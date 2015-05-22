@@ -1,0 +1,19 @@
+{
+  "name": "minio",
+  "version": "0.0.2",
+  "description": "S3 compatible object storage client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minio/objectstorage-js.git"
+  },
+  "author": "minio.io",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/minio/objectstorage-js/issues"
+  },
+  "homepage": "https://github.com/minio/objectstorage-js#readme"
+}
