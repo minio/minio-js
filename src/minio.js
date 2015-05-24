@@ -9,9 +9,28 @@ class Client {
     createBucket(bucket, callback) {
         "use strict"
 
-        this.transport(address)
+        var req = this.transport.request({
+            host: 'localhost',
+            port: 8080,
+            method: 'PUT',
+            path: `/${bucket}`
+        }, function(response) {
+            if(response.statusCode !== 200) {
+                return callback('e')
+            }
+            response.on('data', function(chunk) {
+                console.log(chunk)
+            })
+            response.on('end', function() {
+                callback()
+            })
+        })
 
-        callback(null)
+        req.on('error', function(e) {
+            callback(e)
+        })
+
+        req.end()
     }
 
     setTransport(transport) {
@@ -21,7 +40,7 @@ class Client {
 
     static getClient(params) {
         "use strict"
-        return new Client(params[address])
+        return new Client(params.address)
     }
 }
 var inst = Client
