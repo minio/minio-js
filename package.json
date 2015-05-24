@@ -17,13 +17,15 @@
     "url": "https://github.com/minio/objectstorage-js/issues"
   },
   "homepage": "https://github.com/minio/objectstorage-js#readme",
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
+    "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
-    "gulp-mocha": "^2.1.0",
     "gulp-sourcemaps": "^1.5.2",
-    "nock": "^2.2.0",
     "source-map-support": "^0.2.10"
+  },
+  "devDependencies": {
+    "gulp-mocha": "^2.1.0",
+    "nock": "^2.2.0"
   }
 }
