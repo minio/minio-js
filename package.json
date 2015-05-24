@@ -23,6 +23,7 @@
     "gulp-concat": "^2.5.2",
     "gulp-mocha": "^2.1.0",
     "gulp-sourcemaps": "^1.5.2",
+    "nock": "^2.2.0",
     "source-map-support": "^0.2.10"
   }
 }
