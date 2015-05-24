@@ -4,7 +4,7 @@
   "description": "S3 compatible object storage client",
   "main": "./dist/main/minio.js",
   "scripts": {
-    "preinstall": "gulp compile",
+    "postinstall": "gulp compile",
     "test": "gulp test"
   },
   "repository": {
