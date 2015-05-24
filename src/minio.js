@@ -23,7 +23,7 @@ class Client {
                 response.on('data', chunk => {
                     // do nothing, not expecting any output
                 })
-                response.on('end', _ => {
+                response.on('end', () => {
                     callback()
                 })
             }
@@ -47,7 +47,7 @@ class Client {
         response.on('data', chunk => {
             errorXml = errorXml + chunk.toString()
         })
-        response.on('end', _ => {
+        response.on('end', () => {
             var parsedXml = parseXml(errorXml)
             var e = {}
             parsedXml.root.children.forEach(element => {
