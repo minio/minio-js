@@ -22,7 +22,9 @@
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
     "gulp-sourcemaps": "^1.5.2",
-    "source-map-support": "^0.2.10"
+    "source-map-support": "^0.2.10",
+    "xml": "^1.0.0",
+    "xml-parser": "^1.2.0"
   },
   "devDependencies": {
     "gulp-mocha": "^2.1.0",

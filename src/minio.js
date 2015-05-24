@@ -1,4 +1,6 @@
 var http = require('http')
+var xml = require('xml')
+var parseXml = require('xml-parser')
 
 class Client {
     constructor(address) {
@@ -14,19 +16,20 @@ class Client {
             port: 8080,
             method: 'PUT',
             path: `/${bucket}`
-        }, function(response) {
+        }, response => {
             if(response.statusCode !== 200) {
-                return callback('e')
+                this.parseError(response, callback)
+            } else {
+                response.on('data', chunk => {
+                    // do nothing, not expecting any output
+                })
+                response.on('end', _ => {
+                    callback()
+                })
             }
-            response.on('data', function(chunk) {
-                console.log(chunk)
-            })
-            response.on('end', function() {
-                callback()
-            })
         })
 
-        req.on('error', function(e) {
+        req.on('error', e => {
             callback(e)
         })
 
@@ -36,6 +39,30 @@ class Client {
     setTransport(transport) {
         "use strict"
         this.transport = transport
+    }
+
+    parseError(response, callback) {
+        "use strict";
+        var errorXml = "";
+        response.on('data', chunk => {
+            errorXml = errorXml + chunk.toString()
+        })
+        response.on('end', _ => {
+            var parsedXml = parseXml(errorXml)
+            var e = {}
+            parsedXml.root.children.forEach(element => {
+                if(element.name === 'Status') {
+                    e.status = element.content
+                } else if(element.name === 'Message') {
+                    e.message = element.content
+                } else if(element.name === 'RequestId') {
+                    e.requestid = element.content
+                } else if(element.name === 'Resource') {
+                    e.resource = element.content
+                }
+            })
+            callback(e)
+        })
     }
 
     static getClient(params) {
