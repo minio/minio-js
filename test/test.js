@@ -15,8 +15,8 @@ describe ('Client', function() {
                 client.createBucket('bucket', done)
             })
             it('pass an error into the callback on failure', function(done) {
-                nock('http://localhost:8080').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>resourceid</RequestId><Resource>/bucket</Resource></Error>")
-                client.createBucket('bucket', checkError(done))
+                nock('http://localhost:8080').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
+                client.createBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
         })
     })
@@ -26,12 +26,16 @@ describe ('Client', function() {
     describe("internal helpers", function() { })
 })
 
-var checkError = function(done) {
+var checkError = function(status, message, requestid, resource, done) {
     return function(e) {
         "use strict";
         if(e === null) {
-            done('expected error, got success')
+            done('expected error, received success')
         }
+        assert.equal(e.status, status)
+        assert.equal(e.message, message)
+        assert.equal(e.requestid, requestid)
+        assert.equal(e.resource, resource)
         done()
     }
 }
