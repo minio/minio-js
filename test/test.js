@@ -44,7 +44,8 @@ describe ('Client', () => {
         describe('#getObject()', () => {
             it('should return a stream object', (done) => {
                 nock('http://localhost:8080').get('/bucket/object').reply(200, "hello world")
-                client.getObject("bucket", "object", (r) => {
+                client.getObject("bucket", "object", (e, r) => {
+                    assert.equal(null, e)
                     r.pipe(concat(buf => {
                         assert.equal(buf, "hello world")
                         done()

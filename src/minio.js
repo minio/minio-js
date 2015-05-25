@@ -62,7 +62,10 @@ class Client {
             port: 8080,
             path: `/${bucket}/${object}`
         }, (response) => {
-            callback(response.pipe(through(write, end)))
+            if(response.statusCode !== 200){
+                parseError(response, callback)
+            }
+            callback(null, response.pipe(through(write, end)))
             function write(chunk) {
                 this.queue(chunk)
             }
