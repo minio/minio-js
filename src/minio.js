@@ -28,6 +28,7 @@ class Client {
         this.transport = http
         this.address = address
     }
+
     createBucket(bucket, callback) {
         "use strict"
 
@@ -37,7 +38,7 @@ class Client {
             method: 'PUT',
             path: `/${bucket}`
         }, response => {
-            if(response.statusCode !== 200) {
+            if (response.statusCode !== 200) {
                 this.parseError(response, callback)
             } else {
                 response.pipe(through(null, end))
@@ -61,13 +62,14 @@ class Client {
             port: 8080,
             path: `/${bucket}/${object}`
         }, (response) => {
-            if(response.statusCode !== 200){
+            if (response.statusCode !== 200) {
                 return this.parseError(response, callback)
             }
             callback(null, response.pipe(through(write, end)))
             function write(chunk) {
                 this.queue(chunk)
             }
+
             function end() {
                 this.queue(null)
             }
@@ -86,13 +88,13 @@ class Client {
             var parsedXml = parseXml(errorXml.toString())
             var e = {}
             parsedXml.root.children.forEach(element => {
-                if(element.name === 'Status') {
+                if (element.name === 'Status') {
                     e.status = element.content
-                } else if(element.name === 'Message') {
+                } else if (element.name === 'Message') {
                     e.message = element.content
-                } else if(element.name === 'RequestId') {
+                } else if (element.name === 'RequestId') {
                     e.requestid = element.content
-                } else if(element.name === 'Resource') {
+                } else if (element.name === 'Resource') {
                     e.resource = element.content
                 }
             })

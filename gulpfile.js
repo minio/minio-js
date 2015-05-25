@@ -20,10 +20,10 @@ var mocha = require('gulp-mocha')
 var concat = require('gulp-concat')
 var sourcemaps = require('gulp-sourcemaps')
 
-gulp.task('default', ['test'], function() {
+gulp.task('default', ['test'], function () {
 })
 
-gulp.task('watch', function(cb) {
+gulp.task('watch', function (cb) {
     "use strict";
     gulp.src('src/**/*.js')
         .pipe(sourcemaps.init())
@@ -31,36 +31,36 @@ gulp.task('watch', function(cb) {
         .pipe(babel())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/main'))
-        .on('end', function() {
+        .on('end', function () {
             cb()
         })
 })
 
-gulp.task('compile', function(cb) {
+gulp.task('compile', function (cb) {
     gulp.src('src/**/*.js')
         .pipe(sourcemaps.init())
         .pipe(concat('minio.js'))
         .pipe(babel())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/main'))
-        .on('end', function() {
+        .on('end', function () {
             cb()
         })
 })
 
-gulp.task('test:compile', function(cb) {
+gulp.task('test:compile', function (cb) {
     gulp.src('test/**/*.js')
         .pipe(sourcemaps.init())
         .pipe(concat('minio-test.js'))
         .pipe(babel())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/test'))
-        .on('end', function() {
+        .on('end', function () {
             cb()
         })
 })
 
-gulp.task('test',['compile', 'test:compile'], function () {
+gulp.task('test', ['compile', 'test:compile'], function () {
     gulp.src('dist/test/*.js', {read: false})
         .pipe(mocha({reporter: 'spec'}))
 })
