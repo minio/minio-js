@@ -17,12 +17,13 @@
 require('source-map-support').install();
 
 var assert = require('assert');
+var concat = require('concat-stream')
 var nock = require('nock')
+var through = require('through')
 
 var minio = require('../..');
 
 describe ('Client', () => {
-    console.log('weee')
     "use strict";
     var client = minio.getClient({address: 'localhost:9000'})
     describe("service level", () => {
@@ -37,8 +38,21 @@ describe ('Client', () => {
             })
         })
     })
+
     describe("bucket level", () =>{ })
-    describe("object level", () => { })
+    describe("object level", () => {
+        describe('#getObject()', () => {
+            it('should return a stream object', (done) => {
+                nock('http://localhost:8080').get('/bucket/object').reply(200, "hello world")
+                client.getObject("bucket", "object", (r) => {
+                    r.pipe(concat(buf => {
+                        assert.equal(buf, "hello world")
+                        done()
+                    }))
+                })
+            })
+        })
+    })
     describe("helpers", () => { })
     describe("internal helpers", () => { })
 })

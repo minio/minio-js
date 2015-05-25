@@ -18,11 +18,13 @@
   },
   "homepage": "https://github.com/minio/objectstorage-js#readme",
   "dependencies": {
+    "concat-stream": "^1.4.8",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
     "gulp-sourcemaps": "^1.5.2",
     "source-map-support": "^0.2.10",
+    "through": "^2.3.7",
     "xml": "^1.0.0",
     "xml-parser": "^1.2.0"
   },
