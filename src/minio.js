@@ -89,10 +89,12 @@ class Client {
             if (response.statusCode !== 200) {
                 return this.parseError(response, callback)
             }
-            callback()
+            response.pipe(through(null, end))
+            function end() {
+                callback()
+            }
         })
         r.pipe(request)
-        request.end()
     }
 
     setTransport(transport) {
