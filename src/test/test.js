@@ -79,7 +79,7 @@ describe('Client', () => {
                 }
                 s.push('hello world')
                 s.push(null)
-                client.putObject("bucket", "object",'',  11,s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+                client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
     })

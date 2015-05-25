@@ -21,7 +21,7 @@ var client = new minio({host: 'localhost', port: 9000})
 
 client.createBucket('hello', (e) => {
     "use strict";
-    if(e != null) {
+    if (e != null) {
         console.log(e)
     }
 })
@@ -33,7 +33,7 @@ s.push(null)
 
 client.putObject('hello', 'world', '', 11, s, (e) => {
     "use strict";
-    if(e != null) {
+    if (e != null) {
         console.log(e)
     }
 })

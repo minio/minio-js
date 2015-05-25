@@ -32,12 +32,14 @@ class Client {
     createBucket(bucket, callback) {
         "use strict"
 
-        var req = this.transport.request({
+        var requestParams = {
             host: this.params.host,
             port: this.params.port,
             method: 'PUT',
             path: `/${bucket}`
-        }, response => {
+        }
+
+        var req = this.transport.request(requestParams, response => {
             if (response.statusCode !== 200) {
                 parseError(response, callback)
             } else {
@@ -57,12 +59,14 @@ class Client {
 
     getObject(bucket, object, callback) {
         "use strict";
-        var req = http.request({
+
+        var requestParams = {
             host: this.params.host,
             port: this.params.port,
             path: `/${bucket}/${object}`,
             method: 'GET',
-        }, (response) => {
+        }
+        var req = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
@@ -81,11 +85,11 @@ class Client {
     putObject(bucket, object, contentType, size, r, callback) {
         "use strict";
 
-        if(contentType == null || contentType == '') {
+        if (contentType == null || contentType == '') {
             contentType = 'aplication/octet-stream'
         }
 
-        var request = http.request({
+        var requestParams = {
             host: this.params.host,
             port: this.params.port,
             path: `/${bucket}/${object}`,
@@ -94,7 +98,9 @@ class Client {
                 "Content-Length": size,
                 "Content-Type": contentType
             }
-        }, (response) => {
+        }
+
+        var request = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
@@ -105,7 +111,6 @@ class Client {
         })
         r.pipe(request)
     }
-
 }
 
 var parseError = (response, callback) => {
