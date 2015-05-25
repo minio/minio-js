@@ -26,15 +26,15 @@ var minio = require('../..');
 
 describe('Client', () => {
     "use strict";
-    var client = minio.getClient({address: 'localhost:9000'})
+    var client = new minio({host: 'localhost', port: 9000})
     describe("service level", () => {
         describe('#createBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
-                nock('http://localhost:8080').put('/bucket').reply(200)
+                nock('http://localhost:9000').put('/bucket').reply(200)
                 client.createBucket('bucket', done)
             })
             it('pass an error into the callback on failure', (done) => {
-                nock('http://localhost:8080').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
+                nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
                 client.createBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
         })
@@ -45,7 +45,7 @@ describe('Client', () => {
     describe("object level", () => {
         describe('#getObject(bucket, object, callback)', () => {
             it('should return a stream object', (done) => {
-                nock('http://localhost:8080').get('/bucket/object').reply(200, "hello world")
+                nock('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
                 client.getObject("bucket", "object", (e, r) => {
                     assert.equal(e, null)
                     r.pipe(concat(buf => {
@@ -55,7 +55,7 @@ describe('Client', () => {
                 })
             })
             it('should pass error to callback', (done) => {
-                nock('http://localhost:8080').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
                 client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
                     assert.equal(r, null)
                     done()
@@ -64,7 +64,7 @@ describe('Client', () => {
         })
         describe("putObject(bucket, object, source, callback)", () => {
             it('should put an object', (done) => {
-                nock('http://localhost:8080').put('/bucket/object', 'hello world').reply(200)
+                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
                 var s = new stream.Readable()
                 s._read = function () {
                 }
@@ -73,7 +73,7 @@ describe('Client', () => {
                 client.putObject("bucket", "object", s, done)
             })
             it('should report failures properly', (done) => {
-                nock('http://localhost:8080').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
                 var s = new stream.Readable()
                 s._read = function () {
                 }
