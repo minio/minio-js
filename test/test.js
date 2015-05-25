@@ -23,11 +23,11 @@ var through = require('through')
 
 var minio = require('../..');
 
-describe ('Client', () => {
+describe('Client', () => {
     "use strict";
     var client = minio.getClient({address: 'localhost:9000'})
     describe("service level", () => {
-        describe ('#createBucket(bucket, callback)', () =>  {
+        describe('#createBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
                 nock('http://localhost:8080').put('/bucket').reply(200)
                 client.createBucket('bucket', done)
@@ -39,7 +39,8 @@ describe ('Client', () => {
         })
     })
 
-    describe("bucket level", () =>{ })
+    describe("bucket level", () => {
+    })
     describe("object level", () => {
         describe('#getObject(bucket, object, callback)', () => {
             it('should return a stream object', (done) => {
@@ -61,21 +62,23 @@ describe ('Client', () => {
             })
         })
     })
-    describe("helpers", () => { })
-    describe("internal helpers", () => { })
+    describe("helpers", () => {
+    })
+    describe("internal helpers", () => {
+    })
 })
 
 var checkError = (status, message, requestid, resource, callback) => {
     return (e, ...rest) => {
         "use strict";
-        if(e === null) {
+        if (e === null) {
             callback('expected error, received success')
         }
         assert.equal(e.status, status)
         assert.equal(e.message, message)
         assert.equal(e.requestid, requestid)
         assert.equal(e.resource, resource)
-        if(rest.length === 0) {
+        if (rest.length === 0) {
             callback()
         } else {
             callback(rest)
