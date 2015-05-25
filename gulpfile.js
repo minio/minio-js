@@ -23,21 +23,8 @@ var sourcemaps = require('gulp-sourcemaps')
 gulp.task('default', ['test'], function () {
 })
 
-gulp.task('watch', function (cb) {
-    "use strict";
-    gulp.src('src/**/*.js')
-        .pipe(sourcemaps.init())
-        .pipe(concat('minio.js'))
-        .pipe(babel())
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/main'))
-        .on('end', function () {
-            cb()
-        })
-})
-
 gulp.task('compile', function (cb) {
-    gulp.src('src/**/*.js')
+    gulp.src('src/main/**/*.js')
         .pipe(sourcemaps.init())
         .pipe(concat('minio.js'))
         .pipe(babel())
@@ -49,7 +36,7 @@ gulp.task('compile', function (cb) {
 })
 
 gulp.task('test:compile', function (cb) {
-    gulp.src('test/**/*.js')
+    gulp.src('src/test/**/*.js')
         .pipe(sourcemaps.init())
         .pipe(concat('minio-test.js'))
         .pipe(babel())
