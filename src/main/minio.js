@@ -39,7 +39,7 @@ class Client {
             path: `/${bucket}`
         }, response => {
             if (response.statusCode !== 200) {
-                this.parseError(response, callback)
+                parseError(response, callback)
             } else {
                 response.pipe(through(null, end))
             }
@@ -64,7 +64,7 @@ class Client {
             method: 'GET',
         }, (response) => {
             if (response.statusCode !== 200) {
-                return this.parseError(response, callback)
+                return parseError(response, callback)
             }
             callback(null, response.pipe(through(write, end)))
             function write(chunk) {
@@ -78,16 +78,25 @@ class Client {
         req.end()
     }
 
-    putObject(bucket, object, r, callback) {
+    putObject(bucket, object, contentType, size, r, callback) {
         "use strict";
+
+        if(contentType == null || contentType == '') {
+            contentType = 'aplication/octet-stream'
+        }
+
         var request = http.request({
             host: this.params.host,
             port: this.params.port,
             path: `/${bucket}/${object}`,
-            method: 'PUT'
+            method: 'PUT',
+            headers: {
+                "Content-Length": size,
+                "Content-Type": contentType
+            }
         }, (response) => {
             if (response.statusCode !== 200) {
-                return this.parseError(response, callback)
+                return parseError(response, callback)
             }
             response.pipe(through(null, end))
             function end() {
@@ -97,25 +106,27 @@ class Client {
         r.pipe(request)
     }
 
-    parseError(response, callback) {
-        "use strict";
-        response.pipe(concat(errorXml => {
-            var parsedXml = parseXml(errorXml.toString())
-            var e = {}
-            parsedXml.root.children.forEach(element => {
-                if (element.name === 'Status') {
-                    e.status = element.content
-                } else if (element.name === 'Message') {
-                    e.message = element.content
-                } else if (element.name === 'RequestId') {
-                    e.requestid = element.content
-                } else if (element.name === 'Resource') {
-                    e.resource = element.content
-                }
-            })
-            callback(e)
-        }))
-    }
 }
+
+var parseError = (response, callback) => {
+    "use strict";
+    response.pipe(concat(errorXml => {
+        var parsedXml = parseXml(errorXml.toString())
+        var e = {}
+        parsedXml.root.children.forEach(element => {
+            if (element.name === 'Status') {
+                e.status = element.content
+            } else if (element.name === 'Message') {
+                e.message = element.content
+            } else if (element.name === 'RequestId') {
+                e.requestid = element.content
+            } else if (element.name === 'Resource') {
+                e.resource = element.content
+            }
+        })
+        callback(e)
+    }))
+}
+
 var inst = Client
 module.exports = inst
