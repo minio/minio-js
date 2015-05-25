@@ -62,7 +62,7 @@ describe('Client', () => {
                 }))
             })
         })
-        describe("putObject(bucket, object, source, callback)", () => {
+        describe("putObject(bucket, object, size, source, callback)", () => {
             it('should put an object', (done) => {
                 nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
                 var s = new stream.Readable()
@@ -70,7 +70,7 @@ describe('Client', () => {
                 }
                 s.push('hello world')
                 s.push(null)
-                client.putObject("bucket", "object", s, done)
+                client.putObject("bucket", "object", '', 11, s, done)
             })
             it('should report failures properly', (done) => {
                 nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
@@ -79,7 +79,7 @@ describe('Client', () => {
                 }
                 s.push('hello world')
                 s.push(null)
-                client.putObject("bucket", "object", s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+                client.putObject("bucket", "object",'',  11,s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
     })
