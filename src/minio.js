@@ -40,12 +40,10 @@ class Client {
             if(response.statusCode !== 200) {
                 this.parseError(response, callback)
             } else {
-                response.on('data', chunk => {
-                    // do nothing, not expecting any output
-                })
-                response.on('end', () => {
-                    callback()
-                })
+                response.pipe(through(null, end))
+            }
+            function end() {
+                callback()
             }
         })
 
