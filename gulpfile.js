@@ -38,14 +38,14 @@ gulp.task('test', ['compile', 'test:compile'], function () {
         .pipe(mocha({reporter: 'spec'}))
 })
 
-gulp.task('example:compile', function(cb) {
+gulp.task('example:compile', function (cb) {
     "use strict";
     compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
 })
 
-gulp.task('example', ['compile', 'example:compile'], function(cb) {
+gulp.task('example', ['compile', 'example:compile'], function (cb) {
     "use strict";
-    exec('node dist/example/example.js', function(err, stdout, stderr) {
+    exec('node dist/example/example.js', function (err, stdout, stderr) {
         console.log(stdout)
         console.log(stderr)
         cb(err)
