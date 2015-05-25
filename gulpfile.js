@@ -23,6 +23,19 @@ var sourcemaps = require('gulp-sourcemaps')
 gulp.task('default', ['test'], function() {
 })
 
+gulp.task('watch', function(cb) {
+    "use strict";
+    gulp.src('src/**/*.js')
+        .pipe(sourcemaps.init())
+        .pipe(concat('minio.js'))
+        .pipe(babel())
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest('dist/main'))
+        .on('end', function() {
+            cb()
+        })
+})
+
 gulp.task('compile', function(cb) {
     gulp.src('src/**/*.js')
         .pipe(sourcemaps.init())

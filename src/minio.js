@@ -15,8 +15,11 @@
  */
 
 var http = require('http')
-var xml = require('xml')
 var parseXml = require('xml-parser')
+var stream = require('stream')
+var through = require('through')
+var xml = require('xml')
+var PassThrough = require('stream').PassThrough
 
 class Client {
     constructor(address) {
@@ -49,6 +52,24 @@ class Client {
             callback(e)
         })
 
+        req.end()
+    }
+
+    getObject(bucket, object, callback) {
+        "use strict";
+        var req = http.request({
+            host: 'localhost',
+            port: 8080,
+            path: `/${bucket}/${object}`
+        }, (response) => {
+            callback(response.pipe(through(write, end)))
+            function write(chunk) {
+                this.queue(chunk)
+            }
+            function end() {
+                this.queue(null)
+            }
+        })
         req.end()
     }
 
