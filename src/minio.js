@@ -63,7 +63,7 @@ class Client {
             path: `/${bucket}/${object}`
         }, (response) => {
             if(response.statusCode !== 200){
-                parseError(response, callback)
+                return this.parseError(response, callback)
             }
             callback(null, response.pipe(through(write, end)))
             function write(chunk) {

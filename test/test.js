@@ -41,16 +41,23 @@ describe ('Client', () => {
 
     describe("bucket level", () =>{ })
     describe("object level", () => {
-        describe('#getObject()', () => {
+        describe('#getObject(bucket, object, callback)', () => {
             it('should return a stream object', (done) => {
                 nock('http://localhost:8080').get('/bucket/object').reply(200, "hello world")
                 client.getObject("bucket", "object", (e, r) => {
-                    assert.equal(null, e)
+                    assert.equal(e, null)
                     r.pipe(concat(buf => {
                         assert.equal(buf, "hello world")
                         done()
                     }))
                 })
+            })
+            it('should pass error to callback', (done) => {
+                nock('http://localhost:8080').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
+                client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket", (r) => {
+                    assert.equal(r, null)
+                    done()
+                }))
             })
         })
     })
@@ -58,16 +65,20 @@ describe ('Client', () => {
     describe("internal helpers", () => { })
 })
 
-var checkError = (status, message, requestid, resource, done) => {
-    return (e) => {
+var checkError = (status, message, requestid, resource, callback) => {
+    return (e, ...rest) => {
         "use strict";
         if(e === null) {
-            done('expected error, received success')
+            callback('expected error, received success')
         }
         assert.equal(e.status, status)
         assert.equal(e.message, message)
         assert.equal(e.requestid, requestid)
         assert.equal(e.resource, resource)
-        done()
+        if(rest.length === 0) {
+            callback()
+        } else {
+            callback(rest)
+        }
     }
 }
