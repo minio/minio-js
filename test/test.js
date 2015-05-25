@@ -21,7 +21,8 @@ var nock = require('nock')
 
 var minio = require('../..');
 
-describe ('Client', _ => () => {
+describe ('Client', () => {
+    console.log('weee')
     "use strict";
     var client = minio.getClient({address: 'localhost:9000'})
     describe("service level", () => {

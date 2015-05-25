@@ -19,7 +19,6 @@ var babel = require('gulp-babel')
 var mocha = require('gulp-mocha')
 var concat = require('gulp-concat')
 var sourcemaps = require('gulp-sourcemaps')
-//var sourcemaps = require('gulp-sourcemaps')
 
 gulp.task('default', ['test'], function() {
 })
