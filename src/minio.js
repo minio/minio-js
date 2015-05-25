@@ -23,18 +23,18 @@ var xml = require('xml')
 var PassThrough = require('stream').PassThrough
 
 class Client {
-    constructor(address) {
+    constructor(params) {
         "use strict"
         this.transport = http
-        this.address = address
+        this.params = params
     }
 
     createBucket(bucket, callback) {
         "use strict"
 
         var req = this.transport.request({
-            host: 'localhost',
-            port: 8080,
+            host: this.params.host,
+            port: this.params.port,
             method: 'PUT',
             path: `/${bucket}`
         }, response => {
@@ -58,8 +58,8 @@ class Client {
     getObject(bucket, object, callback) {
         "use strict";
         var req = http.request({
-            host: 'localhost',
-            port: 8080,
+            host: this.params.host,
+            port: this.params.port,
             path: `/${bucket}/${object}`,
             method: 'GET',
         }, (response) => {
@@ -81,8 +81,8 @@ class Client {
     putObject(bucket, object, r, callback) {
         "use strict";
         var request = http.request({
-            host: 'localhost',
-            port: 8080,
+            host: this.params.host,
+            port: this.params.port,
             path: `/${bucket}/${object}`,
             method: 'PUT'
         }, (response) => {
@@ -95,11 +95,6 @@ class Client {
             }
         })
         r.pipe(request)
-    }
-
-    setTransport(transport) {
-        "use strict"
-        this.transport = transport
     }
 
     parseError(response, callback) {
@@ -120,11 +115,6 @@ class Client {
             })
             callback(e)
         }))
-    }
-
-    static getClient(params) {
-        "use strict"
-        return new Client(params.address)
     }
 }
 var inst = Client
