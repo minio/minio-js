@@ -16,6 +16,7 @@
 
 var http = require('http')
 var parseXml = require('xml-parser')
+var concat = require('concat-stream')
 var stream = require('stream')
 var through = require('through')
 var xml = require('xml')
@@ -83,12 +84,8 @@ class Client {
 
     parseError(response, callback) {
         "use strict";
-        var errorXml = "";
-        response.on('data', chunk => {
-            errorXml = errorXml + chunk.toString()
-        })
-        response.on('end', () => {
-            var parsedXml = parseXml(errorXml)
+        response.pipe(concat(errorXml => {
+            var parsedXml = parseXml(errorXml.toString())
             var e = {}
             parsedXml.root.children.forEach(element => {
                 if(element.name === 'Status') {
@@ -102,7 +99,7 @@ class Client {
                 }
             })
             callback(e)
-        })
+        }))
     }
 
     static getClient(params) {
