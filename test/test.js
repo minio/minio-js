@@ -55,8 +55,8 @@ describe('Client', () => {
                 })
             })
             it('should pass error to callback', (done) => {
-                nock('http://localhost:8080').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
-                client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket", (r) => {
+                nock('http://localhost:8080').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
                     assert.equal(r, null)
                     done()
                 }))
@@ -64,13 +64,22 @@ describe('Client', () => {
         })
         describe("putObject(bucket, object, source, callback)", () => {
             it('should put an object', (done) => {
-                nock('http://localhost:8080').put('/one/two', 'hello world').reply(200)
+                nock('http://localhost:8080').put('/bucket/object', 'hello world').reply(200)
                 var s = new stream.Readable()
                 s._read = function () {
                 }
                 s.push('hello world')
                 s.push(null)
-                client.putObject("one", "two", s, done)
+                client.putObject("bucket", "object", s, done)
+            })
+            it('should report failures properly', (done) => {
+                nock('http://localhost:8080').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                var s = new stream.Readable()
+                s._read = function () {
+                }
+                s.push('hello world')
+                s.push(null)
+                client.putObject("bucket", "object", s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
     })
