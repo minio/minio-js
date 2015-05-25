@@ -20,31 +20,16 @@ var mocha = require('gulp-mocha')
 var concat = require('gulp-concat')
 var sourcemaps = require('gulp-sourcemaps')
 
+
 gulp.task('default', ['test'], function () {
 })
 
 gulp.task('compile', function (cb) {
-    gulp.src('src/main/**/*.js')
-        .pipe(sourcemaps.init())
-        .pipe(concat('minio.js'))
-        .pipe(babel())
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/main'))
-        .on('end', function () {
-            cb()
-        })
+    compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
 })
 
 gulp.task('test:compile', function (cb) {
-    gulp.src('src/test/**/*.js')
-        .pipe(sourcemaps.init())
-        .pipe(concat('minio-test.js'))
-        .pipe(babel())
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/test'))
-        .on('end', function () {
-            cb()
-        })
+    compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
 })
 
 gulp.task('test', ['compile', 'test:compile'], function () {
@@ -52,3 +37,14 @@ gulp.task('test', ['compile', 'test:compile'], function () {
         .pipe(mocha({reporter: 'spec'}))
 })
 
+function compile(src, name, dest, cb) {
+    gulp.src(src)
+        .pipe(sourcemaps.init())
+        .pipe(concat(name))
+        .pipe(babel())
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest(dest))
+        .on('end', function () {
+            cb()
+        })
+}
