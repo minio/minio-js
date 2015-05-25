@@ -60,7 +60,8 @@ class Client {
         var req = http.request({
             host: 'localhost',
             port: 8080,
-            path: `/${bucket}/${object}`
+            path: `/${bucket}/${object}`,
+            method: 'GET',
         }, (response) => {
             if (response.statusCode !== 200) {
                 return this.parseError(response, callback)
@@ -75,6 +76,23 @@ class Client {
             }
         })
         req.end()
+    }
+
+    putObject(bucket, object, r, callback) {
+        "use strict";
+        var request = http.request({
+            host: 'localhost',
+            port: 8080,
+            path: `/${bucket}/${object}`,
+            method: 'PUT'
+        }, (response) => {
+            if (response.statusCode !== 200) {
+                return this.parseError(response, callback)
+            }
+            callback()
+        })
+        r.pipe(request)
+        request.end()
     }
 
     setTransport(transport) {

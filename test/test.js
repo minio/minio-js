@@ -20,6 +20,7 @@ var assert = require('assert');
 var concat = require('concat-stream')
 var nock = require('nock')
 var through = require('through')
+var stream = require('stream')
 
 var minio = require('../..');
 
@@ -59,6 +60,16 @@ describe('Client', () => {
                     assert.equal(r, null)
                     done()
                 }))
+            })
+        })
+        describe("putObject(bucket, object, source, callback)", () => {
+            it('should put an object', (done) => {
+                nock('http://localhost:8080').put('/bucket/object').reply(200)
+                var s = new stream.Readable()
+                s._read = function() {}
+                s.push('hello world')
+                s.push(null)
+                client.putObject("bucket", "object", s, done)
             })
         })
     })
