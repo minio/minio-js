@@ -15,6 +15,7 @@
  */
 
 var concat = require('concat-stream')
+var crypto = require('crypto')
 var http = require('http')
 var parseXml = require('xml-parser')
 var stream = require('stream')
@@ -38,7 +39,7 @@ class Client {
             path: `/${bucket}`
         }
 
-        signV4(requestParams)
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
         var req = this.transport.request(requestParams, response => {
             if (response.statusCode !== 200) {
@@ -68,7 +69,7 @@ class Client {
             method: 'GET',
         }
 
-        signV4(requestParams)
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
         var req = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
@@ -104,7 +105,7 @@ class Client {
             }
         }
 
-        signV4(requestParams)
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
         var request = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
@@ -139,7 +140,7 @@ var parseError = (response, callback) => {
     }))
 }
 
-var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
+var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     "use strict";
 
     if (!accessKey || !secretKey) {
@@ -148,25 +149,44 @@ var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
 
     var requestDate = new Date()
 
-    if (!dataShaSum1) {
-        dataShaSum1 = 'df57d21db20da04d7fa30298dd4488ba3a2b47ca3a489c74750e0f1e7df1b9b7'
+    if (!dataShaSum256) {
+        dataShaSum256 = 'df57d21db20da04d7fa30298dd4488ba3a2b47ca3a489c74750e0f1e7df1b9b7'
     }
-
 
     if (!request.headers) {
         request.headers = {}
     }
 
     request.headers['x-amz-date'] = requestDate.toISOString()
-    request.headers['x-amz-content-sha256'] = dataShaSum1
+    request.headers['x-amz-content-sha256'] = dataShaSum256
 
-
-    var canonicalRequest = getCanonicalRequest(request, dataShaSum1, requestDate)
+    var canonicalRequest = getCanonicalRequest(request, dataShaSum256, requestDate)
+    var hash = crypto.createHash('sha256')
+    hash.update(canonicalRequest)
+    var canonicalRequestHash = hash.digest('hex')
 
     var signingKey = getSigningKey(requestDate, getRegion(request.host), secretKey)
 
+    var hmac = crypto.createHmac('sha256', signingKey)
+    hmac.update(canonicalRequest)
+    var signedRequest = hmac.digest('base64')
+
+    request.headers['Authorization'] = signedRequest
+
     function getSigningKey(date, region, secretKey) {
-        return "my signing key"
+        var keyLine = "AWS4" + secretKey + date
+        var year = date.getYear()
+        var month = date.getMonth() + 1
+        if (month < 10) {
+            month = `0${month}`
+        }
+        var day = date.getDate()
+        var dateLine = `${year}${month}${day}`
+
+        var hmac1 = crypto.createHmac('sha256', keyLine).update(dateLine).digest('binary')
+        var hmac2 = crypto.createHmac('sha256', hmac1).update(region).digest('binary')
+        var hmac3 = crypto.createHmac('sha256', hmac2).update("s3").digest('binary')
+        return crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
     }
 
     function getRegion(host) {
@@ -215,8 +235,6 @@ var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
                 signedHeaders += key
             }
         }
-        //request.headers.forEach( (value, key) => {
-        //})
 
         headers.sort()
 
