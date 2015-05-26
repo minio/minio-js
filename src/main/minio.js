@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
+var concat = require('concat-stream')
 var http = require('http')
 var parseXml = require('xml-parser')
-var concat = require('concat-stream')
 var stream = require('stream')
 var through = require('through')
 var xml = require('xml')
-var PassThrough = require('stream').PassThrough
 
 class Client {
     constructor(params) {
@@ -38,6 +37,8 @@ class Client {
             method: 'PUT',
             path: `/${bucket}`
         }
+
+        signV4(requestParams)
 
         var req = this.transport.request(requestParams, response => {
             if (response.statusCode !== 200) {
@@ -66,6 +67,9 @@ class Client {
             path: `/${bucket}/${object}`,
             method: 'GET',
         }
+
+        signV4(requestParams)
+
         var req = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
@@ -100,6 +104,8 @@ class Client {
             }
         }
 
+        signV4(requestParams)
+
         var request = http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
@@ -131,6 +137,69 @@ var parseError = (response, callback) => {
         })
         callback(e)
     }))
+}
+
+var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
+    "use strict";
+
+    var requestDate = new Date()
+
+    if(!dataShaSum1) {
+        dataShaSum1 = 'df57d21db20da04d7fa30298dd4488ba3a2b47ca3a489c74750e0f1e7df1b9b7'
+    }
+
+
+    if (!request.headers) {
+        request.headers = {}
+    }
+
+    request.headers['x-amz-date'] = requestDate.toISOString()
+    request.headers['x-amz-content-sha256'] = dataShaSum1
+
+
+    var canonicalRequest = getCanonicalRequest(request, dataShaSum1, requestDate)
+
+    function getSigningKey(date, region, secretKey) {
+
+    }
+
+    function getCanonicalRequest(request, dataShaSum1, requestDate) {
+
+
+        var headers = []
+        var signedHeaders = ""
+
+        for (var key in request.headers) {
+            if (request.headers.hasOwnProperty(key)) {
+                key = key.trim().toLocaleLowerCase()
+                var value = request.headers[key]
+                headers.push(`${key}: ${value}`)
+                if(signedHeaders) {
+                    signedHeaders += ';'
+                }
+                signedHeaders += key
+            }
+        }
+        //request.headers.forEach( (value, key) => {
+        //})
+
+        headers.sort()
+
+        var canonicalString = ""
+        canonicalString += canonicalString + request.method.toUpperCase() + '\n'
+        canonicalString += request.path + '\n'
+        if (request.query) {
+            canonicalString += request.query + '\n'
+        } else {
+            canonicalString += '\n'
+        }
+        headers.forEach(element => {
+            canonicalString += element + '\n'
+        })
+        canonicalString += '\n'
+        canonicalString += signedHeaders + '\n'
+        canonicalString += dataShaSum1
+    }
 }
 
 var inst = Client
