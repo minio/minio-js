@@ -26,7 +26,7 @@ var minio = require('../..');
 
 describe('Client', () => {
     "use strict";
-    var client = new minio({host: 'localhost', port: 9000})
+    var client = new minio({host: 'localhost', port: 9000, accessKey: "accesskey", secretKey: "secretkey"})
     describe("service level", () => {
         describe('#createBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
