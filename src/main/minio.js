@@ -142,9 +142,13 @@ var parseError = (response, callback) => {
 var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
     "use strict";
 
+    if (!accessKey || !secretKey) {
+        return
+    }
+
     var requestDate = new Date()
 
-    if(!dataShaSum1) {
+    if (!dataShaSum1) {
         dataShaSum1 = 'df57d21db20da04d7fa30298dd4488ba3a2b47ca3a489c74750e0f1e7df1b9b7'
     }
 
@@ -159,8 +163,14 @@ var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
 
     var canonicalRequest = getCanonicalRequest(request, dataShaSum1, requestDate)
 
-    function getSigningKey(date, region, secretKey) {
+    var signingKey = getSigningKey(requestDate, getRegion(request.host), secretKey)
 
+    function getSigningKey(date, region, secretKey) {
+        return "my signing key"
+    }
+
+    function getRegion(url) {
+        return "milky-way"
     }
 
     function getCanonicalRequest(request, dataShaSum1, requestDate) {
@@ -174,7 +184,7 @@ var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
                 key = key.trim().toLocaleLowerCase()
                 var value = request.headers[key]
                 headers.push(`${key}: ${value}`)
-                if(signedHeaders) {
+                if (signedHeaders) {
                     signedHeaders += ';'
                 }
                 signedHeaders += key
@@ -199,6 +209,7 @@ var signV4 = (request, dataShaSum1, accessKey, secretKey) => {
         canonicalString += '\n'
         canonicalString += signedHeaders + '\n'
         canonicalString += dataShaSum1
+        return canonicalString
     }
 }
 
