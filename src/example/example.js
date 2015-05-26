@@ -20,24 +20,34 @@ var stream = require('stream').Readable
 //var client = new minio({host: 's3-us-west-2.amazonaws.com', port: 80, accessKey: 'ACCESSKEY', secretKey: 'SECRETKEY'})
 var client = new minio({host: 'localhost', port: 9000})
 
-client.createBucket('hello', (e) => {
+
+client.createBucket('hello', e => {
     "use strict";
-    if (e != null) {
-        return console.log(e)
+    if (e) {
+        console.log(e)
+        return
     }
-    var s = new stream
-    s.push('hello world')
-    s.push(null)
-    client.putObject('hello', 'world', '', 11, s, (e) => {
+
+    var newObjectStream = new stream
+    newObjectStream.push('hello world')
+    newObjectStream.push(null)
+
+    client.putObject('hello', 'world', '', 11, newObjectStream, e => {
+        "use strict";
+        if (e) {
+            console.log(e)
+            return
+        }
+
         client.getObject('hello', 'world', (e, r) => {
             "use strict";
-            if (e != null) {
+            if (e) {
+                console.log(e)
                 return
             }
+            ;
             r.pipe(process.stdout)
         })
     })
 })
-
-
 
