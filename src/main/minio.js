@@ -252,7 +252,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
         var signedHeaders = ""
         headerKeys.forEach(element => {
-            if(signedHeaders) {
+            if (signedHeaders) {
                 signedHeaders += ';'
             }
             signedHeaders += element
