@@ -20,7 +20,6 @@
   "dependencies": {
     "await": "^0.2.5",
     "combined-stream": "^1.0.3",
-    "babel-core": "^5.4.7",
     "concat-stream": "^1.4.8",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
