@@ -92,6 +92,26 @@ describe('Client', () => {
                 })
             })
         })
+        describe("#listObjects(prefix)", (done) => {
+            it('should iterate with prefix', (done) => {
+                nock('http://localhost:9000').get('/').reply(200, "")
+                nock('http://localhost:9000').get('/').reply(200, "")
+                var stream = client.listObjects()
+                stream.pipe(through(success, end))
+                var results = []
+                function success(bucket) {
+                    results.push(bucket)
+                }
+                function end() {
+                    assert.deepEqual(results, [
+                        { name: 'object1' },
+                        { name: 'object2' },
+                        { name: 'object3' }
+                    ])
+                    done()
+                }
+            })
+        })
     })
 })
 

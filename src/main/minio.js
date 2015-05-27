@@ -109,6 +109,16 @@ class Client {
         req.end()
     }
 
+    listObjects() {
+        "use strict";
+        var stream = new Stream.Readable({objectMode: true})
+        stream.push({name: 'object1'})
+        stream.push({name: 'object2'})
+        stream.push({name: 'object3'})
+        stream.push(null)
+        return stream
+    }
+
     getObject(bucket, object, callback) {
         "use strict";
 
