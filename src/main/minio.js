@@ -65,7 +65,7 @@ class Client {
         req.end()
     }
 
-    listBuckets(callback) {
+    listBuckets() {
         var requestParams = {
             host: this.params.host,
             port: this.params.port,
@@ -75,21 +75,26 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
+        var stream = new Stream.Readable({objectMode: true})
+        stream._read = () => {
+        }
+
         var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
-                callback(parseError(response, callback))
+                // TODO work out how to handle errors with stream
+                stream.push(parseError(response, callback))
+                stream.push(null)
             }
             response.pipe(Concat(errorXml => {
                 "use strict";
                 var parsedXml = ParseXml(errorXml.toString())
-                var result = []
                 parsedXml.root.children.forEach(element => {
                     "use strict";
-                    if(element.name === 'Buckets') {
+                    if (element.name === 'Buckets') {
                         element.children.forEach(bucketListing => {
                             var bucket = {}
-                            bucketListing.children.forEach( prop => {
-                                switch(prop.name) {
+                            bucketListing.children.forEach(prop => {
+                                switch (prop.name) {
                                     case "Name":
                                         bucket.name = prop.content
                                         break
@@ -98,15 +103,15 @@ class Client {
                                         break
                                 }
                             })
-                            result.push(bucket)
+                            stream.push(bucket)
                         })
                     }
                 })
-                result.sort()
-                callback(null, result)
+                stream.push(null)
             }))
         })
         req.end()
+        return stream
     }
 
     listObjects() {
