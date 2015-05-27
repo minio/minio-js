@@ -26,7 +26,7 @@ var Through = require('through')
 var Xml = require('xml')
 var ParseString = require('xml2js').parseString
 
-require("babel/polyfill");
+require("babel-core/polyfill");
 
 class Client {
     constructor(params) {
@@ -77,41 +77,6 @@ class Client {
         }
         return iter
     }
-
-    // listObjects() {
-    //     "use strict";
-    //     var self = this;
-
-    //     var stream = new Stream.Readable
-    //     stream._read = () => {}
-
-    //     var queue = new Stream.Readable
-    //     queue._read = () => {}
-    //     var data = {
-    //     	prefix: "",
-    //     	marker: ""
-    //     }
-    //     queue.push(JSON.stringify(data))
-
-    //     queue.pipe(Through(write, end))
-
-
-    //     return stream
-
-    //     function write(r) {
-    //     	var nextRequest = JSON.parse(r)
-    //     	getBucketList(self.params, nextRequest.prefix, nextRequest.marker, 1, (e, r) => {
-    //     		r.buckets.forEach(element => {
-    //     			stream.push(element)
-    //     			queue.push(JSON.stringify(nextRequest))
-    //     		})
-    //     	})
-    //     }
-
-    //     function end() {
-    //     	stream.push(null)
-    //     }
-    // }
 
     listBuckets(callback) {
         var requestParams = {
