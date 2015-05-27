@@ -26,8 +26,6 @@ var Through = require('through')
 var Xml = require('xml')
 var ParseString = require('xml2js').parseString
 
-require("babel-core/polyfill");
-
 class Client {
     constructor(params) {
         "use strict"
@@ -65,17 +63,6 @@ class Client {
         })
 
         req.end()
-    }
-
-    generatorExample() {
-        var iter = {}
-        iter[Symbol.iterator] = function* () {
-            "use strict";
-            for (var i = 1; i <= 100; i++) {
-                yield i
-            }
-        }
-        return iter
     }
 
     listBuckets(callback) {
