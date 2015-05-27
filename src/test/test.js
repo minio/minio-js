@@ -62,7 +62,7 @@ describe('Client', () => {
                 }))
             })
         })
-        describe("putObject(bucket, object, size, source, callback)", () => {
+        describe("#putObject(bucket, object, size, source, callback)", () => {
             it('should put an object', (done) => {
                 nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
                 var s = new stream.Readable()
@@ -82,7 +82,7 @@ describe('Client', () => {
                 client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
-        describe("listBuckets()", ()=> {
+        describe("#listBuckets()", ()=> {
             it('should generate a bucket iterator', (done) => {
                 nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
                 client.listBuckets((e, r) => {
@@ -92,10 +92,6 @@ describe('Client', () => {
                 })
             })
         })
-    })
-    describe("helpers", () => {
-    })
-    describe("internal helpers", () => {
     })
 })
 
