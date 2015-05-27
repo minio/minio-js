@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/minio/objectstorage-js#readme",
   "dependencies": {
+    "await": "^0.2.5",
+    "combined-stream": "^1.0.3",
     "concat-stream": "^1.4.8",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
@@ -27,7 +29,8 @@
     "source-map-support": "^0.2.10",
     "through": "^2.3.7",
     "xml": "^1.0.0",
-    "xml-parser": "^1.2.0"
+    "xml-parser": "^1.2.0",
+    "xml2js": "^0.4.8"
   },
   "devDependencies": {
     "gulp-mocha": "^2.1.0",

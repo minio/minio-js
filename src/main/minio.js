@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-var concat = require('concat-stream')
-var crypto = require('crypto')
-var http = require('http')
-var parseXml = require('xml-parser')
-var stream = require('stream')
-var through = require('through')
-var xml = require('xml')
-var moment = require('moment')
+var CombinedStream = require('combined-stream') // use MultiStream unless you need lazy append after stream created
+var Concat = require('concat-stream')
+var Crypto = require('crypto')
+var Http = require('http')
+var Moment = require('moment')
+var ParseXml = require('xml-parser')
+var Q = require('q')
+var Stream = require('stream')
+var Through = require('through')
+var Xml = require('xml')
+var ParseString = require('xml2js').parseString
 
 require("babel/polyfill");
 
 class Client {
     constructor(params) {
         "use strict"
-        this.transport = http
+        this.transport = Http
         this.params = params
     }
 
@@ -50,7 +53,7 @@ class Client {
             if (response.statusCode !== 200) {
                 parseError(response, callback)
             } else {
-                response.pipe(through(null, end))
+                response.pipe(Through(null, end))
             }
             function end() {
                 callback()
@@ -75,6 +78,85 @@ class Client {
         return iter
     }
 
+    // listObjects() {
+    //     "use strict";
+    //     var self = this;
+
+    //     var stream = new Stream.Readable
+    //     stream._read = () => {}
+
+    //     var queue = new Stream.Readable
+    //     queue._read = () => {}
+    //     var data = {
+    //     	prefix: "",
+    //     	marker: ""
+    //     }
+    //     queue.push(JSON.stringify(data))
+
+    //     queue.pipe(Through(write, end))
+
+
+    //     return stream
+
+    //     function write(r) {
+    //     	var nextRequest = JSON.parse(r)
+    //     	getBucketList(self.params, nextRequest.prefix, nextRequest.marker, 1, (e, r) => {
+    //     		r.buckets.forEach(element => {
+    //     			stream.push(element)
+    //     			queue.push(JSON.stringify(nextRequest))
+    //     		})
+    //     	})
+    //     }
+
+    //     function end() {
+    //     	stream.push(null)
+    //     }
+    // }
+
+    listBuckets(callback) {
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            path: '/',
+            method: 'GET'
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = Http.request(requestParams, (response) => {
+            if (response.statusCode !== 200) {
+                callback(parseError(response, callback))
+            }
+            response.pipe(Concat(errorXml => {
+                "use strict";
+                var parsedXml = ParseXml(errorXml.toString())
+                var result = []
+                parsedXml.root.children.forEach(element => {
+                    "use strict";
+                    if(element.name === 'Buckets') {
+                        element.children.forEach(bucketListing => {
+                            var bucket = {}
+                            bucketListing.children.forEach( prop => {
+                                switch(prop.name) {
+                                    case "Name":
+                                        bucket.name = prop.content
+                                        break
+                                    case "CreationDate":
+                                        bucket.creationDate = prop.content
+                                        break
+                                }
+                            })
+                            result.push(bucket)
+                        })
+                    }
+                })
+                result.sort()
+                callback(null, result)
+            }))
+        })
+        req.end()
+    }
+
     getObject(bucket, object, callback) {
         "use strict";
 
@@ -87,12 +169,12 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var req = http.request(requestParams, (response) => {
+        var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
                 callback('error')
             }
-            callback(null, response.pipe(through(write, end)))
+            callback(null, response.pipe(Through(write, end)))
             function write(chunk) {
                 this.queue(chunk)
             }
@@ -124,11 +206,11 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var request = http.request(requestParams, (response) => {
+        var request = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
-            response.pipe(through(null, end))
+            response.pipe(Through(null, end))
             function end() {
                 callback()
             }
@@ -139,8 +221,8 @@ class Client {
 
 var parseError = (response, callback) => {
     "use strict";
-    response.pipe(concat(errorXml => {
-        var parsedXml = parseXml(errorXml.toString())
+    response.pipe(Concat(errorXml => {
+        var parsedXml = ParseXml(errorXml.toString())
         var e = {}
         parsedXml.root.children.forEach(element => {
             if (element.name === 'Status') {
@@ -172,7 +254,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         return
     }
 
-    var requestDate = moment().utc()
+    var requestDate = Moment().utc()
 
     if (!dataShaSum256) {
         dataShaSum256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
@@ -191,7 +273,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256, requestDate)
     var canonicalRequest = canonicalRequestAndSignedHeaders[0]
     var signedHeaders = canonicalRequestAndSignedHeaders[1]
-    var hash = crypto.createHash('sha256')
+    var hash = Crypto.createHash('sha256')
     hash.update(canonicalRequest)
     var canonicalRequestHash = hash.digest('hex')
 
@@ -199,7 +281,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var signingKey = getSigningKey(requestDate, region, secretKey)
 
-    var hmac = crypto.createHmac('sha256', signingKey)
+    var hmac = Crypto.createHmac('sha256', signingKey)
 
     hmac.update(stringToSign)
     var signedRequest = hmac.digest('hex').toLowerCase().trim()
@@ -212,10 +294,10 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         var key = "AWS4" + secretKey
         var dateLine = date.format('YYYYMMDD')
 
-        var hmac1 = crypto.createHmac('sha256', key).update(dateLine).digest('binary')
-        var hmac2 = crypto.createHmac('sha256', hmac1).update(region).digest('binary')
-        var hmac3 = crypto.createHmac('sha256', hmac2).update("s3").digest('binary')
-        return crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
+        var hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary')
+        var hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary')
+        var hmac3 = Crypto.createHmac('sha256', hmac2).update("s3").digest('binary')
+        return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
     }
 
     function getRegion(host) {
