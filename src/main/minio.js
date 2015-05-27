@@ -23,12 +23,16 @@ var through = require('through')
 var xml = require('xml')
 var moment = require('moment')
 
+require("babel-core/polyfill");
+
 class Client {
     constructor(params) {
         "use strict"
         this.transport = http
         this.params = params
     }
+
+    // SERIVCE LEVEL CALLS
 
     createBucket(bucket, callback) {
         "use strict"
@@ -58,6 +62,17 @@ class Client {
         })
 
         req.end()
+    }
+
+    generatorExample() {
+        var iter = {}
+        iter[Symbol.iterator] = function* () {
+            "use strict";
+            for (var i = 1; i <= 100; i++) {
+                yield i
+            }
+        }
+        return iter
     }
 
     getObject(bucket, object, callback) {
@@ -278,4 +293,6 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 }
 
 var inst = Client
-module.exports = inst
+module
+    .
+    exports = inst
