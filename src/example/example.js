@@ -45,7 +45,6 @@ client.createBucket('hello', e => {
                 console.log(e)
                 return
             }
-            ;
             r.pipe(process.stdout)
         })
     })
