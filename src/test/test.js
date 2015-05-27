@@ -82,6 +82,17 @@ describe('Client', () => {
                 client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
+        describe("generatorExample()", ()=> {
+            it('should generate numbers', () => {
+                var iterator = client.generatorExample()
+                var count = ((100) * (101)) / 2
+                var n = 0
+                for (var x of iterator) {
+                    n += x
+                }
+                assert.equal(n, count)
+            })
+        })
     })
     describe("helpers", () => {
     })
