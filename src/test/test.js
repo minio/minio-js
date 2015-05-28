@@ -27,6 +27,12 @@ var minio = require('../..');
 describe('Client', () => {
     "use strict";
     var client = new minio({host: 'localhost', port: 9000, accessKey: "accesskey", secretKey: "secretkey"})
+    describe('authentication', () => {
+        it.skip('should not sent auth info without keys', (done) => { })
+        it.skip('should send auth info with access keys', (done) => { })
+        it.skip('should send auth info with signing keys', (done) => { })
+        it.skip('should prefer access keys over signing keys', (done) => { })
+    })
     describe("service level", () => {
         describe('#createBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
@@ -37,49 +43,7 @@ describe('Client', () => {
                 nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
                 client.createBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
-        })
-    })
-
-    describe("bucket level", () => {
-    })
-    describe("object level", () => {
-        describe('#getObject(bucket, object, callback)', () => {
-            it('should return a stream object', (done) => {
-                nock('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
-                client.getObject("bucket", "object", (e, r) => {
-                    assert.equal(e, null)
-                    r.pipe(concat(buf => {
-                        assert.equal(buf, "hello world")
-                        done()
-                    }))
-                })
-            })
-            it('should pass error to callback', (done) => {
-                nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
-                client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
-                    assert.equal(r, null)
-                    done()
-                }))
-            })
-        })
-        describe("#putObject(bucket, object, size, source, callback)", () => {
-            it('should put an object', (done) => {
-                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
-                var s = new stream.Readable()
-                s._read = function () {
-                }
-                s.push('hello world')
-                s.push(null)
-                client.putObject("bucket", "object", '', 11, s, done)
-            })
-            it('should report failures properly', (done) => {
-                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
-                var s = new stream.Readable()
-                s._read = function () {
-                }
-                s.push('hello world')
-                s.push(null)
-                client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+            it.skip('should set bucket acl properly', (done) => {
             })
         })
         describe("#listBuckets(params)", ()=> {
@@ -102,7 +66,9 @@ describe('Client', () => {
                 }
             })
         })
+    })
 
+    describe("bucket level", () => {
         describe("#listObjects()", (done) => {
             it('should iterate without a prefix', (done) => {
                 nock('http://localhost:9000').filteringPath(path => {
@@ -147,6 +113,72 @@ describe('Client', () => {
                     ])
                     done()
                 }
+            })
+        })
+        describe.skip("setBucketAcl", () => {
+            it.skip('set a bucket acl', (done) => {
+            })
+            it.skip('should fail gracefully', (done) => {
+            })
+        })
+        describe.skip("#getBucketMetadata(bucket, object, callback)", () => {
+            it.skip('should retrieve bucket metadata', (done) => {
+            })
+            it.skip('should fail gracefully', (done) => {
+            })
+        })
+    })
+    describe("object level", () => {
+        describe('#getObject(bucket, object, callback)', () => {
+            it('should return a stream object', (done) => {
+                nock('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
+                client.getObject("bucket", "object", (e, r) => {
+                    assert.equal(e, null)
+                    r.pipe(concat(buf => {
+                        assert.equal(buf, "hello world")
+                        done()
+                    }))
+                })
+            })
+            it('should pass error to callback', (done) => {
+                nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
+                    assert.equal(r, null)
+                    done()
+                }))
+            })
+        })
+        describe("#putObject(bucket, object, size, source, callback)", () => {
+            it('should put an object', (done) => {
+                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
+                var s = new stream.Readable()
+                s._read = function () {
+                }
+                s.push('hello world')
+                s.push(null)
+                client.putObject("bucket", "object", '', 11, s, done)
+            })
+            it('should report failures properly', (done) => {
+                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                var s = new stream.Readable()
+                s._read = function () {
+                }
+                s.push('hello world')
+                s.push(null)
+                client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+            })
+        })
+
+        describe.skip("#getObjectMetadata(bucket, object, callback)", () => {
+            it.skip('should retrieve object metadata', (done) => {
+            })
+            it.skip('should fail gracefully', (done) => {
+            })
+        })
+        describe.skip("#deleteObject(bucket, object, callback)", () => {
+            it.skip('should retrieve bucket metadata', (done) => {
+            })
+            it.skip('should fail gracefully', (done) => {
             })
         })
     })
