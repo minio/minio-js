@@ -82,31 +82,43 @@ describe('Client', () => {
                 client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
         })
-        describe("#listBuckets()", ()=> {
+        describe("#listBuckets(params)", ()=> {
             it('should generate a bucket iterator', (done) => {
                 nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
-                client.listBuckets((e, r) => {
-                    assert.equal(r[0].name ,'bucket')
-                    assert.equal(r[1].name ,'foo')
+                var stream = client.listBuckets()
+                var result = []
+                stream.pipe(through(success, end))
+
+                function success(bucket) {
+                    result.push(bucket)
+                }
+
+                function end() {
+                    assert.deepEqual(result, [
+                        {name: 'bucket', creationDate: "2015-05-05T20:35:51.410Z"},
+                        {name: 'foo', creationDate: "2015-05-05T20:35:47.170Z"}
+                    ])
                     done()
-                })
+                }
             })
         })
-        describe("#listObjects(prefix)", (done) => {
+
+        describe("#listObjects(params)", (done) => {
             it('should iterate with prefix', (done) => {
                 nock('http://localhost:9000').get('/').reply(200, "")
                 nock('http://localhost:9000').get('/').reply(200, "")
                 var stream = client.listObjects()
-                stream.pipe(through(success, end))
                 var results = []
+                stream.pipe(through(success, end))
                 function success(bucket) {
                     results.push(bucket)
                 }
+
                 function end() {
                     assert.deepEqual(results, [
-                        { name: 'object1' },
-                        { name: 'object2' },
-                        { name: 'object3' }
+                        {name: 'object1'},
+                        {name: 'object2'},
+                        {name: 'object3'}
                     ])
                     done()
                 }
