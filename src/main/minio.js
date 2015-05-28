@@ -233,6 +233,32 @@ class Client {
         }
     }
 
+    getObjectMetadata(bucket, object, callback) {
+        "use strict";
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            path: `/${bucket}/${object}`,
+            method: 'HEAD'
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = Http.request(requestParams, (response) => {
+            if (response.statusCode !== 200) {
+                return parseError(response, callback)
+                callback('error')
+            }
+            var result = {
+                size: +response.headers['content-length'],
+                etag: response.headers['etag'],
+                lastModified: response.headers['last-modified']
+            }
+            callback(null, result)
+        })
+        req.end()
+    }
+
     getObject(bucket, object, callback) {
         "use strict";
 

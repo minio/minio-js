@@ -29,7 +29,22 @@ describe('Client', () => {
     var client = new minio({host: 'localhost', port: 9000, accessKey: "accesskey", secretKey: "secretkey"})
     describe('authentication', () => {
         describe('unauthenticated', () => {
-            it.skip('should not sent auth info without keys', (done) => {
+            var client = new minio({host: 'localhost', port: 9000})
+            it('should not sent auth info without keys', (done) => {
+                nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
+                    'ETag': 'etag',
+                    'Content-Length': 11,
+                    'Last-Modified': 'lastmodified'
+                })
+
+                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                    assert.deepEqual(r, {
+                        size: '11',
+                        lastModified: 'lastmodified',
+                        etag: 'etag'
+                    })
+                    done()
+                })
             })
             it.skip('should handle errors gracefully', (done) => {
             })
