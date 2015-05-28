@@ -76,7 +76,8 @@ class Client {
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
         var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => { }
+        stream._read = () => {
+        }
 
         var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
@@ -117,11 +118,13 @@ class Client {
         "use strict";
         var self = this
         var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => { }
+        stream._read = () => {
+        }
         var queue = new Stream.Readable({objectMode: true})
-        queue._read = () => { }
+        queue._read = () => {
+        }
         var delimiter = null
-        if(recursive) {
+        if (recursive) {
             delimiter = '/'
         }
         queue.push({bucket: bucket, prefix: prefix, marker: null, delimiter: delimiter, maxKeys: 1000})
@@ -132,14 +135,20 @@ class Client {
 
         function success(currentRequest) {
             getObjectList(self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
-                if(e) {
+                if (e) {
                     return queue.pipe(null)
                 }
                 r.objects.forEach(bucket => {
                     stream.push(bucket)
                 })
-                if(r.isTruncated) {
-                    queue.push({bucket: currentRequest.bucket, prefix: currentRequest.prefix, marker: r.marker, delimiter: currentRequest.delimiter, maxKeys: currentRequest.maxKeys})
+                if (r.isTruncated) {
+                    queue.push({
+                        bucket: currentRequest.bucket,
+                        prefix: currentRequest.prefix,
+                        marker: r.marker,
+                        delimiter: currentRequest.delimiter,
+                        maxKeys: currentRequest.maxKeys
+                    })
                 } else {
                     queue.push(null)
                 }
@@ -152,21 +161,21 @@ class Client {
 
         function getObjectList(params, bucket, prefix, marker, delimiter, maxKeys, callback) {
             var queries = []
-            if(prefix) {
+            if (prefix) {
                 queries.push(`prefix=${prefix}`)
             }
-            if(marker) {
+            if (marker) {
                 queries.push(`marker=${marker}`)
             }
-            if(delimiter) {
+            if (delimiter) {
                 queries.push(`delimiter=${delimiter}`)
             }
-            if(maxKeys) {
+            if (maxKeys) {
                 queries.push(`max-keys=${maxKeys}`)
             }
             queries.sort()
             var query = ''
-            if(queries.length > 0) {
+            if (queries.length > 0) {
                 query = `?${queries.join('&')}`
             }
             var requestParams = {
@@ -189,14 +198,14 @@ class Client {
                         objects: [],
                     }
                     xml.root.children.forEach(element => {
-                        switch(element.name) {
+                        switch (element.name) {
                             case "IsTruncated":
                                 result.isTruncated = element.content === 'true'
                                 break
                             case "Contents":
                                 var object = {}
                                 element.children.forEach(xmlObject => {
-                                    switch(xmlObject.name){
+                                    switch (xmlObject.name) {
                                         case "Key":
                                             object.name = xmlObject.content
                                             break
