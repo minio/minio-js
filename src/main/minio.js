@@ -47,21 +47,12 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var req = this.transport.request(requestParams, response => {
+        var req = Http.request(requestParams, response => {
             if (response.statusCode !== 200) {
-                parseError(response, callback)
-            } else {
-                response.pipe(Through(null, end))
+                return parseError(response, callback)
             }
-            function end() {
-                callback()
-            }
+            callback()
         })
-
-        req.on('error', e => {
-            callback(e)
-        })
-
         req.end()
     }
 
@@ -190,7 +181,6 @@ class Client {
             var req = Http.request(requestParams, (response) => {
                 if (response.statusCode !== 200) {
                     return parseError(response, callback)
-                    callback('error')
                 }
                 response.pipe(Concat((body) => {
                     var xml = ParseXml(body.toString())
@@ -247,14 +237,14 @@ class Client {
         var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
-                callback('error')
+            } else {
+                var result = {
+                    size: +response.headers['content-length'],
+                    etag: response.headers['etag'],
+                    lastModified: response.headers['last-modified']
+                }
+                callback(null, result)
             }
-            var result = {
-                size: +response.headers['content-length'],
-                etag: response.headers['etag'],
-                lastModified: response.headers['last-modified']
-            }
-            callback(null, result)
         })
         req.end()
     }
@@ -274,7 +264,6 @@ class Client {
         var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
-                callback('error')
             }
             callback(null, response.pipe(Through(write, end)))
             function write(chunk) {
