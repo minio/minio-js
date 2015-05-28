@@ -76,8 +76,7 @@ class Client {
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
         var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => {
-        }
+        stream._read = () => { }
 
         var req = Http.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
@@ -114,14 +113,115 @@ class Client {
         return stream
     }
 
-    listObjects() {
+    listObjects(bucket, prefix, recursive) {
         "use strict";
+        var self = this
         var stream = new Stream.Readable({objectMode: true})
-        stream.push({name: 'object1'})
-        stream.push({name: 'object2'})
-        stream.push({name: 'object3'})
-        stream.push(null)
+        stream._read = () => { }
+        var queue = new Stream.Readable({objectMode: true})
+        queue._read = () => { }
+        var delimiter = null
+        if(recursive) {
+            delimiter = '/'
+        }
+        queue.push({bucket: bucket, prefix: prefix, marker: null, delimiter: delimiter, maxKeys: 1000})
+
+        queue.pipe(Through(success, end))
+
         return stream
+
+        function success(currentRequest) {
+            getObjectList(self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
+                if(e) {
+                    return queue.pipe(null)
+                }
+                r.objects.forEach(bucket => {
+                    stream.push(bucket)
+                })
+                if(r.isTruncated) {
+                    queue.push({bucket: currentRequest.bucket, prefix: currentRequest.prefix, marker: r.marker, delimiter: currentRequest.delimiter, maxKeys: currentRequest.maxKeys})
+                } else {
+                    queue.push(null)
+                }
+            })
+        }
+
+        function end() {
+            stream.push(null)
+        }
+
+        function getObjectList(params, bucket, prefix, marker, delimiter, maxKeys, callback) {
+            var queries = []
+            if(prefix) {
+                queries.push(`prefix=${prefix}`)
+            }
+            if(marker) {
+                queries.push(`marker=${marker}`)
+            }
+            if(delimiter) {
+                queries.push(`delimiter=${delimiter}`)
+            }
+            if(maxKeys) {
+                queries.push(`max-keys=${maxKeys}`)
+            }
+            queries.sort()
+            var query = ''
+            if(queries.length > 0) {
+                query = `?${queries.join('&')}`
+            }
+            var requestParams = {
+                host: params.host,
+                port: params.port,
+                path: `/${bucket}${query}`,
+                method: 'GET',
+            }
+
+            signV4(requestParams, '', params.accessKey, params.secretKey)
+
+            var req = Http.request(requestParams, (response) => {
+                if (response.statusCode !== 200) {
+                    return parseError(response, callback)
+                    callback('error')
+                }
+                response.pipe(Concat((body) => {
+                    var xml = ParseXml(body.toString())
+                    var result = {
+                        objects: [],
+                    }
+                    xml.root.children.forEach(element => {
+                        switch(element.name) {
+                            case "IsTruncated":
+                                result.isTruncated = element.content === 'true'
+                                break
+                            case "Contents":
+                                var object = {}
+                                element.children.forEach(xmlObject => {
+                                    switch(xmlObject.name){
+                                        case "Key":
+                                            object.name = xmlObject.content
+                                            break
+                                        case "LastModified":
+                                            object.lastModified = xmlObject.content
+                                            break
+                                        case "Size":
+                                            object.size = +xmlObject.content
+                                            break
+                                        case "ETag":
+                                            object.etag = xmlObject.content
+                                            break
+                                        default:
+                                    }
+                                })
+                                result.objects.push(object)
+                                break
+                            default:
+                        }
+                    })
+                    callback(null, result)
+                }))
+            })
+            req.end()
+        }
     }
 
     getObject(bucket, object, callback) {
