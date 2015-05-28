@@ -55,8 +55,10 @@ describe('Client', () => {
             })
             it.skip('should set bucket acl properly', (done) => {
             })
-            it.skip('should handle already created buckets', (done) => {  })
-            it.skip('should handle buckets with invalid name', (done) => {  })
+            it.skip('should handle already created buckets', (done) => {
+            })
+            it.skip('should handle buckets with invalid name', (done) => {
+            })
         })
         describe("#listBuckets(params)", ()=> {
             it('should generate a bucket iterator', (done) => {
@@ -77,7 +79,8 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should handle access denied', (done) => {  })
+            it.skip('should handle access denied', (done) => {
+            })
         })
     })
 
@@ -127,21 +130,32 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should handle access denied', (done) => { })
-            it.skip('should handle bucket does not exist', (done) => { })
-            it.skip('invalid bucket name', (done) => { })
+            it.skip('should handle access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
         })
         describe.skip("setBucketAcl", () => {
-            it.skip('set a bucket acl', (done) => { })
-            it.skip('should handle access denied', (done) => { })
-            it.skip('should handle bucket does not exist', (done) => { })
-            it.skip('invalid bucket name', (done) => { })
+            it.skip('set a bucket acl', (done) => {
+            })
+            it.skip('should handle access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
         })
         describe.skip("#getBucketMetadata(bucket, object, callback)", () => {
-            it.skip('should retrieve bucket metadata', (done) => { })
-            it.skip('should handle access denied', (done) => { })
-            it.skip('should handle bucket does not exist', (done) => { })
-            it.skip('invalid bucket name', (done) => { })
+            it.skip('should retrieve bucket metadata', (done) => {
+            })
+            it.skip('should handle access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
         })
     })
     describe("object level", () => {
@@ -163,12 +177,18 @@ describe('Client', () => {
                     done()
                 }))
             })
-            it.skip('should handle bucket access denied', (done) => { })
-            it.skip('should handle bucket does not exist', (done) => { })
-            it.skip('invalid bucket name', (done) => { })
-            it.skip('should handle object access denied', (done) => { })
-            it.skip('should handle object does not exist', (done) => { })
-            it.skip('invalid object name', (done) => { })
+            it.skip('should handle bucket access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+            it.skip('should handle object access denied', (done) => {
+            })
+            it.skip('should handle object does not exist', (done) => {
+            })
+            it.skip('invalid object name', (done) => {
+            })
         })
         describe("#putObject(bucket, object, size, source, callback)", () => {
             it('should put an object', (done) => {
@@ -189,24 +209,50 @@ describe('Client', () => {
                 s.push(null)
                 client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
             })
-            it.skip('should handle bucket access denied', (done) => { })
-            it.skip('should handle bucket does not exist', (done) => { })
-            it.skip('invalid bucket name', (done) => { })
-            it.skip('should handle object access denied', (done) => { })
-            it.skip('should handle object does not exist', (done) => { })
-            it.skip('invalid object name', (done) => { })
+            it.skip('should handle bucket access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+            it.skip('should handle object access denied', (done) => {
+            })
+            it.skip('should handle object does not exist', (done) => {
+            })
+            it.skip('invalid object name', (done) => {
+            })
         })
 
         describe.skip("#getObjectMetadata(bucket, object, callback)", () => {
             it.skip('should retrieve object metadata', (done) => {
             })
-            it.skip('should fail gracefully', (done) => {
+            it.skip('should handle bucket access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+            it.skip('should handle object access denied', (done) => {
+            })
+            it.skip('should handle object does not exist', (done) => {
+            })
+            it.skip('invalid object name', (done) => {
             })
         })
         describe.skip("#deleteObject(bucket, object, callback)", () => {
-            it.skip('should retrieve bucket metadata', (done) => {
+            it.skip('should delete an object', (done) => {
             })
-            it.skip('should fail gracefully', (done) => {
+            it.skip('should handle bucket access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+            it.skip('should handle object access denied', (done) => {
+            })
+            it.skip('should handle object does not exist', (done) => {
+            })
+            it.skip('invalid object name', (done) => {
             })
         })
     })
