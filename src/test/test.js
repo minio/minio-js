@@ -98,16 +98,15 @@ describe('Client', () => {
                 client.makeBucket('bucket', done)
             })
             it('pass an error into the callback on failure', (done) => {
-                Nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
+                Nock('http://localhost:9000').put('/bucket').reply(400, generateError('status', 'message', 'requestid', '/bucket'))
                 client.makeBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
             it.skip('should set bucket acl properly', (done) => {
             })
-            it.skip('should handle already created buckets', (done) => {
-            })
-            it.skip('should handle buckets with invalid name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
+
         describe("#listBuckets()", ()=> {
             it('should generate a bucket iterator', (done) => {
                 Nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
@@ -127,22 +126,48 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should handle access denied', (done) => {
+            it.skip('should pass error to callback', () => {
+
             })
         })
-        describe.skip('#bucketExists(bucket, cb)', () => {
+
+        describe('#bucketExists(bucket, cb)', () => {
+            it.skip('should call callback with no options if successful', () => {
+            })
+            it.skip('should pass error to callback', () => {
+            })
         })
-        describe.skip('#deleteBucket(bucket, cb)', () => {
+
+        describe('#deleteBucket(bucket, cb)', () => {
+            it.skip('should delete a bucket', () => {
+            })
+            it.skip('should pass error to callback', () => {
+            })
         })
-        describe.skip('#getBucketACL(bucket, cb)', () => {
+
+        describe('#getBucketACL(bucket, cb)', () => {
+            it.skip('should return acl', () => {
+            })
+            it.skip('should pass error to callback', () => {
+            })
         })
-        describe.skip('#setBucketACL(bucket, acl, cb)', () => {
+
+        describe('#setBucketACL(bucket, acl, cb)', () => {
+            it.skip('should set acl', () => {
+            })
+            it.skip('should pass error to callback', () => {
+            })
         })
-        describe.skip('#dropAllIncompleteUploads(bucket, acl, cb)', () => {
+
+        describe('#dropAllIncompleteUploads(bucket, acl, cb)', () => {
+            it.skip('should drop all incomplete multipart uploads', () => {
+            })
+            it.skip('should pass error to callback', () => {
+            })
         })
 
 
-        describe.skip("setBucketAcl", () => {
+        describe("setBucketAcl", () => {
             it.skip('set a bucket acl', (done) => {
             })
             it.skip('should handle access denied', (done) => {
@@ -153,7 +178,7 @@ describe('Client', () => {
             })
         })
 
-        describe.skip("#getBucketMetadata(bucket, object, callback)", () => {
+        describe("#getBucketMetadata(bucket, object, callback)", () => {
             it.skip('should retrieve bucket metadata', (done) => {
             })
             it.skip('should handle access denied', (done) => {
@@ -178,25 +203,14 @@ describe('Client', () => {
                 })
             })
             it('should pass error to callback', (done) => {
-                Nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                Nock('http://localhost:9000').get('/bucket/object').reply(400, generateError('status', 'message', 'requestid', '/bucket/object'))
                 client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
                     Assert.equal(r, null)
                     done()
                 }))
             })
-            it.skip('should handle bucket access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
-            it.skip('should handle object access denied', (done) => {
-            })
-            it.skip('should handle object does not exist', (done) => {
-            })
-            it.skip('invalid object name', (done) => {
-            })
         })
+
         describe("#putObject(bucket, object, size, source, callback)", () => {
             it('should put an object', (done) => {
                 Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
@@ -207,7 +221,7 @@ describe('Client', () => {
                 s.push(null)
                 client.putObject("bucket", "object", '', 11, s, done)
             })
-            it('should report failures properly', (done) => {
+            it('should pass error to callback', (done) => {
                 Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
                 var s = new Stream.Readable()
                 s._read = function () {
@@ -215,18 +229,6 @@ describe('Client', () => {
                 s.push('hello world')
                 s.push(null)
                 client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
-            })
-            it.skip('should handle bucket access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
-            it.skip('should handle object access denied', (done) => {
-            })
-            it.skip('should handle object does not exist', (done) => {
-            })
-            it.skip('invalid object name', (done) => {
             })
         })
 
@@ -275,11 +277,7 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should handle access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
 
@@ -300,49 +298,21 @@ describe('Client', () => {
                     done()
                 })
             })
-            it.skip('should handle bucket access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
-            it.skip('should handle object access denied', (done) => {
-            })
-            it.skip('should handle object does not exist', (done) => {
-            })
-            it.skip('invalid object name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
-        describe.skip("#removeObject(bucket, object, callback)", () => {
+
+        describe("#removeObject(bucket, object, callback)", () => {
             it.skip('should delete an object', (done) => {
             })
-            it.skip('should handle bucket access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
-            it.skip('should handle object access denied', (done) => {
-            })
-            it.skip('should handle object does not exist', (done) => {
-            })
-            it.skip('invalid object name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
-        describe.skip("#dropIncompleteUpload(bucket, object, callback)", () => {
+
+        describe("#dropIncompleteUpload(bucket, object, callback)", () => {
             it.skip('should delete an object', (done) => {
             })
-            it.skip('should handle bucket access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
-            it.skip('should handle object access denied', (done) => {
-            })
-            it.skip('should handle object does not exist', (done) => {
-            })
-            it.skip('invalid object name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
     })
@@ -364,4 +334,8 @@ var checkError = (status, message, requestid, resource, callback) => {
             callback(rest)
         }
     }
+}
+
+var generateError = (status, message, requestid, resource) => {
+    return `<Error><Status>${status}</Status><Message>${message}</Message><RequestId>${requestid}</RequestId><Resource>${resource}</Resource></Error>`
 }
