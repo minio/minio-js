@@ -21,7 +21,6 @@ var gulp = require('gulp')
 var mocha = require('gulp-mocha')
 var sourcemaps = require('gulp-sourcemaps')
 
-
 gulp.task('default', ['test'], function () {
 })
 
@@ -55,7 +54,7 @@ gulp.task('example', ['compile', 'example:compile'], function (cb) {
 function compile(src, name, dest, cb) {
     gulp.src(src)
         .pipe(sourcemaps.init())
-        .pipe(concat(name))
+        //.pipe(concat(name))
         .pipe(babel())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(dest))
