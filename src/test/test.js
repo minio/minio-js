@@ -16,10 +16,10 @@
 
 require('source-map-support').install();
 
-var assert = require('assert');
-var concat = require('concat-stream')
-var nock = require('nock')
-var through = require('through')
+var Assert = require('assert');
+var Concat = require('concat-stream')
+var Nock = require('nock')
+var Through = require('through')
 var Stream = require('stream')
 
 var minio = require('../..');
@@ -35,7 +35,7 @@ describe('Client', () => {
             var client = new minio({host: 'localhost', port: 9000}, transport)
             it('should not sent auth info without keys', (done) => {
                 client.transport.addRequest((params) => {
-                    assert.deepEqual(params, {
+                    Assert.deepEqual(params, {
                         host: 'localhost',
                         port: 9000,
                         path: '/bucket/object',
@@ -48,7 +48,7 @@ describe('Client', () => {
                 //    'Last-Modified': 'lastmodified'
                 //})
                 client.statObject('bucket', 'object', (e, r) => {
-                    assert.deepEqual(r, {
+                    Assert.deepEqual(r, {
                         size: '11',
                         'lastModified': 'lastmodified',
                         etag: 'etag'
@@ -57,10 +57,10 @@ describe('Client', () => {
                 })
             })
             it.skip('should not sent auth info without keys', (done) => {
-                nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
+                Nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
                 client.statObject('bucket', 'object', (e, r) => {
                     if (!e) {
-                        return assert.fail('no error was returned')
+                        return Assert.fail('no error was returned')
                     }
                     done()
                 })
@@ -79,11 +79,11 @@ describe('Client', () => {
     describe('Bucket API calls', () => {
         describe('#makeBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
-                nock('http://localhost:9000').put('/bucket').reply(200)
+                Nock('http://localhost:9000').put('/bucket').reply(200)
                 client.makeBucket('bucket', done)
             })
             it('pass an error into the callback on failure', (done) => {
-                nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
+                Nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
                 client.makeBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
             it.skip('should set bucket acl properly', (done) => {
@@ -95,17 +95,17 @@ describe('Client', () => {
         })
         describe("#listBuckets()", ()=> {
             it('should generate a bucket iterator', (done) => {
-                nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
+                Nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
                 var stream = client.listBuckets()
                 var result = []
-                stream.pipe(through(success, end))
+                stream.pipe(Through(success, end))
 
                 function success(bucket) {
                     result.push(bucket)
                 }
 
                 function end() {
-                    assert.deepEqual(result, [
+                    Assert.deepEqual(result, [
                         {name: 'bucket', creationDate: "2015-05-05T20:35:51.410Z"},
                         {name: 'foo', creationDate: "2015-05-05T20:35:47.170Z"}
                     ])
@@ -153,19 +153,19 @@ describe('Client', () => {
     describe("object level", () => {
         describe('#getObject(bucket, object, callback)', () => {
             it('should return a stream object', (done) => {
-                nock('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
+                Nock('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
                 client.getObject("bucket", "object", (e, r) => {
-                    assert.equal(e, null)
-                    r.pipe(concat(buf => {
-                        assert.equal(buf, "hello world")
+                    Assert.equal(e, null)
+                    r.pipe(Concat(buf => {
+                        Assert.equal(buf, "hello world")
                         done()
                     }))
                 })
             })
             it('should pass error to callback', (done) => {
-                nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                Nock('http://localhost:9000').get('/bucket/object').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
                 client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
-                    assert.equal(r, null)
+                    Assert.equal(r, null)
                     done()
                 }))
             })
@@ -184,7 +184,7 @@ describe('Client', () => {
         })
         describe("#putObject(bucket, object, size, source, callback)", () => {
             it('should put an object', (done) => {
-                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
+                Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
                 var s = new Stream.Readable()
                 s._read = function () {
                 }
@@ -193,7 +193,7 @@ describe('Client', () => {
                 client.putObject("bucket", "object", '', 11, s, done)
             })
             it('should report failures properly', (done) => {
-                nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
                 var s = new Stream.Readable()
                 s._read = function () {
                 }
@@ -217,21 +217,21 @@ describe('Client', () => {
 
         describe("#listObjects()", (done) => {
             it('should iterate without a prefix', (done) => {
-                nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(path => {
                     return '/bucket'
                 }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-                nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(path => {
                     return '/bucket'
                 }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
                 var stream = client.listObjects('bucket')
                 var results = []
-                stream.pipe(through(success, end))
+                stream.pipe(Through(success, end))
                 function success(bucket) {
                     results.push(bucket)
                 }
 
                 function end() {
-                    assert.deepEqual(results, [
+                    Assert.deepEqual(results, [
                         {
                             "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
                             "lastModified": "2015-05-05T02:21:15.716Z",
@@ -270,14 +270,14 @@ describe('Client', () => {
 
         describe("#statObject(bucket, object, callback)", () => {
             it('should retrieve object metadata', (done) => {
-                nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
+                Nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
                     'ETag': 'etag',
                     'Content-Length': 11,
                     'Last-Modified': 'lastmodified'
                 })
 
                 client.statObject('bucket', 'object', (e, r) => {
-                    assert.deepEqual(r, {
+                    Assert.deepEqual(r, {
                         size: '11',
                         lastModified: 'lastmodified',
                         etag: 'etag'
@@ -339,10 +339,10 @@ var checkError = (status, message, requestid, resource, callback) => {
         if (e === null) {
             callback('expected error, received success')
         }
-        assert.equal(e.status, status)
-        assert.equal(e.message, message)
-        assert.equal(e.requestid, requestid)
-        assert.equal(e.resource, resource)
+        Assert.equal(e.status, status)
+        Assert.equal(e.message, message)
+        Assert.equal(e.requestid, requestid)
+        Assert.equal(e.resource, resource)
         if (rest.length === 0) {
             callback()
         } else {

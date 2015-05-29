@@ -29,7 +29,7 @@ var ParseString = require('xml2js').parseString
 class Client {
     constructor(params, transport) {
         "use strict"
-        if(transport) {
+        if (transport) {
             this.transport = transport
         } else {
             this.transport = Http
@@ -204,10 +204,10 @@ class Client {
         var queue = new Stream.Readable({objectMode: true})
         queue._read = () => {
         }
-        var prefix =  null
+        var prefix = null
         var delimiter = null
-        if(params) {
-            if(params.prefix) {
+        if (params) {
+            if (params.prefix) {
                 prefix = params.prefix
             }
             if (params.recursive) {
