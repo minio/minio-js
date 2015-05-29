@@ -27,9 +27,13 @@ var Xml = require('xml')
 var ParseString = require('xml2js').parseString
 
 class Client {
-    constructor(params) {
+    constructor(params, transport) {
         "use strict"
-        this.transport = Http
+        if(transport) {
+            this.transport = transport
+        } else {
+            this.transport = Http
+        }
         this.params = params
     }
 
@@ -47,7 +51,7 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var req = Http.request(requestParams, response => {
+        var req = this.transport.request(requestParams, response => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
@@ -70,7 +74,7 @@ class Client {
         stream._read = () => {
         }
 
-        var req = Http.request(requestParams, (response) => {
+        var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 // TODO work out how to handle errors with stream
                 stream.push(parseError(response, callback))
@@ -108,6 +112,7 @@ class Client {
     listObjects(bucket, prefix, recursive) {
         "use strict";
         var self = this
+        console.log(self.transport)
         var stream = new Stream.Readable({objectMode: true})
         stream._read = () => {
         }
@@ -125,7 +130,7 @@ class Client {
         return stream
 
         function success(currentRequest) {
-            getObjectList(self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
+            getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
                 if (e) {
                     return queue.pipe(null)
                 }
@@ -150,7 +155,8 @@ class Client {
             stream.push(null)
         }
 
-        function getObjectList(params, bucket, prefix, marker, delimiter, maxKeys, callback) {
+        function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, callback) {
+            console.log(transport)
             var queries = []
             if (prefix) {
                 queries.push(`prefix=${prefix}`)
@@ -178,7 +184,7 @@ class Client {
 
             signV4(requestParams, '', params.accessKey, params.secretKey)
 
-            var req = Http.request(requestParams, (response) => {
+            var req = transport.request(requestParams, (response) => {
                 if (response.statusCode !== 200) {
                     return parseError(response, callback)
                 }
@@ -234,7 +240,7 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var req = Http.request(requestParams, (response) => {
+        var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             } else {
@@ -261,7 +267,7 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var req = Http.request(requestParams, (response) => {
+        var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
@@ -297,7 +303,7 @@ class Client {
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-        var request = Http.request(requestParams, (response) => {
+        var request = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 return parseError(response, callback)
             }
@@ -466,6 +472,4 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 }
 
 var inst = Client
-module
-    .
-    exports = inst
+module.exports = inst
