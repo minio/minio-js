@@ -27,11 +27,10 @@ var minio = require('../..');
 describe('Client', () => {
     "use strict";
     var client = new minio({host: 'localhost', port: 9000, accessKey: "accesskey", secretKey: "secretkey"})
-    describe('authentication', () => {
-        describe('unauthenticated', () => {
+    describe('Authentication', () => {
+        describe('not set', () => {
             var client = new minio({host: 'localhost', port: 9000})
             it('should not sent auth info without keys', (done) => {
-                console.log('test no auth')
                 nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
                     'ETag': 'etag',
                     'Content-Length': 11,
@@ -47,11 +46,8 @@ describe('Client', () => {
                 })
             })
             it('should not sent auth info without keys', (done) => {
-                console.log('test no auth fail')
                 nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
                 client.statObject('bucket', 'object', (e, r) => {
-                    console.log(e)
-                    console.log(r)
                     if (!e) {
                         return assert.fail('no error was returned')
                     }
@@ -59,7 +55,7 @@ describe('Client', () => {
                 })
             })
         })
-        describe('authenticated', () => {
+        describe('set with access and secret keys', () => {
             it.skip('should send auth info with access keys', (done) => {
             })
             it.skip('should send auth info with signing keys', (done) => {
@@ -68,7 +64,8 @@ describe('Client', () => {
             })
         })
     })
-    describe("service level", () => {
+
+    describe('Bucket API calls', () => {
         describe('#makeBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
                 nock('http://localhost:9000').put('/bucket').reply(200)
@@ -85,7 +82,7 @@ describe('Client', () => {
             it.skip('should handle buckets with invalid name', (done) => {
             })
         })
-        describe("#listBuckets(params)", ()=> {
+        describe("#listBuckets()", ()=> {
             it('should generate a bucket iterator', (done) => {
                 nock('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
                 var stream = client.listBuckets()
@@ -107,61 +104,18 @@ describe('Client', () => {
             it.skip('should handle access denied', (done) => {
             })
         })
-    })
-
-    describe("bucket level", () => {
-        describe("#listObjects()", (done) => {
-            it('should iterate without a prefix', (done) => {
-                nock('http://localhost:9000').filteringPath(path => {
-                    return '/bucket'
-                }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-                nock('http://localhost:9000').filteringPath(path => {
-                    return '/bucket'
-                }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-                var stream = client.listObjects('bucket')
-                var results = []
-                stream.pipe(through(success, end))
-                function success(bucket) {
-                    results.push(bucket)
-                }
-
-                function end() {
-                    assert.deepEqual(results, [
-                        {
-                            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-                            "lastModified": "2015-05-05T02:21:15.716Z",
-                            "name": "key1",
-                            "size": 11,
-                        },
-                        {
-                            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-                            "lastModified": "2015-05-05T20:36:17.498Z",
-                            "name": "key2",
-                            "size": 1661
-                        },
-                        {
-                            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-                            "lastModified": "2015-05-05T02:21:15.716Z",
-                            "name": "key3",
-                            "size": 11
-                        },
-                        {
-                            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-                            "lastModified": "2015-05-05T20:36:17.498Z",
-                            "name": "key4",
-                            "size": 1661
-                        }
-                    ])
-                    done()
-                }
-            })
-            it.skip('should handle access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
-            })
+        describe.skip('#bucketExists(bucket, cb)', () => {
         })
+        describe.skip('#deleteBucket(bucket, cb)', () => {
+        })
+        describe.skip('#getBucketACL(bucket, cb)', () => {
+        })
+        describe.skip('#setBucketACL(bucket, acl, cb)', () => {
+        })
+        describe.skip('#dropAllIncompleteUploads(bucket, acl, cb)', () => {
+        })
+
+
         describe.skip("setBucketAcl", () => {
             it.skip('set a bucket acl', (done) => {
             })
@@ -172,6 +126,7 @@ describe('Client', () => {
             it.skip('invalid bucket name', (done) => {
             })
         })
+
         describe.skip("#getBucketMetadata(bucket, object, callback)", () => {
             it.skip('should retrieve bucket metadata', (done) => {
             })
@@ -183,6 +138,7 @@ describe('Client', () => {
             })
         })
     })
+
     describe("object level", () => {
         describe('#getObject(bucket, object, callback)', () => {
             it('should return a stream object', (done) => {
@@ -248,6 +204,59 @@ describe('Client', () => {
             })
         })
 
+        describe("#listObjects()", (done) => {
+            it('should iterate without a prefix', (done) => {
+                nock('http://localhost:9000').filteringPath(path => {
+                    return '/bucket'
+                }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+                nock('http://localhost:9000').filteringPath(path => {
+                    return '/bucket'
+                }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+                var stream = client.listObjects('bucket')
+                var results = []
+                stream.pipe(through(success, end))
+                function success(bucket) {
+                    results.push(bucket)
+                }
+
+                function end() {
+                    assert.deepEqual(results, [
+                        {
+                            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
+                            "lastModified": "2015-05-05T02:21:15.716Z",
+                            "name": "key1",
+                            "size": 11,
+                        },
+                        {
+                            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
+                            "lastModified": "2015-05-05T20:36:17.498Z",
+                            "name": "key2",
+                            "size": 1661
+                        },
+                        {
+                            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
+                            "lastModified": "2015-05-05T02:21:15.716Z",
+                            "name": "key3",
+                            "size": 11
+                        },
+                        {
+                            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
+                            "lastModified": "2015-05-05T20:36:17.498Z",
+                            "name": "key4",
+                            "size": 1661
+                        }
+                    ])
+                    done()
+                }
+            })
+            it.skip('should handle access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+        })
+
         describe("#statObject(bucket, object, callback)", () => {
             it('should retrieve object metadata', (done) => {
                 nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
@@ -278,7 +287,23 @@ describe('Client', () => {
             it.skip('invalid object name', (done) => {
             })
         })
-        describe.skip("#deleteObject(bucket, object, callback)", () => {
+        describe.skip("#removeObject(bucket, object, callback)", () => {
+            it.skip('should delete an object', (done) => {
+            })
+            it.skip('should handle bucket access denied', (done) => {
+            })
+            it.skip('should handle bucket does not exist', (done) => {
+            })
+            it.skip('invalid bucket name', (done) => {
+            })
+            it.skip('should handle object access denied', (done) => {
+            })
+            it.skip('should handle object does not exist', (done) => {
+            })
+            it.skip('invalid object name', (done) => {
+            })
+        })
+        describe.skip("#dropIncompleteUpload(bucket, object, callback)", () => {
             it.skip('should delete an object', (done) => {
             })
             it.skip('should handle bucket access denied', (done) => {

@@ -198,7 +198,6 @@ class Client {
     listObjects(bucket, params) {
         "use strict";
         var self = this
-        console.log(self.transport)
         var stream = new Stream.Readable({objectMode: true})
         stream._read = () => {
         }
@@ -248,7 +247,6 @@ class Client {
         }
 
         function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) {
-            console.log(transport)
             var queries = []
             if (prefix) {
                 queries.push(`prefix=${prefix}`)
