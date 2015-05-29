@@ -21,7 +21,7 @@ var stream = require('stream').Readable
 var client = new minio({host: 'localhost', port: 9000})
 
 
-client.createBucket('hello', e => {
+client.makeBucket('hello', e => {
     "use strict";
     if (e) {
         console.log(e)

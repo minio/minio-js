@@ -37,7 +37,7 @@ describe('Client', () => {
                     'Content-Length': 11,
                     'Last-Modified': 'lastmodified'
                 })
-                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                client.statObject('bucket', 'object', (e, r) => {
                     assert.deepEqual(r, {
                         size: '11',
                         lastModified: 'lastmodified',
@@ -49,7 +49,7 @@ describe('Client', () => {
             it('should not sent auth info without keys', (done) => {
                 console.log('test no auth fail')
                 nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
-                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                client.statObject('bucket', 'object', (e, r) => {
                     console.log(e)
                     console.log(r)
                     if (!e) {
@@ -69,14 +69,14 @@ describe('Client', () => {
         })
     })
     describe("service level", () => {
-        describe('#createBucket(bucket, callback)', () => {
+        describe('#makeBucket(bucket, callback)', () => {
             it('should call the callback on success', (done) => {
                 nock('http://localhost:9000').put('/bucket').reply(200)
-                client.createBucket('bucket', done)
+                client.makeBucket('bucket', done)
             })
             it('pass an error into the callback on failure', (done) => {
                 nock('http://localhost:9000').put('/bucket').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>")
-                client.createBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
+                client.makeBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
             it.skip('should set bucket acl properly', (done) => {
             })
@@ -248,7 +248,7 @@ describe('Client', () => {
             })
         })
 
-        describe("#getObjectMetadata(bucket, object, callback)", () => {
+        describe("#statObject(bucket, object, callback)", () => {
             it('should retrieve object metadata', (done) => {
                 nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
                     'ETag': 'etag',
@@ -256,7 +256,7 @@ describe('Client', () => {
                     'Last-Modified': 'lastmodified'
                 })
 
-                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                client.statObject('bucket', 'object', (e, r) => {
                     assert.deepEqual(r, {
                         size: '11',
                         lastModified: 'lastmodified',
