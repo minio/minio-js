@@ -32,10 +32,12 @@ class MockTransport {
         }
         this.requests.push(req)
     }
+
     clearRequests() {
         "use strict"
         this.requests = []
     }
+
     request(params, callback) {
         "use strict"
         var req = this.requests.shift()
@@ -50,10 +52,12 @@ class Request {
         this.params = params
         this.callback = callback
     }
+
     end() {
         "use strict";
         this._r()
     }
+
     _r() {
         "use strict";
         var stream = new Stream.Readable()
