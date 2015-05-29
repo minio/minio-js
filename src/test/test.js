@@ -31,12 +31,12 @@ describe('Client', () => {
         describe('unauthenticated', () => {
             var client = new minio({host: 'localhost', port: 9000})
             it('should not sent auth info without keys', (done) => {
+                console.log('test no auth')
                 nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
                     'ETag': 'etag',
                     'Content-Length': 11,
                     'Last-Modified': 'lastmodified'
                 })
-
                 client.getObjectMetadata('bucket', 'object', (e, r) => {
                     assert.deepEqual(r, {
                         size: '11',
@@ -46,7 +46,17 @@ describe('Client', () => {
                     done()
                 })
             })
-            it.skip('should handle errors gracefully', (done) => {
+            it('should not sent auth info without keys', (done) => {
+                console.log('test no auth fail')
+                nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
+                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                    console.log(e)
+                    console.log(r)
+                    if (!e) {
+                        return assert.fail('no error was returned')
+                    }
+                    done()
+                })
             })
         })
         describe('authenticated', () => {
@@ -238,8 +248,22 @@ describe('Client', () => {
             })
         })
 
-        describe.skip("#getObjectMetadata(bucket, object, callback)", () => {
-            it.skip('should retrieve object metadata', (done) => {
+        describe("#getObjectMetadata(bucket, object, callback)", () => {
+            it('should retrieve object metadata', (done) => {
+                nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
+                    'ETag': 'etag',
+                    'Content-Length': 11,
+                    'Last-Modified': 'lastmodified'
+                })
+
+                client.getObjectMetadata('bucket', 'object', (e, r) => {
+                    assert.deepEqual(r, {
+                        size: '11',
+                        lastModified: 'lastmodified',
+                        etag: 'etag'
+                    })
+                    done()
+                })
             })
             it.skip('should handle bucket access denied', (done) => {
             })
