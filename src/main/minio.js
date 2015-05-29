@@ -403,7 +403,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var region = getRegion(request.host)
 
-    request.headers['Host'] = request.host
+    request.headers['host'] = request.host
     request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmSS') + 'Z'
     request.headers['x-amz-content-sha256'] = dataShaSum256
 
@@ -425,7 +425,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`
 
-    request.headers['Authorization'] = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
+    request.headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
     function getSigningKey(date, region, secretKey) {
         var key = "AWS4" + secretKey

@@ -33,7 +33,7 @@ describe('Client', () => {
         describe('not set', () => {
             var transport = new MockTransport()
             var client = new minio({host: 'localhost', port: 9000}, transport)
-            it('should not sent auth info without keys', (done) => {
+            it('should not send auth info without keys', (done) => {
                 client.transport.addRequest((params) => {
                     Assert.deepEqual(params, {
                         host: 'localhost',
@@ -42,11 +42,6 @@ describe('Client', () => {
                         method: 'HEAD'
                     })
                 }, 200, {'etag': 'etag', 'content-length': 11, 'last-modified': 'lastmodified'}, null)
-                //nock('http://localhost:9000').head('/bucket/object').reply(200, '', {
-                //    'ETag': 'etag',
-                //    'Content-Length': 11,
-                //    'Last-Modified': 'lastmodified'
-                //})
                 client.statObject('bucket', 'object', (e, r) => {
                     Assert.deepEqual(r, {
                         size: '11',
@@ -56,18 +51,37 @@ describe('Client', () => {
                     done()
                 })
             })
-            it.skip('should not sent auth info without keys', (done) => {
-                Nock('http://localhost:9000').head('/bucket/object').reply(400, '<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket</Resource></Error>')
-                client.statObject('bucket', 'object', (e, r) => {
-                    if (!e) {
-                        return Assert.fail('no error was returned')
-                    }
-                    done()
-                })
-            })
         })
         describe('set with access and secret keys', () => {
-            it.skip('should send auth info with access keys', (done) => {
+            it('should not send auth info without keys', (done) => {
+                var transport = new MockTransport()
+                var client = new minio({host: 'localhost', port: 9000, accessKey: 'accessKey', secretKey: 'secretKey'}, transport)
+                client.transport.addRequest((params) => {
+                    Assert.equal(true, params.headers.authorization !== null)
+                    Assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
+                    Assert.equal(true, params.headers['x-amz-date'] !== null)
+                    delete params.headers.authorization
+                    delete params.headers['x-amz-date']
+                    Assert.deepEqual(params, {
+                            host: 'localhost',
+                            port: 9000,
+                            path: '/bucket/object',
+                            method: 'HEAD',
+                            headers: {
+                                host: 'localhost',
+                                'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+                            }
+                        }
+                    )
+                }, 200, {'etag': 'etag', 'content-length': 11, 'last-modified': 'lastmodified'}, null)
+                client.statObject('bucket', 'object', (e, r) => {
+                    Assert.deepEqual(r, {
+                        size: '11',
+                        'lastModified': 'lastmodified',
+                        etag: 'etag'
+                    })
+                    done()
+                })
             })
             it.skip('should send auth info with signing keys', (done) => {
             })
