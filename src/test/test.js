@@ -101,10 +101,6 @@ describe('Client', () => {
                 Nock('http://localhost:9000').put('/bucket').reply(400, generateError('status', 'message', 'requestid', '/bucket'))
                 client.makeBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
             })
-            it.skip('should set bucket acl properly', (done) => {
-            })
-            it.skip('should pass error to callback', (done) => {
-            })
         })
 
         describe("#listBuckets()", ()=> {
@@ -126,13 +122,27 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should pass error to callback', () => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').get('/').reply(400, generateError('status', 'message', 'requestid', '/'))
+                var stream = client.listBuckets()
+                stream.pipe(Through(success, end))
 
+                stream.on('error', (e) => {
+                    checkError('status', 'message', 'requestid', '/')
+                    done()
+                })
+
+                function success(chunk) {
+                }
+
+                function end() {
+                }
             })
         })
 
         describe('#bucketExists(bucket, cb)', () => {
             it.skip('should call callback with no options if successful', () => {
+
             })
             it.skip('should pass error to callback', () => {
             })
