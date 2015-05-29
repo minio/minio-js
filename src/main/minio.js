@@ -39,7 +39,7 @@ class Client {
 
     // SERIVCE LEVEL CALLS
 
-    createBucket(bucket, callback) {
+    makeBucket(bucket, cb) {
         "use strict"
 
         var requestParams = {
@@ -53,9 +53,9 @@ class Client {
 
         var req = this.transport.request(requestParams, response => {
             if (response.statusCode !== 200) {
-                return parseError(response, callback)
+                return parseError(response, cb)
             }
-            callback()
+            cb()
         })
         req.end()
     }
@@ -77,7 +77,7 @@ class Client {
         var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 // TODO work out how to handle errors with stream
-                stream.push(parseError(response, callback))
+                stream.push(parseError(response, cb))
                 stream.push(null)
             }
             response.pipe(Concat(errorXml => {
@@ -109,7 +109,93 @@ class Client {
         return stream
     }
 
-    listObjects(bucket, prefix, recursive) {
+    bucketExists(bucket, cb) {
+        "use strict";
+        cb('not implemented')
+    }
+
+    removeBucket(bucket, cb) {
+        "use strict";
+        cb('not implemented')
+    }
+
+    getBucketACL(bucket, cb) {
+        "use strict";
+        cb('not implemented')
+    }
+
+    setBucketACL(bucket, acl, cb) {
+        "use strict";
+        cb('not implemented')
+    }
+
+    dropAllIncompleteUploads(bucket, acl, cb) {
+        "use strict";
+        cb('not implemented')
+    }
+
+    getObject(bucket, object, cb) {
+        "use strict";
+
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            path: `/${bucket}/${object}`,
+            method: 'GET',
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = this.transport.request(requestParams, (response) => {
+            if (response.statusCode !== 200) {
+                return parseError(response, cb)
+            }
+            cb(null, response.pipe(Through(write, end)))
+            function write(chunk) {
+                this.queue(chunk)
+            }
+
+            function end() {
+                this.queue(null)
+            }
+        })
+        req.end()
+    }
+
+
+    putObject(bucket, object, contentType, size, r, cb) {
+        "use strict";
+
+        if (contentType == null || contentType == '') {
+            contentType = 'aplication/octet-stream'
+        }
+
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            path: `/${bucket}/${object}`,
+            method: 'PUT',
+            headers: {
+                "Content-Length": size,
+                "Content-Type": contentType
+            }
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var request = this.transport.request(requestParams, (response) => {
+            if (response.statusCode !== 200) {
+                return parseError(response, cb)
+            }
+            response.pipe(Through(null, end))
+            function end() {
+                cb()
+            }
+        })
+        r.pipe(request)
+    }
+
+    listObjects(bucket, params) {
         "use strict";
         var self = this
         console.log(self.transport)
@@ -119,9 +205,15 @@ class Client {
         var queue = new Stream.Readable({objectMode: true})
         queue._read = () => {
         }
+        var prefix =  null
         var delimiter = null
-        if (recursive) {
-            delimiter = '/'
+        if(params) {
+            if(params.prefix) {
+                prefix = params.prefix
+            }
+            if (params.recursive) {
+                delimiter = '/'
+            }
         }
         queue.push({bucket: bucket, prefix: prefix, marker: null, delimiter: delimiter, maxKeys: 1000})
 
@@ -155,7 +247,7 @@ class Client {
             stream.push(null)
         }
 
-        function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, callback) {
+        function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) {
             console.log(transport)
             var queries = []
             if (prefix) {
@@ -186,7 +278,7 @@ class Client {
 
             var req = transport.request(requestParams, (response) => {
                 if (response.statusCode !== 200) {
-                    return parseError(response, callback)
+                    return parseError(response, cb)
                 }
                 response.pipe(Concat((body) => {
                     var xml = ParseXml(body.toString())
@@ -222,14 +314,14 @@ class Client {
                             default:
                         }
                     })
-                    callback(null, result)
+                    cb(null, result)
                 }))
             })
             req.end()
         }
     }
 
-    getObjectMetadata(bucket, object, callback) {
+    statObject(bucket, object, cb) {
         "use strict";
         var requestParams = {
             host: this.params.host,
@@ -242,81 +334,31 @@ class Client {
 
         var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
-                return parseError(response, callback)
+                return parseError(response, cb)
             } else {
                 var result = {
                     size: +response.headers['content-length'],
                     etag: response.headers['etag'],
                     lastModified: response.headers['last-modified']
                 }
-                callback(null, result)
+                cb(null, result)
             }
         })
         req.end()
     }
 
-    getObject(bucket, object, callback) {
+    deleteObject(bucket, object, cb) {
         "use strict";
-
-        var requestParams = {
-            host: this.params.host,
-            port: this.params.port,
-            path: `/${bucket}/${object}`,
-            method: 'GET',
-        }
-
-        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-        var req = this.transport.request(requestParams, (response) => {
-            if (response.statusCode !== 200) {
-                return parseError(response, callback)
-            }
-            callback(null, response.pipe(Through(write, end)))
-            function write(chunk) {
-                this.queue(chunk)
-            }
-
-            function end() {
-                this.queue(null)
-            }
-        })
-        req.end()
+        cb('not implemented')
     }
 
-    putObject(bucket, object, contentType, size, r, callback) {
+    abortMultipartUpload(bucket, object, cb) {
         "use strict";
-
-        if (contentType == null || contentType == '') {
-            contentType = 'aplication/octet-stream'
-        }
-
-        var requestParams = {
-            host: this.params.host,
-            port: this.params.port,
-            path: `/${bucket}/${object}`,
-            method: 'PUT',
-            headers: {
-                "Content-Length": size,
-                "Content-Type": contentType
-            }
-        }
-
-        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-        var request = this.transport.request(requestParams, (response) => {
-            if (response.statusCode !== 200) {
-                return parseError(response, callback)
-            }
-            response.pipe(Through(null, end))
-            function end() {
-                callback()
-            }
-        })
-        r.pipe(request)
+        cb('not implemented')
     }
 }
 
-var parseError = (response, callback) => {
+var parseError = (response, cb) => {
     "use strict";
     response.pipe(Concat(errorXml => {
         var parsedXml = ParseXml(errorXml.toString())
@@ -332,7 +374,7 @@ var parseError = (response, callback) => {
                 e.resource = element.content
             }
         })
-        callback(e)
+        cb(e)
     }))
 }
 
