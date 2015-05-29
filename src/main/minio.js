@@ -384,6 +384,7 @@ var getStringToSign = function (canonicalRequestHash, requestDate, region) {
     stringToSign += canonicalRequestHash
     return stringToSign
 }
+
 var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     "use strict";
 

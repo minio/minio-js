@@ -55,7 +55,12 @@ describe('Client', () => {
         describe('set with access and secret keys', () => {
             it('should not send auth info without keys', (done) => {
                 var transport = new MockTransport()
-                var client = new minio({host: 'localhost', port: 9000, accessKey: 'accessKey', secretKey: 'secretKey'}, transport)
+                var client = new minio({
+                    host: 'localhost',
+                    port: 9000,
+                    accessKey: 'accessKey',
+                    secretKey: 'secretKey'
+                }, transport)
                 client.transport.addRequest((params) => {
                     Assert.equal(true, params.headers.authorization !== null)
                     Assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
@@ -82,10 +87,6 @@ describe('Client', () => {
                     })
                     done()
                 })
-            })
-            it.skip('should send auth info with signing keys', (done) => {
-            })
-            it.skip('should prefer access keys over signing keys', (done) => {
             })
         })
     })
