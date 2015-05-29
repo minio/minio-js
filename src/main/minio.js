@@ -77,7 +77,10 @@ class Client {
         var req = this.transport.request(requestParams, (response) => {
             if (response.statusCode !== 200) {
                 // TODO work out how to handle errors with stream
-                stream.push(parseError(response, cb))
+                stream.push(parseError(response, (error) => {
+                    "use strict";
+                    stream.emit('error', error)
+                }))
                 stream.push(null)
             }
             response.pipe(Concat(errorXml => {
