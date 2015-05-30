@@ -181,9 +181,36 @@ describe('Client', () => {
         })
 
         describe('#setBucketACL(bucket, acl, cb)', () => {
-            it.skip('should set acl', () => {
+            it('should set acl', (done) => {
+                var transport = new MockTransport()
+                var client = new minio({
+                    host: 'localhost',
+                    port: 9000
+                }, transport)
+                client.transport.addRequest((params) => {
+                    Assert.deepEqual(params, {
+                            host: 'localhost',
+                            port: 9000,
+                            path: '/bucket',
+                            method: 'PUT',
+                            headers: {
+                                acl: '',
+                                'x-amz-acl': 'public',
+                            }
+                        }
+                    )
+                }, 200, {'etag': 'etag', 'content-length': 11, 'last-modified': 'lastmodified'}, null)
+                client.setBucketACL('bucket', 'public', (e) => {
+                    Assert.equal(e, null)
+                })
+                done()
             })
-            it.skip('should pass error to callback', () => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').put('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                client.setBucketACL('bucket', 'public', checkError('status', 'message', 'requestid', 'resource', (r) => {
+                    Assert.equal(r, null)
+                    done()
+                }))
             })
         })
 

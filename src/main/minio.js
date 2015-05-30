@@ -160,8 +160,26 @@ class Client {
     }
 
     setBucketACL(bucket, acl, cb) {
-        "use strict";
-        cb('not implemented')
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            method: 'PUT',
+            path: `/${bucket}`,
+            headers: {
+                acl: "",
+                'x-amz-acl': acl
+            }
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = this.transport.request(requestParams, response => {
+            if (response.statusCode !== 200) {
+                return parseError(response, cb)
+            }
+            cb()
+        })
+        req.end()
     }
 
     dropAllIncompleteUploads(bucket, acl, cb) {
