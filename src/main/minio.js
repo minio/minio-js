@@ -194,7 +194,7 @@ class Client {
             host: this.params.host,
             port: this.params.port,
             path: `/${bucket}/${object}`,
-            method: 'GET',
+            method: 'GET'
         }
 
         signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
@@ -323,7 +323,7 @@ class Client {
                 host: params.host,
                 port: params.port,
                 path: `/${bucket}${query}`,
-                method: 'GET',
+                method: 'GET'
             }
 
             signV4(requestParams, '', params.accessKey, params.secretKey)
@@ -335,7 +335,7 @@ class Client {
                 response.pipe(Concat((body) => {
                     var xml = ParseXml(body.toString())
                     var result = {
-                        objects: [],
+                        objects: []
                     }
                     xml.root.children.forEach(element => {
                         switch (element.name) {
@@ -477,7 +477,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmSS') + 'Z'
     request.headers['x-amz-content-sha256'] = dataShaSum256
 
-    var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256, requestDate)
+    var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256)
     var canonicalRequest = canonicalRequestAndSignedHeaders[0]
     var signedHeaders = canonicalRequestAndSignedHeaders[1]
     var hash = Crypto.createHash('sha256')
@@ -523,8 +523,6 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
                 return "eu-west-1"
             case "s3-sa-east-1.amazonaws.com":
                 return "sa-east-1"
-            case "s3.amazonaws.com":
-                return "us-east-1"
             case "s3-external-1.amazonaws.com":
                 return "us-east-1"
             case "s3-us-west-1.amazonaws.com":
@@ -536,7 +534,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         }
     }
 
-    function getCanonicalRequest(request, dataShaSum1, requestDate) {
+    function getCanonicalRequest(request, dataShaSum1) {
 
 
         var headerKeys = []
@@ -544,7 +542,6 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
         for (var key in request.headers) {
             if (request.headers.hasOwnProperty(key)) {
-                key = key
                 var value = request.headers[key]
                 headers.push(`${key.toLowerCase()}:${value}`)
                 headerKeys.push(key.toLowerCase())

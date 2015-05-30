@@ -33,6 +33,7 @@ class MockTransport {
         this.requests.push(req)
     }
 
+    //noinspection JSUnusedGlobalSymbols
     clearRequests() {
         "use strict"
         this.requests = []
@@ -53,6 +54,7 @@ class Request {
         this.callback = callback
     }
 
+    //noinspection JSUnusedGlobalSymbols
     end() {
         "use strict";
         this._r()
