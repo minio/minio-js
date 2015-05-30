@@ -251,7 +251,8 @@ class Client {
         "use strict";
         var self = this
         var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => {}
+        stream._read = () => {
+        }
         var queue = new Stream.Readable({objectMode: true})
         queue._read = () => {
         }
@@ -596,7 +597,7 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
         "use strict";
 
         listIncompleteUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
-            if(response.statusCode !== 200) {
+            if (response.statusCode !== 200) {
                 parseError(response, (e) => {
                     queue.emit('error', e)
                 })
@@ -647,17 +648,58 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
     signV4(requestParams, '', params.accessKey, params.secretKey)
 
     var req = transport.request(requestParams, (response) => {
-        if(response.statusCode !== 200) {
+        if (response.statusCode !== 200) {
             return parseError(response, cb)
         }
-        console.log('found')
-        var objects = [
-            {bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid'},
-            {bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2'}
-        ]
-        var nextJob = null
-        // parse XML
-        cb(null, objects, nextJob)
+        response.pipe(Concat(xml => {
+            var parsedXml = ParseXml(xml.toString())
+            var result = {
+                uploads: [],
+                isTruncated: false,
+                nextJob: null
+            }
+            var nextJob = {
+                bucket: bucket,
+                object: object
+            }
+            parsedXml.root.children.forEach(element => {
+                switch (element.name) {
+                    case "IsTruncated":
+                        result.isTruncated = element.content === 'true'
+                        break
+                    case "NextKeyMarker":
+                        nextJob.keyMarker = element.content
+                        break
+                    case "NextUploadIdMarker":
+                        nextJob.uploadIdMarker = element.content
+                        break
+                    case "Upload":
+                        var upload = {
+                            bucket: bucket,
+                            key: null,
+                            uploadId: null,
+                        }
+                        element.children.forEach(xmlObject => {
+                            switch (xmlObject.name) {
+                                case "Key":
+                                    upload.key = xmlObject.content
+                                    break
+                                case "UploadId":
+                                    upload.uploadId = xmlObject.content
+                                    break
+                                default:
+                            }
+                        })
+                        result.uploads.push(upload)
+                        break
+                    default:
+                }
+            })
+            if(result.isTruncated) {
+                result.nextJob = nextJob
+            }
+            cb(null, result)
+        }))
     })
     req.end()
 }
