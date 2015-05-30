@@ -128,7 +128,7 @@ describe('Client', () => {
                 stream.pipe(Through(success, end))
 
                 stream.on('error', (e) => {
-                    checkError('status', 'message', 'requestid', '/')
+                    checkError('status', 'message', 'requestid', '/')(e)
                     done()
                 })
 
@@ -195,7 +195,7 @@ describe('Client', () => {
                             method: 'PUT',
                             headers: {
                                 acl: '',
-                                'x-amz-acl': 'public',
+                                'x-amz-acl': 'public'
                             }
                         }
                     )
@@ -278,10 +278,10 @@ describe('Client', () => {
 
         describe("#listObjects()", (done) => {
             it('should iterate without a prefix', (done) => {
-                Nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(_ => {
                     return '/bucket'
                 }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-                Nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(_ => {
                     return '/bucket'
                 }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
                 var stream = client.listObjects('bucket')
@@ -297,7 +297,7 @@ describe('Client', () => {
                             "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
                             "lastModified": "2015-05-05T02:21:15.716Z",
                             "name": "key1",
-                            "size": 11,
+                            "size": 11
                         },
                         {
                             "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
@@ -322,33 +322,35 @@ describe('Client', () => {
                 }
             })
             it('should pass error on stream', (done) => {
-                Nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(() => {
                     return '/bucket'
                 }).get('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
                 var stream = client.listObjects('bucket')
                 stream.on('error', (e) => {
+                    checkError('status', 'message', 'requestid', 'resource')(e)
                     done()
                 })
                 stream.pipe(Through(success, end))
-                function success(bucket) {
+                function success() {
                 }
 
                 function end() {
                 }
             })
             it('should pass error in stream on subsequent error', (done) => {
-                Nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(() => {
                     return '/bucket'
                 }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-                Nock('http://localhost:9000').filteringPath(path => {
+                Nock('http://localhost:9000').filteringPath(() => {
                     return '/bucket'
                 }).get('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
                 var stream = client.listObjects('bucket')
                 stream.on('error', (e) => {
+                    checkError('status', 'message', 'requestid', 'resource')(e)
                     done()
                 })
                 stream.pipe(Through(success, end))
-                function success(bucket) {
+                function success() {
                 }
 
                 function end() {
@@ -421,10 +423,16 @@ var checkError = (status, message, requestid, resource, callback) => {
         Assert.equal(e.message, message)
         Assert.equal(e.requestid, requestid)
         Assert.equal(e.resource, resource)
-        if (rest.length === 0) {
-            callback()
+        if(callback) {
+            if (rest.length === 0) {
+                callback()
+            } else {
+                callback(rest)
+            }
         } else {
-            callback(rest)
+            if(rest.length > 0) {
+                Assert.fail('Data returned with no callback registered')
+            }
         }
     }
 }
