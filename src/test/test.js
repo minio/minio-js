@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-require('source-map-support').install();
+require('source-map-support').install()
 
-var Assert = require('assert');
+var Assert = require('assert')
 var Concat = require('concat-stream')
+var Http = require('http')
 var Nock = require('nock')
 var Through = require('through')
 var Stream = require('stream')
 
-var minio = require('../..');
+var Rewire = require('rewire')
+var minio = Rewire('../..')
 
 var MockTransport = require('./transport.js')
 
@@ -408,6 +410,40 @@ describe('Client', () => {
             it.skip('should delete an object', (done) => {
             })
             it.skip('should pass error to callback', (done) => {
+            })
+        })
+    })
+
+    describe('unexposed functions', () => {
+        describe('listIncompleteUploads(transport, params, bucket, object, objectMarker, uploadIdMarker, callback', () => {
+            describe('without an object', () => {
+                it('should list uploads with one page', (done) => {
+                    var method = minio.__get__('listIncompleteUploads')
+                    var params = {
+                        host: 'localhost',
+                        port: 9000
+                    }
+                    Nock('http://localhost:9000').get('/bucket?uploads&max-uploads=1000').reply(200, '')
+                    method(Http, params, 'bucket', null, null, null, (e, objects, nextJob) => {
+                        Assert.equal(e, null)
+                        Assert.deepEqual(objects, [
+                            { bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid' },
+                            { bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2' }
+                        ])
+                        Assert.equal(nextJob, null)
+                        done()
+                    })
+                })
+                it.skip('should list uploads with two pages', (done) => {
+                    var method = minio.__get__('listIncompleteUploads')
+                    var params = {
+                        host: 'localhost',
+                        port: 9000
+                    }
+                    Nock('http://localhost:9000').get('/bucket?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                    method(Http, params, 'bucket', null, null, null, (e, objects, nextJob) => {
+                    })
+                })
             })
         })
     })

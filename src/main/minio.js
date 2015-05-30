@@ -182,7 +182,7 @@ class Client {
         req.end()
     }
 
-    dropAllIncompleteUploads(bucket, acl, cb) {
+    dropAllIncompleteUploads(bucket, cb) {
         "use strict";
         cb('not implemented')
     }
@@ -214,7 +214,6 @@ class Client {
         })
         req.end()
     }
-
 
     putObject(bucket, object, contentType, size, r, cb) {
         "use strict";
@@ -252,8 +251,7 @@ class Client {
         "use strict";
         var self = this
         var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => {
-        }
+        stream._read = () => {}
         var queue = new Stream.Readable({objectMode: true})
         queue._read = () => {
         }
@@ -279,8 +277,8 @@ class Client {
                     stream.emit('error', e)
                     return queue.push(null)
                 }
-                r.objects.forEach(bucket => {
-                    stream.push(bucket)
+                r.objects.forEach(object => {
+                    stream.push(object)
                 })
                 if (r.isTruncated) {
                     queue.push({
@@ -576,6 +574,92 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         canonicalString += dataShaSum1
         return [canonicalString, signedHeaders]
     }
+}
+
+var getAllIncompleteUploads = function (transport, params, bucket, object) {
+    "use strict";
+    var stream = new Stream.Readable({objectMode: true})
+
+    var queue = new Stream.Readable({objectMode: true})
+
+    queue.pipe(Through(success, end))
+
+    queue.on('error', (e) => {
+        stream.emit('error', e)
+    })
+
+    queue.push({bucket: bucket, object: object, objectMarker: null, uploadIdMarker: null})
+
+    return stream
+
+    function success(currentJob) {
+        "use strict";
+
+        listIncompleteUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
+            if(response.statusCode !== 200) {
+                parseError(response, (e) => {
+                    queue.emit('error', e)
+                })
+                return
+            }
+            var uploads = []
+            // parse xml
+            uploads.forEach(upload => {
+                stream.push(upload)
+            })
+            queue.push({bucket: bucket, object: object, objectMarker: objectMarker, uploadIdMarker: uploadIdMarker})
+        })
+
+    }
+
+    function end() {
+        stream.push()
+    }
+
+}
+
+function listIncompleteUploads(transport, params, bucket, object, keyMarker, uploadIdMarker, cb) {
+    "use strict";
+    var queries = []
+    if (object) {
+        queries.push(`prefix=${object}`)
+    }
+    if (keyMarker) {
+        queries.push(`key-marker=${keyMarker}`)
+    }
+    if (uploadIdMarker) {
+        queries.push(`upload-id-marker=${uploadIdMarker}`)
+    }
+    queries.push(`max-uploads=1000`)
+    queries.sort()
+    queries.unshift('uploads')
+    var query = ''
+    if (queries.length > 0) {
+        query = `?${queries.join('&')}`
+    }
+    var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}${query}`,
+        method: 'GET'
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var req = transport.request(requestParams, (response) => {
+        if(response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        console.log('found')
+        var objects = [
+            {bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid'},
+            {bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2'}
+        ]
+        var nextJob = null
+        // parse XML
+        cb(null, objects, nextJob)
+    })
+    req.end()
 }
 
 var inst = Client
