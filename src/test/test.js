@@ -373,9 +373,20 @@ describe('Client', () => {
         })
 
         describe("#removeObject(bucket, object, callback)", () => {
-            it.skip('should delete an object', (done) => {
+            it('should delete an object', (done) => {
+                Nock('http://localhost:9000').delete('/bucket/object').reply(200)
+                client.removeObject('bucket', 'object', (e) => {
+                    Assert.equal(e, null)
+                    done()
+                })
             })
-            it.skip('should pass error to callback', (done) => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').delete('/bucket/object')
+                    .reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                client.removeObject('bucket', 'object', checkError('status', 'message', 'requestid', 'resource', (r) => {
+                    Assert.equal(r, null)
+                    done()
+                }))
             })
         })
 
