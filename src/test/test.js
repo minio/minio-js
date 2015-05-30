@@ -224,11 +224,7 @@ describe('Client', () => {
         describe("#getBucketMetadata(bucket, object, callback)", () => {
             it.skip('should retrieve bucket metadata', (done) => {
             })
-            it.skip('should handle access denied', (done) => {
-            })
-            it.skip('should handle bucket does not exist', (done) => {
-            })
-            it.skip('invalid bucket name', (done) => {
+            it.skip('should pass error to callback', (done) => {
             })
         })
     })
