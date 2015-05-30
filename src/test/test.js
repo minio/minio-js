@@ -320,6 +320,7 @@ describe('Client', () => {
                 stream.pipe(Through(success, end))
                 function success(bucket) {
                 }
+
                 function end() {
                 }
             })
@@ -337,6 +338,7 @@ describe('Client', () => {
                 stream.pipe(Through(success, end))
                 function success(bucket) {
                 }
+
                 function end() {
                 }
             })
@@ -359,7 +361,14 @@ describe('Client', () => {
                     done()
                 })
             })
-            it.skip('should pass error to callback', (done) => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').head('/bucket/object')
+                    .reply(400, generateError('status', 'message', 'requestid', 'resource'))
+
+                client.statObject('bucket', 'object', checkError('status', 'message', 'requestid', 'resource', (r) => {
+                    Assert.equal(r, null)
+                    done()
+                }))
             })
         })
 
