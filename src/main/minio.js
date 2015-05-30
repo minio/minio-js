@@ -276,7 +276,8 @@ class Client {
         function success(currentRequest) {
             getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
                 if (e) {
-                    return queue.pipe(null)
+                    stream.emit('error', e)
+                    return queue.push(null)
                 }
                 r.objects.forEach(bucket => {
                     stream.push(bucket)
