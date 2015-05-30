@@ -220,13 +220,6 @@ describe('Client', () => {
             it.skip('should pass error to callback', () => {
             })
         })
-
-        describe("#getBucketMetadata(bucket, object, callback)", () => {
-            it.skip('should retrieve bucket metadata', (done) => {
-            })
-            it.skip('should pass error to callback', (done) => {
-            })
-        })
     })
 
     describe("object level", () => {
@@ -316,8 +309,21 @@ describe('Client', () => {
                     done()
                 }
             })
-            it.skip('should pass error to callback', (done) => {
+            it('should pass error on stream', (done) => {
+                Nock('http://localhost:9000').filteringPath(path => {
+                    return '/bucket'
+                }).get('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                var stream = client.listObjects('bucket')
+                stream.on('error', (e) => {
+                    done()
+                })
+                stream.pipe(Through(success, end))
+                function success(bucket) {
+                }
+                function end() {
+                }
             })
+            it.skip('should pass error in stream on subsequent error')
         })
 
         describe("#statObject(bucket, object, callback)", () => {
