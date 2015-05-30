@@ -114,12 +114,44 @@ class Client {
 
     bucketExists(bucket, cb) {
         "use strict";
-        cb('not implemented')
+
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            method: 'HEAD',
+            path: `/${bucket}`
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = this.transport.request(requestParams, response => {
+            if (response.statusCode !== 200) {
+                return parseError(response, cb)
+            }
+            cb()
+        })
+        req.end()
     }
 
     removeBucket(bucket, cb) {
         "use strict";
-        cb('not implemented')
+
+        var requestParams = {
+            host: this.params.host,
+            port: this.params.port,
+            method: 'DELETE',
+            path: `/${bucket}`
+        }
+
+        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+        var req = this.transport.request(requestParams, response => {
+            if (response.statusCode !== 200) {
+                return parseError(response, cb)
+            }
+            cb()
+        })
+        req.end()
     }
 
     getBucketACL(bucket, cb) {

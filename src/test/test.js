@@ -132,7 +132,7 @@ describe('Client', () => {
                     done()
                 })
 
-                function success(chunk) {
+                function success() {
                 }
 
                 function end() {
@@ -141,17 +141,35 @@ describe('Client', () => {
         })
 
         describe('#bucketExists(bucket, cb)', () => {
-            it.skip('should call callback with no options if successful', () => {
-
+            it('should call callback with no options if successful', (done) => {
+                Nock('http://localhost:9000').head('/bucket').reply(200)
+                client.bucketExists('bucket', (e) => {
+                    Assert.equal(e, null)
+                    done()
+                })
             })
-            it.skip('should pass error to callback', () => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').head('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                client.bucketExists('bucket', checkError('status', 'message', 'requestid', 'resource', (r) => {
+                    Assert.equal(r, null)
+                    done()
+                }))
             })
         })
 
-        describe('#deleteBucket(bucket, cb)', () => {
-            it.skip('should delete a bucket', () => {
+        describe('#removeBucket(bucket, cb)', () => {
+            it('should remove a bucket', (done) => {
+                Nock('http://localhost:9000').delete('/bucket').reply(200)
+                client.removeBucket('bucket', () => {
+                    done()
+                })
             })
-            it.skip('should pass error to callback', () => {
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').head('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                client.bucketExists('bucket', checkError('status', 'message', 'requestid', 'resource', (r) => {
+                    Assert.equal(r, null)
+                    done()
+                }))
             })
         })
 
