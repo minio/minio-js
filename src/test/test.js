@@ -457,6 +457,21 @@ describe('Client', () => {
                         done()
                     })
                 })
+                it('should pass error to callback', (done) => {
+                    var method = minio.__get__('listIncompleteUploads')
+                    var params = {
+                        host: 'localhost',
+                        port: 9000
+                    }
+                    Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                    method(Http, params, 'golang', null, null, null, checkError('status', 'message', 'requestid', 'resource', (result) => {
+                        Assert.equal(result, null)
+                        checkError('status', 'message', 'requestid', 'resource', (r) => {
+                            Assert.equal(r, null)
+                        })
+                        done()
+                    }))
+                })
             })
         })
     })
