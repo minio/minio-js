@@ -244,23 +244,35 @@ describe('Client', () => {
         })
 
         describe("#putObject(bucket, object, size, source, callback)", () => {
-            it('should put an object', (done) => {
-                Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
-                var s = new Stream.Readable()
-                s._read = function () {
-                }
-                s.push('hello world')
-                s.push(null)
-                client.putObject("bucket", "object", '', 11, s, done)
+            describe('with small objects using single put', () => {
+                it('should put an object', (done) => {
+                    Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
+                    var s = new Stream.Readable()
+                    s._read = function () {
+                    }
+                    s.push('hello world')
+                    s.push(null)
+                    client.putObject("bucket", "object", '', 11, s, done)
+                })
+                it('should pass error to callback', (done) => {
+                    Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+                    var s = new Stream.Readable()
+                    s._read = function () {
+                    }
+                    s.push('hello world')
+                    s.push(null)
+                    client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+                })
             })
-            it('should pass error to callback', (done) => {
-                Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
-                var s = new Stream.Readable()
-                s._read = function () {
-                }
-                s.push('hello world')
-                s.push(null)
-                client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+            describe('with large objects using multipart', () => {
+                it.skip('should put an object', (done) => {
+                })
+                it.skip('should resume an object upload', (done) => {
+                })
+                it.skip('should abort an object upload when uploaded data does not match', (done) => {
+                })
+                it.skip('should pass error to callback', (done) => {
+                })
             })
         })
 
