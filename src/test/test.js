@@ -216,8 +216,15 @@ describe('Client', () => {
             })
         })
 
-        describe('#dropAllIncompleteUploads(bucket, acl, cb)', () => {
-            it.skip('should drop all incomplete multipart uploads', () => {
+        describe('#dropAllIncompleteUploads(bucket, cb)', () => {
+            it('should drop all incomplete multipart uploads', (done) => {
+                Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(200)
+                Nock('http://localhost:9000').delete('/golang/go1.5.0?uploadId=uploadid2').reply(200)
+                Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&upload-id-marker=uploadidmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(200)
+                Nock('http://localhost:9000').delete('/golang/go1.5.0?uploadId=uploadid2').reply(200)
+                client.dropAllIncompleteUploads('golang', done)
             })
             it.skip('should pass error to callback', () => {
             })
@@ -567,7 +574,14 @@ describe('Client', () => {
                 port: 9000
             }
             it('should drop an incomplete upload', (done) => {
-                Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200)
+                Nock('http://localhost:9000').delete('/bucket/object?uploadId=uploadid').reply(200)
+                method(Http, params, 'bucket', 'object', 'uploadid', (e) => {
+                    Assert.equal(e, null)
+                    done()
+                })
+            })
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').delete('/bucket/object?uploadId=uploadid').reply(200)
                 method(Http, params, 'bucket', 'object', 'uploadid', (e) => {
                     Assert.equal(e, null)
                     done()
