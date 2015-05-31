@@ -715,5 +715,25 @@ function listIncompleteUploads(transport, params, bucket, key, keyMarker, upload
     req.end()
 }
 
+var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
+    var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}/${key}?uploadId=${uploadId}`,
+        method: 'GET'
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var req = transport.request(requestParams, (response) => {
+        "use strict";
+        if (response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        cb()
+    })
+    req.end()
+}
+
 var inst = Client
 module.exports = inst

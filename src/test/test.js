@@ -560,6 +560,20 @@ describe('Client', () => {
                 })
             })
         })
+        describe('abortMultipartUpload', () => {
+            var method = minio.__get__('abortMultipartUpload')
+            var params = {
+                host: 'localhost',
+                port: 9000
+            }
+            it('should drop an incomplete upload', (done) => {
+                Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200)
+                method(Http, params, 'bucket', 'object', 'uploadid', (e) => {
+                    Assert.equal(e, null)
+                    done()
+                })
+            })
+        })
     })
 })
 
