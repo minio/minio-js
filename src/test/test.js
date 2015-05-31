@@ -415,8 +415,8 @@ describe('Client', () => {
     })
 
     describe('unexposed functions', () => {
-        describe('listIncompleteUploads(transport, params, bucket, key, objectMarker, uploadIdMarker, callback', () => {
-            var method = minio.__get__('listIncompleteUploads')
+        describe('listMultipartUploads(transport, params, bucket, key, objectMarker, uploadIdMarker, callback', () => {
+            var method = minio.__get__('listMultipartUploads')
             var params = {
                 host: 'localhost',
                 port: 9000

@@ -596,7 +596,7 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
     function success(currentJob) {
         "use strict";
 
-        listIncompleteUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
+        listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
             if (response.statusCode !== 200) {
                 parseError(response, (e) => {
                     queue.emit('error', e)
@@ -619,7 +619,7 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
 
 }
 
-function listIncompleteUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
+function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
     "use strict";
     var queries = []
     if (key) {
