@@ -184,7 +184,6 @@ class Client {
 
     dropIncompleteUpload(bucket, key, cb) {
         "use strict";
-        console.log('dropping')
         dropUploads(this.transport, this.params, bucket, key, cb)
     }
 
