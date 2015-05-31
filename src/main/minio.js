@@ -184,7 +184,58 @@ class Client {
 
     dropAllIncompleteUploads(bucket, cb) {
         "use strict";
-        cb('not implemented')
+        var self = this
+
+        var listUploadsQueue = new Stream.Readable({objectMode: true})
+        listUploadsQueue._read = () => {}
+
+        listUploadsQueue.pipe(Through(nextListJob, endListJob))
+
+        listUploadsQueue.on('error', (e) => {
+            uploadsToCancelQueue.emit('error', e)
+        })
+
+        var uploadsToCancelQueue = new Stream.Readable({objectMode: true})
+        uploadsToCancelQueue._read = () => {}
+
+        uploadsToCancelQueue.pipe(Through(nextUploadToCancel, endUploadsToCancel))
+
+        uploadsToCancelQueue.on('error', (e) => {
+            cb(e)
+        })
+
+        listUploadsQueue.push({bucket: bucket, key: null, keyMarker: null, uploadIdMarker: null})
+
+
+        function nextListJob(job) {
+            listMultipartUploads(self.transport, self.params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
+                if(e) {
+                    return listUploadsqueue.emit('error', e)
+                }
+                result.uploads.forEach(element => {
+                    uploadsToCancelQueue.push(element)
+                })
+                if(result.isTruncated) {
+                    listUploadsQueue.push(result.nextJob)
+                } else {
+                    listUploadsQueue.push(null)
+                }
+            })
+        }
+
+        function endListJob() {
+            uploadsToCancelQueue.push(null)
+        }
+
+        function nextUploadToCancel(upload) {
+            abortMultipartUpload(self.transport, self.params, upload.bucket, upload.key, upload.uploadId, (e) => {
+                // ignore, continue on
+            })
+        }
+
+        function endUploadsToCancel() {
+            cb()
+        }
     }
 
     getObject(bucket, object, cb) {
@@ -416,11 +467,6 @@ class Client {
             cb()
         })
         req.end()
-    }
-
-    abortMultipartUpload(bucket, object, cb) {
-        "use strict";
-        cb('not implemented')
     }
 }
 
@@ -720,7 +766,7 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
         host: params.host,
         port: params.port,
         path: `/${bucket}/${key}?uploadId=${uploadId}`,
-        method: 'GET'
+        method: 'DELETE'
     }
 
     signV4(requestParams, '', params.accessKey, params.secretKey)
