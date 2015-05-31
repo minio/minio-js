@@ -619,11 +619,11 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
 
 }
 
-function listIncompleteUploads(transport, params, bucket, object, keyMarker, uploadIdMarker, cb) {
+function listIncompleteUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
     "use strict";
     var queries = []
-    if (object) {
-        queries.push(`prefix=${object}`)
+    if (key) {
+        queries.push(`prefix=${key}`)
     }
     if (keyMarker) {
         queries.push(`key-marker=${keyMarker}`)
@@ -660,7 +660,7 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
             }
             var nextJob = {
                 bucket: bucket,
-                object: object
+                key: key
             }
             var ignoreTruncated = false
             parsedXml.root.children.forEach(element => {
@@ -691,8 +691,8 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
                                 default:
                             }
                         })
-                        if (object) {
-                            if (object === upload.key) {
+                        if (key) {
+                            if (key === upload.key) {
                                 result.uploads.push(upload)
                             } else {
                                 ignoreTruncated = true
