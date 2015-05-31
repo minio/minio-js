@@ -767,7 +767,7 @@ var dropUploads = (transport, params, bucket, key, cb) => {
     function nextListJob(job) {
         listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
             if (e) {
-                return listUploadsqueue.emit('error', e)
+                return listUploadsQueue.emit('error', e)
             }
             result.uploads.forEach(element => {
                 uploadsToCancelQueue.push(element)

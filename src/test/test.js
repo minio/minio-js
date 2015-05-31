@@ -420,7 +420,13 @@ describe('Client', () => {
                 Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
                 client.dropIncompleteUpload('golang', 'go1.4.2', done)
             })
-            it.skip('should pass error to callback', (done) => {
+            it('should pass error to callback on list failure', (done) => {
+                Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                client.dropIncompleteUpload('golang', 'go1.4.2', checkError('status', 'message', 'requestid', 'resource', done))
+            })
+            it.skip('should pass error to callback on second list failure', (done) => {
+            })
+            it.skip('should pass error to callback on drop failure', (done) => {
             })
         })
     })
