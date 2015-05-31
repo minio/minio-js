@@ -415,14 +415,14 @@ describe('Client', () => {
     })
 
     describe('unexposed functions', () => {
-        describe('listIncompleteUploads(transport, params, bucket, object, objectMarker, uploadIdMarker, callback', () => {
+        describe('listIncompleteUploads(transport, params, bucket, key, objectMarker, uploadIdMarker, callback', () => {
             var method = minio.__get__('listIncompleteUploads')
             var params = {
                 host: 'localhost',
                 port: 9000
             }
-            describe('without an object', () => {
-                it('should list uploads with one page', (done) => {
+            describe('without a key', () => {
+                it('should list uploads', (done) => {
                     Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
                     method(Http, params, 'golang', null, null, null, (e, result) => {
                         Assert.equal(e, null)
@@ -449,7 +449,7 @@ describe('Client', () => {
                             ],
                             nextJob: {
                                 bucket: 'golang',
-                                object: null,
+                                key: null,
                                 keyMarker: 'keymarker',
                                 uploadIdMarker: 'uploadmarker'
                             },
@@ -483,8 +483,8 @@ describe('Client', () => {
                     }))
                 })
             })
-            describe('with an object', () => {
-                it('should list objects on one page', (done) => {
+            describe('with a key', () => {
+                it('should list uploads', (done) => {
                     Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
                     method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
                         Assert.equal(e, null)
@@ -507,7 +507,7 @@ describe('Client', () => {
                         done()
                     })
                 })
-                it('should list objects with a new job', (done) => {
+                it('should list uploads with a new job', (done) => {
                     Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
                     method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
                         Assert.equal(e, null)
@@ -527,7 +527,7 @@ describe('Client', () => {
                             ],
                             nextJob: {
                                 bucket: 'golang',
-                                object: 'go1.4.2',
+                                key: 'go1.4.2',
                                 keyMarker: 'keymarker',
                                 uploadIdMarker: 'uploadidmarker'
                             }
