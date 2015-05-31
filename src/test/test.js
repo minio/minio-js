@@ -429,8 +429,8 @@ describe('Client', () => {
                         Assert.deepEqual(result, {
                             isTruncated: false,
                             uploads: [
-                                { bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid' },
-                                { bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2' }
+                                {bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid'},
+                                {bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2'}
                             ],
                             nextJob: null,
                         })
@@ -444,10 +444,15 @@ describe('Client', () => {
                         Assert.deepEqual(result, {
                             isTruncated: true,
                             uploads: [
-                                { bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid' },
-                                { bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2' }
+                                {bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid'},
+                                {bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2'}
                             ],
-                            nextJob: {bucket: 'golang', object: null, keyMarker: 'keymarker', uploadIdMarker: 'uploadmarker'},
+                            nextJob: {
+                                bucket: 'golang',
+                                object: null,
+                                keyMarker: 'keymarker',
+                                uploadIdMarker: 'uploadmarker'
+                            },
                         })
                         done()
                     })
@@ -459,8 +464,8 @@ describe('Client', () => {
                         Assert.deepEqual(result, {
                             isTruncated: false,
                             uploads: [
-                                { bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid' },
-                                { bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2' }
+                                {bucket: 'golang', key: 'go1.4.2', uploadId: 'uploadid'},
+                                {bucket: 'golang', key: 'go1.5.0', uploadId: 'uploadid2'}
                             ],
                             nextJob: null,
                         })
@@ -478,53 +483,82 @@ describe('Client', () => {
                     }))
                 })
             })
-           describe('with an object', () => {
-               it('should list objects on one page', (done) => {
-                   Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-                   method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
-                       Assert.equal(e, null)
-                       Assert.deepEqual(result, {
-                           isTruncated: false,
-                           uploads: [
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0' },
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh' }
-                           ],
-                           nextJob: null
-                       })
-                       done()
-                   })
-               })
-               it('should list objects with a new job', (done) => {
-                   Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-                   method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
-                       Assert.equal(e, null)
-                       Assert.deepEqual(result, {
-                           isTruncated: true,
-                           uploads: [
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0' },
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh' }
-                           ],
-                           nextJob: {bucket: 'golang', object: 'go1.4.2', keyMarker: 'keymarker', uploadIdMarker: 'uploadidmarker'}
-                       })
-                       done()
-                   })
-               })
-               it('should list uploads with markers', (done) => {
-                   Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadidmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-                   method(Http, params, 'golang', 'go1.4.2', 'keymarker', 'uploadidmarker', (e, result) => {
-                       Assert.equal(e, null)
-                       Assert.deepEqual(result, {
-                           isTruncated: false,
-                           uploads: [
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0' },
-                               { bucket: 'golang', key: 'go1.4.2', uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh' }
-                           ],
-                           nextJob: null
-                       })
-                       done()
-                   })
-               })
-           })
+            describe('with an object', () => {
+                it('should list objects on one page', (done) => {
+                    Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                    method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
+                        Assert.equal(e, null)
+                        Assert.deepEqual(result, {
+                            isTruncated: false,
+                            uploads: [
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0'
+                                },
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh'
+                                }
+                            ],
+                            nextJob: null
+                        })
+                        done()
+                    })
+                })
+                it('should list objects with a new job', (done) => {
+                    Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                    method(Http, params, 'golang', 'go1.4.2', null, null, (e, result) => {
+                        Assert.equal(e, null)
+                        Assert.deepEqual(result, {
+                            isTruncated: true,
+                            uploads: [
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0'
+                                },
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh'
+                                }
+                            ],
+                            nextJob: {
+                                bucket: 'golang',
+                                object: 'go1.4.2',
+                                keyMarker: 'keymarker',
+                                uploadIdMarker: 'uploadidmarker'
+                            }
+                        })
+                        done()
+                    })
+                })
+                it('should list uploads with markers', (done) => {
+                    Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadidmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T16:34:57.199Z</Initiated></Upload><Upload><Key>go1.4.2.linux-amd64.tar.gz</Key><UploadId>vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>go1.4.2</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+                    method(Http, params, 'golang', 'go1.4.2', 'keymarker', 'uploadidmarker', (e, result) => {
+                        Assert.equal(e, null)
+                        Assert.deepEqual(result, {
+                            isTruncated: false,
+                            uploads: [
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0'
+                                },
+                                {
+                                    bucket: 'golang',
+                                    key: 'go1.4.2',
+                                    uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh'
+                                }
+                            ],
+                            nextJob: null
+                        })
+                        done()
+                    })
+                })
+            })
         })
     })
 })
@@ -539,14 +573,14 @@ var checkError = (status, message, requestid, resource, callback) => {
         Assert.equal(e.message, message)
         Assert.equal(e.requestid, requestid)
         Assert.equal(e.resource, resource)
-        if(callback) {
+        if (callback) {
             if (rest.length === 0) {
                 callback()
             } else {
                 callback(rest)
             }
         } else {
-            if(rest.length > 0) {
+            if (rest.length > 0) {
                 Assert.fail('Data returned with no callback registered')
             }
         }

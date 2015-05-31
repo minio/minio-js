@@ -691,8 +691,8 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
                                 default:
                             }
                         })
-                        if(object) {
-                            if(object === upload.key) {
+                        if (object) {
+                            if (object === upload.key) {
                                 result.uploads.push(upload)
                             } else {
                                 ignoreTruncated = true
@@ -704,7 +704,7 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
                     default:
                 }
             })
-            if(result.isTruncated && !ignoreTruncated) {
+            if (result.isTruncated && !ignoreTruncated) {
                 result.nextJob = nextJob
             } else {
                 result.isTruncated = false
