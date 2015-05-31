@@ -662,6 +662,7 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
                 bucket: bucket,
                 object: object
             }
+            var ignoreTruncated = false
             parsedXml.root.children.forEach(element => {
                 switch (element.name) {
                     case "IsTruncated":
@@ -690,13 +691,23 @@ function listIncompleteUploads(transport, params, bucket, object, keyMarker, upl
                                 default:
                             }
                         })
-                        result.uploads.push(upload)
+                        if(object) {
+                            if(object === upload.key) {
+                                result.uploads.push(upload)
+                            } else {
+                                ignoreTruncated = true
+                            }
+                        } else {
+                            result.uploads.push(upload)
+                        }
                         break
                     default:
                 }
             })
-            if(result.isTruncated) {
+            if(result.isTruncated && !ignoreTruncated) {
                 result.nextJob = nextJob
+            } else {
+                result.isTruncated = false
             }
             cb(null, result)
         }))
