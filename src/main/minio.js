@@ -796,5 +796,9 @@ var dropUploads = (transport, params, bucket, key, cb) => {
     }
 }
 
+function doPutObject(transport, params, bucket, key, size, uploadId, source, cb) {
+    
+}
+
 var inst = Client
 module.exports = inst
