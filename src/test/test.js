@@ -193,10 +193,9 @@ describe('Client', () => {
                     Assert.deepEqual(params, {
                             host: 'localhost',
                             port: 9000,
-                            path: '/bucket',
+                            path: '/bucket?acl',
                             method: 'PUT',
                             headers: {
-                                acl: '',
                                 'x-amz-acl': 'public'
                             }
                         }
@@ -208,7 +207,7 @@ describe('Client', () => {
                 done()
             })
             it('should pass error to callback', (done) => {
-                Nock('http://localhost:9000').put('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                Nock('http://localhost:9000').put('/bucket?acl').reply(400, generateError('status', 'message', 'requestid', 'resource'))
                 client.setBucketACL('bucket', 'public', checkError('status', 'message', 'requestid', 'resource', (r) => {
                     Assert.equal(r, null)
                     done()
