@@ -664,6 +664,21 @@ describe('Client', () => {
                 method(Http, params, 'bucket', 'object', checkError('status', 'message', 'requestid', 'resource', done))
             })
         })
+        describe('#completeMultipartUpload(transport, params, bucket, object, cb)', () => {
+            var method = minio.__get__('completeMultipartUpload')
+            var params = {
+                host: 'localhost',
+                port: 9000
+            }
+            it('should complete a multipart upload', (done) => {
+                Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200)
+                method(Http, params, 'bucket', 'object', 'uploadid', done)
+            })
+            it('should pass error to callback', (done) => {
+                Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+                method(Http, params, 'bucket', 'object', 'uploadid', checkError('status', 'message', 'requestid', 'resource', done))
+            })
+        })
     })
 })
 
