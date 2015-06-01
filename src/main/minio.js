@@ -849,8 +849,23 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadID
     r.pipe(request)
 }
 
-function completeMultipartUPload(transport, params, bucket, key, uploadId, cb) {
-    cb('not implemented')
+function completeMultipartUpload(transport, params, bucket, key, uploadID, cb) {
+     var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}/${key}?uploadId=${uploadID}`,
+        method: 'POST'
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var request = transport.request(requestParams, (response) => {
+        if (response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        cb()
+    })
+    request.end()
 }
 
 var inst = Client
