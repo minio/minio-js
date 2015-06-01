@@ -221,7 +221,7 @@ describe('Client', () => {
                 Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(200)
                 Nock('http://localhost:9000').delete('/golang/go1.5.0?uploadId=uploadid2').reply(200)
                 Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&upload-id-marker=uploadidmarker').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-                client.dropAllIncompleteUploads('golang', checkError( 'status', 'message', 'requestid', 'resource', done))
+                client.dropAllIncompleteUploads('golang', checkError('status', 'message', 'requestid', 'resource', done))
             })
             it.skip('should pass error to callback', () => {
             })
