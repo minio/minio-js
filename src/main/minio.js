@@ -223,36 +223,21 @@ class Client {
         req.end()
     }
 
-    putObject(bucket, object, contentType, size, r, cb) {
+    putObject(bucket, key, contentType, size, r, cb) {
         "use strict";
 
-        if (contentType == null || contentType == '') {
-            contentType = 'aplication/octet-stream'
+        var uploadID = null
+        var part = null
+
+        if(size > 5*1024*1024) {
+            initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, bucket, key) => {
+              if(e) {
+                return cb(e)
+              }
+            })
+        } else {
+            doPutObject(this.transport, this.params, bucket, key, contentType, size, uploadID, part, r, cb)
         }
-
-        var requestParams = {
-            host: this.params.host,
-            port: this.params.port,
-            path: `/${bucket}/${object}`,
-            method: 'PUT',
-            headers: {
-                "Content-Length": size,
-                "Content-Type": contentType
-            }
-        }
-
-        signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-        var request = this.transport.request(requestParams, (response) => {
-            if (response.statusCode !== 200) {
-                return parseError(response, cb)
-            }
-            response.pipe(Through(null, end))
-            function end() {
-                cb()
-            }
-        })
-        r.pipe(request)
     }
 
     listObjects(bucket, params) {
@@ -796,8 +781,76 @@ var dropUploads = (transport, params, bucket, key, cb) => {
     }
 }
 
-function doPutObject(transport, params, bucket, key, size, uploadId, source, cb) {
-    
+var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
+    var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}/${key}?uploads`,
+        method: 'POST'
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var request = transport.request(requestParams, (response) => {
+        if (response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        response.pipe(Concat(xml => {
+            "use strict";
+            var parsedXml = ParseXml(xml.toString())
+            var uploadID = null
+            parsedXml.root.children.forEach(element => {
+                "use strict";
+                if (element.name === 'UploadId') {
+                    uploadID = element.content
+                }
+            })
+
+            if(uploadID) {
+                return cb(null, uploadID)
+            }
+            cb('unable to get upload id')
+        }))
+    })
+    request.end()
+}
+
+function doPutObject(transport, params, bucket, key, contentType, size, uploadID, part, r, cb) {
+     var query = ''
+    if(part) {
+        query = `?part=${part}&uploadId=${uploadID}`
+    }
+    if (contentType == null || contentType == '') {
+        contentType = 'aplication/octet-stream'
+    }
+
+    var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}/${key}${query}`,
+        method: 'PUT',
+        headers: {
+            "Content-Length": size,
+            "Content-Type": contentType
+        }
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var request = transport.request(requestParams, (response) => {
+        if (response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        response.pipe(Through(null, end))
+        function end() {
+            cb()
+        }
+    })
+    r.pipe(request)
+}
+
+function completeMultipartUPload(transport, params, bucket, key, uploadId, cb) {
+    cb('not implemented')
 }
 
 var inst = Client
