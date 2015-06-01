@@ -160,15 +160,13 @@ class Client {
     }
 
     setBucketACL(bucket, acl, cb) {
-        // we should make sure to set this query parameter, but the call apparently succeeds without it to s3
-        // To differentiate this functionality from makeBucket() lets do it anyways.
-        var query = `?acl`;
         var requestParams = {
             host: this.params.host,
             port: this.params.port,
             method: 'PUT',
-            path: `/${bucket}${query}`,
+            path: `/${bucket}`,
             headers: {
+                acl: "",
                 'x-amz-acl': acl
             }
         }
