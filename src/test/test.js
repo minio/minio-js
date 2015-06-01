@@ -271,7 +271,24 @@ describe('Client', () => {
                 })
             })
             describe('with large objects using multipart', () => {
-                it.skip('should put an object', (done) => {
+                var uploadBlock = ''
+                for(var i=0; i<1024; i++) {
+                    uploadBlock += 'a'
+                }
+                it('should put an object', (done) => {
+                    Nock('http://localhost:9000').put('/bucket/object', (body) => {
+                        if(body.length === 10*1024*1024) {
+                            return true
+                        }
+                        return false
+                    }).reply(200)
+                    var s = new Stream.Readable()
+                    s._read = function() {}
+                    for(var i = 0; i<10*1024; i++) {
+                        s.push(uploadBlock)
+                    }
+                    s.push(null)
+                    client.putObject("bucket", "object", '', 10*1024*1024, s, done)
                 })
                 it.skip('should resume an object upload', (done) => {
                 })
