@@ -21,7 +21,6 @@ var Http = require('http')
 var Moment = require('moment')
 var ParseXml = require('xml-parser')
 var Stream = require('stream')
-var Through = require('through')
 var Through2 = require('through2')
 var Xml = require('xml')
 
