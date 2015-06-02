@@ -210,14 +210,11 @@ class Client {
             if (response.statusCode !== 200) {
                 return parseError(response, cb)
             }
-            cb(null, response.pipe(Through(write, end)))
-            function write(chunk) {
-                this.queue(chunk)
-            }
+            // wrap it in a new pipe to strip additional response data
+            cb(null, response.pipe(Through2((data, enc, done) => {
+                done(null, data)
+            })))
 
-            function end() {
-                this.queue(null)
-            }
         })
         req.end()
     }
