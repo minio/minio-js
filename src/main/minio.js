@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+var Async = require('async')
+var BlockStream = require('block-stream')
 var CombinedStream = require('combined-stream') // use MultiStream unless you need lazy append after stream created
 var Concat = require('concat-stream')
 var Crypto = require('crypto')
@@ -23,6 +25,7 @@ var ParseXml = require('xml-parser')
 var Q = require('q')
 var Stream = require('stream')
 var Through = require('through')
+var Through2 = require('through2')
 var Xml = require('xml')
 var ParseString = require('xml2js').parseString
 
@@ -226,17 +229,31 @@ class Client {
     putObject(bucket, key, contentType, size, r, cb) {
         "use strict";
 
+        var self = this
+
         var uploadID = null
         var part = null
 
         if(size > 5*1024*1024) {
-            initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, bucket, key) => {
-              if(e) {
-                return cb(e)
-              }
+            initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, uploadID) => {
+                if(e) {
+                  return cb(e)
+                }
+                var part = 1
+                var blocks = r.pipe(new BlockStream(5*1024*1024)).pipe(Through2.obj(function(data, enc, done) {
+                    var curPart = part
+                    part = part + 1
+                    var dataStream = new Stream.Readable()
+                    dataStream.push(data)
+                    dataStream.push(null)
+                    dataStream._read = () => {}
+                    doPutObject(self.transport, self.params, bucket, key, contentType, size, uploadID, curPart, dataStream, done)
+                })).on('finish', () => {
+                    cb()
+                })
             })
         } else {
-            doPutObject(this.transport, this.params, bucket, key, contentType, size, uploadID, part, r, cb)
+            doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
         }
     }
 
@@ -818,7 +835,7 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
 function doPutObject(transport, params, bucket, key, contentType, size, uploadID, part, r, cb) {
      var query = ''
     if(part) {
-        query = `?part=${part}&uploadId=${uploadID}`
+        query = `?partNumber=${part}&uploadId=${uploadID}`
     }
     if (contentType == null || contentType == '') {
         contentType = 'aplication/octet-stream'
@@ -841,10 +858,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadID
         if (response.statusCode !== 200) {
             return parseError(response, cb)
         }
-        response.pipe(Through(null, end))
-        function end() {
-            cb()
-        }
+        cb()
     })
     r.pipe(request)
 }
