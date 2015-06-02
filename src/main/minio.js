@@ -229,19 +229,20 @@ class Client {
 
         var etags = []
 
-        if(size > 5*1024*1024) {
+        if (size > 5 * 1024 * 1024) {
             initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, uploadID) => {
-                if(e) {
-                  return cb(e)
+                if (e) {
+                    return cb(e)
                 }
                 var part = 1
-                var blocks = r.pipe(new BlockStream(5*1024*1024)).pipe(Through2.obj(function(data, enc, done) {
+                var blocks = r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function (data, enc, done) {
                     var curPart = part
                     part = part + 1
                     var dataStream = new Stream.Readable()
                     dataStream.push(data)
                     dataStream.push(null)
-                    dataStream._read = () => {}
+                    dataStream._read = () => {
+                    }
                     doPutObject(self.transport, self.params, bucket, key, contentType, size, uploadID, curPart, dataStream, (e, etag) => {
                         etags.push({part: curPart, etag: etag})
                         done()
@@ -258,12 +259,8 @@ class Client {
     listObjects(bucket, params) {
         "use strict";
         var self = this
-        var stream = new Stream.Readable({objectMode: true})
-        stream._read = () => {
-        }
-        var queue = new Stream.Readable({objectMode: true})
-        queue._read = () => {
-        }
+
+
         var prefix = null
         var delimiter = null
         if (params) {
@@ -274,20 +271,18 @@ class Client {
                 delimiter = '/'
             }
         }
-        queue.push({bucket: bucket, prefix: prefix, marker: null, delimiter: delimiter, maxKeys: 1000})
 
-        queue.pipe(Through(success, end))
-
-        return stream
-
-        function success(currentRequest) {
+        var queue = new Stream.Readable({objectMode: true})
+        queue._read = () => {
+        }
+        var stream = queue.pipe(Through2.obj(function (currentRequest, enc, done) {
             getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
                 if (e) {
                     stream.emit('error', e)
                     return queue.push(null)
                 }
                 r.objects.forEach(object => {
-                    stream.push(object)
+                    this.push(object)
                 })
                 if (r.isTruncated) {
                     queue.push({
@@ -297,87 +292,16 @@ class Client {
                         delimiter: currentRequest.delimiter,
                         maxKeys: currentRequest.maxKeys
                     })
+                    queue.push(null)
                 } else {
                     queue.push(null)
                 }
+                done()
             })
-        }
+        }))
+        queue.push({bucket: bucket, prefix: prefix, marker: null, delimiter: delimiter, maxKeys: 1000})
+        return stream
 
-        function end() {
-            stream.push(null)
-        }
-
-        function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) {
-            var queries = []
-            if (prefix) {
-                queries.push(`prefix=${prefix}`)
-            }
-            if (marker) {
-                queries.push(`marker=${marker}`)
-            }
-            if (delimiter) {
-                queries.push(`delimiter=${delimiter}`)
-            }
-            if (maxKeys) {
-                queries.push(`max-keys=${maxKeys}`)
-            }
-            queries.sort()
-            var query = ''
-            if (queries.length > 0) {
-                query = `?${queries.join('&')}`
-            }
-            var requestParams = {
-                host: params.host,
-                port: params.port,
-                path: `/${bucket}${query}`,
-                method: 'GET'
-            }
-
-            signV4(requestParams, '', params.accessKey, params.secretKey)
-
-            var req = transport.request(requestParams, (response) => {
-                if (response.statusCode !== 200) {
-                    return parseError(response, cb)
-                }
-                response.pipe(Concat((body) => {
-                    var xml = ParseXml(body.toString())
-                    var result = {
-                        objects: []
-                    }
-                    xml.root.children.forEach(element => {
-                        switch (element.name) {
-                            case "IsTruncated":
-                                result.isTruncated = element.content === 'true'
-                                break
-                            case "Contents":
-                                var object = {}
-                                element.children.forEach(xmlObject => {
-                                    switch (xmlObject.name) {
-                                        case "Key":
-                                            object.name = xmlObject.content
-                                            break
-                                        case "LastModified":
-                                            object.lastModified = xmlObject.content
-                                            break
-                                        case "Size":
-                                            object.size = +xmlObject.content
-                                            break
-                                        case "ETag":
-                                            object.etag = xmlObject.content
-                                            break
-                                        default:
-                                    }
-                                })
-                                result.objects.push(object)
-                                break
-                            default:
-                        }
-                    })
-                    cb(null, result)
-                }))
-            })
-            req.end()
-        }
     }
 
     statObject(bucket, object, cb) {
@@ -821,7 +745,7 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
                 }
             })
 
-            if(uploadID) {
+            if (uploadID) {
                 return cb(null, uploadID)
             }
             cb('unable to get upload id')
@@ -831,8 +755,8 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
 }
 
 function doPutObject(transport, params, bucket, key, contentType, size, uploadID, part, r, cb) {
-     var query = ''
-    if(part) {
+    var query = ''
+    if (part) {
         query = `?partNumber=${part}&uploadId=${uploadID}`
     }
     if (contentType == null || contentType == '') {
@@ -863,7 +787,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadID
 }
 
 function completeMultipartUpload(transport, params, bucket, key, uploadID, etags, cb) {
-     var requestParams = {
+    var requestParams = {
         host: params.host,
         port: params.port,
         path: `/${bucket}/${key}?uploadId=${uploadID}`,
@@ -873,10 +797,12 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
     var parts = []
 
     etags.forEach(element => {
-        parts.push({Part: [
-            {PartNumber: element.part},
-            {ETag: element.etag},
-        ]})
+        parts.push({
+            Part: [
+                {PartNumber: element.part},
+                {ETag: element.etag},
+            ]
+        })
     })
 
 
@@ -892,7 +818,8 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
     var payloadHash = hash.digest('hex')
 
     var stream = new Stream.Readable()
-    stream._read = () => {}
+    stream._read = () => {
+    }
     stream.push(payload)
     stream.push(null)
 
@@ -905,6 +832,78 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
         cb()
     })
     stream.pipe(request)
+}
+
+var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
+    var queries = []
+    if (prefix) {
+        queries.push(`prefix=${prefix}`)
+    }
+    if (marker) {
+        queries.push(`marker=${marker}`)
+    }
+    if (delimiter) {
+        queries.push(`delimiter=${delimiter}`)
+    }
+    if (maxKeys) {
+        queries.push(`max-keys=${maxKeys}`)
+    }
+    queries.sort()
+    var query = ''
+    if (queries.length > 0) {
+        query = `?${queries.join('&')}`
+    }
+    var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}${query}`,
+        method: 'GET'
+    }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var req = transport.request(requestParams, (response) => {
+        if (response.statusCode !== 200) {
+            return parseError(response, cb)
+        }
+        response.pipe(Concat((body) => {
+            var xml = ParseXml(body.toString())
+            var result = {
+                objects: []
+            }
+            xml.root.children.forEach(element => {
+                switch (element.name) {
+                    case "IsTruncated":
+                        result.isTruncated = element.content === 'true'
+                        break
+                    case "Contents":
+                        var object = {}
+                        element.children.forEach(xmlObject => {
+                            switch (xmlObject.name) {
+                                case "Key":
+                                    object.name = xmlObject.content
+                                    break
+                                case "LastModified":
+                                    object.lastModified = xmlObject.content
+                                    break
+                                case "Size":
+                                    object.size = +xmlObject.content
+                                    break
+                                case "ETag":
+                                    object.etag = xmlObject.content
+                                    break
+                                default:
+                            }
+                        })
+                        result.objects.push(object)
+                        break
+                    default:
+                }
+            })
+            cb(null, result)
+        }))
+    })
+    req.end()
 }
 
 var inst = Client
