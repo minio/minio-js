@@ -506,9 +506,10 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 var getAllIncompleteUploads = function (transport, params, bucket, object) {
     "use strict";
     var queue = new Stream.Readable({objectMode: true})
-    queue._read = () => {}
+    queue._read = () => {
+    }
 
-    var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
+    var stream = queue.pipe(Through2.obj(function (currentJob, enc, done) {
         listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
             if (response.statusCode !== 200) {
                 parseError(response, (e) => {
@@ -651,58 +652,60 @@ var dropUploads = (transport, params, bucket, key, cb) => {
     "use strict";
     var self = this
 
-    var listUploadsQueue = new Stream.Readable({objectMode: true})
-    listUploadsQueue._read = () => {
+    var errorred = null
+
+    var queue = new Stream.Readable({objectMode: true})
+    queue._read = () => {
     }
-
-    listUploadsQueue.pipe(Through(nextListJob, endListJob))
-
-    listUploadsQueue.on('error', (e) => {
-        uploadsToCancelQueue.emit('error', e)
-    })
-
-    var uploadsToCancelQueue = new Stream.Readable({objectMode: true})
-    uploadsToCancelQueue._read = () => {
-    }
-
-    uploadsToCancelQueue.pipe(Through(nextUploadToCancel, endUploadsToCancel))
-
-    uploadsToCancelQueue.on('error', (e) => {
-        cb(e)
-    })
-
-    listUploadsQueue.push({bucket: bucket, key: key, keyMarker: null, uploadIdMarker: null})
-
-
-    function nextListJob(job) {
+    queue.pipe(Through2.obj(function (job, enc, done) {
+        if(errorred) {
+            return done()
+        }
         listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
-            if (e) {
-                return listUploadsQueue.emit('error', e)
+            if(errorred) {
+                return done()
+            }
+            if(e) {
+                errorred = e
+                queue.push(null)
+                return done()
             }
             result.uploads.forEach(element => {
-                uploadsToCancelQueue.push(element)
+                this.push(element)
             })
             if (result.isTruncated) {
-                listUploadsQueue.push(result.nextJob)
+                queue.push({
+                    bucket: result.nextJob.bucket,
+                    key: result.nextJob.key,
+                    keyMarker: result.nextJob.keyMarker,
+                    uploadIdMarker: result.nextJob.uploadIdMarker
+                })
             } else {
-                listUploadsQueue.push(null)
+                queue.push(null)
             }
+            done()
         })
-    }
-
-    function endListJob() {
-        uploadsToCancelQueue.push(null)
-    }
-
-    function nextUploadToCancel(upload) {
-        abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-            // ignore, continue on
-        })
-    }
-
-    function endUploadsToCancel() {
-        cb()
-    }
+    }))
+        .pipe(Through2.obj(function (upload, enc, done) {
+            if(errorred) {
+                return done()
+            }
+            abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
+                if(errorred) {
+                    return done()
+                }
+                if(e) {
+                    errorred = e
+                    queue.push(null)
+                    return done()
+                }
+                done()
+            })
+        }, function(done) {
+            cb(errorred)
+            done()
+        }))
+    queue.push({bucket: bucket, key: key, keyMarker: null, uploadIdMarker: null})
 }
 
 var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
