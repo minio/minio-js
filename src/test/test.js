@@ -1,5 +1,5 @@
 /*
- * Minimal Object Storage Library, (C) 2015 Minio, Inc.
+ * Minimal Object Storage Library, (C) 2016 Minio, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,44 +278,45 @@ describe('Client', () => {
             })
             describe('with large objects using multipart', () => {
                 var uploadBlock = ''
-                for(var i=0; i<1024; i++) {
+                for (var i = 0; i < 1024; i++) {
                     uploadBlock += 'a'
                 }
                 it('should put an object', (done) => {
                     Nock('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
-                        if(body.length === 5*1024*1024) {
+                        if (body.length === 5 * 1024 * 1024) {
                             return true
                         }
                         return false
                     }).reply(200, '', {etag: 'etag1'})
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=2&uploadId=uploadid', (body) => {
-                        if(body.length === 5*1024*1024) {
+                        if (body.length === 5 * 1024 * 1024) {
                             return true
                         }
                         return false
                     }).reply(200, '', {etag: 'etag2'})
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-                        if(body.length === 5*1024*1024) {
+                        if (body.length === 5 * 1024 * 1024) {
                             return true
                         }
                         return false
                     }).reply(200, '', {etag: 'etag3'})
                     Nock('http://localhost:9000').put('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
-                        if(body.length === 4*1024*1024) {
+                        if (body.length === 4 * 1024 * 1024) {
                             return true
                         }
                         return false
                     }).reply(200)
                     Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200)
                     var s = new Stream.Readable()
-                    s._read = function() {}
-                    for(var i = 0; i<11*1024; i++) {
+                    s._read = function () {
+                    }
+                    for (var i = 0; i < 11 * 1024; i++) {
                         s.push(uploadBlock)
                     }
                     s.push(null)
-                    client.putObject("bucket", "object", '', 11*1024*1024, s, done)
+                    client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
                 })
                 it.skip('should resume an object upload', (done) => {
                 })

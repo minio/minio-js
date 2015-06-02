@@ -259,7 +259,6 @@ class Client {
         "use strict";
         var self = this
 
-
         var prefix = null
         var delimiter = null
         if (params) {
@@ -657,14 +656,14 @@ var dropUploads = (transport, params, bucket, key, cb) => {
     queue._read = () => {
     }
     queue.pipe(Through2.obj(function (job, enc, done) {
-        if(errorred) {
+        if (errorred) {
             return done()
         }
         listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
-            if(errorred) {
+            if (errorred) {
                 return done()
             }
-            if(e) {
+            if (e) {
                 errorred = e
                 queue.push(null)
                 return done()
@@ -686,21 +685,21 @@ var dropUploads = (transport, params, bucket, key, cb) => {
         })
     }))
         .pipe(Through2.obj(function (upload, enc, done) {
-            if(errorred) {
+            if (errorred) {
                 return done()
             }
             abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-                if(errorred) {
+                if (errorred) {
                     return done()
                 }
-                if(e) {
+                if (e) {
                     errorred = e
                     queue.push(null)
                     return done()
                 }
                 done()
             })
-        }, function(done) {
+        }, function (done) {
             cb(errorred)
             done()
         }))
