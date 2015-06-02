@@ -275,26 +275,26 @@ describe('Client', () => {
                 for(var i=0; i<1024; i++) {
                     uploadBlock += 'a'
                 }
-                it.skip('should put an object', (done) => {
+                it('should put an object', (done) => {
                     Nock('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
-                    //Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
-                    //    if(body.length === 5*1024*1024) {
-                    //        return true
-                    //    }
-                    //    return false
-                    //}).reply(200)
-                    //Nock('http://localhost:9000').put('/bucket/object?partNumber=2&uploadId=uploadid', (body) => {
-                    //    if(body.length === 5*1024*1024) {
-                    //        return true
-                    //    }
-                    //    return false
-                    //}).reply(200)
-                    //Nock('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-                    //    if(body.length === 1*1024*1024) {
-                    //        return true
-                    //    }
-                    //    return false
-                    //}).reply(200)
+                    Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
+                        if(body.length === 5*1024*1024) {
+                            return true
+                        }
+                        return false
+                    }).reply(200)
+                    Nock('http://localhost:9000').put('/bucket/object?partNumber=2&uploadId=uploadid', (body) => {
+                        if(body.length === 5*1024*1024) {
+                            return true
+                        }
+                        return false
+                    }).reply(200)
+                    Nock('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
+                        if(body.length === 5*1024*1024) {
+                            return true
+                        }
+                        return false
+                    }).reply(200)
                     //Nock('http://localhost:9000').put('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
                     //Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
                     //    if(body.length === 4*1024*1024) {
