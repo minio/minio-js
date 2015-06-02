@@ -234,6 +234,8 @@ class Client {
         var uploadID = null
         var part = null
 
+        var etags = []
+
         if(size > 5*1024*1024) {
             initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, uploadID) => {
                 if(e) {
@@ -247,9 +249,12 @@ class Client {
                     dataStream.push(data)
                     dataStream.push(null)
                     dataStream._read = () => {}
-                    doPutObject(self.transport, self.params, bucket, key, contentType, size, uploadID, curPart, dataStream, done)
+                    doPutObject(self.transport, self.params, bucket, key, contentType, size, uploadID, curPart, dataStream, (e, etag) => {
+                        etags.push({part: curPart, etag: etag})
+                        done()
+                    })
                 })).on('finish', () => {
-                    cb()
+                    completeMultipartUpload(self.transport, self.params, bucket, key, uploadID, etags, cb)
                 })
             })
         } else {
@@ -858,12 +863,13 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadID
         if (response.statusCode !== 200) {
             return parseError(response, cb)
         }
-        cb()
+        var etag = response.headers['etag']
+        cb(null, etag)
     })
     r.pipe(request)
 }
 
-function completeMultipartUpload(transport, params, bucket, key, uploadID, cb) {
+function completeMultipartUpload(transport, params, bucket, key, uploadID, etags, cb) {
      var requestParams = {
         host: params.host,
         port: params.port,

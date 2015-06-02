@@ -282,27 +282,27 @@ describe('Client', () => {
                             return true
                         }
                         return false
-                    }).reply(200)
+                    }).reply(200, '', {etag: 'etag1'})
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=2&uploadId=uploadid', (body) => {
                         if(body.length === 5*1024*1024) {
                             return true
                         }
                         return false
-                    }).reply(200)
+                    }).reply(200, '', {etag: 'etag2'})
                     Nock('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
                         if(body.length === 5*1024*1024) {
                             return true
                         }
                         return false
+                    }).reply(200, '', {etag: 'etag3'})
+                    Nock('http://localhost:9000').put('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
+                    Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
+                        if(body.length === 4*1024*1024) {
+                            return true
+                        }
+                        return false
                     }).reply(200)
-                    //Nock('http://localhost:9000').put('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
-                    //Nock('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
-                    //    if(body.length === 4*1024*1024) {
-                    //        return true
-                    //    }
-                    //    return false
-                    //}).reply(200)
-                    Nock('http://localhost:9000').put('/bucket/object?uploadId=uploadid').reply(200)
+                    Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200)
                     var s = new Stream.Readable()
                     s._read = function() {}
                     for(var i = 0; i<11*1024; i++) {
@@ -664,19 +664,24 @@ describe('Client', () => {
                 method(Http, params, 'bucket', 'object', checkError('status', 'message', 'requestid', 'resource', done))
             })
         })
-        describe('#completeMultipartUpload(transport, params, bucket, object, cb)', () => {
+        describe('#completeMultipartUpload(transport, params, bucket, object, uploadID, etags cb)', () => {
             var method = minio.__get__('completeMultipartUpload')
             var params = {
                 host: 'localhost',
                 port: 9000
             }
+            var etags = [
+                {part: 1, etag: 'etag1'},
+                {part: 2, etag: 'etag2'},
+                {part: 3, etag: 'etag3'}
+            ]
             it('should complete a multipart upload', (done) => {
                 Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200)
-                method(Http, params, 'bucket', 'object', 'uploadid', done)
+                method(Http, params, 'bucket', 'object', 'uploadid', etags, done)
             })
             it('should pass error to callback', (done) => {
                 Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-                method(Http, params, 'bucket', 'object', 'uploadid', checkError('status', 'message', 'requestid', 'resource', done))
+                method(Http, params, 'bucket', 'object', 'uploadid', etags, checkError('status', 'message', 'requestid', 'resource', done))
             })
         })
     })
