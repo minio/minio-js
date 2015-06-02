@@ -278,8 +278,7 @@ class Client {
         var stream = queue.pipe(Through2.obj(function (currentRequest, enc, done) {
             getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
                 if (e) {
-                    stream.emit('error', e)
-                    return queue.push(null)
+                    return done(e)
                 }
                 r.objects.forEach(object => {
                     this.push(object)
@@ -506,29 +505,15 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
 var getAllIncompleteUploads = function (transport, params, bucket, object) {
     "use strict";
-    var stream = new Stream.Readable({objectMode: true})
-
     var queue = new Stream.Readable({objectMode: true})
+    queue._read = () => {}
 
-    queue.pipe(Through(success, end))
-
-    queue.on('error', (e) => {
-        stream.emit('error', e)
-    })
-
-    queue.push({bucket: bucket, object: object, objectMarker: null, uploadIdMarker: null})
-
-    return stream
-
-    function success(currentJob) {
-        "use strict";
-
+    var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
         listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
             if (response.statusCode !== 200) {
                 parseError(response, (e) => {
-                    queue.emit('error', e)
+                    return done(e)
                 })
-                return
             }
             var uploads = []
             // parse xml
@@ -536,13 +521,13 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
                 stream.push(upload)
             })
             queue.push({bucket: bucket, object: object, objectMarker: objectMarker, uploadIdMarker: uploadIdMarker})
+            done()
         })
+    }))
 
-    }
+    queue.push({bucket: bucket, object: object, objectMarker: null, uploadIdMarker: null})
 
-    function end() {
-        stream.push()
-    }
+    return stream
 
 }
 
