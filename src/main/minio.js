@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-var Async = require('async')
 var BlockStream = require('block-stream')
-var CombinedStream = require('combined-stream') // use MultiStream unless you need lazy append after stream created
 var Concat = require('concat-stream')
 var Crypto = require('crypto')
 var Http = require('http')
 var Moment = require('moment')
 var ParseXml = require('xml-parser')
-var Q = require('q')
 var Stream = require('stream')
 var Through = require('through')
 var Through2 = require('through2')
 var Xml = require('xml')
-var ParseString = require('xml2js').parseString
 
 class Client {
     constructor(params, transport) {
