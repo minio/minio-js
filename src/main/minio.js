@@ -877,7 +877,33 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
         method: 'POST'
     }
 
-    signV4(requestParams, '', params.accessKey, params.secretKey)
+    var parts = []
+
+    etags.forEach(element => {
+        parts.push({Part: [
+            {PartNumber: element.part},
+            {ETag: element.etag},
+        ]})
+    })
+
+
+    var payloadObject = {
+        CompleteMultipartUpload: parts
+    }
+
+
+    var payload = Xml(payloadObject)
+
+    var hash = Crypto.createHash('sha256')
+    hash.update(payload)
+    var payloadHash = hash.digest('hex')
+
+    var stream = new Stream.Readable()
+    stream._read = () => {}
+    stream.push(payload)
+    stream.push(null)
+
+    signV4(requestParams, payloadHash, params.accessKey, params.secretKey)
 
     var request = transport.request(requestParams, (response) => {
         if (response.statusCode !== 200) {
@@ -885,7 +911,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
         }
         cb()
     })
-    request.end()
+    stream.pipe(request)
 }
 
 var inst = Client

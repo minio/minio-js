@@ -30,6 +30,10 @@ var MockTransport = require('./transport.js')
 
 describe('Client', () => {
     "use strict";
+
+    beforeEach(() => {
+        Nock.cleanAll()
+    })
     var client = new minio({host: 'localhost', port: 9000, accessKey: "accesskey", secretKey: "secretkey"})
     describe('Authentication', () => {
         describe('not set', () => {
@@ -676,7 +680,7 @@ describe('Client', () => {
                 {part: 3, etag: 'etag3'}
             ]
             it('should complete a multipart upload', (done) => {
-                Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200)
+                Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid', '<CompleteMultipartUpload><Part><PartNumber>1</PartNumber><ETag>etag1</ETag></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag></Part></CompleteMultipartUpload>').reply(200)
                 method(Http, params, 'bucket', 'object', 'uploadid', etags, done)
             })
             it('should pass error to callback', (done) => {
