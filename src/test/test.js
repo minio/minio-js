@@ -21,6 +21,7 @@ var Concat = require('concat-stream')
 var Http = require('http')
 var Nock = require('nock')
 var Through = require('through')
+var Through2 = require('through2')
 var Stream = require('stream')
 
 var Rewire = require('rewire')
@@ -775,6 +776,66 @@ describe('Client', () => {
         Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource', done))
         method(Http, params, 'bucket', 'object', 'uploadid', 3, checkError('status', 'message', 'requestid', 'resource', done))
       })
+    })
+    describe('#listAllParts(transport, params, bucket, object, uploadId)', () => {
+      var method = minio.__get__('listAllParts')
+      var params = {
+        host: 'localhost',
+        port: 9000
+      }
+      it('should list all parts', (done) => {
+        var expectedResults = [{
+          part: 1,
+          etag: 'etag1',
+          size: 5242880
+        }, {
+          part: 2,
+          etag: 'etag2',
+          size: 5242880
+        }, {
+          part: 3,
+          etag: 'etag3',
+          size: 5242880
+        }, {
+          part: 4,
+          etag: 'etag4',
+          size: 5242880
+        }, {
+          part: 5,
+          etag: 'etag5',
+          size: 5242880
+        }, {
+          part: 6,
+          etag: 'etag6',
+          size: 5242880
+        }, {
+          part: 7,
+          etag: 'etag7',
+          size: 5242880
+        }, {
+          part: 8,
+          etag: 'etag8',
+          size: 5242880
+        }, {
+          part: 9,
+          etag: 'etag9',
+          size: 5242880
+        }]
+        Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>3</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>1</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
+        Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>6</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>4</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>5</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>6</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
+        Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>7</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>8</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>9</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
+        var stream = method(Http, params, 'bucket', 'object', 'uploadid')
+        var results = []
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          results.push(part)
+          end()
+        }, function(end) {
+          Assert.deepEqual(results, expectedResults)
+          end()
+          done()
+        }))
+      })
+      it.skip('should return error in stream', (done) => {})
     })
   })
 })
