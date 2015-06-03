@@ -515,7 +515,7 @@ var getAllIncompleteUploads = function (transport, params, bucket, object) {
                 })
             }
             var uploads = []
-            // parse xml
+            // TODO parse xml
             uploads.forEach(upload => {
                 stream.push(upload)
             })
@@ -891,6 +891,79 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
     })
     req.end()
 }
+
+var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
+  var query = '?'
+  if(marker) {
+    query += `part-number-marker=${marker}&`
+  }
+  query += `uploadId=${uploadId}`
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}${query}`,
+    method: 'GET'
+  }
+
+  signV4(requestParams, '', params.accessKey, params.secretKey)
+
+  var request = Http.request(requestParams, (response) => {
+    if(response.statusCode !== 200) {
+      return parseError(response, cb)
+    }
+    response.pipe(Concat(body => {
+      var xml = ParseXml(body.toString())
+      var result = {
+        isTruncated: false,
+        parts: [],
+        nextJob: null
+      }
+      var nextJob = {
+        bucket: bucket,
+        key: key,
+        uploadId: uploadId
+      }
+      xml.root.children.forEach(element => {
+        switch (element.name) {
+          case "IsTruncated":
+            result.isTruncated = element.content === 'true'
+            break
+          case "NextPartNumberMarker":
+            nextJob.marker = +element.content
+            break
+          case "Part":
+            var object = {}
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case "PartNumber":
+                  object.part = +xmlObject.content
+                  break
+                case "ETag":
+                  object.etag = xmlObject.content
+                  break
+                case "Size":
+                  object.size = +xmlObject.content
+                  break
+                case "ETag":
+                  object.etag = xmlObject.content
+                  break
+                default:
+              }
+            })
+            result.parts.push(object)
+            break
+          default:
+            break
+          }
+        })
+        if(result.isTruncated) {
+          result.nextJob = nextJob
+        }
+        cb(null, result)
+      }))
+    })
+    request.end()
+  }
 
 var inst = Client
 module.exports = inst
