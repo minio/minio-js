@@ -14,22 +14,9 @@
  * limitations under the License.
  */
 
-var minio = require('../..')
-var stream = require('stream');
-var util = require('util');
-
-function StringifyStream(){
-  stream.Transform.call(this);
-
-  this._readableState.objectMode = false;
-  this._writableState.objectMode = true;
-}
-util.inherits(StringifyStream, stream.Transform);
-
-StringifyStream.prototype._transform = function(obj, encoding, cb){
-  this.push(JSON.stringify(obj));
-  cb();
-};
+var Minio = require('../..')
+var Stream = require('stream');
+var Through2 = require('through2');
 
 var s3client = new minio({
   host: 's3.amazonaws.com',
@@ -38,5 +25,8 @@ var s3client = new minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketstream = s3client.listBuckets()
-bucketstream.pipe(new StringifyStream()).pipe(process.stdout)
+var bucketStream = s3client.listBuckets()
+bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
+  console.log(bucket)
+  done()
+}))
