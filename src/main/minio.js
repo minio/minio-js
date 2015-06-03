@@ -268,7 +268,8 @@ class Client {
       if (params.prefix) {
         prefix = params.prefix
       }
-      if (params.recursive) {
+      // we delimit when recursive is false
+      if (params.recursive == false) {
         delimiter = '/'
       }
     }
