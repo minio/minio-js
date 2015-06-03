@@ -927,22 +927,22 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
   queue._read = () => {}
   var stream = queue
     .pipe(Through2.obj(function(job, enc, done) {
-      console.log(job)
-      if(errorred) {
+      if (errorred) {
         return done()
       }
       listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
-        console.log(r)
-        if(errorred) {
+        if (errorred) {
           return done()
         }
-        if(e) {
+        if (e) {
           errorred = e
+          queue.push(null)
+          return done()
         }
         r.parts.forEach((element) => {
           this.push(element)
         })
-        if(r.isTruncated) {
+        if (r.isTruncated) {
           queue.push(r.nextJob)
         } else {
           queue.push(null)
