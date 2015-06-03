@@ -498,9 +498,10 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var canonicalString = ""
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
-    canonicalString += request.path + '\n'
-    if (request.query) {
-      canonicalString += request.query + '\n'
+    // TODO this not clean, but works
+    canonicalString += request.path.split('?')[0] + '\n';
+    if (request.path.split('?')[1]) {
+      canonicalString += request.path.split('?')[1] + '\n';
     } else {
       canonicalString += '\n'
     }
@@ -512,6 +513,18 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     canonicalString += dataShaSum1
     return [canonicalString, signedHeaders]
   }
+}
+
+var uriEscape = function uriEscape(string) {
+  var output = encodeURIComponent(string);
+  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
+
+  // AWS percent-encodes some extra non-standard characters in a URI
+  output = output.replace(/[*]/g, function(ch) {
+    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
+  });
+
+  return output;
 }
 
 var getAllIncompleteUploads = function(transport, params, bucket, object) {
@@ -557,16 +570,21 @@ var getAllIncompleteUploads = function(transport, params, bucket, object) {
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
   "use strict";
   var queries = []
+  var escape = uriEscape
   if (key) {
+    key = escape(key)
     queries.push(`prefix=${key}`)
   }
   if (keyMarker) {
+    keyMarker = escape(keyMarker)
     queries.push(`key-marker=${keyMarker}`)
   }
   if (uploadIdMarker) {
+    uploadIdMarker = escape(uploadIdMarker)
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
-  queries.push(`max-uploads=1000`)
+  var maxuploads = 1000;
+  queries.push(`max-uploads=${maxuploads}`)
   queries.sort()
   queries.unshift('uploads')
   var query = ''
@@ -852,16 +870,21 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
 
 var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
   var queries = []
+  var escape = uriEscape; // escape every value, for query string
   if (prefix) {
+    prefix = escape(prefix)
     queries.push(`prefix=${prefix}`)
   }
   if (marker) {
+    marker = escape(marker)
     queries.push(`marker=${marker}`)
   }
   if (delimiter) {
+    delimiter = escape(delimiter)
     queries.push(`delimiter=${delimiter}`)
   }
   if (maxKeys) {
+    maxKeys = escape(maxKeys)
     queries.push(`max-keys=${maxKeys}`)
   }
   queries.sort()
