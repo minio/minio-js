@@ -919,6 +919,35 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
   req.end()
 }
 
+var listAllParts = (transport, params, bucket, key, uploadId) => {
+  var queue = new Stream.Readable({
+    objectMode: true
+  })
+  queue._read = () => {}
+  var stream = queue
+    .pipe(Through2.obj(function(job, enc, done) {
+      for (var i = 1; i <= 3; i++) {
+        var part = (+job.marker) + i
+        this.push({
+          part: part,
+          etag: `etag${part}`,
+          size: 5 * 1024 * 1024
+        })
+      }
+      var nextMarker = (+job.marker) + 3
+      if(nextMarker <= 6) {
+        queue.push({marker: nextMarker})
+      } else {
+        queue.push(null)
+      }
+      done()
+    }, function(end) {
+      end()
+    }))
+  queue.push({marker: 0})
+  return stream
+}
+
 var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   var query = '?'
   if (marker) {
