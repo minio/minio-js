@@ -34,7 +34,7 @@ gulp.task('test:compile', function (cb) {
 
 gulp.task('test', ['compile', 'test:compile'], function () {
     gulp.src('dist/test/*.js', {read: false})
-        .pipe(mocha({reporter: 'spec'}))
+        .pipe(mocha({reporter: 'min'}))
 })
 
 gulp.task('example:compile', function (cb) {
