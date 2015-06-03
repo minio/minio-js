@@ -7,6 +7,37 @@ $ git clone https://github.com/minio/minio-js
 $ npm install
 ```
 
+## Example
+
+```js
+var stream = require('stream');
+var util = require('util');
+var minio = require('minio')
+
+function StringifyStream(){
+  stream.Transform.call(this);
+
+  this._readableState.objectMode = false;
+  this._writableState.objectMode = true;
+}
+util.inherits(StringifyStream, stream.Transform);
+
+StringifyStream.prototype._transform = function(obj, encoding, cb){
+  this.push(JSON.stringify(obj));
+  cb();
+};
+
+var s3client = new minio({
+  host: 's3.amazonaws.com',
+  port: 80,
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY'
+})
+
+var bucketstream = s3client.listBuckets()
+bucketstream.pipe(new StringifyStream()).pipe(process.stdout)
+```
+
 ## Documentation
 
 ## Join The Community
