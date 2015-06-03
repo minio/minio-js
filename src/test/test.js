@@ -776,6 +776,12 @@ describe('Client', () => {
         method(Http, params, 'bucket', 'object', 'uploadid', 3, checkError('status', 'message', 'requestid', 'resource', done))
       })
     })
+    describe('#listAllParts(transport, params, bucket, object, uploadId)'() => {
+      it.skip('should list all parts'(done) => {
+      })
+      it.skip('should return error in stream'(done) => {
+      })
+    })
   })
 })
 
