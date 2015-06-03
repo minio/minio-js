@@ -773,7 +773,7 @@ describe('Client', () => {
         })
       })
       it('should pass error to callcack', (done) => {
-        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
         method(Http, params, 'bucket', 'object', 'uploadid', 3, checkError('status', 'message', 'requestid', 'resource', done))
       })
     })
@@ -835,7 +835,19 @@ describe('Client', () => {
           done()
         }))
       })
-      it.skip('should return error in stream', (done) => {})
+      it('should return error in stream', (done) => {
+        Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>3</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>1</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
+        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+        var stream = method(Http, params, 'bucket', 'object', 'uploadid')
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          end()
+        }, function(end) {
+          end()
+        }))
+        stream.on('error', (e) => {
+          done()
+        })
+      })
     })
   })
 })
