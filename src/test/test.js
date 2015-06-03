@@ -120,8 +120,8 @@ describe('Client', () => {
         client.makeBucket('bucket', done)
       })
       it('pass an error into the callback on failure', (done) => {
-        Nock('http://localhost:9000').put('/bucket').reply(400, generateError('status', 'message', 'requestid', '/bucket'))
-        client.makeBucket('bucket', checkError("status", "message", "requestid", "/bucket", done))
+        Nock('http://localhost:9000').put('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
+        client.makeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
     })
 
@@ -148,12 +148,12 @@ describe('Client', () => {
         }
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').get('/').reply(400, generateError('status', 'message', 'requestid', '/'))
+        Nock('http://localhost:9000').get('/').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/'))
         var stream = client.listBuckets()
         stream.pipe(Through(success, end))
 
         stream.on('error', (e) => {
-          checkError('status', 'message', 'requestid', '/')(e)
+          checkError('code', 'message', 'requestid', 'hostid', '/')(e)
           done()
         })
 
@@ -172,8 +172,8 @@ describe('Client', () => {
         })
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').head('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.bucketExists('bucket', checkError('status', 'message', 'requestid', 'resource', (r) => {
+        Nock('http://localhost:9000').head('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -188,8 +188,8 @@ describe('Client', () => {
         })
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').head('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.bucketExists('bucket', checkError('status', 'message', 'requestid', 'resource', (r) => {
+        Nock('http://localhost:9000').head('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -229,8 +229,8 @@ describe('Client', () => {
         done()
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').put('/bucket?acl').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.setBucketACL('bucket', 'public', checkError('status', 'message', 'requestid', 'resource', (r) => {
+        Nock('http://localhost:9000').put('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.setBucketACL('bucket', 'public', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -251,14 +251,14 @@ describe('Client', () => {
         Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncted><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(200)
         Nock('http://localhost:9000').delete('/golang/go1.5.0?uploadId=uploadid2').reply(200)
-        Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&upload-id-marker=uploadidmarker').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.dropAllIncompleteUploads('golang', checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&upload-id-marker=uploadidmarker').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.dropAllIncompleteUploads('golang', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should pass delete error to callback', (done) => {
         Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncted><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&upload-id-marker=uploadidmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadidmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncted><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-        client.dropAllIncompleteUploads('golang', checkError('status', 'message', 'requestid', 'resource', done))
+        client.dropAllIncompleteUploads('golang', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
   })
@@ -276,8 +276,8 @@ describe('Client', () => {
         })
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').get('/bucket/object').reply(400, generateError('status', 'message', 'requestid', '/bucket/object'))
-        client.getObject("bucket", "object", checkError("status", "message", "requestid", "/bucket/object", (r) => {
+        Nock('http://localhost:9000').get('/bucket/object').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket/object'))
+        client.getObject("bucket", "object", checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -295,12 +295,12 @@ describe('Client', () => {
           client.putObject("bucket", "object", '', 11, s, done)
         })
         it('should pass error to callback', (done) => {
-          Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Status>status</Status><Message>message</Message><RequestId>requestid</RequestId><Resource>/bucket/object</Resource></Error>")
+          Nock('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, "<Error><Code>code</Code><Message>message</Message><RequestId>requestid</RequestId><HostId>hostid</HostId><Resource>/bucket/object</Resource></Error>")
           var s = new Stream.Readable()
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 11, s, checkError('status', 'message', 'requestid', '/bucket/object', done))
+          client.putObject("bucket", "object", '', 11, s, checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', done))
         })
       })
       describe('with large objects using multipart', () => {
@@ -400,10 +400,10 @@ describe('Client', () => {
       it('should pass error on stream', (done) => {
         Nock('http://localhost:9000').filteringPath(() => {
           return '/bucket'
-        }).get('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         var stream = client.listObjects('bucket')
         stream.on('error', (e) => {
-          checkError('status', 'message', 'requestid', 'resource')(e)
+          checkError('code', 'message', 'requestid', 'hostid', 'resource')(e)
           done()
         })
         stream.pipe(Through(success, end))
@@ -418,10 +418,10 @@ describe('Client', () => {
         }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
         Nock('http://localhost:9000').filteringPath(() => {
           return '/bucket'
-        }).get('/bucket').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         var stream = client.listObjects('bucket')
         stream.on('error', (e) => {
-          checkError('status', 'message', 'requestid', 'resource')(e)
+          checkError('code', 'message', 'requestid', 'hostid', 'resource')(e)
           done()
         })
         stream.pipe(Through(success, end))
@@ -451,9 +451,9 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         Nock('http://localhost:9000').head('/bucket/object')
-          .reply(400, generateError('status', 'message', 'requestid', 'resource'))
+          .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
 
-        client.statObject('bucket', 'object', checkError('status', 'message', 'requestid', 'resource', (r) => {
+        client.statObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -470,8 +470,8 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         Nock('http://localhost:9000').delete('/bucket/object')
-          .reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.removeObject('bucket', 'object', checkError('status', 'message', 'requestid', 'resource', (r) => {
+          .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.removeObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
@@ -486,22 +486,22 @@ describe('Client', () => {
         client.dropIncompleteUpload('golang', 'go1.4.2', done)
       })
       it('should pass error to callback on list failure', (done) => {
-        Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should pass error to callback on second list failure', (done) => {
         Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(200)
         Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(200)
-        Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadmarker').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadmarker').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should skip errors and continue', (done) => {
         Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(400, generateError('status2', 'message2', 'requestid2', 'resource2'))
+        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        Nock('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(400, generateError('code2', 'message2', 'requestid2', 'hostid2', 'resource2'))
         Nock('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
-        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('status', 'message', 'requestid', 'resource', done))
+        client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
   })
@@ -580,10 +580,10 @@ describe('Client', () => {
           })
         })
         it('should pass error to callback', (done) => {
-          Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-          method(Http, params, 'golang', null, null, null, checkError('status', 'message', 'requestid', 'resource', (result) => {
+          Nock('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+          method(Http, params, 'golang', null, null, null, checkError('code', 'message', 'requestid', 'hostid', 'resource', (result) => {
             Assert.equal(result, null)
-            checkError('status', 'message', 'requestid', 'resource', (r) => {
+            checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
               Assert.equal(r, null)
             })
             done()
@@ -694,8 +694,8 @@ describe('Client', () => {
         })
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').post('/bucket/object?uploads').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        method(Http, params, 'bucket', 'object', checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').post('/bucket/object?uploads').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        method(Http, params, 'bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
     describe('#completeMultipartUpload(transport, params, bucket, object, uploadID, etags cb)', () => {
@@ -719,8 +719,8 @@ describe('Client', () => {
         method(Http, params, 'bucket', 'object', 'uploadid', etags, done)
       })
       it('should pass error to callback', (done) => {
-        Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        method(Http, params, 'bucket', 'object', 'uploadid', etags, checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        method(Http, params, 'bucket', 'object', 'uploadid', etags, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
     describe('#listParts(transport, params, bucket, object, uploadId, marker, cb)', () => {
@@ -785,8 +785,8 @@ describe('Client', () => {
         })
       })
       it('should pass error to callcack', (done) => {
-        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
-        method(Http, params, 'bucket', 'object', 'uploadid', 3, checkError('status', 'message', 'requestid', 'resource', done))
+        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        method(Http, params, 'bucket', 'object', 'uploadid', 3, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
     describe('#listAllParts(transport, params, bucket, object, uploadId)', () => {
@@ -849,7 +849,7 @@ describe('Client', () => {
       })
       it('should return error in stream', (done) => {
         Nock('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>3</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>1</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
-        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('status', 'message', 'requestid', 'resource'))
+        Nock('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         var stream = method(Http, params, 'bucket', 'object', 'uploadid')
         stream.pipe(Through2.obj(function(part, enc, end) {
           end()
@@ -864,15 +864,16 @@ describe('Client', () => {
   })
 })
 
-var checkError = (status, message, requestid, resource, callback) => {
+var checkError = (code, message, requestid, hostid, resource, callback) => {
   return (e, ...rest) => {
     "use strict";
     if (e === null) {
       callback('expected error, received success')
     }
-    Assert.equal(e.status, status)
+    Assert.equal(e.code, code)
     Assert.equal(e.message, message)
     Assert.equal(e.requestid, requestid)
+    Assert.equal(e.hostid, hostid)
     Assert.equal(e.resource, resource)
     if (callback) {
       if (rest.length === 0) {
@@ -888,6 +889,6 @@ var checkError = (status, message, requestid, resource, callback) => {
   }
 }
 
-var generateError = (status, message, requestid, resource) => {
-  return `<Error><Status>${status}</Status><Message>${message}</Message><RequestId>${requestid}</RequestId><Resource>${resource}</Resource></Error>`
+var generateError = (code, message, requestid, hostid, resource) => {
+  return `<Error><Code>${code}</Code><Message>${message}</Message><RequestId>${requestid}</RequestId><HostId>${hostid}</HostId><Resource>${resource}</Resource></Error>`
 }

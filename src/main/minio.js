@@ -365,14 +365,16 @@ var parseError = (response, cb) => {
     var parsedXml = ParseXml(errorXml.toString())
     var e = {}
     parsedXml.root.children.forEach(element => {
-      if (element.name === 'Status') {
-        e.status = element.content
+      if (element.name === 'Code') {
+        e.code = element.content
       } else if (element.name === 'Message') {
         e.message = element.content
       } else if (element.name === 'RequestId') {
         e.requestid = element.content
       } else if (element.name === 'Resource') {
         e.resource = element.content
+      } else if (element.name === 'HostId') {
+        e.hostid = element.content
       }
     })
     cb(e)
