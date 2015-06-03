@@ -920,37 +920,50 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
 }
 
 var listAllParts = (transport, params, bucket, key, uploadId) => {
+  var errorred = null
   var queue = new Stream.Readable({
     objectMode: true
   })
   queue._read = () => {}
   var stream = queue
     .pipe(Through2.obj(function(job, enc, done) {
-      for (var i = 1; i <= 3; i++) {
-        var part = (+job.marker) + i
-        this.push({
-          part: part,
-          etag: `etag${part}`,
-          size: 5 * 1024 * 1024
+      console.log(job)
+      if(errorred) {
+        return done()
+      }
+      listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
+        console.log(r)
+        if(errorred) {
+          return done()
+        }
+        if(e) {
+          errorred = e
+        }
+        r.parts.forEach((element) => {
+          this.push(element)
         })
-      }
-      var nextMarker = (+job.marker) + 3
-      if(nextMarker <= 6) {
-        queue.push({marker: nextMarker})
-      } else {
-        queue.push(null)
-      }
-      done()
+        if(r.isTruncated) {
+          queue.push(r.nextJob)
+        } else {
+          queue.push(null)
+        }
+        done()
+      })
     }, function(end) {
-      end()
+      end(errorred)
     }))
-  queue.push({marker: 0})
+  queue.push({
+    bucket: bucket,
+    key: key,
+    uploadId: uploadId,
+    marker: 0
+  })
   return stream
 }
 
 var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   var query = '?'
-  if (marker) {
+  if (marker && marker != 0) {
     query += `part-number-marker=${marker}&`
   }
   query += `uploadId=${uploadId}`
