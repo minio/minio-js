@@ -260,6 +260,9 @@ class Client {
         } else {
           //console.log('list parts pre init')
           var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
+          parts.on('error', (e) => {
+            cb(e)
+          })
           var partsErrorred = null
           var partsArray = []
           parts.pipe(Through2.obj(function(part, enc, partDone) {

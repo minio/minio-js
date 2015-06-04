@@ -412,7 +412,17 @@ describe('Client', () => {
           s.push(null)
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
-        it.skip('should pass part list error to callback', (done) => {})
+        it('should pass part list error to callback', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+          MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+          var s = new Stream.Readable()
+          s._read = function() {}
+          for (var i = 0; i < 11 * 1024; i++) {
+            s.push(uploadBlock)
+          }
+          s.push(null)
+          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+        })
         it.skip('should pass put error to callback', (done) => {})
         it.skip('should pass complete upload error to callback', (done) => {})
       })
