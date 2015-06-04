@@ -234,59 +234,60 @@ class Client {
       var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key)
       var uploadId = null
       stream.pipe(Through2.obj(function(upload, enc, done) {
-          //console.log('found existing upload')
-          //console.log(upload)
-          uploadId = upload.uploadId
-          done()
-        }, function(done) {
-          //console.log('final upload id')
-          //console.log(uploadId)
-          if (!uploadId) {
-            initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
-              if (e) {
-                return done(e)
-              }
-              streamUpload(self.transport, self.params, bucket, key, uploadId, [], r, (e) => {
-                //console.log('other upload')
-                return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                  done(e)
-                  cb(e)
-                })
+        //console.log('found existing upload')
+        //console.log(upload)
+        uploadId = upload.uploadId
+        done()
+      }, function(done) {
+        //console.log('final upload id')
+        //console.log(uploadId)
+        if (!uploadId) {
+          initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
+            if (e) {
+              return done(e)
+            }
+            streamUpload(self.transport, self.params, bucket, key, uploadId, [], r, (e) => {
+              //console.log('other upload')
+              return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                done(e)
+                cb(e)
               })
             })
-          } else {
-            //console.log('list parts pre init')
-            var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
-            var partsErrorred = null
-            var partsArray = []
-            parts.pipe(Through2.obj(function(part, enc, partDone) {
-              //console.log('got part')
-              //console.log(part)
-              partsArray.push(part)
-              partDone()
-            }, function(partDone) {
+          })
+        } else {
+          //console.log('list parts pre init')
+          var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
+          var partsErrorred = null
+          var partsArray = []
+          parts.pipe(Through2.obj(function(part, enc, partDone) {
+            //console.log('got part')
+            //console.log(part)
+            partsArray.push(part)
+            partDone()
+          }, function(partDone) {
+            if (partsErrorred) {
+              return partDone(partsErrorred)
+            }
+            //console.log('got all parts')
+            //console.log(partsArray)
+            streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, r, (e) => {
+              //console.log('stream upload finished')
               if (partsErrorred) {
-                return partDone(partsErrorred)
+                partDone()
               }
-              //console.log('got all parts')
-              //console.log(partsArray)
-              streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, r, (e) => {
-                //console.log('stream upload finished')
-                if (e) {
-                  return partDone(e)
-                }
-                //console.log('calling complete multipart upload')
-                completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                  partDone(e)
-                  cb(e)
-                })
+              if (e) {
+                partDone()
+                return cb(e)
+              }
+              //console.log('calling complete multipart upload')
+              completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                partDone(e)
+                return cb(e)
               })
-            }))
-          }
-        }))
-        .on('error', (e) => {
-          cb(e)
-        })
+            })
+          }))
+        }
+      }))
 
       function streamUpload(transport, params, bucket, key, uploadId, partsArray, r, cb) {
         //console.log('stream upload started')
@@ -317,7 +318,7 @@ class Client {
             } else {
               //console.log('actual  : ' + md5)
               //console.log('expected: ' + curPart.etag)
-              errorred = new Error('mismatched etag')
+              errorred = 'mismatched etag'
               return done()
             }
           } else {
@@ -348,7 +349,7 @@ class Client {
           }
         }, function(done) {
           //console.log('data pipe end reached')
-          done(errorred)
+          done()
             //console.log('wee')
           cb(errorred)
         }))
