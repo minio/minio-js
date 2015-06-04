@@ -367,7 +367,10 @@ describe('Client', () => {
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
         })
         it.skip('should abort an object upload when uploaded data does not match', (done) => {})
-        it.skip('should pass error to callback', (done) => {})
+        it.skip('should pass upload list error to callback', (done) => {})
+        it.skip('should pass part list error to callback', (done) => {})
+        it.skip('should pass put error to callback', (done) => {})
+        it.skip('should pass complete upload error to callback', (done) => {})
       })
     })
 
