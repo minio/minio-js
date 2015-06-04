@@ -24,8 +24,8 @@ var client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketStream = client.listBuckets()
-bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
-  console.log(bucket)
+var objectsStream = client.listObjects('your-bucket', {recursive: true})
+objectsStream.pipe(Through2.obj(function(object, enc, done) {
+  console.log(object)
   done()
 }))
