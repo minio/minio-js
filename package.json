@@ -21,7 +21,7 @@
     "await": "^0.2.5",
     "block-stream": "0.0.8",
     "concat-stream": "^1.4.8",
-    "gulp": "^3.8.11",
+    "gulp": "^3.9.0",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
     "gulp-sourcemaps": "^1.5.2",
