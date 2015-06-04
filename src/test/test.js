@@ -40,7 +40,6 @@ describe('Client', () => {
   afterEach(() => {
     nockRequests.forEach(element => {
       if (!element.request.isDone()) {
-        //console.log(element.trace)
         element.request.done()
       }
     })
@@ -135,11 +134,12 @@ describe('Client', () => {
   describe('Bucket API calls', () => {
     describe('#makeBucket(bucket, callback)', () => {
       it('should call the callback on success', (done) => {
-        MockResponse('http://localhost:9000').put('/bucket').reply(200)
+        // <CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>
+        MockResponse('http://localhost:9000').put('/bucket','<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>').reply(200)
         client.makeBucket('bucket', done)
       })
       it('pass an error into the callback on failure', (done) => {
-        MockResponse('http://localhost:9000').put('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
+        MockResponse('http://localhost:9000').put('/bucket', '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
         client.makeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
     })
@@ -382,8 +382,6 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, (e, r) => {
-            //console.log('tracer')
-            //console.log(new Error().stack)
             done(e)
           })
         })

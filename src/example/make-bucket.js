@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-Minio = require('../..')
+var Minio = require('../..')
 
 var client = new Minio({
   host: 's3.amazonaws.com',
@@ -23,6 +23,6 @@ var client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-client.makeBucket('golangjs', (e) => {
+client.makeBucket('goroutinejs', (e) => {
   console.log(e)
 })

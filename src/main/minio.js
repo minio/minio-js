@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+require('source-map-support').install()
+
 var BlockStream = require('block-stream')
 var Concat = require('concat-stream')
 var Crypto = require('crypto')
@@ -40,14 +42,36 @@ class Client {
   makeBucket(bucket, cb) {
     "use strict"
 
+    var payloadObject = {
+      CreateBucketConfiguration: [{
+        _attr: {
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
+        }
+      }, {
+        LocationConstraint: getRegion(this.params.host)
+      }]
+    }
+
+    var payload = Xml(payloadObject)
+
+    var stream = new Stream.Readable()
+    stream.push(payload.toString())
+    stream.push(null)
+
+    var hash = Crypto.createHash('sha256')
+    hash.update(payload)
+    var sha256 = hash.digest('hex').toLowerCase()
+
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
       method: 'PUT',
-      path: `/${bucket}`
+      path: `/${bucket}`,
+      headers: {
+        'Content-Length': payload.length
+      }
     }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
@@ -55,7 +79,7 @@ class Client {
       }
       cb()
     })
-    req.end()
+    stream.pipe(req)
   }
 
   listBuckets() {
@@ -523,32 +547,6 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
   }
 
-  function getRegion(host) {
-    switch (host) {
-      case "s3.amazonaws.com":
-        return "us-east-1"
-      case "s3-ap-northeast-1.amazonaws.com":
-        return "ap-northeast-1"
-      case "s3-ap-southeast-1.amazonaws.com":
-        return "ap-southeast-1"
-      case "s3-ap-southeast-2.amazonaws.com":
-        return "ap-southeast-2"
-      case "s3-eu-central-1.amazonaws.com":
-        return "eu-central-1"
-      case "s3-eu-west-1.amazonaws.com":
-        return "eu-west-1"
-      case "s3-sa-east-1.amazonaws.com":
-        return "sa-east-1"
-      case "s3-external-1.amazonaws.com":
-        return "us-east-1"
-      case "s3-us-west-1.amazonaws.com":
-        return "us-west-1"
-      case "s3-us-west-2.amazonaws.com":
-        return "us-west-2"
-      default:
-        return "milkyway"
-    }
-  }
 
   function getCanonicalRequest(request, dataShaSum1) {
 
@@ -942,14 +940,14 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
 
   var hash = Crypto.createHash('sha256')
   hash.update(payload)
-  var payloadHash = hash.digest('hex')
+  var sha256 = hash.digest('hex').toLowerCase()
 
   var stream = new Stream.Readable()
   stream._read = () => {}
   stream.push(payload)
   stream.push(null)
 
-  signV4(requestParams, payloadHash, params.accessKey, params.secretKey)
+  signV4(requestParams, sha256, params.accessKey, params.secretKey)
 
   var request = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
@@ -1163,6 +1161,33 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
     }))
   })
   request.end()
+}
+
+function getRegion(host) {
+  switch (host) {
+    case "s3.amazonaws.com":
+      return "us-east-1"
+    case "s3-ap-northeast-1.amazonaws.com":
+      return "ap-northeast-1"
+    case "s3-ap-southeast-1.amazonaws.com":
+      return "ap-southeast-1"
+    case "s3-ap-southeast-2.amazonaws.com":
+      return "ap-southeast-2"
+    case "s3-eu-central-1.amazonaws.com":
+      return "eu-central-1"
+    case "s3-eu-west-1.amazonaws.com":
+      return "eu-west-1"
+    case "s3-sa-east-1.amazonaws.com":
+      return "sa-east-1"
+    case "s3-external-1.amazonaws.com":
+      return "us-east-1"
+    case "s3-us-west-1.amazonaws.com":
+      return "us-west-1"
+    case "s3-us-west-2.amazonaws.com":
+      return "us-west-2"
+    default:
+      return "milkyway"
+  }
 }
 
 var inst = Client
