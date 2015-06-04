@@ -327,7 +327,8 @@ describe('Client', () => {
         for (var i = 0; i < 1024; i++) {
           uploadBlock += 'a'
         }
-        it('should put an object', (done) => {
+        it('should put an object with no resume needed', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncaed><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
             if (body.length === 5 * 1024 * 1024) {
@@ -362,7 +363,9 @@ describe('Client', () => {
           s.push(null)
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
         })
-        it.skip('should resume an object upload', (done) => {})
+        it.skip('should resume an object upload', (done) => {
+          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
+        })
         it.skip('should abort an object upload when uploaded data does not match', (done) => {})
         it.skip('should pass error to callback', (done) => {})
       })

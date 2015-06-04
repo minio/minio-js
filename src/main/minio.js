@@ -230,10 +230,29 @@ class Client {
     var etags = []
 
     if (size > 5 * 1024 * 1024) {
-      initiateNewMultipartUpload(this.transport, this.params, bucket, key, (e, uploadID) => {
-        if (e) {
-          return cb(e)
+      var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key)
+      var uploadId = null
+      stream.pipe(Through2.obj(function(upload, enc, done) {
+        uploadId = upload.uploadId
+      }, function(done) {
+        if(!uploadId) {
+          initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
+            if (e) {
+              return done(e)
+            }
+            streamUpload(self.transport, self.params, bucket, key, uploadId, r, (e) => {
+              return done(e)
+            })
+          })
         }
+      }))
+      .on('finish', () => {
+        cb()
+      })
+      .on('error', (e) => {
+        cb(e)
+      })
+      function streamUpload(transport, params, bucket, key, uploadID, r, cb) {
         var part = 1
         var blocks = r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function(data, enc, done) {
           var curPart = part
@@ -242,7 +261,7 @@ class Client {
           dataStream.push(data)
           dataStream.push(null)
           dataStream._read = () => {}
-          doPutObject(self.transport, self.params, bucket, key, contentType, size, uploadID, curPart, dataStream, (e, etag) => {
+          doPutObject(transport, params, bucket, key, contentType, size, uploadID, curPart, dataStream, (e, etag) => {
             etags.push({
               part: curPart,
               etag: etag
@@ -250,9 +269,10 @@ class Client {
             done()
           })
         })).on('finish', () => {
-          completeMultipartUpload(self.transport, self.params, bucket, key, uploadID, etags, cb)
+          completeMultipartUpload(transport, params, bucket, key, uploadID, etags, cb)
+          cb()
         })
-      })
+      }
     } else {
       doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
     }
@@ -527,33 +547,44 @@ var uriEscape = function uriEscape(string) {
   return output;
 }
 
-var getAllIncompleteUploads = function(transport, params, bucket, object) {
+var listAllIncompleteUploads = function(transport, params, bucket, object) {
   "use strict";
+  var errorred = null
   var queue = new Stream.Readable({
     objectMode: true
   })
   queue._read = () => {}
 
   var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
-    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMArker, currentJob.uploadIdMarker, (e, r) => {
-      if (response.statusCode !== 200) {
-        parseError(response, (e) => {
-          return done(e)
-        })
+    if(errorred) {
+      return done()
+    }
+    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
+      if(errorred) {
+        return done()
+      }
+      // TODO handle error
+      if(e) {
+        return done(e)
       }
       var uploads = []
-        // TODO parse xml
       uploads.forEach(upload => {
         stream.push(upload)
       })
-      queue.push({
-        bucket: bucket,
-        object: object,
-        objectMarker: objectMarker,
-        uploadIdMarker: uploadIdMarker
-      })
+      if(r.isTruncated) {
+        queue.push({
+          bucket: bucket,
+          object: object,
+          objectMarker: r.objectMarker,
+          uploadIdMarker: r.uploadIdMarker
+        })
+      } else {
+        queue.push(null)
+      }
       done()
     })
+  }, function(done) {
+    done(errorred)
   }))
 
   queue.push({
@@ -564,7 +595,6 @@ var getAllIncompleteUploads = function(transport, params, bucket, object) {
   })
 
   return stream
-
 }
 
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
