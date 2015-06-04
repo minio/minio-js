@@ -40,7 +40,7 @@ describe('Client', () => {
   afterEach(() => {
     nockRequests.forEach(element => {
       if(!element.request.isDone()) {
-        console.log(element.trace)
+        //console.log(element.trace)
         element.request.done()
       }
     })
@@ -363,8 +363,29 @@ describe('Client', () => {
           s.push(null)
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
         })
-        it.skip('should resume an object upload', (done) => {
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
+        it('should resume an object upload', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+          MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
+          MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
+            if (body.length === 5 * 1024 * 1024) {
+              return true
+            }
+            return false
+          }).reply(200, '', {
+            etag: '79b281060d337b9b2b84ccf390adcf74'
+          })
+          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
+          var s = new Stream.Readable()
+          s._read = function() {}
+          for (var i = 0; i < 11 * 1024; i++) {
+            s.push(uploadBlock)
+          }
+          s.push(null)
+          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, (e, r) => {
+            //console.log('tracer')
+            //console.log(new Error().stack)
+            done(e)
+          })
         })
         it.skip('should abort an object upload when uploaded data does not match', (done) => {})
         it.skip('should pass upload list error to callback', (done) => {})
