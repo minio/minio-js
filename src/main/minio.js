@@ -252,7 +252,7 @@ class Client {
             streamUpload(self.transport, self.params, bucket, key, uploadId, [], r, (e) => {
               //console.log('other upload')
               return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                done(e)
+                done()
                 cb(e)
               })
             })
@@ -287,7 +287,7 @@ class Client {
               }
               //console.log('calling complete multipart upload')
               completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                partDone(e)
+                partDone()
                 return cb(e)
               })
             })
