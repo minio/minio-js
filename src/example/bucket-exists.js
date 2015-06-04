@@ -17,13 +17,13 @@
 var Minio = require('../..')
 var Through2 = require('through2')
 
-var client = new Minio({
+var s3client = new Minio({
   host: 's3.amazonaws.com',
   port: 80,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-client.bucketExists('goroutine', (e) => {
+s3client.bucketExists('goroutine', (e) => {
   console.log(e) // should be null
 })

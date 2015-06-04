@@ -17,11 +17,10 @@
 var minio = require('../..')
 var stream = require('stream').Readable
 
-//var client = new minio({host: 's3-us-west-2.amazonaws.com', port: 80, accessKey: 'ACCESSKEY', secretKey: 'SECRETKEY'})
-var client = new minio({host: 'localhost', port: 9000})
+var s3client = new minio({host: 'localhost', port: 9000})
 
 
-client.makeBucket('hello', e => {
+s3client.makeBucket('hello', e => {
     "use strict";
     if (e) {
         console.log(e)
@@ -32,14 +31,14 @@ client.makeBucket('hello', e => {
     newObjectStream.push('hello world')
     newObjectStream.push(null)
 
-    client.putObject('hello', 'world', '', 11, newObjectStream, e => {
+    s3client.putObject('hello', 'world', '', 11, newObjectStream, e => {
         "use strict";
         if (e) {
             console.log(e)
             return
         }
 
-        client.getObject('hello', 'world', (e, r) => {
+        s3client.getObject('hello', 'world', (e, r) => {
             "use strict";
             if (e) {
                 console.log(e)
@@ -49,4 +48,3 @@ client.makeBucket('hello', e => {
         })
     })
 })
-

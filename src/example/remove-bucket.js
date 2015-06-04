@@ -15,7 +15,6 @@
  */
 
 var Minio = require('../..')
-var Through2 = require('through2')
 
 var s3client = new Minio({
   host: 's3.amazonaws.com',
@@ -24,8 +23,6 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var objectsStream = s3client.listObjects('your-bucket', {recursive: true})
-objectsStream.pipe(Through2.obj(function(object, enc, done) {
-  console.log(object)
-  done()
-}))
+s3client.removeBucket('goroutinejs', (e) => {
+  console.log(e)
+})
