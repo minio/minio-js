@@ -464,8 +464,14 @@ class Client {
 
 var parseError = (response, cb) => {
   "use strict";
-  if(response.statusCode === 301) {
-    return cb({code: 'MovedPermanently', message: 'Moved Permanently', requestId: null, hostId: null, resource: null})
+  if (response.statusCode === 301) {
+    return cb({
+      code: 'MovedPermanently',
+      message: 'Moved Permanently',
+      requestId: null,
+      hostId: null,
+      resource: null
+    })
   }
   response.pipe(Concat(errorXml => {
     var parsedXml = ParseXml(errorXml.toString())
@@ -575,16 +581,26 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
       signedHeaders += element
     })
 
+    var splitPath = request.path.split('?')
+    var requestResource = splitPath[0]
+    var requestyQuery = ''
+    if (splitPath.length == 2) {
+      var requestQuery = splitPath[1]
+        .split('&')
+        .map(element => {
+          if (element.indexOf('=') === -1) {
+            element = element + '='
+            return element
+          }
+        })
+        .join('&')
+    }
+
 
     var canonicalString = ""
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
-      // TODO this not clean, but works
-    canonicalString += request.path.split('?')[0] + '\n';
-    if (request.path.split('?')[1]) {
-      canonicalString += request.path.split('?')[1] + '\n';
-    } else {
-      canonicalString += '\n'
-    }
+    canonicalString += requestResource + '\n'
+    canonicalString += requestQuery + '\n';
     headers.forEach(element => {
       canonicalString += element + '\n'
     })
