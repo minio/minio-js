@@ -841,14 +841,17 @@ describe('Client', () => {
           parts: [{
             part: 1,
             etag: 'etag1',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }, {
             part: 2,
             etag: 'etag2',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }, {
             part: 3,
             etag: 'etag3',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }],
           nextJob: null
@@ -866,14 +869,17 @@ describe('Client', () => {
           parts: [{
             part: 4,
             etag: 'etag1',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }, {
             part: 5,
             etag: 'etag2',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }, {
             part: 6,
             etag: 'etag3',
+            lastModified: '2015-06-03T03:12:34.756Z',
             size: 5 * 1024 * 1024
           }],
           nextJob: {
@@ -905,38 +911,47 @@ describe('Client', () => {
         var expectedResults = [{
           part: 1,
           etag: 'etag1',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 2,
           etag: 'etag2',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 3,
           etag: 'etag3',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 4,
           etag: 'etag4',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 5,
           etag: 'etag5',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 6,
           etag: 'etag6',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 7,
           etag: 'etag7',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 8,
           etag: 'etag8',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }, {
           part: 9,
           etag: 'etag9',
+          lastModified: '2015-06-03T03:12:34.756Z',
           size: 5242880
         }]
         MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>3</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>1</PartNumber><ETag>etag1</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
