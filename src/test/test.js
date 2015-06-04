@@ -134,8 +134,7 @@ describe('Client', () => {
   describe('Bucket API calls', () => {
     describe('#makeBucket(bucket, callback)', () => {
       it('should call the callback on success', (done) => {
-        // <CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>
-        MockResponse('http://localhost:9000').put('/bucket','<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>').reply(200)
+        MockResponse('http://localhost:9000').put('/bucket', '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>').reply(200)
         client.makeBucket('bucket', done)
       })
       it('pass an error into the callback on failure', (done) => {
@@ -395,7 +394,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, (e) => {
-            if(e) {
+            if (e) {
               done()
             }
           })
