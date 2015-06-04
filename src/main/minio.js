@@ -936,6 +936,19 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
             })
             result.objects.push(object)
             break
+          case "CommonPrefixes": // todo, this is the only known way for now to propagate delimited entries
+            var object = {}
+            element.children.forEach(xmlPrefix => {
+              switch (xmlPrefix.name) {
+                case "Prefix":
+                  object.name = xmlPrefix.content
+                  object.size = 0
+                  break
+                default:
+              }
+            })
+            result.objects.push(object);
+            break;
           default:
         }
       })
