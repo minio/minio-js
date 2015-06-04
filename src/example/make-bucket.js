@@ -16,13 +16,13 @@
 
 var Minio = require('../..')
 
-var client = new Minio({
+var s3client = new Minio({
   host: 's3.amazonaws.com',
   port: 80,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-client.makeBucket('goroutinejs', (e) => {
+s3client.makeBucket('goroutinejs', (e) => {
   console.log(e)
 })

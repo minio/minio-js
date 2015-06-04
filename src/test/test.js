@@ -207,7 +207,7 @@ describe('Client', () => {
 
     describe('#removeBucket(bucket, cb)', () => {
       it('should remove a bucket', (done) => {
-        MockResponse('http://localhost:9000').delete('/bucket').reply(200)
+        MockResponse('http://localhost:9000').delete('/bucket').reply(204)
         client.removeBucket('bucket', () => {
           done()
         })

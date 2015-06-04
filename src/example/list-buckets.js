@@ -17,14 +17,14 @@
 var Minio = require('../..')
 var Through2 = require('through2')
 
-var client = new Minio({
+var s3client = new Minio({
   host: 's3.amazonaws.com',
   port: 80,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketStream = client.listBuckets()
+var bucketStream = s3client.listBuckets()
 bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
   console.log(bucket)
   done()
