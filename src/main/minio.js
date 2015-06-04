@@ -309,8 +309,7 @@ class Client {
       function streamUpload(transport, params, bucket, key, uploadId, partsArray, r, cb) {
         var part = 1
         var errorred = null
-        r.on('finish', () => {
-        })
+        r.on('finish', () => {})
         r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function(data, enc, done) {
           if (errorred) {
             return done()
@@ -576,7 +575,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var canonicalString = ""
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
-    // TODO this not clean, but works
+      // TODO this not clean, but works
     canonicalString += request.path.split('?')[0] + '\n';
     if (request.path.split('?')[1]) {
       canonicalString += request.path.split('?')[1] + '\n';
