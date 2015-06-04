@@ -402,7 +402,16 @@ describe('Client', () => {
             }
           })
         })
-        it.skip('should pass upload list error to callback', (done) => {})
+        it('should pass upload list error to callback', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+          var s = new Stream.Readable()
+          s._read = function() {}
+          for (var i = 0; i < 11 * 1024; i++) {
+            s.push(uploadBlock)
+          }
+          s.push(null)
+          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+        })
         it.skip('should pass part list error to callback', (done) => {})
         it.skip('should pass put error to callback', (done) => {})
         it.skip('should pass complete upload error to callback', (done) => {})
