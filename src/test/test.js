@@ -39,20 +39,20 @@ describe('Client', () => {
   })
   afterEach(() => {
     nockRequests.forEach(element => {
-      if(!element.request.isDone()) {
+      if (!element.request.isDone()) {
         //console.log(element.trace)
         element.request.done()
       }
     })
   })
   var MockResponse = (address) => {
-      var request = Nock(address)
-      var trace = new Error().stack
-      nockRequests.push({
-          request: request,
-          trace: trace
-      })
-      return request
+    var request = Nock(address)
+    var trace = new Error().stack
+    nockRequests.push({
+      request: request,
+      trace: trace
+    })
+    return request
   }
   var client = new minio({
     host: 'localhost',
