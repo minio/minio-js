@@ -224,54 +224,133 @@ class Client {
 
     var self = this
 
-    var uploadID = null
+    var uploadId = null
     var part = null
 
     var etags = []
 
     if (size > 5 * 1024 * 1024) {
+      //console.log('large file triggered')
       var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key)
       var uploadId = null
       stream.pipe(Through2.obj(function(upload, enc, done) {
+        //console.log('found existing upload')
+        //console.log(upload)
         uploadId = upload.uploadId
+        done()
       }, function(done) {
+        //console.log('final upload id')
+        //console.log(uploadId)
         if(!uploadId) {
           initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
             if (e) {
               return done(e)
             }
-            streamUpload(self.transport, self.params, bucket, key, uploadId, r, (e) => {
-              return done(e)
+            streamUpload(self.transport, self.params, bucket, key, uploadId, [], r, (e) => {
+              //console.log('other upload')
+              return completeMultipartUpload( self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                done(e)
+                cb(e)
+              })
             })
           })
+        } else {
+          //console.log('list parts pre init')
+          var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
+          var partsErrorred = null
+          var partsArray = []
+          parts.pipe(Through2.obj(function(part, enc, partDone) {
+            //console.log('got part')
+            //console.log(part)
+            partsArray.push(part)
+            partDone()
+          }, function(partDone) {
+            if(partsErrorred) {
+              return partDone(partsErrorred)
+            }
+            //console.log('got all parts')
+            //console.log(partsArray)
+            streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, r, (e) => {
+              //console.log('stream upload finished')
+              if(e) {
+                return partDone(e)
+              }
+              //console.log('calling complete multipart upload')
+              completeMultipartUpload( self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                partDone(e)
+                cb(e)
+              })
+            })
+          }))
         }
       }))
-      .on('finish', () => {
-        cb()
-      })
       .on('error', (e) => {
         cb(e)
       })
-      function streamUpload(transport, params, bucket, key, uploadID, r, cb) {
+      function streamUpload(transport, params, bucket, key, uploadId, partsArray, r, cb) {
+        //console.log('stream upload started')
         var part = 1
-        var blocks = r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function(data, enc, done) {
+        var errorred = null
+        r.on('finish', () => {
+          //console.log('data stream finished')
+        })
+        r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function(data, enc, done) {
+          //console.log('block found')
+          if(errorred) {
+            return done()
+          }
           var curPart = part
           part = part + 1
-          var dataStream = new Stream.Readable()
-          dataStream.push(data)
-          dataStream.push(null)
-          dataStream._read = () => {}
-          doPutObject(transport, params, bucket, key, contentType, size, uploadID, curPart, dataStream, (e, etag) => {
-            etags.push({
-              part: curPart,
-              etag: etag
+          if(partsArray.length > 0) {
+            //console.log('found part ' + curPart)
+            var curPart = partsArray.shift()
+            var hash = Crypto.createHash('md5')
+            hash.update(data)
+            var md5 = hash.digest('hex').toLowerCase()
+            if(curPart.etag == md5) {
+              etags.push({
+                part: curPart,
+                etag: md5
+              })
+              done()
+            } else {
+              //console.log('actual  : ' + md5)
+              //console.log('expected: ' + curPart.etag)
+              errorred = new Error('mismatched etag')
+              return done()
+            }
+          } else {
+            //console.log('no found part ' + curPart)
+            var dataStream = new Stream.Readable()
+            dataStream.push(data)
+            dataStream.push(null)
+            dataStream._read = () => {}
+            //console.log('data length:')
+            doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
+              //console.log('do put object returned')
+              //console.log(e)
+              //console.log(etag)
+              if(errorred) {
+                return done()
+              }
+              if(e) {
+                errorred = e
+                return done()
+              }
+              //console.log('pushing to etag')
+              etags.push({
+                part: curPart,
+                etag: etag
+              })
+              return done()
             })
-            done()
-          })
-        })).on('finish', () => {
-          completeMultipartUpload(transport, params, bucket, key, uploadID, etags, cb)
-          cb()
-        })
+          }
+        }, function(done) {
+          //console.log('data pipe end reached')
+          done(errorred)
+          //console.log('wee')
+          cb(errorred)
+        }))
       }
     } else {
       doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
@@ -556,10 +635,14 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
   queue._read = () => {}
 
   var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
+    //console.log('list all incomplete uploads job found')
+    //console.log(currentJob)
     if(errorred) {
       return done()
     }
     listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
+      //console.log('list multipart uploads result')
+      //console.log(r)
       if(errorred) {
         return done()
       }
@@ -567,11 +650,13 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
       if(e) {
         return done(e)
       }
-      var uploads = []
-      uploads.forEach(upload => {
-        stream.push(upload)
+      r.uploads.forEach(upload => {
+        //console.log('emitting upload')
+        //console.log(upload)
+        this.push(upload)
       })
       if(r.isTruncated) {
+        //console.log('truncated, emitting job')
         queue.push({
           bucket: bucket,
           object: object,
@@ -579,12 +664,17 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
           uploadIdMarker: r.uploadIdMarker
         })
       } else {
+        //console.log('not truncated, sending finally push')
         queue.push(null)
       }
       done()
     })
   }, function(done) {
-    done(errorred)
+    //console.log('stream ended')
+    if(errorred) {
+      return done(errorred)
+    }
+    return done()
   }))
 
   queue.push({
@@ -801,16 +891,16 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
     response.pipe(Concat(xml => {
       "use strict";
       var parsedXml = ParseXml(xml.toString())
-      var uploadID = null
+      var uploadId = null
       parsedXml.root.children.forEach(element => {
         "use strict";
         if (element.name === 'UploadId') {
-          uploadID = element.content
+          uploadId = element.content
         }
       })
 
-      if (uploadID) {
-        return cb(null, uploadID)
+      if (uploadId) {
+        return cb(null, uploadId)
       }
       cb('unable to get upload id')
     }))
@@ -818,10 +908,10 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
   request.end()
 }
 
-function doPutObject(transport, params, bucket, key, contentType, size, uploadID, part, r, cb) {
+function doPutObject(transport, params, bucket, key, contentType, size, uploadId, part, r, cb) {
   var query = ''
   if (part) {
-    query = `?partNumber=${part}&uploadId=${uploadID}`
+    query = `?partNumber=${part}&uploadId=${uploadId}`
   }
   if (contentType == null || contentType == '') {
     contentType = 'aplication/octet-stream'
@@ -850,11 +940,12 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadID
   r.pipe(request)
 }
 
-function completeMultipartUpload(transport, params, bucket, key, uploadID, etags, cb) {
+function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
+  //console.log('complete multipart')
   var requestParams = {
     host: params.host,
     port: params.port,
-    path: `/${bucket}/${key}?uploadId=${uploadID}`,
+    path: `/${bucket}/${key}?uploadId=${uploadId}`,
     method: 'POST'
   }
 
@@ -890,9 +981,11 @@ function completeMultipartUpload(transport, params, bucket, key, uploadID, etags
   signV4(requestParams, payloadHash, params.accessKey, params.secretKey)
 
   var request = transport.request(requestParams, (response) => {
+    //console.log('multipart complete returned')
     if (response.statusCode !== 200) {
       return parseError(response, cb)
     }
+    //console.log('calling cb')
     cb()
   })
   stream.pipe(request)
@@ -996,10 +1089,14 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
   queue._read = () => {}
   var stream = queue
     .pipe(Through2.obj(function(job, enc, done) {
+      //console.log('list parts job found')
+      //console.log(job)
       if (errorred) {
         return done()
       }
       listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
+        //console.log('list parts result')
+        //console.log(r)
         if (errorred) {
           return done()
         }
@@ -1019,6 +1116,7 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
         done()
       })
     }, function(end) {
+      //console.log('list parts jobs complete')
       end(errorred)
     }))
   queue.push({
