@@ -464,6 +464,9 @@ class Client {
 
 var parseError = (response, cb) => {
   "use strict";
+  if(response.statusCode === 301) {
+    return cb({code: 'MovedPermanently', message: 'Moved Permanently', requestId: null, hostId: null, resource: null})
+  }
   response.pipe(Concat(errorXml => {
     var parsedXml = ParseXml(errorXml.toString())
     var e = {}

@@ -196,6 +196,13 @@ describe('Client', () => {
           done()
         }))
       })
+      it('should return an error on moved permanently', (done) => {
+        MockResponse('http://localhost:9000').head('/bucket').reply(301)
+        client.bucketExists('bucket', checkError('MovedPermanently', 'Moved Permanently', null, null, null, (r) => {
+          Assert.equal(r, null)
+          done()
+        }))
+      })
     })
 
     describe('#removeBucket(bucket, cb)', () => {

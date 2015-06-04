@@ -17,18 +17,13 @@
 var Minio = require('../..')
 var Through2 = require('through2')
 
-var s3client = new Minio({
+var client = new Minio({
   host: 's3.amazonaws.com',
   port: 80,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var params = {}
-params.recursive = true
-
-var objectsStream = s3client.listObjects('your-bucket', params)
-objectsStream.pipe(Through2.obj(function(object, enc, done) {
-  console.log(object)
-  done()
-}))
+client.bucketExists('goroutine', (e) => {
+  console.log(e) // should be null
+})
