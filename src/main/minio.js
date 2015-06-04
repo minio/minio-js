@@ -233,6 +233,9 @@ class Client {
       //console.log('large file triggered')
       var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key)
       var uploadId = null
+      stream.on('error', (e) => {
+        cb(e)
+      })
       stream.pipe(Through2.obj(function(upload, enc, done) {
         //console.log('found existing upload')
         //console.log(upload)
