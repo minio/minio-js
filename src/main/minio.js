@@ -559,10 +559,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
   }
 
-
   function getCanonicalRequest(request, dataShaSum1) {
-
-
     var headerKeys = []
     var headers = []
 
@@ -909,11 +906,14 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     contentType = 'aplication/octet-stream'
   }
 
-
   r.pipe(Concat(data => {
-    var hash = Crypto.createHash('sha256')
-    hash.update(data)
-    var sha256 = hash.digest('hex').toLowerCase()
+    var hash256 = Crypto.createHash('sha256')
+    var hashMD5 = Crypto.createHash('md5')
+    hash256.update(data)
+    hashMD5.update(data)
+
+    var sha256 = hash256.digest('hex').toLowerCase()
+    var md5 = hashMD5.digest('base64')
 
     var requestParams = {
       host: params.host,
@@ -922,7 +922,8 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       method: 'PUT',
       headers: {
         "Content-Length": size,
-        "Content-Type": contentType
+        "Content-Type": contentType,
+        "Content-MD5": md5
       }
     }
 
@@ -969,11 +970,9 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
     })
   })
 
-
   var payloadObject = {
     CompleteMultipartUpload: parts
   }
-
 
   var payload = Xml(payloadObject)
 
@@ -1224,6 +1223,10 @@ function getRegion(host) {
       return "us-west-1"
     case "s3-us-west-2.amazonaws.com":
       return "us-west-2"
+    case "s3.cn-north-1.amazonaws.com.cn":
+      return "cn-north-1"
+    case "s3-fips-us-gov-west-1.amazonaws.com":
+      return "us-gov-west-1"
     default:
       return "milkyway"
   }
