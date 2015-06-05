@@ -573,7 +573,7 @@ describe('Client', () => {
 
     describe("#removeObject(bucket, object, callback)", () => {
       it('should delete an object', (done) => {
-        MockResponse('http://localhost:9000').delete('/bucket/object').reply(200)
+        MockResponse('http://localhost:9000').delete('/bucket/object').reply(204)
         client.removeObject('bucket', 'object', (e) => {
           Assert.equal(e, null)
           done()
