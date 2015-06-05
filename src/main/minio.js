@@ -789,7 +789,7 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 
   var req = transport.request(requestParams, (response) => {
     "use strict";
-    if (response.statusCode !== 200) {
+    if (response.statusCode !== 204) {
       return parseError(response, cb)
     }
     cb()
