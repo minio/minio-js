@@ -309,11 +309,14 @@ class Client {
       function streamUpload(transport, params, bucket, key, uploadId, partsArray, totalSize, r, cb) {
         var part = 1
         var errorred = null
-        // compute size
+          // compute size
         var blockSize = 5 * 1024 * 1024
         var seen = 0
         r.on('finish', () => {})
-        r.pipe(BlockStream2({size: blockSize, zeroPadding: false})).pipe(Through2.obj(function(data, enc, done) {
+        r.pipe(BlockStream2({
+          size: blockSize,
+          zeroPadding: false
+        })).pipe(Through2.obj(function(data, enc, done) {
           if (errorred) {
             return done()
           }
@@ -650,9 +653,9 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
       if (r.isTruncated) {
         queue.push({
           bucket: bucket,
-          object: object,
-          objectMarker: r.objectMarker,
-          uploadIdMarker: r.uploadIdMarker
+          object: decodeURI(object),
+          objectMarker: decodeURI(r.objectMarker),
+          uploadIdMarker: decodeURI(r.uploadIdMarker)
         })
       } else {
         queue.push(null)
@@ -681,8 +684,7 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
   var queries = []
   var escape = uriEscape
   if (key) {
-    key = escape(key)
-    queries.push(`prefix=${key}`)
+    queries.push(`prefix=${escape(key)}`)
   }
   if (keyMarker) {
     keyMarker = escape(keyMarker)
@@ -731,10 +733,10 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
             result.isTruncated = element.content === 'true'
             break
           case "NextKeyMarker":
-            nextJob.keyMarker = element.content
+            nextJob.keyMarker = decodeURI(element.content)
             break
           case "NextUploadIdMarker":
-            nextJob.uploadIdMarker = element.content
+            nextJob.uploadIdMarker = decodeURI(element.content)
             break
           case "Upload":
             var upload = {
@@ -745,10 +747,10 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
             element.children.forEach(xmlObject => {
               switch (xmlObject.name) {
                 case "Key":
-                  upload.key = xmlObject.content
+                  upload.key = decodeURI(xmlObject.content)
                   break
                 case "UploadId":
-                  upload.uploadId = xmlObject.content
+                  upload.uploadId = decodeURI(xmlObject.content)
                   break
                 default:
               }
