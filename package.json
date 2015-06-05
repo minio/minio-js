@@ -27,7 +27,6 @@
     "gulp-sourcemaps": "^1.5.2",
     "moment": "^2.10.3",
     "source-map-support": "^0.2.10",
-    "through": "^2.3.7",
     "through2": "^0.6.5",
     "xml": "^1.0.0",
     "xml-parser": "^1.2.0"

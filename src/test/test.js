@@ -20,7 +20,6 @@ var Assert = require('assert')
 var Concat = require('concat-stream')
 var Http = require('http')
 var Nock = require('nock')
-var Through = require('through')
 var Through2 = require('through2')
 var Stream = require('stream')
 
@@ -147,37 +146,35 @@ describe('Client', () => {
       it('should generate a bucket iterator', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
         var stream = client.listBuckets()
-        var result = []
-        stream.pipe(Through(success, end))
-
-        function success(bucket) {
-          result.push(bucket)
-        }
-
-        function end() {
-          Assert.deepEqual(result, [{
-            name: 'bucket',
-            creationDate: "2015-05-05T20:35:51.410Z"
-          }, {
-            name: 'foo',
-            creationDate: "2015-05-05T20:35:47.170Z"
-          }])
+        var results = []
+        var expectedResults = [{
+          name: 'bucket',
+          creationDate: "2015-05-05T20:35:51.410Z"
+        }, {
+          name: 'foo',
+          creationDate: "2015-05-05T20:35:47.170Z"
+        }]
+        stream.pipe(Through2.obj(function(bucket, enc, end) {
+          results.push(bucket)
+          end()
+        }, function(end) {
+          Assert.deepEqual(results, expectedResults)
+          end()
           done()
-        }
+        }))
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/'))
         var stream = client.listBuckets()
-        stream.pipe(Through(success, end))
-
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          end()
+        }, function(end) {
+          end()
+        }))
         stream.on('error', (e) => {
           checkError('code', 'message', 'requestid', 'hostid', '/')(e)
           done()
         })
-
-        function success() {}
-
-        function end() {}
       })
     })
 
@@ -477,51 +474,50 @@ describe('Client', () => {
         }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
         var stream = client.listObjects('bucket')
         var results = []
-        stream.pipe(Through(success, end))
-
-        function success(bucket) {
-          results.push(bucket)
-        }
-
-        function end() {
-          Assert.deepEqual(results, [{
-            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-            "lastModified": "2015-05-05T02:21:15.716Z",
-            "name": "key1",
-            "size": 11
-          }, {
-            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-            "lastModified": "2015-05-05T20:36:17.498Z",
-            "name": "key2",
-            "size": 1661
-          }, {
-            "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-            "lastModified": "2015-05-05T02:21:15.716Z",
-            "name": "key3",
-            "size": 11
-          }, {
-            "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-            "lastModified": "2015-05-05T20:36:17.498Z",
-            "name": "key4",
-            "size": 1661
-          }])
+        var expectedResults = [{
+          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
+          "lastModified": "2015-05-05T02:21:15.716Z",
+          "name": "key1",
+          "size": 11
+        }, {
+          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
+          "lastModified": "2015-05-05T20:36:17.498Z",
+          "name": "key2",
+          "size": 1661
+        }, {
+          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
+          "lastModified": "2015-05-05T02:21:15.716Z",
+          "name": "key3",
+          "size": 11
+        }, {
+          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
+          "lastModified": "2015-05-05T20:36:17.498Z",
+          "name": "key4",
+          "size": 1661
+        }]
+        stream.pipe(Through2.obj(function(object, enc, end) {
+          results.push(object)
+          end()
+        }, function(end) {
+          Assert.deepEqual(results, expectedResults)
+          end()
           done()
-        }
+        }))
       })
       it('should pass error on stream', (done) => {
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
-        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
         var stream = client.listObjects('bucket')
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          end()
+        }, function(end) {
+          end()
+        }))
         stream.on('error', (e) => {
-          checkError('code', 'message', 'requestid', 'hostid', 'resource')(e)
+          checkError('code', 'message', 'requestid', 'hostid', '/bucket')(e)
           done()
         })
-        stream.pipe(Through(success, end))
-
-        function success() {}
-
-        function end() {}
       })
       it('should pass error in stream on subsequent error', (done) => {
         MockResponse('http://localhost:9000').filteringPath(() => {
@@ -529,17 +525,17 @@ describe('Client', () => {
         }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
-        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
         var stream = client.listObjects('bucket')
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          end()
+        }, function(end) {
+          end()
+        }))
         stream.on('error', (e) => {
-          checkError('code', 'message', 'requestid', 'hostid', 'resource')(e)
+          checkError('code', 'message', 'requestid', 'hostid', '/bucket')(e)
           done()
         })
-        stream.pipe(Through(success, end))
-
-        function success() {}
-
-        function end() {}
       })
     })
 
