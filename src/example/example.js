@@ -19,7 +19,6 @@ var stream = require('stream').Readable
 
 var s3client = new minio({host: 'localhost', port: 9000})
 
-
 s3client.makeBucket('hello', function(e) {
     "use strict";
     if (e) {
@@ -37,7 +36,7 @@ s3client.makeBucket('hello', function(e) {
             console.log(e)
             return
         }
-        s3client.getObject('hello', 'world', (e, r) => {
+        s3client.getObject('hello', 'world', function(e, r) {
             "use strict";
             if (e) {
                 console.log(e)
