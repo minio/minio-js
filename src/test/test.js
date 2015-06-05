@@ -467,7 +467,7 @@ describe('Client', () => {
       })
     })
 
-    describe("#listObjects()", (done) => {
+    describe("#listObjects()", () => {
       it('should iterate without a prefix', (done) => {
         MockResponse('http://localhost:9000').filteringPath(_ => {
           return '/bucket'
