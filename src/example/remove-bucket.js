@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('../..')
+var Minio = require('minio')
 
 var s3client = new Minio({
   host: 's3.amazonaws.com',
@@ -23,6 +23,6 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.removeBucket('goroutinejs', (e) => {
+s3client.removeBucket('mybucket', function(e) {
   console.log(e)
 })

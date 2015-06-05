@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-var minio = require('../..')
+var minio = require('minio')
 var stream = require('stream').Readable
 
 var s3client = new minio({host: 'localhost', port: 9000})
 
 
-s3client.makeBucket('hello', e => {
+s3client.makeBucket('hello', function(e) {
     "use strict";
     if (e) {
         console.log(e)
@@ -31,13 +31,12 @@ s3client.makeBucket('hello', e => {
     newObjectStream.push('hello world')
     newObjectStream.push(null)
 
-    s3client.putObject('hello', 'world', '', 11, newObjectStream, e => {
+    s3client.putObject('hello', 'world', '', 11, newObjectStream, function(e) {
         "use strict";
         if (e) {
             console.log(e)
             return
         }
-
         s3client.getObject('hello', 'world', (e, r) => {
             "use strict";
             if (e) {
@@ -45,6 +44,6 @@ s3client.makeBucket('hello', e => {
                 return
             }
             r.pipe(process.stdout)
-        })
+       })
     })
 })
