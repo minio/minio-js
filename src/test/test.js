@@ -309,7 +309,7 @@ describe('Client', () => {
       })
     })
 
-    describe("#putObject(bucket, object, size, source, callback)", () => {
+    describe("#putObject(bucket, object, contentType, size, source, callback)", () => {
       describe('with small objects using single put', () => {
         it('should put an object', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
