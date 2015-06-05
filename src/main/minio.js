@@ -559,10 +559,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
   }
 
-
   function getCanonicalRequest(request, dataShaSum1) {
-
-
     var headerKeys = []
     var headers = []
 
@@ -910,9 +907,13 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
   }
 
   r.pipe(Concat(data => {
-    var hash = Crypto.createHash('sha256')
-    hash.update(data)
-    var sha256 = hash.digest('hex').toLowerCase()
+    var hash256 = Crypto.createHash('sha256')
+    var hashMD5 = Crypto.createHash('md5')
+    hash256.update(data)
+    hashMD5.update(data)
+
+    var sha256 = hash256.digest('hex').toLowerCase()
+    var md5 = hashMD5.digest('base64')
 
     var requestParams = {
       host: params.host,
@@ -921,7 +922,8 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       method: 'PUT',
       headers: {
         "Content-Length": size,
-        "Content-Type": contentType
+        "Content-Type": contentType,
+        "Content-MD5": md5
       }
     }
 
