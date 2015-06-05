@@ -909,7 +909,6 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     contentType = 'aplication/octet-stream'
   }
 
-
   r.pipe(Concat(data => {
     var hash = Crypto.createHash('sha256')
     hash.update(data)
@@ -969,11 +968,9 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
     })
   })
 
-
   var payloadObject = {
     CompleteMultipartUpload: parts
   }
-
 
   var payload = Xml(payloadObject)
 
@@ -1224,6 +1221,10 @@ function getRegion(host) {
       return "us-west-1"
     case "s3-us-west-2.amazonaws.com":
       return "us-west-2"
+    case "s3.cn-north-1.amazonaws.com.cn":
+      return "cn-north-1"
+    case "s3-fips-us-gov-west-1.amazonaws.com":
+      return "us-gov-west-1"
     default:
       return "milkyway"
   }
