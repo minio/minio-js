@@ -583,19 +583,19 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
     var splitPath = request.path.split('?')
     var requestResource = splitPath[0]
-    var requestyQuery = ''
+    var requestQuery = ''
     if (splitPath.length == 2) {
-      var requestQuery = splitPath[1]
+      requestQuery = splitPath[1]
         .split('&')
+        .sort()
         .map(element => {
           if (element.indexOf('=') === -1) {
             element = element + '='
-            return element
           }
+          return element
         })
         .join('&')
     }
-
 
     var canonicalString = ""
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
@@ -905,27 +905,44 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     contentType = 'aplication/octet-stream'
   }
 
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    path: `/${bucket}/${key}${query}`,
-    method: 'PUT',
-    headers: {
-      "Content-Length": size,
-      "Content-Type": contentType
-    }
-  }
 
-  signV4(requestParams, '', params.accessKey, params.secretKey)
+  r.pipe(Concat(data => {
+    var hash = Crypto.createHash('sha256')
+    hash.update(data)
+    var sha256 = hash.digest('hex').toLowerCase()
 
-  var request = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 200) {
-      return parseError(response, cb)
+    var requestParams = {
+      host: params.host,
+      port: params.port,
+      path: `/${bucket}/${key}${query}`,
+      method: 'PUT',
+      headers: {
+        "Content-Length": size,
+        "Content-Type": contentType
+      }
     }
-    var etag = response.headers['etag']
-    cb(null, etag)
+
+    signV4(requestParams, sha256, params.accessKey, params.secretKey)
+
+    var dataStream = new Stream.Readable()
+    dataStream._read = () => {}
+    dataStream.push(data)
+    dataStream.push(null)
+
+    var request = transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        return parseError(response, cb)
+      }
+      var etag = response.headers['etag']
+      cb(null, etag)
+    })
+    dataStream.pipe(request)
+  }, function(done) {
+    done()
+  }))
+  r.on('error', (e) => {
+    cb('Unable to read data')
   })
-  r.pipe(request)
 }
 
 function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
