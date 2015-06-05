@@ -29,11 +29,11 @@ var s3client = new Minio({
 // large object from file
 var file = 'file.zip'
 var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, (e, stat) => {
+var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3client.putObject('goroutine', 'hello/file.zip', 'application/octet-stream', stat.size, fileStream, (e) => {
+  s3client.putObject('mybucket', 'hello/file.zip', 'application/octet-stream', stat.size, fileStream, function(e) {
     return console.log(e) // should be undefined
   })
 })

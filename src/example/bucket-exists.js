@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('../..')
+var Minio = require('minio')
 var Through2 = require('through2')
 
 var s3client = new Minio({
@@ -24,6 +24,6 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.bucketExists('goroutine', (e) => {
+s3client.bucketExists('mybucket', (e) => {
   console.log(e) // should be null
 })
