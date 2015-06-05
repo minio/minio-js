@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('../..')
+var Minio = require('minio')
 
 var s3client = new Minio({
   host: 's3.amazonaws.com',
@@ -23,7 +23,7 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.statObject('goroutine', 'hello/11mb', (e, stat) => {
+s3client.statObject('mybucket', 'hello/11mb', function(e, stat) {
   if(e) {
     return console.log(e)
   }
