@@ -457,7 +457,7 @@ class Client {
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
+      if (response.statusCode !== 204) {
         return parseError(response, cb)
       }
       cb()
