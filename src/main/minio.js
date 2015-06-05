@@ -16,7 +16,7 @@
 
 require('source-map-support').install()
 
-var BlockStream = require('block-stream')
+var BlockStream2 = require('block-stream2')
 var Concat = require('concat-stream')
 var Crypto = require('crypto')
 var Http = require('http')
@@ -268,7 +268,7 @@ class Client {
             if (e) {
               return done(e)
             }
-            streamUpload(self.transport, self.params, bucket, key, uploadId, [], r, (e) => {
+            streamUpload(self.transport, self.params, bucket, key, uploadId, [], size, r, (e) => {
               return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
                 done()
                 cb(e)
@@ -289,7 +289,7 @@ class Client {
             if (partsErrorred) {
               return partDone(partsErrorred)
             }
-            streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, r, (e) => {
+            streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, size, r, (e) => {
               if (partsErrorred) {
                 partDone()
               }
@@ -306,14 +306,18 @@ class Client {
         }
       }))
 
-      function streamUpload(transport, params, bucket, key, uploadId, partsArray, r, cb) {
+      function streamUpload(transport, params, bucket, key, uploadId, partsArray, totalSize, r, cb) {
         var part = 1
         var errorred = null
+        // compute size
+        var blockSize = 5 * 1024 * 1024
+        var seen = 0
         r.on('finish', () => {})
-        r.pipe(new BlockStream(5 * 1024 * 1024)).pipe(Through2.obj(function(data, enc, done) {
+        r.pipe(BlockStream2({size: blockSize, zeroPadding: false})).pipe(Through2.obj(function(data, enc, done) {
           if (errorred) {
             return done()
           }
+          var currentSize = blockSize
           var curPart = part
           part = part + 1
           if (partsArray.length > 0) {
