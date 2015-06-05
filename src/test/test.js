@@ -353,7 +353,7 @@ describe('Client', () => {
             etag: 'etag2'
           })
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            if (body.length === 5 * 1024 * 1024) {
+            if (body.length === 1 * 1024 * 1024) {
               return true
             }
             return false
@@ -373,7 +373,7 @@ describe('Client', () => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            if (body.length === 5 * 1024 * 1024) {
+            if (body.length === 1 * 1024 * 1024) {
               return true
             }
             return false
@@ -431,7 +431,7 @@ describe('Client', () => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            if (body.length === 5 * 1024 * 1024) {
+            if (body.length === 1 * 1024 * 1024) {
               return true
             }
             return false
@@ -448,7 +448,7 @@ describe('Client', () => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>79b281060d337b9b2b84ccf390adcf74</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            if (body.length === 5 * 1024 * 1024) {
+            if (body.length === 1 * 1024 * 1024) {
               return true
             }
             return false
