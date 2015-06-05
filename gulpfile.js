@@ -18,7 +18,6 @@ var babel = require('gulp-babel')
 var concat = require('gulp-concat')
 var exec = require('child_process').exec
 var gulp = require('gulp')
-var mocha = require('gulp-mocha')
 var sourcemaps = require('gulp-sourcemaps')
 
 gulp.task('default', ['test'], function () {
@@ -33,6 +32,7 @@ gulp.task('test:compile', function (cb) {
 })
 
 gulp.task('test', ['compile', 'test:compile'], function () {
+    var mocha = require('gulp-mocha')
     gulp.src('dist/test/*.js', {read: false})
         .pipe(mocha({reporter: 'spec'}))
 })
