@@ -140,6 +140,24 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').put('/bucket', '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><LocationConstraint>milkyway</LocationConstraint></CreateBucketConfiguration>').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
         client.makeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
+      it('should fail on null bucket', (done) => {
+          client.makeBucket(null, (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.makeBucket("", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.makeBucket("  \n  \t  ", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
     })
 
     describe("#listBuckets()", () => {
