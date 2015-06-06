@@ -26,7 +26,7 @@ var s3client = new Minio({
 
 var size = 0
 s3client.getObject('goroutine', 'hello/11mb', function(e, dataStream) {
-  if(e) {
+  if (e) {
     return console.log(e)
   }
   dataStream.pipe(Through2(function(chunk, enc, done) {

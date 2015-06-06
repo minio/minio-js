@@ -24,7 +24,9 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var objectsStream = s3client.listObjects('your-bucket', {recursive: true})
+var objectsStream = s3client.listObjects('your-bucket', {
+  recursive: true
+})
 objectsStream.pipe(Through2.obj(function(object, enc, done) {
   console.log(object)
   done()
