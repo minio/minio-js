@@ -23,8 +23,8 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.dropIncompleteUpload('goroutine', 'hello/11mb', function (e, stat) {
-  if(e) {
+s3client.dropIncompleteUpload('goroutine', 'hello/11mb', function(e, stat) {
+  if (e) {
     return console.log(e)
   }
   console.log(stat)

@@ -17,74 +17,73 @@
 var Stream = require('stream')
 
 class MockTransport {
-    constructor() {
-        "use strict"
-        this.requests = []
-    }
+  constructor() {
+    "use strict"
+    this.requests = []
+  }
 
-    addRequest(verifyParams, statusCode, responseHeaders, responseStream) {
-        "use strict"
-        var req = {
-            verifyParams: verifyParams,
-            statusCode: statusCode,
-            responseHeaders: responseHeaders,
-            responseStream: responseStream
-        }
-        this.requests.push(req)
+  addRequest(verifyParams, statusCode, responseHeaders, responseStream) {
+    "use strict"
+    var req = {
+      verifyParams: verifyParams,
+      statusCode: statusCode,
+      responseHeaders: responseHeaders,
+      responseStream: responseStream
     }
+    this.requests.push(req)
+  }
 
-    //noinspection JSUnusedGlobalSymbols
-    clearRequests() {
-        "use strict"
-        this.requests = []
-    }
+  //noinspection JSUnusedGlobalSymbols
+  clearRequests() {
+    "use strict"
+    this.requests = []
+  }
 
-    request(params, callback) {
-        "use strict"
-        var req = this.requests.shift()
-        return new Request(req, params, callback)
-    }
+  request(params, callback) {
+    "use strict"
+    var req = this.requests.shift()
+    return new Request(req, params, callback)
+  }
 }
 
 class Request {
-    constructor(req, params, callback) {
-        "use strict";
-        this.req = req
-        this.params = params
-        this.callback = callback
-    }
+  constructor(req, params, callback) {
+    "use strict";
+    this.req = req
+    this.params = params
+    this.callback = callback
+  }
 
-    //noinspection JSUnusedGlobalSymbols
-    end() {
-        "use strict";
-        this._r()
-    }
+  //noinspection JSUnusedGlobalSymbols
+  end() {
+    "use strict";
+    this._r()
+  }
 
-    _r() {
-        "use strict";
-        var stream = new Stream.Readable()
-        stream._read = () => {
-        }
-        if (this.req.responseStream) {
-            this.req.responseStream.pipe(stream)
-        } else {
-            stream.push(null)
-        }
-        if (this.req.verifyParams) {
-            this.req.verifyParams(this.params)
-        }
-        if (this.req.statusCode) {
-            stream.statusCode = this.req.statusCode
-        } else {
-            stream.statusCode = 200
-        }
-        if (this.req.responseHeaders) {
-            stream.headers = this.req.responseHeaders
-        } else {
-            stream.headers = {}
-        }
-        this.callback(stream)
+  _r() {
+    "use strict";
+    var stream = new Stream.Readable()
+    stream._read = () => {}
+    if (this.req.responseStream) {
+      this.req.responseStream.pipe(stream)
+    } else {
+      stream.push(null)
     }
+    if (this.req.verifyParams) {
+      this.req.verifyParams(this.params)
+    }
+    if (this.req.statusCode) {
+      stream.statusCode = this.req.statusCode
+    } else {
+      stream.statusCode = 200
+    }
+    if (this.req.responseHeaders) {
+      stream.headers = this.req.responseHeaders
+    } else {
+      stream.headers = {}
+    }
+    this.callback(stream)
+  }
 }
 
 var inst = MockTransport

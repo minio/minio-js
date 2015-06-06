@@ -20,45 +20,48 @@ var exec = require('child_process').exec
 var gulp = require('gulp')
 var sourcemaps = require('gulp-sourcemaps')
 
-gulp.task('default', ['test'], function () {
+gulp.task('default', ['test'], function() {})
+
+gulp.task('compile', function(cb) {
+  compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
 })
 
-gulp.task('compile', function (cb) {
-    compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
+gulp.task('test:compile', ['compile'], function(cb) {
+  compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
 })
 
-gulp.task('test:compile', ['compile'], function (cb) {
-    compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
-})
-
-gulp.task('test', ['compile', 'test:compile'], function () {
-    var mocha = require('gulp-mocha')
-    gulp.src('dist/test/*.js', {read: false})
-        .pipe(mocha({reporter: 'spec'}))
-})
-
-gulp.task('example:compile', ['compile'], function (cb) {
-    "use strict";
-    compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
-})
-
-gulp.task('example', ['compile', 'example:compile'], function (cb) {
-    "use strict";
-    exec('node dist/example/example.js', function (err, stdout, stderr) {
-        console.log(stdout)
-        console.log(stderr)
-        cb(err)
+gulp.task('test', ['compile', 'test:compile'], function() {
+  var mocha = require('gulp-mocha')
+  gulp.src('dist/test/*.js', {
+      read: false
     })
+    .pipe(mocha({
+      reporter: 'spec'
+    }))
+})
+
+gulp.task('example:compile', ['compile'], function(cb) {
+  "use strict";
+  compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
+})
+
+gulp.task('example', ['compile', 'example:compile'], function(cb) {
+  "use strict";
+  exec('node dist/example/example.js', function(err, stdout, stderr) {
+    console.log(stdout)
+    console.log(stderr)
+    cb(err)
+  })
 })
 
 function compile(src, name, dest, cb) {
-    gulp.src(src)
-        .pipe(sourcemaps.init())
-        //.pipe(concat(name))
-        .pipe(babel())
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest(dest))
-        .on('end', function () {
-            cb()
-        })
+  gulp.src(src)
+    .pipe(sourcemaps.init())
+    //.pipe(concat(name))
+    .pipe(babel())
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(dest))
+    .on('end', function() {
+      cb()
+    })
 }
