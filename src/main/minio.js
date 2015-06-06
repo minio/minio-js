@@ -142,6 +142,10 @@ class Client {
   bucketExists(bucket, cb) {
     "use strict";
 
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
