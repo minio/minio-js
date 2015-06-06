@@ -42,6 +42,10 @@ class Client {
   makeBucket(bucket, cb) {
     "use strict"
 
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
     var payloadObject = {
       CreateBucketConfiguration: [{
         _attr: {
