@@ -252,6 +252,24 @@ describe('Client', () => {
           done()
         }))
       })
+      it('should fail on null bucket', (done) => {
+          client.makeBucket(null, (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.makeBucket("", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.makeBucket("  \n  \t  ", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
     })
 
     describe('#getBucketACL(bucket, cb)', () => {
