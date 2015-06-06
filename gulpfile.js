@@ -27,7 +27,7 @@ gulp.task('compile', function (cb) {
     compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
 })
 
-gulp.task('test:compile', function (cb) {
+gulp.task('test:compile', ['compile'], function (cb) {
     compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
 })
 
@@ -37,7 +37,7 @@ gulp.task('test', ['compile', 'test:compile'], function () {
         .pipe(mocha({reporter: 'spec'}))
 })
 
-gulp.task('example:compile', function (cb) {
+gulp.task('example:compile', ['compile'], function (cb) {
     "use strict";
     compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
 })
