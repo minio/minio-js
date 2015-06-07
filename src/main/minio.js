@@ -239,6 +239,11 @@ class Client {
 
   dropAllIncompleteUploads(bucket, cb) {
     "use strict";
+
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
     dropUploads(this.transport, this.params, bucket, null, cb)
   }
 
