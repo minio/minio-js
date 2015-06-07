@@ -256,7 +256,7 @@ class Client {
     }
 
     if(object == null || object.trim() === "") {
-        return cb('object name cannot be empty')
+        return cb('object key cannot be empty')
     }
 
     var requestParams = {
@@ -283,6 +283,14 @@ class Client {
 
   putObject(bucket, key, contentType, size, r, cb) {
     "use strict";
+
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
+    if(key == null || key.trim() === "") {
+        return cb('object key cannot be empty')
+    }
 
     var self = this
 

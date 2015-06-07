@@ -432,19 +432,19 @@ describe('Client', () => {
       })
       it('should fail on null object', (done) => {
           client.getObject("hello", null, (e) => {
-              Assert(e, 'object name cannot be empty')
+              Assert(e, 'object key cannot be empty')
               done()
           })
       })
       it('should fail on empty object', (done) => {
           client.getObject("hello", "", (e) => {
-              Assert(e, 'object name cannot be empty')
+              Assert(e, 'object key cannot be empty')
               done()
           })
       })
       it('should fail on empty object', (done) => {
           client.getObject("hello", "  \n  \t  ", (e) => {
-              Assert(e, 'object name cannot be empty')
+              Assert(e, 'object key cannot be empty')
               done()
           })
       })
@@ -467,6 +467,42 @@ describe('Client', () => {
           s.push('hello world')
           s.push(null)
           client.putObject("bucket", "object", '', 11, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+        })
+        it('should fail on null bucket', (done) => {
+            client.putObject(null, "hello", '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
+        })
+        it('should fail on empty bucket', (done) => {
+            client.putObject("", "hello", '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
+        })
+        it('should fail on empty bucket', (done) => {
+            client.putObject(" \n \t ", "hello", '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
+        })
+        it('should fail on null object', (done) => {
+            client.putObject("hello", null, '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
+        })
+        it('should fail on empty object', (done) => {
+            client.putObject("hello", '', '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
+        })
+        it('should fail on empty object', (done) => {
+            client.putObject("hello", " \n \t ", '', 1, new Stream.Readable(), (e) => {
+                Assert(e, 'bucket name cannot be empty')
+                done()
+            })
         })
       })
       describe('with large objects using multipart', () => {
