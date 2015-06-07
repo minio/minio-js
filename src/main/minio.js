@@ -232,11 +232,6 @@ class Client {
     req.end()
   }
 
-  dropIncompleteUpload(bucket, key, cb) {
-    "use strict";
-    dropUploads(this.transport, this.params, bucket, key, cb)
-  }
-
   dropAllIncompleteUploads(bucket, cb) {
     "use strict";
 
@@ -247,6 +242,19 @@ class Client {
     dropUploads(this.transport, this.params, bucket, null, cb)
   }
 
+  dropIncompleteUpload(bucket, key, cb) {
+    "use strict";
+
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
+    if(key == null || key.trim() === "") {
+        return cb('object key cannot be empty')
+    }
+
+    dropUploads(this.transport, this.params, bucket, key, cb)
+  }
 
   getObject(bucket, object, cb) {
     "use strict";

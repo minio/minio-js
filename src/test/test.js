@@ -764,19 +764,19 @@ describe('Client', () => {
           })
       })
       it('should fail on null object', (done) => {
-          client.getObject("hello", null, (e) => {
+          client.statObject("hello", null, (e) => {
               Assert(e, 'object key cannot be empty')
               done()
           })
       })
       it('should fail on empty object', (done) => {
-          client.getObject("hello", "", (e) => {
+          client.statObject("hello", "", (e) => {
               Assert(e, 'object key cannot be empty')
               done()
           })
       })
       it('should fail on empty object', (done) => {
-          client.getObject("hello", "  \n  \t  ", (e) => {
+          client.statObject("hello", "  \n  \t  ", (e) => {
               Assert(e, 'object key cannot be empty')
               done()
           })
@@ -860,6 +860,42 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         MockResponse('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadmarker').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+      })
+      it('should fail on null bucket', (done) => {
+          client.dropIncompleteUpload(null, "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.dropIncompleteUpload("", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.dropIncompleteUpload("  \n  \t  ", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on null object', (done) => {
+          client.dropIncompleteUpload("hello", null, (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.dropIncompleteUpload("hello", "", (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.dropIncompleteUpload("hello", "  \n  \t  ", (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
       })
     })
   })
