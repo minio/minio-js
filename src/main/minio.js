@@ -251,6 +251,14 @@ class Client {
   getObject(bucket, object, cb) {
     "use strict";
 
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
+    if(object == null || object.trim() === "") {
+        return cb('object name cannot be empty')
+    }
+
     var requestParams = {
       host: this.params.host,
       port: this.params.port,

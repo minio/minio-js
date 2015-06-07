@@ -412,6 +412,42 @@ describe('Client', () => {
           done()
         }))
       })
+      it('should fail on null bucket', (done) => {
+          client.getObject(null, "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.getObject("", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.getObject("  \n  \t  ", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on null object', (done) => {
+          client.getObject("hello", null, (e) => {
+              Assert(e, 'object name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.getObject("hello", "", (e) => {
+              Assert(e, 'object name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.getObject("hello", "  \n  \t  ", (e) => {
+              Assert(e, 'object name cannot be empty')
+              done()
+          })
+      })
     })
 
     describe("#putObject(bucket, object, contentType, size, source, callback)", () => {
