@@ -195,8 +195,21 @@ class Client {
   }
 
   setBucketACL(bucket, acl, cb) {
+    "use strict"
+
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
+    if(acl == null || acl.trim() === "") {
+        return cb('acl name cannot be empty')
+    }
+
     // we should make sure to set this query parameter, but the call apparently succeeds without it to s3
     // To differentiate this functionality from makeBucket() lets do it anyways.
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
     var query = `?acl`;
     var requestParams = {
       host: this.params.host,
