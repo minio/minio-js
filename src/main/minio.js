@@ -191,7 +191,86 @@ class Client {
 
   getBucketACL(bucket, cb) {
     "use strict";
-    cb('not implemented')
+
+    if(bucket == null || bucket.trim() === "") {
+        return cb('bucket name cannot be empty')
+    }
+
+    var query = `?acl`;
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      method: 'GET',
+      path: `/${bucket}${query}`,
+    }
+
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+    var req = this.transport.request(requestParams, response => {
+      if (response.statusCode !== 200) {
+        return parseError(response, cb)
+      }
+      response.pipe(Concat((body) => {
+        var xml = ParseXml(body.toString())
+
+        var publicRead = false
+        var publicWrite = false
+        var authenticatedRead = false
+        var authenticatedWrite = false
+
+        xml.root.children.forEach(element => {
+          switch (element.name) {
+            case "AccessControlList":
+              element.children.forEach(grant => {
+                var granteeURL = null
+                var permission = null
+                grant.children.forEach(grantChild => {
+                  switch(grantChild.name){
+                    case "Grantee":
+                      grantChild.children.forEach(grantee => {
+                        switch(grantee.name) {
+                          case "URI":
+                            granteeURL = grantee.content
+                            break
+                        }
+                      })
+                      break
+                    case "Permission":
+                      permission = grantChild.content
+                    break
+                  }
+                })
+                if(granteeURL === 'http://acs.amazonaws.com/groups/global/AllUsers') {
+                    if(permission === 'READ') {
+                        publicRead = true
+                    } else if(permission === 'WRITE') {
+                        publicWrite = true
+                    }
+                } else if(granteeURL === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
+                    if(permission === 'READ') {
+                        authenticatedRead = true
+                    } else if(permission === 'WRITE') {
+                        authenticatedWrite = true
+                    }
+                }
+              })
+              break
+          }
+        })
+        var cannedACL = 'unsupported-acl'
+        if(publicRead && publicWrite && !authenticatedRead && !authenticatedWrite ) {
+            cannedACL = 'public-read-write'
+        } else if(publicRead && !publicWrite && !authenticatedRead && !authenticatedWrite ) {
+            cannedACL = 'public-read'
+        } else if(!publicRead && !publicWrite && authenticatedRead && !authenticatedWrite ) {
+            cannedACL = 'authenticated-read'
+        } else if(!publicRead && !publicWrite && !authenticatedRead && !authenticatedWrite ) {
+            cannedACL = 'private'
+        }
+        cb(null, cannedACL)
+      }))
+    })
+    req.end()
   }
 
   setBucketACL(bucket, acl, cb) {

@@ -273,8 +273,60 @@ describe('Client', () => {
     })
 
     describe('#getBucketACL(bucket, cb)', () => {
-      it.skip('should return acl', () => {})
-      it.skip('should pass error to callback', () => {})
+      it('should return public-read-write acl', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns=\"http://s3.amazonaws.com/doc/2006-03-01\"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        client.getBucketACL('bucket', (e, r) => {
+          Assert.equal(e, null)
+          Assert.equal(r, "public-read-write")
+          done()
+        })
+      })
+      it('should return public-read acl', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns=\"http://s3.amazonaws.com/doc/2006-03-01\"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        client.getBucketACL('bucket', (e, r) => {
+          Assert.equal(e, null)
+          Assert.equal(r, "public-read")
+          done()
+        })
+      })
+      it('should return authenticated-read acl', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AuthenticatedUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        client.getBucketACL('bucket', (e, r) => {
+          Assert.equal(e, null)
+          Assert.equal(r, 'authenticated-read')
+          done()
+        })
+      })
+      it('should return private acl', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        client.getBucketACL('bucket', (e, r) => {
+          Assert.equal(e, null)
+          Assert.equal(r, 'private')
+          done()
+        })
+      })
+      it('should pass error to callback', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.getBucketACL('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+      })
+      it('should fail on null bucket', (done) => {
+          client.getBucketACL(null, (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.getBucketACL("", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.getBucketACL("  \n  \t  ", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
     })
 
     describe('#setBucketACL(bucket, acl, cb)', () => {
