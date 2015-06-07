@@ -799,6 +799,42 @@ describe('Client', () => {
           done()
         }))
       })
+      it('should fail on null bucket', (done) => {
+          client.removeObject(null, "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.removeObject("", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.removeObject("  \n  \t  ", "hello", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on null object', (done) => {
+          client.removeObject("hello", null, (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.removeObject("hello", "", (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty object', (done) => {
+          client.removeObject("hello", "  \n  \t  ", (e) => {
+              Assert(e, 'object key cannot be empty')
+              done()
+          })
+      })
     })
 
     describe("#dropIncompleteUpload(bucket, object, callback)", () => {
