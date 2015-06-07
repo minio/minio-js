@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/minio/objectstorage-js#readme",
   "dependencies": {
-    "await": "^0.2.5",
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
     "gulp": "^3.9.0",
