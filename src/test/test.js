@@ -219,19 +219,19 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-          client.makeBucket(null, (e) => {
+          client.bucketExists(null, (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
       })
       it('should fail on empty bucket', (done) => {
-          client.makeBucket("", (e) => {
+          client.bucketExists("", (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
       })
       it('should fail on empty bucket', (done) => {
-          client.makeBucket("  \n  \t  ", (e) => {
+          client.bucketExists("  \n  \t  ", (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
@@ -246,26 +246,26 @@ describe('Client', () => {
         })
       })
       it('should pass error to callback', (done) => {
-        MockResponse('http://localhost:9000').head('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
+        MockResponse('http://localhost:9000').delete('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
+        client.removeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
           Assert.equal(r, null)
           done()
         }))
       })
       it('should fail on null bucket', (done) => {
-          client.makeBucket(null, (e) => {
+          client.removeBucket(null, (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
       })
       it('should fail on empty bucket', (done) => {
-          client.makeBucket("", (e) => {
+          client.removeBucket("", (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
       })
       it('should fail on empty bucket', (done) => {
-          client.makeBucket("  \n  \t  ", (e) => {
+          client.removeBucket("  \n  \t  ", (e) => {
               Assert(e, 'bucket name cannot be empty')
               done()
           })
@@ -310,6 +310,42 @@ describe('Client', () => {
           Assert.equal(r, null)
           done()
         }))
+      })
+      it('should fail on null bucket', (done) => {
+          client.setBucketACL(null, "public", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.setBucketACL("", "public", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty bucket', (done) => {
+          client.setBucketACL("  \n  \t  ", "public", (e) => {
+              Assert(e, 'bucket name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on null acl', (done) => {
+          client.setBucketACL("hello", null, (e) => {
+              Assert(e, 'acl name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty acl', (done) => {
+          client.setBucketACL("hello", "", (e) => {
+              Assert(e, 'acl name cannot be empty')
+              done()
+          })
+      })
+      it('should fail on empty acl', (done) => {
+          client.setBucketACL("hello", "  \n  \t  ", (e) => {
+              Assert(e, 'acl name cannot be empty')
+              done()
+          })
       })
     })
 
