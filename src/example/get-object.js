@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('../..')
+var Minio = require('minio')
 var Through2 = require('through2')
 
 var s3client = new Minio({
