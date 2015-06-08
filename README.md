@@ -31,33 +31,33 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
 
 ### Bucket
 
-[MakeBucket(bucket, cb)](https://github.com/minio/minio-js/blob/master/src/example/make-bucket.js)
+[MakeBucket(bucket, cb)](src/example/make-bucket.js)
 
-[ListBuckets() : Stream](https://github.com/minio/minio-js/blob/master/src/example/list-buckets.js)
+[ListBuckets() : Stream](src/example/list-buckets.js)
 
-[BucketExists(bucket, cb)](https://github.com/minio/minio-js/blob/master/src/example/bucket-exists.js)
+[BucketExists(bucket, cb)](src/example/bucket-exists.js)
 
-[RemoveBucket(bucket, cb)](https://github.com/minio/minio-js/blob/master/src/example/remove-bucket.js)
+[RemoveBucket(bucket, cb)](src/example/remove-bucket.js)
 
-[GetBucketACL(bucket, cb)](https://github.com/minio/minio-js/blob/master/src/example/get-bucket-acl.js)
+[GetBucketACL(bucket, cb)](src/example/get-bucket-acl.js)
 
-[SetBucketACL(bucket, acl, cb)](https://github.com/minio/minio-js/blob/master/src/example/set-bucket-acl.js)
+[SetBucketACL(bucket, acl, cb)](src/example/set-bucket-acl.js)
 
-[DropAllIncompleteUploads(bucket, cb)](https://github.com/minio/minio-js/blob/master/src/example/drop-incomplete-upload.js)
+[DropAllIncompleteUploads(bucket, cb)](src/example/drop-incomplete-upload.js)
 
 ### Object
 
-GetObject(bucket, key) Stream](https://github.com/minio/minio-js/blob/master/src/example/get-object.js)
+[GetObject(bucket, key) Stream](src/example/get-object.js)
 
-PutObject(bucket, key, Stream, cb)](https://github.com/minio/minio-js/blob/master/src/example/put-object.js)
+[PutObject(bucket, key, Stream, cb)](src/example/put-object.js)
 
-ListObjects(bucket, {prefix: prefix, recursive: true}) : Stream](https://github.com/minio/minio-js/blob/master/src/example/list-objects.js)
+[ListObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/example/list-objects.js)
 
-StatObject(bucket, key, cb)](https://github.com/minio/minio-js/blob/master/src/example/stat-object.js)
+[StatObject(bucket, key, cb)](src/example/stat-object.js)
 
-RemoveObject(bucket, key, cb)](https://github.com/minio/minio-js/blob/master/src/example/remove-object.js)
+[RemoveObject(bucket, key, cb)](src/example/remove-object.js)
 
-DropIncompleteUpload(bucket, key, cb)](https://github.com/minio/minio-js/blob/master/src/example/drop-incomplete-upload.js)
+[DropIncompleteUpload(bucket, key, cb)](src/example/drop-incomplete-upload.js)
 
 ## Join The Community
 * Community hangout on Gitter    [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
