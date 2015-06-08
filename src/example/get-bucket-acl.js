@@ -24,8 +24,8 @@ var s3client = new Minio({
 })
 
 s3client.getBucketACL('mybucket', function(e, acl) {
-  if(e) {
-     return console.log(e)
+  if (e) {
+    return console.log(e)
   }
   console.log(acl)
 })
