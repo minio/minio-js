@@ -444,7 +444,7 @@ class Client {
         var part = 1
         var errorred = null
         // compute size
-        var blockSize = 5 * 1024 * 1024
+        var blockSize = calculateBlockSize(size)
         var seen = 0
         r.on('finish', () => {
         })
@@ -498,6 +498,12 @@ class Client {
           done()
           cb(errorred)
         }))
+
+        function calculateBlockSize(size) {
+          var minimumPartSize = 5 * 1024 * 1024; // 5MB
+          var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
+          return Math.max(minimumPartSize, partSize);
+        }
       }
     } else {
       doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
