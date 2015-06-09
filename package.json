@@ -31,7 +31,6 @@
     "xml-parser": "^1.2.0"
   },
   "devDependencies": {
-    "esformatter": "^0.7.0",
     "gulp-mocha": "^2.1.0",
     "nock": "^2.2.0",
     "rewire": "^2.3.3"
