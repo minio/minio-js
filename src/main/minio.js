@@ -1203,8 +1203,11 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
       response.pipe(Concat((body) => {
         var xml = ParseXml(body.toString())
         var result = {
-          objects: []
+          objects: [],
+          marker: null,
+          isTruncated: false
         }
+        var marker = null
         xml.root.children.forEach(element => {
           switch (element.name) {
             case "IsTruncated":
@@ -1216,6 +1219,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
                 switch (xmlObject.name) {
                   case "Key":
                     object.name = xmlObject.content
+                    marker = object.name
                     break
                   case "LastModified":
                     object.lastModified = xmlObject.content
@@ -1247,6 +1251,10 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
             default:
           }
         })
+        // if truncated but no marker set, we set it
+        if(!result.marker && result.isTruncated) {
+          result.marker = marker
+        }
         cb(null, result)
       }))
     })
