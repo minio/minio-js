@@ -547,7 +547,6 @@ class Client {
             delimiter: currentRequest.delimiter,
             maxKeys: currentRequest.maxKeys
           })
-          queue.push(null)
         } else {
           queue.push(null)
         }
