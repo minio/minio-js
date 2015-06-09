@@ -218,6 +218,13 @@ describe('Client', () => {
           done()
         }))
       })
+      it('should return an error on 404', (done) => {
+          MockResponse('http://localhost:9000').head('/bucket').reply(404)
+          client.bucketExists('bucket', checkError('NotFound', '404: Not Found', null, null, null, (r) => {
+              Assert.equal(r, null)
+              done()
+          }))
+      })
       it('should fail on null bucket', (done) => {
           client.bucketExists(null, (e) => {
               Assert(e, 'bucket name cannot be empty')

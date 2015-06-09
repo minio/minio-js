@@ -641,6 +641,15 @@ var parseError = (response, cb) => {
       resource: null
     })
   }
+  if(response.statusCode === 404) {
+    return cb({
+      code: 'NotFound',
+      message: '404: Not Found',
+      requestId: null,
+      hostId: null,
+      resource: null
+    })
+  }
   response.pipe(Concat(errorXml => {
     var parsedXml = ParseXml(errorXml.toString())
     var e = {}
