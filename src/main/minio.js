@@ -536,14 +536,19 @@ class Client {
         if (e) {
           return done(e)
         }
+        var marker = null
         r.objects.forEach(object => {
+          marker = object.name
           this.push(object)
         })
         if (r.isTruncated) {
+          if(delimiter) {
+            marker = r.nextMarker
+          }
           queue.push({
             bucket: currentRequest.bucket,
             prefix: currentRequest.prefix,
-            marker: r.marker,
+            marker: marker,
             delimiter: currentRequest.delimiter,
             maxKeys: currentRequest.maxKeys
           })
@@ -1220,6 +1225,9 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
           switch (element.name) {
             case "IsTruncated":
               result.isTruncated = element.content === 'true'
+              break
+            case "NextMarker":
+              result.nextMarker = element.content
               break
             case "Contents":
               var object = {}
