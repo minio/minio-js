@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/minio/objectstorage-js.git"
+    "url": "git+https://github.com/minio/minio-js.git"
   },
   "author": "minio.io",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/minio/objectstorage-js/issues"
+    "url": "https://github.com/minio/minio-js/issues"
   },
-  "homepage": "https://github.com/minio/objectstorage-js#readme",
+  "homepage": "https://github.com/minio/minio-js#readme",
   "dependencies": {
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
