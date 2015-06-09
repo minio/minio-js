@@ -63,8 +63,7 @@ class Request {
   _r() {
     "use strict";
     var stream = new Stream.Readable()
-    stream._read = () => {
-    }
+    stream._read = () => {}
     if (this.req.responseStream) {
       this.req.responseStream.pipe(stream)
     } else {

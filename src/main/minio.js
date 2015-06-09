@@ -99,8 +99,7 @@ class Client {
     var stream = new Stream.Readable({
       objectMode: true
     })
-    stream._read = () => {
-    }
+    stream._read = () => {}
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
@@ -443,11 +442,10 @@ class Client {
       function streamUpload(transport, params, bucket, key, uploadId, partsArray, totalSize, r, cb) {
         var part = 1
         var errorred = null
-        // compute size
+          // compute size
         var blockSize = calculateBlockSize(size)
         var seen = 0
-        r.on('finish', () => {
-        })
+        r.on('finish', () => {})
         r.pipe(BlockStream2({
           size: blockSize,
           zeroPadding: false
@@ -477,8 +475,7 @@ class Client {
             var dataStream = new Stream.Readable()
             dataStream.push(data)
             dataStream.push(null)
-            dataStream._read = () => {
-            }
+            dataStream._read = () => {}
             doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
               if (errorred) {
                 return done()
@@ -529,8 +526,7 @@ class Client {
     var queue = new Stream.Readable({
       objectMode: true
     })
-    queue._read = () => {
-    }
+    queue._read = () => {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
       getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
         if (e) {
@@ -542,7 +538,7 @@ class Client {
           this.push(object)
         })
         if (r.isTruncated) {
-          if(delimiter) {
+          if (delimiter) {
             marker = r.nextMarker
           }
           queue.push({
@@ -645,7 +641,7 @@ var parseError = (response, cb) => {
       resource: null
     })
   }
-  if(response.statusCode === 404) {
+  if (response.statusCode === 404) {
     return cb({
       code: 'NotFound',
       message: '404: Not Found',
@@ -771,221 +767,219 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
             element = element + '='
           }
           return element
-          })
-          .join('&')
-      }
-
-      var canonicalString = ""
-      canonicalString += canonicalString + request.method.toUpperCase() + '\n'
-      canonicalString += requestResource + '\n'
-      canonicalString += requestQuery + '\n';
-      headers.forEach(element => {
-        canonicalString += element + '\n'
-      })
-      canonicalString += '\n'
-      canonicalString += signedHeaders + '\n'
-      canonicalString += dataShaSum1
-      return [canonicalString, signedHeaders]
+        })
+        .join('&')
     }
-  }
 
-  var uriEscape = function uriEscape(string) {
-    var output = encodeURIComponent(string);
-    output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
-
-    // AWS percent-encodes some extra non-standard characters in a URI
-    output = output.replace(/[*]/g, function(ch) {
-      return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
-    });
-
-    return output;
-  }
-
-  var listAllIncompleteUploads = function(transport, params, bucket, object) {
-    "use strict";
-    var errorred = null
-    var queue = new Stream.Readable({
-      objectMode: true
+    var canonicalString = ""
+    canonicalString += canonicalString + request.method.toUpperCase() + '\n'
+    canonicalString += requestResource + '\n'
+    canonicalString += requestQuery + '\n';
+    headers.forEach(element => {
+      canonicalString += element + '\n'
     })
-    queue._read = () => {
-    }
+    canonicalString += '\n'
+    canonicalString += signedHeaders + '\n'
+    canonicalString += dataShaSum1
+    return [canonicalString, signedHeaders]
+  }
+}
 
-    var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
+var uriEscape = function uriEscape(string) {
+  var output = encodeURIComponent(string);
+  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
+
+  // AWS percent-encodes some extra non-standard characters in a URI
+  output = output.replace(/[*]/g, function(ch) {
+    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
+  });
+
+  return output;
+}
+
+var listAllIncompleteUploads = function(transport, params, bucket, object) {
+  "use strict";
+  var errorred = null
+  var queue = new Stream.Readable({
+    objectMode: true
+  })
+  queue._read = () => {}
+
+  var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
+    if (errorred) {
+      return done()
+    }
+    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
       if (errorred) {
         return done()
       }
-      listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
-        if (errorred) {
-          return done()
-        }
-        // TODO handle error
-        if (e) {
-          return done(e)
-        }
-        r.uploads.forEach(upload => {
-          this.push(upload)
-        })
-        if (r.isTruncated) {
-          queue.push({
-            bucket: bucket,
-            object: decodeURI(object),
-            objectMarker: decodeURI(r.objectMarker),
-            uploadIdMarker: decodeURI(r.uploadIdMarker)
-          })
-        } else {
-          queue.push(null)
-        }
-        done()
+      // TODO handle error
+      if (e) {
+        return done(e)
+      }
+      r.uploads.forEach(upload => {
+        this.push(upload)
       })
-    }, function(done) {
-      if (errorred) {
-        return done(errorred)
-      }
-      return done()
-    }))
-
-    queue.push({
-      bucket: bucket,
-      object: object,
-      objectMarker: null,
-      uploadIdMarker: null
-    })
-
-    return stream
-  }
-
-  function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
-    "use strict";
-    var queries = []
-    var escape = uriEscape
-    if (key) {
-      queries.push(`prefix=${escape(key)}`)
-    }
-    if (keyMarker) {
-      keyMarker = escape(keyMarker)
-      queries.push(`key-marker=${keyMarker}`)
-    }
-    if (uploadIdMarker) {
-      uploadIdMarker = escape(uploadIdMarker)
-      queries.push(`upload-id-marker=${uploadIdMarker}`)
-    }
-    var maxuploads = 1000;
-    queries.push(`max-uploads=${maxuploads}`)
-    queries.sort()
-    queries.unshift('uploads')
-    var query = ''
-    if (queries.length > 0) {
-      query = `?${queries.join('&')}`
-    }
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}${query}`,
-      method: 'GET'
-    }
-
-    signV4(requestParams, '', params.accessKey, params.secretKey)
-
-    var req = transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        return parseError(response, cb)
-      }
-      response.pipe(Concat(xml => {
-        var parsedXml = ParseXml(xml.toString())
-        var result = {
-          uploads: [],
-          isTruncated: false,
-          nextJob: null
-        }
-        var nextJob = {
+      if (r.isTruncated) {
+        queue.push({
           bucket: bucket,
-          key: key
-        }
-        var ignoreTruncated = false
-        parsedXml.root.children.forEach(element => {
-          switch (element.name) {
-            case "IsTruncated":
-              result.isTruncated = element.content === 'true'
-              break
-            case "NextKeyMarker":
-              nextJob.keyMarker = decodeURI(element.content)
-              break
-            case "NextUploadIdMarker":
-              nextJob.uploadIdMarker = decodeURI(element.content)
-              break
-            case "Upload":
-              var upload = {
-                bucket: bucket,
-                key: null,
-                uploadId: null,
-              }
-              element.children.forEach(xmlObject => {
-                switch (xmlObject.name) {
-                  case "Key":
-                    upload.key = decodeURI(xmlObject.content)
-                    break
-                  case "UploadId":
-                    upload.uploadId = decodeURI(xmlObject.content)
-                    break
-                  default:
-                }
-              })
-              if (key) {
-                if (key === upload.key) {
-                  result.uploads.push(upload)
-                } else {
-                  ignoreTruncated = true
-                }
-              } else {
-                result.uploads.push(upload)
-              }
-              break
-            default:
-          }
+          object: decodeURI(object),
+          objectMarker: decodeURI(r.objectMarker),
+          uploadIdMarker: decodeURI(r.uploadIdMarker)
         })
-        if (result.isTruncated && !ignoreTruncated) {
-          result.nextJob = nextJob
-        } else {
-          result.isTruncated = false
-        }
-        cb(null, result)
-      }))
-    })
-    req.end()
-  }
-
-  var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}/${key}?uploadId=${uploadId}`,
-      method: 'DELETE'
-    }
-
-    signV4(requestParams, '', params.accessKey, params.secretKey)
-
-    var req = transport.request(requestParams, (response) => {
-      "use strict";
-      if (response.statusCode !== 204) {
-        return parseError(response, cb)
+      } else {
+        queue.push(null)
       }
-      cb()
+      done()
     })
-    req.end()
+  }, function(done) {
+    if (errorred) {
+      return done(errorred)
+    }
+    return done()
+  }))
+
+  queue.push({
+    bucket: bucket,
+    object: object,
+    objectMarker: null,
+    uploadIdMarker: null
+  })
+
+  return stream
+}
+
+function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
+  "use strict";
+  var queries = []
+  var escape = uriEscape
+  if (key) {
+    queries.push(`prefix=${escape(key)}`)
+  }
+  if (keyMarker) {
+    keyMarker = escape(keyMarker)
+    queries.push(`key-marker=${keyMarker}`)
+  }
+  if (uploadIdMarker) {
+    uploadIdMarker = escape(uploadIdMarker)
+    queries.push(`upload-id-marker=${uploadIdMarker}`)
+  }
+  var maxuploads = 1000;
+  queries.push(`max-uploads=${maxuploads}`)
+  queries.sort()
+  queries.unshift('uploads')
+  var query = ''
+  if (queries.length > 0) {
+    query = `?${queries.join('&')}`
+  }
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}${query}`,
+    method: 'GET'
   }
 
-  var dropUploads = (transport, params, bucket, key, cb) => {
-    "use strict";
-    var self = this
+  signV4(requestParams, '', params.accessKey, params.secretKey)
 
-    var errorred = null
-
-    var queue = new Stream.Readable({
-      objectMode: true
-    })
-    queue._read = () => {
+  var req = transport.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return parseError(response, cb)
     }
-    queue.pipe(Through2.obj(function(job, enc, done) {
+    response.pipe(Concat(xml => {
+      var parsedXml = ParseXml(xml.toString())
+      var result = {
+        uploads: [],
+        isTruncated: false,
+        nextJob: null
+      }
+      var nextJob = {
+        bucket: bucket,
+        key: key
+      }
+      var ignoreTruncated = false
+      parsedXml.root.children.forEach(element => {
+        switch (element.name) {
+          case "IsTruncated":
+            result.isTruncated = element.content === 'true'
+            break
+          case "NextKeyMarker":
+            nextJob.keyMarker = decodeURI(element.content)
+            break
+          case "NextUploadIdMarker":
+            nextJob.uploadIdMarker = decodeURI(element.content)
+            break
+          case "Upload":
+            var upload = {
+              bucket: bucket,
+              key: null,
+              uploadId: null,
+            }
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case "Key":
+                  upload.key = decodeURI(xmlObject.content)
+                  break
+                case "UploadId":
+                  upload.uploadId = decodeURI(xmlObject.content)
+                  break
+                default:
+              }
+            })
+            if (key) {
+              if (key === upload.key) {
+                result.uploads.push(upload)
+              } else {
+                ignoreTruncated = true
+              }
+            } else {
+              result.uploads.push(upload)
+            }
+            break
+          default:
+        }
+      })
+      if (result.isTruncated && !ignoreTruncated) {
+        result.nextJob = nextJob
+      } else {
+        result.isTruncated = false
+      }
+      cb(null, result)
+    }))
+  })
+  req.end()
+}
+
+var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}?uploadId=${uploadId}`,
+    method: 'DELETE'
+  }
+
+  signV4(requestParams, '', params.accessKey, params.secretKey)
+
+  var req = transport.request(requestParams, (response) => {
+    "use strict";
+    if (response.statusCode !== 204) {
+      return parseError(response, cb)
+    }
+    cb()
+  })
+  req.end()
+}
+
+var dropUploads = (transport, params, bucket, key, cb) => {
+  "use strict";
+  var self = this
+
+  var errorred = null
+
+  var queue = new Stream.Readable({
+    objectMode: true
+  })
+  queue._read = () => {}
+  queue.pipe(Through2.obj(function(job, enc, done) {
       if (errorred) {
         return done()
       }
@@ -1014,214 +1008,212 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         done()
       })
     }))
-      .pipe(Through2.obj(function(upload, enc, done) {
+    .pipe(Through2.obj(function(upload, enc, done) {
+      if (errorred) {
+        return done()
+      }
+      abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
         if (errorred) {
           return done()
         }
-        abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-          if (errorred) {
-            return done()
-          }
-          if (e) {
-            errorred = e
-            queue.push(null)
-            return done()
-          }
-          done()
-        })
-      }, function(done) {
-        cb(errorred)
+        if (e) {
+          errorred = e
+          queue.push(null)
+          return done()
+        }
         done()
-      }))
-    queue.push({
-      bucket: bucket,
-      key: key,
-      keyMarker: null,
-      uploadIdMarker: null
-    })
-  }
-
-  var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}/${key}?uploads`,
-      method: 'POST'
-    }
-
-    signV4(requestParams, '', params.accessKey, params.secretKey)
-
-    var request = transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        return parseError(response, cb)
-      }
-      response.pipe(Concat(xml => {
-        "use strict";
-        var parsedXml = ParseXml(xml.toString())
-        var uploadId = null
-        parsedXml.root.children.forEach(element => {
-          "use strict";
-          if (element.name === 'UploadId') {
-            uploadId = element.content
-          }
-        })
-
-        if (uploadId) {
-          return cb(null, uploadId)
-        }
-        cb('unable to get upload id')
-      }))
-    })
-    request.end()
-  }
-
-  function doPutObject(transport, params, bucket, key, contentType, size, uploadId, part, r, cb) {
-    var query = ''
-    if (part) {
-      query = `?partNumber=${part}&uploadId=${uploadId}`
-    }
-    if (contentType == null || contentType == '') {
-      contentType = 'aplication/octet-stream'
-    }
-
-    r.pipe(Concat(data => {
-      var hash256 = Crypto.createHash('sha256')
-      var hashMD5 = Crypto.createHash('md5')
-      hash256.update(data)
-      hashMD5.update(data)
-
-      var sha256 = hash256.digest('hex').toLowerCase()
-      var md5 = hashMD5.digest('base64')
-
-      var requestParams = {
-        host: params.host,
-        port: params.port,
-        path: `/${bucket}/${key}${query}`,
-        method: 'PUT',
-        headers: {
-          "Content-Length": size,
-          "Content-Type": contentType,
-          "Content-MD5": md5
-        }
-      }
-
-      signV4(requestParams, sha256, params.accessKey, params.secretKey)
-
-      var dataStream = new Stream.Readable()
-      dataStream._read = () => {
-      }
-      dataStream.push(data)
-      dataStream.push(null)
-
-      var request = transport.request(requestParams, (response) => {
-        if (response.statusCode !== 200) {
-          return parseError(response, cb)
-        }
-        var etag = response.headers['etag']
-        cb(null, etag)
       })
-      dataStream.pipe(request)
     }, function(done) {
+      cb(errorred)
       done()
     }))
-    r.on('error', (e) => {
-      cb('Unable to read data')
-    })
+  queue.push({
+    bucket: bucket,
+    key: key,
+    keyMarker: null,
+    uploadIdMarker: null
+  })
+}
+
+var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}?uploads`,
+    method: 'POST'
   }
 
-  function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
+  signV4(requestParams, '', params.accessKey, params.secretKey)
+
+  var request = transport.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return parseError(response, cb)
+    }
+    response.pipe(Concat(xml => {
+      "use strict";
+      var parsedXml = ParseXml(xml.toString())
+      var uploadId = null
+      parsedXml.root.children.forEach(element => {
+        "use strict";
+        if (element.name === 'UploadId') {
+          uploadId = element.content
+        }
+      })
+
+      if (uploadId) {
+        return cb(null, uploadId)
+      }
+      cb('unable to get upload id')
+    }))
+  })
+  request.end()
+}
+
+function doPutObject(transport, params, bucket, key, contentType, size, uploadId, part, r, cb) {
+  var query = ''
+  if (part) {
+    query = `?partNumber=${part}&uploadId=${uploadId}`
+  }
+  if (contentType == null || contentType == '') {
+    contentType = 'aplication/octet-stream'
+  }
+
+  r.pipe(Concat(data => {
+    var hash256 = Crypto.createHash('sha256')
+    var hashMD5 = Crypto.createHash('md5')
+    hash256.update(data)
+    hashMD5.update(data)
+
+    var sha256 = hash256.digest('hex').toLowerCase()
+    var md5 = hashMD5.digest('base64')
+
     var requestParams = {
       host: params.host,
       port: params.port,
-      path: `/${bucket}/${key}?uploadId=${uploadId}`,
-      method: 'POST'
+      path: `/${bucket}/${key}${query}`,
+      method: 'PUT',
+      headers: {
+        "Content-Length": size,
+        "Content-Type": contentType,
+        "Content-MD5": md5
+      }
     }
-
-    var parts = []
-
-    etags.forEach(element => {
-      parts.push({
-        Part: [{
-          PartNumber: element.part
-        }, {
-          ETag: element.etag
-        },]
-      })
-    })
-
-    var payloadObject = {
-      CompleteMultipartUpload: parts
-    }
-
-    var payload = Xml(payloadObject)
-
-    var hash = Crypto.createHash('sha256')
-    hash.update(payload)
-    var sha256 = hash.digest('hex').toLowerCase()
-
-    var stream = new Stream.Readable()
-    stream._read = () => {
-    }
-    stream.push(payload)
-    stream.push(null)
 
     signV4(requestParams, sha256, params.accessKey, params.secretKey)
 
+    var dataStream = new Stream.Readable()
+    dataStream._read = () => {}
+    dataStream.push(data)
+    dataStream.push(null)
+
     var request = transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         return parseError(response, cb)
       }
-      cb()
+      var etag = response.headers['etag']
+      cb(null, etag)
     })
-    stream.pipe(request)
+    dataStream.pipe(request)
+  }, function(done) {
+    done()
+  }))
+  r.on('error', (e) => {
+    cb('Unable to read data')
+  })
+}
+
+function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}?uploadId=${uploadId}`,
+    method: 'POST'
   }
 
-  var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
-    var queries = []
-    var escape = uriEscape; // escape every value, for query string
-    if (prefix) {
-      prefix = escape(prefix)
-      queries.push(`prefix=${prefix}`)
-    }
-    if (marker) {
-      marker = escape(marker)
-      queries.push(`marker=${marker}`)
-    }
-    if (delimiter) {
-      delimiter = escape(delimiter)
-      queries.push(`delimiter=${delimiter}`)
-    }
-    if (maxKeys) {
-      maxKeys = escape(maxKeys)
-      queries.push(`max-keys=${maxKeys}`)
-    }
-    queries.sort()
-    var query = ''
-    if (queries.length > 0) {
-      query = `?${queries.join('&')}`
-    }
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}${query}`,
-      method: 'GET'
-    }
+  var parts = []
 
-    signV4(requestParams, '', params.accessKey, params.secretKey)
+  etags.forEach(element => {
+    parts.push({
+      Part: [{
+        PartNumber: element.part
+      }, {
+        ETag: element.etag
+      }, ]
+    })
+  })
 
-    var req = transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        return parseError(response, cb)
+  var payloadObject = {
+    CompleteMultipartUpload: parts
+  }
+
+  var payload = Xml(payloadObject)
+
+  var hash = Crypto.createHash('sha256')
+  hash.update(payload)
+  var sha256 = hash.digest('hex').toLowerCase()
+
+  var stream = new Stream.Readable()
+  stream._read = () => {}
+  stream.push(payload)
+  stream.push(null)
+
+  signV4(requestParams, sha256, params.accessKey, params.secretKey)
+
+  var request = transport.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return parseError(response, cb)
+    }
+    cb()
+  })
+  stream.pipe(request)
+}
+
+var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
+  var queries = []
+  var escape = uriEscape; // escape every value, for query string
+  if (prefix) {
+    prefix = escape(prefix)
+    queries.push(`prefix=${prefix}`)
+  }
+  if (marker) {
+    marker = escape(marker)
+    queries.push(`marker=${marker}`)
+  }
+  if (delimiter) {
+    delimiter = escape(delimiter)
+    queries.push(`delimiter=${delimiter}`)
+  }
+  if (maxKeys) {
+    maxKeys = escape(maxKeys)
+    queries.push(`max-keys=${maxKeys}`)
+  }
+  queries.sort()
+  var query = ''
+  if (queries.length > 0) {
+    query = `?${queries.join('&')}`
+  }
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}${query}`,
+    method: 'GET'
+  }
+
+  signV4(requestParams, '', params.accessKey, params.secretKey)
+
+  var req = transport.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return parseError(response, cb)
+    }
+    response.pipe(Concat((body) => {
+      var xml = ParseXml(body.toString())
+      var result = {
+        objects: [],
+        marker: null,
+        isTruncated: false
       }
-      response.pipe(Concat((body) => {
-        var xml = ParseXml(body.toString())
-        var result = {
-          objects: [],
-          marker: null,
-          isTruncated: false
-        }
-        var marker = null
-        xml.root.children.forEach(element => {
+      var marker = null
+      xml.root.children.forEach(element => {
           switch (element.name) {
             case "IsTruncated":
               result.isTruncated = element.content === 'true'
@@ -1268,161 +1260,160 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
           }
         })
         // if truncated but no marker set, we set it
-        if(!result.marker && result.isTruncated) {
-          result.marker = marker
-        }
-        cb(null, result)
-      }))
-    })
-    req.end()
-  }
+      if (!result.marker && result.isTruncated) {
+        result.marker = marker
+      }
+      cb(null, result)
+    }))
+  })
+  req.end()
+}
 
-  var listAllParts = (transport, params, bucket, key, uploadId) => {
-    var errorred = null
-    var queue = new Stream.Readable({
-      objectMode: true
-    })
-    queue._read = () => {
-    }
-    var stream = queue
-      .pipe(Through2.obj(function(job, enc, done) {
+var listAllParts = (transport, params, bucket, key, uploadId) => {
+  var errorred = null
+  var queue = new Stream.Readable({
+    objectMode: true
+  })
+  queue._read = () => {}
+  var stream = queue
+    .pipe(Through2.obj(function(job, enc, done) {
+      if (errorred) {
+        return done()
+      }
+      listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
         if (errorred) {
           return done()
         }
-        listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
-          if (errorred) {
-            return done()
-          }
-          if (e) {
-            errorred = e
-            queue.push(null)
-            return done()
-          }
-          r.parts.forEach((element) => {
-            this.push(element)
-          })
-          if (r.isTruncated) {
-            queue.push(r.nextJob)
-          } else {
-            queue.push(null)
-          }
-          done()
+        if (e) {
+          errorred = e
+          queue.push(null)
+          return done()
+        }
+        r.parts.forEach((element) => {
+          this.push(element)
         })
-      }, function(end) {
-        end(errorred)
-      }))
-    queue.push({
-      bucket: bucket,
-      key: key,
-      uploadId: uploadId,
-      marker: 0
-    })
-    return stream
+        if (r.isTruncated) {
+          queue.push(r.nextJob)
+        } else {
+          queue.push(null)
+        }
+        done()
+      })
+    }, function(end) {
+      end(errorred)
+    }))
+  queue.push({
+    bucket: bucket,
+    key: key,
+    uploadId: uploadId,
+    marker: 0
+  })
+  return stream
+}
+
+var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
+  var query = '?'
+  if (marker && marker != 0) {
+    query += `part-number-marker=${marker}&`
+  }
+  query += `uploadId=${uploadId}`
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}${query}`,
+    method: 'GET'
   }
 
-  var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
-    var query = '?'
-    if (marker && marker != 0) {
-      query += `part-number-marker=${marker}&`
-    }
-    query += `uploadId=${uploadId}`
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}/${key}${query}`,
-      method: 'GET'
-    }
+  signV4(requestParams, '', params.accessKey, params.secretKey)
 
-    signV4(requestParams, '', params.accessKey, params.secretKey)
-
-    var request = Http.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        return parseError(response, cb)
+  var request = Http.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return parseError(response, cb)
+    }
+    response.pipe(Concat(body => {
+      var xml = ParseXml(body.toString())
+      var result = {
+        isTruncated: false,
+        parts: [],
+        nextJob: null
       }
-      response.pipe(Concat(body => {
-        var xml = ParseXml(body.toString())
-        var result = {
-          isTruncated: false,
-          parts: [],
-          nextJob: null
+      var nextJob = {
+        bucket: bucket,
+        key: key,
+        uploadId: uploadId
+      }
+      xml.root.children.forEach(element => {
+        switch (element.name) {
+          case "IsTruncated":
+            result.isTruncated = element.content === 'true'
+            break
+          case "NextPartNumberMarker":
+            nextJob.marker = +element.content
+            break
+          case "Part":
+            var object = {}
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case "PartNumber":
+                  object.part = +xmlObject.content
+                  break
+                case "LastModified":
+                  object.lastModified = xmlObject.content
+                  break
+                case "ETag":
+                  object.etag = xmlObject.content
+                  break
+                case "Size":
+                  object.size = +xmlObject.content
+                  break
+                default:
+              }
+            })
+            result.parts.push(object)
+            break
+          default:
+            break
         }
-        var nextJob = {
-          bucket: bucket,
-          key: key,
-          uploadId: uploadId
-        }
-        xml.root.children.forEach(element => {
-          switch (element.name) {
-            case "IsTruncated":
-              result.isTruncated = element.content === 'true'
-              break
-            case "NextPartNumberMarker":
-              nextJob.marker = +element.content
-              break
-            case "Part":
-              var object = {}
-              element.children.forEach(xmlObject => {
-                switch (xmlObject.name) {
-                  case "PartNumber":
-                    object.part = +xmlObject.content
-                    break
-                  case "LastModified":
-                    object.lastModified = xmlObject.content
-                    break
-                  case "ETag":
-                    object.etag = xmlObject.content
-                    break
-                  case "Size":
-                    object.size = +xmlObject.content
-                    break
-                  default:
-                }
-              })
-              result.parts.push(object)
-              break
-            default:
-              break
-          }
-        })
-        if (result.isTruncated) {
-          result.nextJob = nextJob
-        }
-        cb(null, result)
-      }))
-    })
-    request.end()
-  }
+      })
+      if (result.isTruncated) {
+        result.nextJob = nextJob
+      }
+      cb(null, result)
+    }))
+  })
+  request.end()
+}
 
-  function getRegion(host) {
-    switch (host) {
-      case "s3.amazonaws.com":
-        return "us-east-1"
-      case "s3-ap-northeast-1.amazonaws.com":
-        return "ap-northeast-1"
-      case "s3-ap-southeast-1.amazonaws.com":
-        return "ap-southeast-1"
-      case "s3-ap-southeast-2.amazonaws.com":
-        return "ap-southeast-2"
-      case "s3-eu-central-1.amazonaws.com":
-        return "eu-central-1"
-      case "s3-eu-west-1.amazonaws.com":
-        return "eu-west-1"
-      case "s3-sa-east-1.amazonaws.com":
-        return "sa-east-1"
-      case "s3-external-1.amazonaws.com":
-        return "us-east-1"
-      case "s3-us-west-1.amazonaws.com":
-        return "us-west-1"
-      case "s3-us-west-2.amazonaws.com":
-        return "us-west-2"
-      case "s3.cn-north-1.amazonaws.com.cn":
-        return "cn-north-1"
-      case "s3-fips-us-gov-west-1.amazonaws.com":
-        return "us-gov-west-1"
-      default:
-        return "milkyway"
-    }
+function getRegion(host) {
+  switch (host) {
+    case "s3.amazonaws.com":
+      return "us-east-1"
+    case "s3-ap-northeast-1.amazonaws.com":
+      return "ap-northeast-1"
+    case "s3-ap-southeast-1.amazonaws.com":
+      return "ap-southeast-1"
+    case "s3-ap-southeast-2.amazonaws.com":
+      return "ap-southeast-2"
+    case "s3-eu-central-1.amazonaws.com":
+      return "eu-central-1"
+    case "s3-eu-west-1.amazonaws.com":
+      return "eu-west-1"
+    case "s3-sa-east-1.amazonaws.com":
+      return "sa-east-1"
+    case "s3-external-1.amazonaws.com":
+      return "us-east-1"
+    case "s3-us-west-1.amazonaws.com":
+      return "us-west-1"
+    case "s3-us-west-2.amazonaws.com":
+      return "us-west-2"
+    case "s3.cn-north-1.amazonaws.com.cn":
+      return "cn-north-1"
+    case "s3-fips-us-gov-west-1.amazonaws.com":
+      return "us-gov-west-1"
+    default:
+      return "milkyway"
   }
+}
 
-  var inst = Client
-  module.exports = inst
+var inst = Client
+module.exports = inst
