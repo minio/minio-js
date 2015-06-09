@@ -20,6 +20,7 @@ var BlockStream2 = require('block-stream2')
 var Concat = require('concat-stream')
 var Crypto = require('crypto')
 var Http = require('http')
+var Https = require('https')
 var Moment = require('moment')
 var ParseXml = require('xml-parser')
 var Stream = require('stream')
@@ -32,7 +33,11 @@ class Client {
     if (transport) {
       this.transport = transport
     } else {
-      this.transport = Http
+      if(params.https) {
+        this.transport = Https
+      } else {
+        this.transport = Http
+      }
     }
     this.params = params
   }
