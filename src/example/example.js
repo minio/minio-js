@@ -17,9 +17,10 @@
 var minio = require('minio')
 var stream = require('stream').Readable
 
-var s3client = new minio({
-  host: 'localhost',
-  port: 9000
+var s3client = new Minio({
+  url: 'https://s3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 s3client.makeBucket('hello', function(e) {

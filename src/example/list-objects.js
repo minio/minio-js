@@ -18,8 +18,7 @@ var Minio = require('minio')
 var Through2 = require('through2')
 
 var s3client = new Minio({
-  host: 's3.amazonaws.com',
-  port: 80,
+  url: 'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
