@@ -20,6 +20,7 @@ var Assert = require('assert')
 var Concat = require('concat-stream')
 var Http = require('http')
 var Nock = require('nock')
+var Package = require('../../package.json')
 var Through2 = require('through2')
 var Stream = require('stream')
 
@@ -108,6 +109,82 @@ describe('Client', () => {
           secretKey: "secretkey"
         })
       } catch (e) {
+        done()
+      }
+    })
+  })
+  describe('User Agent', () => {
+    it('should have a default user agent', () => {
+      var client = new minio({
+        url: 'https://localhost:9000',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.agent)
+    })
+    it('should add to the user agent', () => {
+      var client = new minio({
+        url: 'https://localhost:9000',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      client.addUserAgent('test', '1.0.0', ['comment', 'on', 'life'])
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; on; life)`, client.params.agent)
+    })
+    it('should add to the user agent without comments', () => {
+      var client = new minio({
+        url: 'https://localhost:9000',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      client.addUserAgent('test', '1.0.0', [])
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.agent)
+    })
+    it('should add to the user agent without name', (done) => {
+      try {
+        var client = new minio({
+          url: 'https://localhost:9000',
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+        client.addUserAgent(null, '1.0.0')
+      } catch(e) {
+        done()
+      }
+    })
+    it('should add to the user agent with empty name', (done) => {
+      try {
+        var client = new minio({
+          url: 'https://localhost:9000',
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+        client.addUserAgent('', '1.0.0')
+      } catch(e) {
+        done()
+      }
+    })
+    it('should add to the user agent without version', (done) => {
+      try {
+        var client = new minio({
+          url: 'https://localhost:9000',
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+        client.addUserAgent('test', null)
+      } catch(e) {
+        done()
+      }
+    })
+    it('should add to the user agent with empty version', (done) => {
+      try {
+        var client = new minio({
+          url: 'https://localhost:9000',
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+        client.addUserAgent('test', '')
+      } catch(e) {
         done()
       }
     })
