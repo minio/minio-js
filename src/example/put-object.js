@@ -20,8 +20,7 @@ var Stream = require('stream')
 var Fs = require('fs')
 
 var s3client = new Minio({
-  host: 's3.amazonaws.com',
-  port: 80,
+  url: 'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })

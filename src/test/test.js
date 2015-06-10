@@ -53,17 +53,70 @@ describe('Client', () => {
     return request
   }
   var client = new minio({
-    host: 'localhost',
-    port: 9000,
+    url: 'http://localhost:9000',
     accessKey: "accesskey",
     secretKey: "secretkey"
+  })
+  describe('new client', () => {
+    it('should work with http', () => {
+      var client = new minio({
+        url: 'http://localhost',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      Assert.equal(client.params.port, 80)
+    })
+    it('should override port with http', () => {
+      var client = new minio({
+        url: 'http://localhost:9000',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      Assert.equal(client.params.port, 9000)
+    })
+    it('should work with https', () => {
+      var client = new minio({
+        url: 'https://localhost',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      Assert.equal(client.params.port, 443)
+    })
+    it('should override port with https', () => {
+      var client = new minio({
+        url: 'https://localhost:9000',
+        accessKey: "accesskey",
+        secretKey: "secretkey"
+      })
+      Assert.equal(client.params.port, 9000)
+    })
+    it('should fail with no url', (done) => {
+      try {
+        new minio({
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+      } catch (e) {
+        done()
+      }
+    })
+    it('should fail with no scheme', (done) => {
+      try {
+        new minio({
+          url: 'localhost',
+          accessKey: "accesskey",
+          secretKey: "secretkey"
+        })
+      } catch (e) {
+        done()
+      }
+    })
   })
   describe('Authentication', () => {
     describe('not set', () => {
       var transport = new MockTransport()
       var client = new minio({
-        host: 'localhost',
-        port: 9000
+        url: 'http://localhost:9000'
       }, transport)
       it('should not send auth info without keys', (done) => {
         client.transport.addRequest((params) => {
@@ -92,8 +145,7 @@ describe('Client', () => {
       it('should not send auth info without keys', (done) => {
         var transport = new MockTransport()
         var client = new minio({
-          host: 'localhost',
-          port: 9000,
+          url: 'http://localhost:9000',
           accessKey: 'accessKey',
           secretKey: 'secretKey'
         }, transport)
@@ -340,8 +392,7 @@ describe('Client', () => {
       it('should set acl', (done) => {
         var transport = new MockTransport()
         var client = new minio({
-          host: 'localhost',
-          port: 9000
+          url: 'http://localhost:9000'
         }, transport)
         client.transport.addRequest((params) => {
           Assert.deepEqual(params, {

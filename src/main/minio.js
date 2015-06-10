@@ -25,21 +25,40 @@ var Moment = require('moment')
 var ParseXml = require('xml-parser')
 var Stream = require('stream')
 var Through2 = require('through2')
+var Url = require('url')
 var Xml = require('xml')
 
 class Client {
   constructor(params, transport) {
     "use strict"
+    var parsedUrl = Url.parse(params.url)
+    var port = +parsedUrl.port
     if (transport) {
       this.transport = transport
     } else {
-      if(params.https) {
-        this.transport = Https
-      } else {
-        this.transport = Http
+      switch (parsedUrl.protocol) {
+        case 'http:':
+          this.transport = Http
+          if(port === 0) {
+            port = 80
+          }
+          break
+        case 'https:':
+          this.transport = Https
+          if(port === 0) {
+            port = 443
+          }
+          break
+        default:
+          throw new Error('Unknown protocol: ' + parsedUrl.protocol)
       }
     }
-    this.params = params
+    this.params = {
+      host: parsedUrl.hostname,
+      port: port,
+      accessKey: params.accessKey,
+      secretKey: params.secretKey
+    }
   }
 
   // SERIVCE LEVEL CALLS
@@ -47,9 +66,11 @@ class Client {
   makeBucket(bucket, cb) {
     "use strict"
 
+    console.log('making bucket')
     if (bucket == null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
+    console.log('payload')
 
     var payloadObject = {
       CreateBucketConfiguration: [{
@@ -63,14 +84,18 @@ class Client {
 
     var payload = Xml(payloadObject)
 
+    console.log('stream')
+
     var stream = new Stream.Readable()
     stream.push(payload.toString())
     stream.push(null)
 
+    console.log('crypto')
     var hash = Crypto.createHash('sha256')
     hash.update(payload)
     var sha256 = hash.digest('hex').toLowerCase()
 
+    console.log('making params')
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
@@ -80,6 +105,8 @@ class Client {
         'Content-Length': payload.length
       }
     }
+    console.log('params')
+    console.log(requestParams)
     signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, response => {
