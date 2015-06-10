@@ -22,6 +22,7 @@ var Crypto = require('crypto')
 var Http = require('http')
 var Https = require('https')
 var Moment = require('moment')
+var Package = require('../../package.json')
 var ParseXml = require('xml-parser')
 var Stream = require('stream')
 var Through2 = require('through2')
@@ -39,13 +40,13 @@ class Client {
       switch (parsedUrl.protocol) {
         case 'http:':
           this.transport = Http
-          if(port === 0) {
+          if (port === 0) {
             port = 80
           }
           break
         case 'https:':
           this.transport = Https
-          if(port === 0) {
+          if (port === 0) {
             port = 443
           }
           break
@@ -57,7 +58,23 @@ class Client {
       host: parsedUrl.hostname,
       port: port,
       accessKey: params.accessKey,
-      secretKey: params.secretKey
+      secretKey: params.secretKey,
+      agent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`
+    }
+  }
+
+  // CLIENT LEVEL CALLS
+
+  addUserAgent(name, version, comments) {
+    var formattedComments = ''
+    if (comments && comments.length > 0) {
+      var joinedComments = comments.join('; ')
+      formattedComments = ` (${joinedComments})`
+    }
+    if (name && version) {
+      this.params.agent = `${this.params.agent} ${name}/${version}${formattedComments}`
+    } else {
+      throw new Exception('Invalid user agent')
     }
   }
 
