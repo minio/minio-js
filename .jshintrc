@@ -1,4 +1,4 @@
 {
     "asi": true,
-    "jsnext": true
+    "esnext": true
 }
