@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// ignore x.['foo'] recommneded as x.foo
+`/jshint -W069 /`
+
 require('source-map-support').install()
 
 var BlockStream2 = require('block-stream2')
@@ -395,8 +398,8 @@ class Client {
     }
 
     var headers = {}
-    if (range != '') {
-      headers['Range'] = range
+    if (range !== '') {
+      headers.Range = range
     }
 
     var requestParams = {
@@ -432,9 +435,6 @@ class Client {
     }
 
     var self = this
-
-    var uploadId = null
-    var part = null
 
     var etags = []
 
@@ -509,7 +509,7 @@ class Client {
           var curPart = part
           part = part + 1
           if (partsArray.length > 0) {
-            var curPart = partsArray.shift()
+            curPart = partsArray.shift()
             var hash = Crypto.createHash('md5')
             hash.update(data)
             var md5 = hash.digest('hex').toLowerCase()
@@ -1111,7 +1111,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
   if (part) {
     query = `?partNumber=${part}&uploadId=${uploadId}`
   }
-  if (contentType === null || contentType == '') {
+  if (contentType === null || contentType === '') {
     contentType = 'aplication/octet-stream'
   }
 
@@ -1350,7 +1350,7 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
 
 var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   var query = '?'
-  if (marker && marker != 0) {
+  if (marker && marker !== 0) {
     query += `part-number-marker=${marker}&`
   }
   query += `uploadId=${uploadId}`
