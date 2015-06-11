@@ -88,7 +88,7 @@ class Client {
     }
 
     var region = getRegion(this.params.host)
-    if(region === 'milkyway') {
+    if (region === 'milkyway') {
       region = null;
     }
     var createBucketConfiguration = []
@@ -97,7 +97,7 @@ class Client {
         xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
       }
     })
-    if(region) {
+    if (region) {
       createBucketConfiguration.push({
         LocationConstraint: getRegion(this.params.host)
       })
@@ -390,6 +390,12 @@ class Client {
   getObject(bucket, object, cb) {
     "use strict";
 
+    this.getPartialObject(bucket, object, 0, 0, cb)
+  }
+
+  getPartialObject(bucket, object, offset, length, cb) {
+    "use strict";
+
     if (bucket == null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
@@ -398,17 +404,35 @@ class Client {
       return cb('object key cannot be empty')
     }
 
+
+    var range = ''
+
+    if (offset) {
+      range = `${+offset}-`
+    } else {
+      offset = 0
+    }
+    if (length) {
+      range += `${+length + offset}`
+    }
+
+    var headers = {}
+    if (range != '') {
+      headers['Range'] = range
+    }
+
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
       path: `/${bucket}/${object}`,
-      method: 'GET'
+      method: 'GET',
+      headers
     }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
+      if (!(response.statusCode === 200 || response.statusCode === 206)) {
         return parseError(response, cb)
       }
       // wrap it in a new pipe to strip additional response data

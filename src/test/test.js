@@ -148,7 +148,7 @@ describe('Client', () => {
           secretKey: "secretkey"
         })
         client.addUserAgent(null, '1.0.0')
-      } catch(e) {
+      } catch (e) {
         done()
       }
     })
@@ -160,7 +160,7 @@ describe('Client', () => {
           secretKey: "secretkey"
         })
         client.addUserAgent('', '1.0.0')
-      } catch(e) {
+      } catch (e) {
         done()
       }
     })
@@ -172,7 +172,7 @@ describe('Client', () => {
           secretKey: "secretkey"
         })
         client.addUserAgent('test', null)
-      } catch(e) {
+      } catch (e) {
         done()
       }
     })
@@ -184,7 +184,7 @@ describe('Client', () => {
           secretKey: "secretkey"
         })
         client.addUserAgent('test', '')
-      } catch(e) {
+      } catch (e) {
         done()
       }
     })
@@ -633,6 +633,50 @@ describe('Client', () => {
         client.getObject("hello", "  \n  \t  ", (e) => {
           Assert(e, 'object key cannot be empty')
           done()
+        })
+      })
+    })
+    describe('#getPartialObject(bucket, object, offset, range) callback)', () => {
+      it('should work with offset and range', (done) => {
+        MockResponse('http://localhost:9000', {
+          reqHeaders: {
+            'range': '10-21'
+          }
+        }).get('/bucket/object').reply(206, "hello world")
+        client.getPartialObject("bucket", "object", 10, 11, (e, r) => {
+          Assert.equal(e, null)
+          r.pipe(Concat(buf => {
+            Assert.equal(buf, "hello world")
+            done()
+          }))
+        })
+      })
+      it('should work with offset', (done) => {
+        MockResponse('http://localhost:9000', {
+          reqHeaders: {
+            'range': '10-'
+          }
+        }).get('/bucket/object').reply(206, "hello world")
+        client.getPartialObject("bucket", "object", 10, null, (e, r) => {
+          Assert.equal(e, null)
+          r.pipe(Concat(buf => {
+            Assert.equal(buf, "hello world")
+            done()
+          }))
+        })
+      })
+      it('should work with range', (done) => {
+        MockResponse('http://localhost:9000', {
+          reqHeaders: {
+            'range': '0-21'
+          }
+        }).get('/bucket/object').reply(206, "hello world")
+        client.getPartialObject("bucket", "object", null, 11, (e, r) => {
+          Assert.equal(e, null)
+          r.pipe(Concat(buf => {
+            Assert.equal(buf, "hello world")
+            done()
+          }))
         })
       })
     })
