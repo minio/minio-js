@@ -83,36 +83,40 @@ class Client {
   makeBucket(bucket, cb) {
     "use strict"
 
-    console.log('making bucket')
     if (bucket == null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
-    console.log('payload')
 
-    var payloadObject = {
-      CreateBucketConfiguration: [{
-        _attr: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
-        }
-      }, {
+    var region = getRegion(this.params.host)
+    if(region === 'milkyway') {
+      region = null;
+    }
+    var createBucketConfiguration = []
+    createBucketConfiguration.push({
+      _attr: {
+        xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
+      }
+    })
+    if(region) {
+      createBucketConfiguration.push({
         LocationConstraint: getRegion(this.params.host)
-      }]
+      })
+    }
+    var payloadObject = {
+      CreateBucketConfiguration: createBucketConfiguration
     }
 
     var payload = Xml(payloadObject)
 
-    console.log('stream')
-
     var stream = new Stream.Readable()
+    stream._read = function() {}
     stream.push(payload.toString())
     stream.push(null)
 
-    console.log('crypto')
     var hash = Crypto.createHash('sha256')
     hash.update(payload)
     var sha256 = hash.digest('hex').toLowerCase()
 
-    console.log('making params')
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
@@ -122,8 +126,7 @@ class Client {
         'Content-Length': payload.length
       }
     }
-    console.log('params')
-    console.log(requestParams)
+
     signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, response => {
