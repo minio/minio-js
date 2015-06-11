@@ -65,3 +65,7 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
 ## Contribute
 
 [Contributors Guide](./CONTRIBUTING.md)
+
+[![NPM](https://img.shields.io/npm/v/minio.svg)](https://www.npmjs.com/package/minio)
+[![NPM](https://img.shields.io/npm/l/minio.svg)](https://www.npmjs.com/package/minio)
+[![NPM](https://img.shields.io/npm/dm/minio.svg)](https://www.npmjs.com/package/minio)
