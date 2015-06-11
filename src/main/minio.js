@@ -15,7 +15,7 @@
  */
 
 // ignore x.['foo'] recommneded as x.foo
-`/jshint -W069 /`
+/*jshint sub: true */
 
 require('source-map-support').install()
 
@@ -436,8 +436,6 @@ class Client {
 
     var self = this
 
-    var etags = []
-
     if (size > 5 * 1024 * 1024) {
       var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key)
       var uploadId = null
@@ -453,7 +451,7 @@ class Client {
             if (e) {
               return done(e)
             }
-            streamUpload(self.transport, self.params, bucket, key, uploadId, [], size, r, (e) => {
+            streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, [], size, r, (e, etags) => {
               return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
                 done()
                 cb(e)
@@ -474,7 +472,7 @@ class Client {
             if (partsErrorred) {
               return partDone(partsErrorred)
             }
-            streamUpload(self.transport, self.params, bucket, key, uploadId, partsArray, size, r, (e) => {
+            streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, partsArray, size, r, (e, etags) => {
               if (partsErrorred) {
                 partDone()
               }
@@ -490,70 +488,6 @@ class Client {
           }))
         }
       }))
-
-      function streamUpload(transport, params, bucket, key, uploadId, partsArray, totalSize, r, cb) {
-        var part = 1
-        var errorred = null
-          // compute size
-        var blockSize = calculateBlockSize(size)
-        var seen = 0
-        r.on('finish', () => {})
-        r.pipe(BlockStream2({
-          size: blockSize,
-          zeroPadding: false
-        })).pipe(Through2.obj(function(data, enc, done) {
-          if (errorred) {
-            return done()
-          }
-          var currentSize = blockSize
-          var curPart = part
-          part = part + 1
-          if (partsArray.length > 0) {
-            curPart = partsArray.shift()
-            var hash = Crypto.createHash('md5')
-            hash.update(data)
-            var md5 = hash.digest('hex').toLowerCase()
-            if (curPart.etag == md5) {
-              etags.push({
-                part: curPart,
-                etag: md5
-              })
-              done()
-            } else {
-              errorred = 'mismatched etag'
-              return done()
-            }
-          } else {
-            var dataStream = new Stream.Readable()
-            dataStream.push(data)
-            dataStream.push(null)
-            dataStream._read = () => {}
-            doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
-              if (errorred) {
-                return done()
-              }
-              if (e) {
-                errorred = e
-                return done()
-              }
-              etags.push({
-                part: curPart,
-                etag: etag
-              })
-              return done()
-            })
-          }
-        }, function(done) {
-          done()
-          cb(errorred)
-        }))
-
-        function calculateBlockSize(size) {
-          var minimumPartSize = 5 * 1024 * 1024; // 5MB
-          var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
-          return Math.max(minimumPartSize, partSize);
-        }
-      }
     } else {
       doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
     }
@@ -569,7 +503,7 @@ class Client {
         prefix = params.prefix
       }
       // we delimit when recursive is false
-      if (params.recursive == false) {
+      if (params.recursive === false) {
         delimiter = '/'
       }
     }
@@ -1259,39 +1193,39 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
               result.nextMarker = element.content
               break
             case "Contents":
-              var object = {}
+              var content = {}
               element.children.forEach(xmlObject => {
                 switch (xmlObject.name) {
                   case "Key":
-                    object.name = xmlObject.content
-                    marker = object.name
+                    content.name = xmlObject.content
+                    marker = content.name
                     break
                   case "LastModified":
-                    object.lastModified = xmlObject.content
+                    content.lastModified = xmlObject.content
                     break
                   case "Size":
-                    object.size = +xmlObject.content
+                    content.size = +xmlObject.content
                     break
                   case "ETag":
-                    object.etag = xmlObject.content
+                    content.etag = xmlObject.content
                     break
                   default:
                 }
               })
-              result.objects.push(object)
+              result.objects.push(content)
               break
             case "CommonPrefixes": // todo, this is the only known way for now to propagate delimited entries
-              var object = {}
+              var commonPrefixes = {}
               element.children.forEach(xmlPrefix => {
                 switch (xmlPrefix.name) {
                   case "Prefix":
-                    object.name = xmlPrefix.content
-                    object.size = 0
+                    commonPrefixes.name = xmlPrefix.content
+                    commonPrefixes.size = 0
                     break
                   default:
                 }
               })
-              result.objects.push(object);
+              result.objects.push(commonPrefixes);
               break;
             default:
           }
@@ -1449,6 +1383,75 @@ function getRegion(host) {
       return "us-gov-west-1"
     default:
       return "milkyway"
+  }
+}
+
+function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
+  var part = 1
+  var errorred = null
+  var etags = []
+    // compute size
+  var blockSize = calculateBlockSize(totalSize)
+  var seen = 0
+  r.on('finish', () => {})
+  r.pipe(BlockStream2({
+    size: blockSize,
+    zeroPadding: false
+  })).pipe(Through2.obj(function(data, enc, done) {
+    if (errorred) {
+      return done()
+    }
+    var currentSize = blockSize
+    var curPart = part
+    part = part + 1
+    if (partsArray.length > 0) {
+      curPart = partsArray.shift()
+      var hash = Crypto.createHash('md5')
+      hash.update(data)
+      var md5 = hash.digest('hex').toLowerCase()
+      if (curPart.etag == md5) {
+        etags.push({
+          part: curPart,
+          etag: md5
+        })
+        done()
+      } else {
+        errorred = 'mismatched etag'
+        return done()
+      }
+    } else {
+      var dataStream = new Stream.Readable()
+      dataStream.push(data)
+      dataStream.push(null)
+      dataStream._read = () => {}
+      doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
+        if (errorred) {
+          return done()
+        }
+        if (e) {
+          errorred = e
+          return done()
+        }
+        etags.push({
+          part: curPart,
+          etag: etag
+        })
+        return done()
+      })
+    }
+  }, function(done) {
+    done()
+    if(errorred) {
+      return cb(errorred)
+    } else {
+      return cb(null, etags)
+    }
+  }))
+
+  function calculateBlockSize(size) {
+    var minimumPartSize = 5 * 1024 * 1024; // 5MB
+    var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
+    return Math.max(minimumPartSize, partSize);
   }
 }
 
