@@ -31,7 +31,6 @@ var Xml = require('xml')
 
 class Client {
   constructor(params, transport) {
-    "use strict"
     var parsedUrl = Url.parse(params.url)
     var port = +parsedUrl.port
     if (transport) {
@@ -81,9 +80,7 @@ class Client {
   // SERIVCE LEVEL CALLS
 
   makeBucket(bucket, cb) {
-    "use strict"
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
@@ -157,16 +154,13 @@ class Client {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
         stream.push(parseError(response, (error) => {
-          "use strict";
           stream.emit('error', error)
         }))
         stream.push(null)
       }
       response.pipe(Concat(errorXml => {
-        "use strict";
         var parsedXml = ParseXml(errorXml.toString())
         parsedXml.root.children.forEach(element => {
-          "use strict";
           if (element.name === 'Buckets') {
             element.children.forEach(bucketListing => {
               var bucket = {}
@@ -192,9 +186,7 @@ class Client {
   }
 
   bucketExists(bucket, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
@@ -217,9 +209,7 @@ class Client {
   }
 
   removeBucket(bucket, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
@@ -242,9 +232,7 @@ class Client {
   }
 
   getBucketACL(bucket, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
@@ -326,19 +314,17 @@ class Client {
   }
 
   setBucketACL(bucket, acl, cb) {
-    "use strict"
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (acl == null || acl.trim() === "") {
+    if (acl === null || acl.trim() === "") {
       return cb('acl name cannot be empty')
     }
 
     // we should make sure to set this query parameter, but the call apparently succeeds without it to s3
     // To differentiate this functionality from makeBucket() lets do it anyways.
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
     var query = `?acl`;
@@ -364,9 +350,7 @@ class Client {
   }
 
   dropAllIncompleteUploads(bucket, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
@@ -374,13 +358,11 @@ class Client {
   }
 
   dropIncompleteUpload(bucket, key, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (key == null || key.trim() === "") {
+    if (key === null || key.trim() === "") {
       return cb('object key cannot be empty')
     }
 
@@ -388,19 +370,15 @@ class Client {
   }
 
   getObject(bucket, object, cb) {
-    "use strict";
-
     this.getPartialObject(bucket, object, 0, 0, cb)
   }
 
   getPartialObject(bucket, object, offset, length, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (object == null || object.trim() === "") {
+    if (object === null || object.trim() === "") {
       return cb('object key cannot be empty')
     }
 
@@ -445,13 +423,11 @@ class Client {
   }
 
   putObject(bucket, key, contentType, size, r, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (key == null || key.trim() === "") {
+    if (key === null || key.trim() === "") {
       return cb('object key cannot be empty')
     }
 
@@ -584,7 +560,6 @@ class Client {
   }
 
   listObjects(bucket, params) {
-    "use strict";
     var self = this
 
     var prefix = null
@@ -642,13 +617,11 @@ class Client {
   }
 
   statObject(bucket, object, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (object == null || object.trim() === "") {
+    if (object === null || object.trim() === "") {
       return cb('object key cannot be empty')
     }
 
@@ -677,13 +650,11 @@ class Client {
   }
 
   removeObject(bucket, object, cb) {
-    "use strict";
-
-    if (bucket == null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
 
-    if (object == null || object.trim() === "") {
+    if (object === null || object.trim() === "") {
       return cb('object key cannot be empty')
     }
 
@@ -707,7 +678,6 @@ class Client {
 }
 
 var parseError = (response, cb) => {
-  "use strict";
   if (response.statusCode === 301) {
     return cb({
       code: 'MovedPermanently',
@@ -747,7 +717,6 @@ var parseError = (response, cb) => {
 }
 
 var getStringToSign = function(canonicalRequestHash, requestDate, region) {
-  "use strict";
   var stringToSign = "AWS4-HMAC-SHA256\n"
   stringToSign += requestDate.format('YYYYMMDDTHHmmSS') + 'Z\n'
   stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
@@ -756,8 +725,6 @@ var getStringToSign = function(canonicalRequestHash, requestDate, region) {
 }
 
 var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
-  "use strict";
-
   if (!accessKey || !secretKey) {
     return
   }
@@ -874,7 +841,6 @@ var uriEscape = function uriEscape(string) {
 }
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {
-  "use strict";
   var errorred = null
   var queue = new Stream.Readable({
     objectMode: true
@@ -926,7 +892,6 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
 }
 
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
-  "use strict";
   var queries = []
   var escape = uriEscape
   if (key) {
@@ -1036,7 +1001,6 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
   signV4(requestParams, '', params.accessKey, params.secretKey)
 
   var req = transport.request(requestParams, (response) => {
-    "use strict";
     if (response.statusCode !== 204) {
       return parseError(response, cb)
     }
@@ -1046,7 +1010,6 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 }
 
 var dropUploads = (transport, params, bucket, key, cb) => {
-  "use strict";
   var self = this
 
   var errorred = null
@@ -1126,11 +1089,9 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
       return parseError(response, cb)
     }
     response.pipe(Concat(xml => {
-      "use strict";
       var parsedXml = ParseXml(xml.toString())
       var uploadId = null
       parsedXml.root.children.forEach(element => {
-        "use strict";
         if (element.name === 'UploadId') {
           uploadId = element.content
         }
@@ -1150,7 +1111,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
   if (part) {
     query = `?partNumber=${part}&uploadId=${uploadId}`
   }
-  if (contentType == null || contentType == '') {
+  if (contentType === null || contentType == '') {
     contentType = 'aplication/octet-stream'
   }
 
