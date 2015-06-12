@@ -92,7 +92,7 @@ class Client {
     }
 
     var region = helpers.getRegion(this.params.host)
-    if (region === 'milkyway') {
+    if (region === 'milkyway' || region === 'us-east-1') {
       region = null;
     }
     var createBucketConfiguration = []
