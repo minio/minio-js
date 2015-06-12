@@ -192,46 +192,14 @@ class Client {
     if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
-
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      method: 'HEAD',
-      path: `/${bucket}`
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, response => {
-      if (response.statusCode !== 200) {
-        return parseError(response, cb)
-      }
-      cb()
-    })
-    req.end()
+    executeMethodWithNoResponse(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
     if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
-
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      method: 'DELETE',
-      path: `/${bucket}`
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, response => {
-      if (response.statusCode !== 204) {
-        return parseError(response, cb)
-      }
-      cb()
-    })
-    req.end()
+    executeMethodWithNoResponse(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
@@ -1441,7 +1409,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     }
   }, function(done) {
     done()
-    if(errorred) {
+    if (errorred) {
       return cb(errorred)
     } else {
       return cb(null, etags)
@@ -1453,6 +1421,25 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
     return Math.max(minimumPartSize, partSize);
   }
+}
+
+function executeMethodWithNoResponse(self, method, bucket, cb) {
+  var requestParams = {
+    host: self.params.host,
+    port: self.params.port,
+    method: method,
+    path: `/${bucket}`
+  }
+
+  signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
+
+  var req = self.transport.request(requestParams, response => {
+    if (response.statusCode !== 204) {
+      return parseError(response, cb)
+    }
+    cb()
+  })
+  req.end()
 }
 
 var inst = Client

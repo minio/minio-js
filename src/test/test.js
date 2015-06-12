@@ -327,7 +327,7 @@ describe('Client', () => {
 
     describe('#bucketExists(bucket, cb)', () => {
       it('should call callback with no options if successful', (done) => {
-        MockResponse('http://localhost:9000').head('/bucket').reply(200)
+        MockResponse('http://localhost:9000').head('/bucket').reply(204)
         client.bucketExists('bucket', (e) => {
           Assert.equal(e, null)
           done()
