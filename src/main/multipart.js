@@ -78,7 +78,8 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
   var queries = []
   var escape = helpers.uriEscape
   if (key) {
-    queries.push(`prefix=${escape(key)}`)
+    key = escape(key)
+    queries.push(`prefix=${key}`)
   }
   if (keyMarker) {
     keyMarker = escape(keyMarker)
