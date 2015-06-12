@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+var Concat = require('concat-stream')
 var Stream = require('stream')
+var ParseXml = require('xml-parser')
 var Through2 = require('through2')
 
 var helpers = require('./helpers.js')
@@ -196,9 +198,126 @@ var dropUploads = (transport, params, bucket, key, cb) => {
   })
 }
 
+var listAllParts = (transport, params, bucket, key, uploadId) => {
+  var errorred = null
+  var queue = new Stream.Readable({
+    objectMode: true
+  })
+  queue._read = () => {}
+  var stream = queue
+    .pipe(Through2.obj(function(job, enc, done) {
+      if (errorred) {
+        return done()
+      }
+      listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
+        if (errorred) {
+          return done()
+        }
+        if (e) {
+          errorred = e
+          queue.push(null)
+          return done()
+        }
+        r.parts.forEach((element) => {
+          this.push(element)
+        })
+        if (r.isTruncated) {
+          queue.push(r.nextJob)
+        } else {
+          queue.push(null)
+        }
+        done()
+      })
+    }, function(end) {
+      end(errorred)
+    }))
+  queue.push({
+    bucket: bucket,
+    key: key,
+    uploadId: uploadId,
+    marker: 0
+  })
+  return stream
+}
+
+var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
+  var query = '?'
+  if (marker && marker !== 0) {
+    query += `part-number-marker=${marker}&`
+  }
+  query += `uploadId=${uploadId}`
+  var requestParams = {
+    host: params.host,
+    port: params.port,
+    path: `/${bucket}/${key}${query}`,
+    method: 'GET'
+  }
+
+  signV4(requestParams, '', params.accessKey, params.secretKey)
+
+  var request = transport.request(requestParams, (response) => {
+    if (response.statusCode !== 200) {
+      return xmlParsers.parseError(response, cb)
+    }
+    response.pipe(Concat(body => {
+      var xml = ParseXml(body.toString())
+      var result = {
+        isTruncated: false,
+        parts: [],
+        nextJob: null
+      }
+      var nextJob = {
+        bucket: bucket,
+        key: key,
+        uploadId: uploadId
+      }
+      xml.root.children.forEach(element => {
+        switch (element.name) {
+          case "IsTruncated":
+            result.isTruncated = element.content === 'true'
+            break
+          case "NextPartNumberMarker":
+            nextJob.marker = +element.content
+            break
+          case "Part":
+            var object = {}
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case "PartNumber":
+                  object.part = +xmlObject.content
+                  break
+                case "LastModified":
+                  object.lastModified = xmlObject.content
+                  break
+                case "ETag":
+                  object.etag = xmlObject.content
+                  break
+                case "Size":
+                  object.size = +xmlObject.content
+                  break
+                default:
+              }
+            })
+            result.parts.push(object)
+            break
+          default:
+            break
+        }
+      })
+      if (result.isTruncated) {
+        result.nextJob = nextJob
+      }
+      cb(null, result)
+    }))
+  })
+  request.end()
+}
+
 module.exports = {
   listAllIncompleteUploads: listAllIncompleteUploads,
   listMultipartUploads: listMultipartUploads,
   dropUploads: dropUploads,
-  abortMultipartUpload: abortMultipartUpload
+  abortMultipartUpload: abortMultipartUpload,
+  listAllParts: listAllParts,
+  listParts: listParts
 }
