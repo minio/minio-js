@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/*jshint sub: true */
+
 var BlockStream2 = require('block-stream2')
 var Concat = require('concat-stream')
 var Crypto = require('crypto')

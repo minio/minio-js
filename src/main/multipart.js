@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/*jshint sub: true */
+
 var Concat = require('concat-stream')
 var Stream = require('stream')
 var ParseXml = require('xml-parser')

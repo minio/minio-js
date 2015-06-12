@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/*jshint sub: true */
+
 var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
 
