@@ -1,10 +1,9 @@
 # Minimal object storage library for Nodejs [![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
 
-## Install
+## Install from ninja programmers mindmeld (npm)
 
 ```sh
-$ git clone https://github.com/minio/minio-js
-$ npm install
+$ npm install --save minio
 ```
 
 ## Example
