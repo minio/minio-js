@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 var uriEscape = function uriEscape(string) {
   var output = encodeURIComponent(string);
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
@@ -55,6 +55,12 @@ function getRegion(host) {
     default:
       return "milkyway"
   }
+}
+
+function checkBucket(bucket) {
+    if (bucket === null || bucket.trim() === "") {
+      return cb('bucket name cannot be empty')
+    }
 }
 
 module.exports = {

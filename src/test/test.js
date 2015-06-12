@@ -28,6 +28,7 @@ var Stream = require('stream')
 
 var Rewire = require('rewire')
 var minio = Rewire('../..')
+var upload = require('../../dist/main/upload.js')
 
 var MockTransport = require('./transport.js')
 
@@ -1410,7 +1411,7 @@ describe('Client', () => {
       })
     })
     describe('#initiateNewMultipartUpload(transport, params, bucket, object, cb)', () => {
-      var method = minio.__get__('initiateNewMultipartUpload')
+      var method = upload.initiateNewMultipartUpload
       var params = {
         host: 'localhost',
         port: 9000
@@ -1429,7 +1430,7 @@ describe('Client', () => {
       })
     })
     describe('#completeMultipartUpload(transport, params, bucket, object, uploadID, etags cb)', () => {
-      var method = minio.__get__('completeMultipartUpload')
+      var method = upload.completeMultipartUpload
       var params = {
         host: 'localhost',
         port: 9000
