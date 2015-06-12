@@ -486,23 +486,7 @@ class Client {
     if (object === null || object.trim() === "") {
       return cb('object key cannot be empty')
     }
-
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      path: `/${bucket}/${object}`,
-      method: 'DELETE'
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 204) {
-        return xmlParsers.parseError(response, cb)
-      }
-      cb()
-    })
-    req.end()
+    simpleRequests.objectRequest(this, 'DELETE', bucket, object, cb)
   }
 }
 

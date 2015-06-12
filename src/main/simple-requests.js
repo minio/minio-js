@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
 
 function bucketRequest(self, method, bucket, cb) {
+  var path = `/${bucket}`
+  request(self, method, path, cb)
+}
+
+function objectRequest(self, method, bucket, object, cb) {
+  var path = `/${bucket}/${object}`
+  request(self, method, path, cb)
+}
+
+function request(self, method, path, cb) {
   var requestParams = {
     host: self.params.host,
     port: self.params.port,
     method: method,
-    path: `/${bucket}`
+    path: path
   }
 
   signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
@@ -37,5 +47,6 @@ function bucketRequest(self, method, bucket, cb) {
 }
 
 module.exports = {
-  bucketRequest: bucketRequest
+  bucketRequest: bucketRequest,
+  objectRequest: objectRequest
 }
