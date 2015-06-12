@@ -828,66 +828,7 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     if (response.statusCode !== 200) {
       return parseError(response, cb)
     }
-    response.pipe(Concat(xml => {
-      var parsedXml = ParseXml(xml.toString())
-      var result = {
-        uploads: [],
-        isTruncated: false,
-        nextJob: null
-      }
-      var nextJob = {
-        bucket: bucket,
-        key: key
-      }
-      var ignoreTruncated = false
-      parsedXml.root.children.forEach(element => {
-        switch (element.name) {
-          case "IsTruncated":
-            result.isTruncated = element.content === 'true'
-            break
-          case "NextKeyMarker":
-            nextJob.keyMarker = decodeURI(element.content)
-            break
-          case "NextUploadIdMarker":
-            nextJob.uploadIdMarker = decodeURI(element.content)
-            break
-          case "Upload":
-            var upload = {
-              bucket: bucket,
-              key: null,
-              uploadId: null,
-            }
-            element.children.forEach(xmlObject => {
-              switch (xmlObject.name) {
-                case "Key":
-                  upload.key = decodeURI(xmlObject.content)
-                  break
-                case "UploadId":
-                  upload.uploadId = decodeURI(xmlObject.content)
-                  break
-                default:
-              }
-            })
-            if (key) {
-              if (key === upload.key) {
-                result.uploads.push(upload)
-              } else {
-                ignoreTruncated = true
-              }
-            } else {
-              result.uploads.push(upload)
-            }
-            break
-          default:
-        }
-      })
-      if (result.isTruncated && !ignoreTruncated) {
-        result.nextJob = nextJob
-      } else {
-        result.isTruncated = false
-      }
-      cb(null, result)
-    }))
+    parseListMultipartResult(bucket, key, response, cb)
   })
   req.end()
 }
@@ -1440,6 +1381,69 @@ function executeMethodWithNoResponse(self, method, bucket, cb) {
     cb()
   })
   req.end()
+}
+
+function parseListMultipartResult(bucket, key, response, cb) {
+    response.pipe(Concat(xml => {
+      var parsedXml = ParseXml(xml.toString())
+      var result = {
+        uploads: [],
+        isTruncated: false,
+        nextJob: null
+      }
+      var nextJob = {
+        bucket: bucket,
+        key: key
+      }
+      var ignoreTruncated = false
+      parsedXml.root.children.forEach(element => {
+        switch (element.name) {
+          case "IsTruncated":
+            result.isTruncated = element.content === 'true'
+            break
+          case "NextKeyMarker":
+            nextJob.keyMarker = decodeURI(element.content)
+            break
+          case "NextUploadIdMarker":
+            nextJob.uploadIdMarker = decodeURI(element.content)
+            break
+          case "Upload":
+            var upload = {
+              bucket: bucket,
+              key: null,
+              uploadId: null,
+            }
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case "Key":
+                  upload.key = decodeURI(xmlObject.content)
+                  break
+                case "UploadId":
+                  upload.uploadId = decodeURI(xmlObject.content)
+                  break
+                default:
+              }
+            })
+            if (key) {
+              if (key === upload.key) {
+                result.uploads.push(upload)
+              } else {
+                ignoreTruncated = true
+              }
+            } else {
+              result.uploads.push(upload)
+            }
+            break
+          default:
+        }
+      })
+      if (result.isTruncated && !ignoreTruncated) {
+        result.nextJob = nextJob
+      } else {
+        result.isTruncated = false
+      }
+      cb(null, result)
+    }))
 }
 
 var inst = Client
