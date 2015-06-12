@@ -19,8 +19,6 @@
 
 require('source-map-support').install()
 
-var BlockStream2 = require('block-stream2')
-var Concat = require('concat-stream')
 var Crypto = require('crypto')
 var Http = require('http')
 var Https = require('https')
