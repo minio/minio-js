@@ -668,7 +668,7 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     if (response.statusCode !== 200) {
       return xmlParsers.parseError(response, cb)
     }
-    parseListMultipartResult(bucket, key, response, cb)
+    xmlParsers.parseListMultipartResult(bucket, key, response, cb)
   })
   req.end()
 }
@@ -1172,69 +1172,6 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
     return Math.max(minimumPartSize, partSize);
   }
-}
-
-function parseListMultipartResult(bucket, key, response, cb) {
-    response.pipe(Concat(xml => {
-      var parsedXml = ParseXml(xml.toString())
-      var result = {
-        uploads: [],
-        isTruncated: false,
-        nextJob: null
-      }
-      var nextJob = {
-        bucket: bucket,
-        key: key
-      }
-      var ignoreTruncated = false
-      parsedXml.root.children.forEach(element => {
-        switch (element.name) {
-          case "IsTruncated":
-            result.isTruncated = element.content === 'true'
-            break
-          case "NextKeyMarker":
-            nextJob.keyMarker = decodeURI(element.content)
-            break
-          case "NextUploadIdMarker":
-            nextJob.uploadIdMarker = decodeURI(element.content)
-            break
-          case "Upload":
-            var upload = {
-              bucket: bucket,
-              key: null,
-              uploadId: null,
-            }
-            element.children.forEach(xmlObject => {
-              switch (xmlObject.name) {
-                case "Key":
-                  upload.key = decodeURI(xmlObject.content)
-                  break
-                case "UploadId":
-                  upload.uploadId = decodeURI(xmlObject.content)
-                  break
-                default:
-              }
-            })
-            if (key) {
-              if (key === upload.key) {
-                result.uploads.push(upload)
-              } else {
-                ignoreTruncated = true
-              }
-            } else {
-              result.uploads.push(upload)
-            }
-            break
-          default:
-        }
-      })
-      if (result.isTruncated && !ignoreTruncated) {
-        result.nextJob = nextJob
-      } else {
-        result.isTruncated = false
-      }
-      cb(null, result)
-    }))
 }
 
 var inst = Client

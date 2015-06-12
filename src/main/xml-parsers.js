@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 var Concat = require('concat-stream')
 var ParseXml = require('xml-parser')
 
@@ -56,6 +56,70 @@ var parseError = (response, cb) => {
   }))
 }
 
+function parseListMultipartResult(bucket, key, response, cb) {
+  response.pipe(Concat(xml => {
+    var parsedXml = ParseXml(xml.toString())
+    var result = {
+      uploads: [],
+      isTruncated: false,
+      nextJob: null
+    }
+    var nextJob = {
+      bucket: bucket,
+      key: key
+    }
+    var ignoreTruncated = false
+    parsedXml.root.children.forEach(element => {
+      switch (element.name) {
+        case "IsTruncated":
+          result.isTruncated = element.content === 'true'
+          break
+        case "NextKeyMarker":
+          nextJob.keyMarker = decodeURI(element.content)
+          break
+        case "NextUploadIdMarker":
+          nextJob.uploadIdMarker = decodeURI(element.content)
+          break
+        case "Upload":
+          var upload = {
+            bucket: bucket,
+            key: null,
+            uploadId: null,
+          }
+          element.children.forEach(xmlObject => {
+            switch (xmlObject.name) {
+              case "Key":
+                upload.key = decodeURI(xmlObject.content)
+                break
+              case "UploadId":
+                upload.uploadId = decodeURI(xmlObject.content)
+                break
+              default:
+            }
+          })
+          if (key) {
+            if (key === upload.key) {
+              result.uploads.push(upload)
+            } else {
+              ignoreTruncated = true
+            }
+          } else {
+            result.uploads.push(upload)
+          }
+          break
+        default:
+      }
+    })
+    if (result.isTruncated && !ignoreTruncated) {
+      result.nextJob = nextJob
+    } else {
+      result.isTruncated = false
+    }
+    cb(null, result)
+  }))
+}
+
 module.exports = {
-  parseError: parseError
+  parseError: parseError,
+  parseListMultipartResult: parseListMultipartResult
 }
