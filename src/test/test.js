@@ -1456,7 +1456,7 @@ describe('Client', () => {
       })
     })
     describe('#listParts(transport, params, bucket, object, uploadId, marker, cb)', () => {
-      var method = minio.__get__('listParts')
+      var method = multipart.listParts
       var params = {
         host: 'localhost',
         port: 9000
@@ -1528,7 +1528,7 @@ describe('Client', () => {
       })
     })
     describe('#listAllParts(transport, params, bucket, object, uploadId)', () => {
-      var method = minio.__get__('listAllParts')
+      var method = multipart.listAllParts
       var params = {
         host: 'localhost',
         port: 9000
