@@ -65,7 +65,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
   var etags = []
     // compute size
   var blockSize = calculateBlockSize(totalSize)
-  var seen = 0
+
   r.on('finish', () => {})
   r.pipe(BlockStream2({
     size: blockSize,
@@ -74,7 +74,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     if (errorred) {
       return done()
     }
-    var currentSize = blockSize
+
     var curPart = part
     part = part + 1
     if (partsArray.length > 0) {
@@ -177,7 +177,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     done()
   }))
   r.on('error', (e) => {
-    cb('Unable to read data')
+    cb(e)
   })
 }
 
@@ -197,7 +197,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
         PartNumber: element.part
       }, {
         ETag: element.etag
-      }, ]
+      }]
     })
   })
 

@@ -86,7 +86,7 @@ function parseListMultipartResult(bucket, key, response, cb) {
           var upload = {
             bucket: bucket,
             key: null,
-            uploadId: null,
+            uploadId: null
           }
           element.children.forEach(xmlObject => {
             switch (xmlObject.name) {

@@ -197,7 +197,7 @@ class Client {
       host: this.params.host,
       port: this.params.port,
       method: 'GET',
-      path: `/${bucket}${query}`,
+      path: `/${bucket}${query}`
     }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)

@@ -137,7 +137,6 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 }
 
 var dropUploads = (transport, params, bucket, key, cb) => {
-  var self = this
 
   var errorred = null
 
