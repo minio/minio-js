@@ -119,7 +119,96 @@ function parseListMultipartResult(bucket, key, response, cb) {
   }))
 }
 
+function parseListBucketResult(response, stream) {
+  response.pipe(Concat(errorXml => {
+    var parsedXml = ParseXml(errorXml.toString())
+    parsedXml.root.children.forEach(element => {
+      if (element.name === 'Buckets') {
+        element.children.forEach(bucketListing => {
+          var bucket = {}
+          bucketListing.children.forEach(prop => {
+            switch (prop.name) {
+              case "Name":
+                bucket.name = prop.content
+                break
+              case "CreationDate":
+                bucket.creationDate = prop.content
+                break
+            }
+          })
+          stream.push(bucket)
+        })
+      }
+    })
+    stream.push(null)
+  }))
+}
+
+function parseAcl(response, cb) {
+  response.pipe(Concat((body) => {
+    var xml = ParseXml(body.toString())
+
+    var publicRead = false
+    var publicWrite = false
+    var authenticatedRead = false
+    var authenticatedWrite = false
+
+    xml.root.children.forEach(element => {
+      switch (element.name) {
+        case "AccessControlList":
+          element.children.forEach(grant => {
+            var granteeURL = null
+            var permission = null
+            grant.children.forEach(grantChild => {
+              switch (grantChild.name) {
+                case "Grantee":
+                  grantChild.children.forEach(grantee => {
+                    switch (grantee.name) {
+                      case "URI":
+                        granteeURL = grantee.content
+                        break
+                    }
+                  })
+                  break
+                case "Permission":
+                  permission = grantChild.content
+                  break
+              }
+            })
+            if (granteeURL === 'http://acs.amazonaws.com/groups/global/AllUsers') {
+              if (permission === 'READ') {
+                publicRead = true
+              } else if (permission === 'WRITE') {
+                publicWrite = true
+              }
+            } else if (granteeURL === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
+              if (permission === 'READ') {
+                authenticatedRead = true
+              } else if (permission === 'WRITE') {
+                authenticatedWrite = true
+              }
+            }
+          })
+          break
+      }
+    })
+    var cannedACL = 'unsupported-acl'
+    if (publicRead && publicWrite && !authenticatedRead && !authenticatedWrite) {
+      cannedACL = 'public-read-write'
+    } else if (publicRead && !publicWrite && !authenticatedRead && !authenticatedWrite) {
+      cannedACL = 'public-read'
+    } else if (!publicRead && !publicWrite && authenticatedRead && !authenticatedWrite) {
+      cannedACL = 'authenticated-read'
+    } else if (!publicRead && !publicWrite && !authenticatedRead && !authenticatedWrite) {
+      cannedACL = 'private'
+    }
+    cb(null, cannedACL)
+  }))
+}
+
 module.exports = {
   parseError: parseError,
-  parseListMultipartResult: parseListMultipartResult
+  parseListMultipartResult: parseListMultipartResult,
+  parseListBucketResult: parseListBucketResult,
+  parseAcl: parseAcl
 }
