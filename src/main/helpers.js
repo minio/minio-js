@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/*jshint sub: true */
+
 var uriEscape = function uriEscape(string) {
   var output = encodeURIComponent(string);
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
@@ -58,9 +60,9 @@ function getRegion(host) {
 }
 
 function checkBucket(bucket) {
-    if (bucket === null || bucket.trim() === "") {
-      return cb('bucket name cannot be empty')
-    }
+  if (bucket === null || bucket.trim() === "") {
+    return cb('bucket name cannot be empty')
+  }
 }
 
 module.exports = {
