@@ -31,7 +31,9 @@ var Through2 = require('through2')
 var Url = require('url')
 var Xml = require('xml')
 var signV4 = require('./signing.js')
+var simpleRequests = require('./simple-requests.js')
 var helpers = require('./helpers.js')
+var xmlParsers = require('./xml-parsers.js')
 
 class Client {
   constructor(params, transport) {
@@ -132,7 +134,7 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       cb()
     })
@@ -157,7 +159,7 @@ class Client {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
-        stream.push(parseError(response, (error) => {
+        stream.push(xmlParsers.parseError(response, (error) => {
           stream.emit('error', error)
         }))
         stream.push(null)
@@ -193,14 +195,14 @@ class Client {
     if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
-    executeMethodWithNoResponse(this, 'HEAD', bucket, cb)
+    simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
     if (bucket === null || bucket.trim() === "") {
       return cb('bucket name cannot be empty')
     }
-    executeMethodWithNoResponse(this, 'DELETE', bucket, cb)
+    simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
@@ -220,7 +222,7 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       response.pipe(Concat((body) => {
         var xml = ParseXml(body.toString())
@@ -314,7 +316,7 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       cb()
     })
@@ -383,7 +385,7 @@ class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (!(response.statusCode === 200 || response.statusCode === 206)) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       // wrap it in a new pipe to strip additional response data
       cb(null, response.pipe(Through2((data, enc, done) => {
@@ -539,7 +541,7 @@ class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       } else {
         var result = {
           size: +response.headers['content-length'],
@@ -572,54 +574,13 @@ class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 204) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       cb()
     })
     req.end()
   }
 }
-
-var parseError = (response, cb) => {
-  if (response.statusCode === 301) {
-    return cb({
-      code: 'MovedPermanently',
-      message: 'Moved Permanently',
-      requestId: null,
-      hostId: null,
-      resource: null
-    })
-  }
-  if (response.statusCode === 404) {
-    return cb({
-      code: 'NotFound',
-      message: '404: Not Found',
-      requestId: null,
-      hostId: null,
-      resource: null
-    })
-  }
-  response.pipe(Concat(errorXml => {
-    var parsedXml = ParseXml(errorXml.toString())
-    var e = {}
-    parsedXml.root.children.forEach(element => {
-      if (element.name === 'Code') {
-        e.code = element.content
-      } else if (element.name === 'Message') {
-        e.message = element.content
-      } else if (element.name === 'RequestId') {
-        e.requestid = element.content
-      } else if (element.name === 'Resource') {
-        e.resource = element.content
-      } else if (element.name === 'HostId') {
-        e.hostid = element.content
-      }
-    })
-    cb(e)
-  }))
-}
-
-
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {
   var errorred = null
@@ -705,7 +666,7 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
 
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     parseListMultipartResult(bucket, key, response, cb)
   })
@@ -724,7 +685,7 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 204) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     cb()
   })
@@ -808,7 +769,7 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
 
   var request = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     response.pipe(Concat(xml => {
       var parsedXml = ParseXml(xml.toString())
@@ -867,7 +828,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
 
     var request = transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        return xmlParsers.parseError(response, cb)
       }
       var etag = response.headers['etag']
       cb(null, etag)
@@ -920,7 +881,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
 
   var request = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     cb()
   })
@@ -962,7 +923,7 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
 
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     response.pipe(Concat((body) => {
       var xml = ParseXml(body.toString())
@@ -1087,7 +1048,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
 
   var request = Http.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return parseError(response, cb)
+      return xmlParsers.parseError(response, cb)
     }
     response.pipe(Concat(body => {
       var xml = ParseXml(body.toString())
@@ -1211,25 +1172,6 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
     return Math.max(minimumPartSize, partSize);
   }
-}
-
-function executeMethodWithNoResponse(self, method, bucket, cb) {
-  var requestParams = {
-    host: self.params.host,
-    port: self.params.port,
-    method: method,
-    path: `/${bucket}`
-  }
-
-  signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
-
-  var req = self.transport.request(requestParams, response => {
-    if (response.statusCode !== 204) {
-      return parseError(response, cb)
-    }
-    cb()
-  })
-  req.end()
 }
 
 function parseListMultipartResult(bucket, key, response, cb) {
