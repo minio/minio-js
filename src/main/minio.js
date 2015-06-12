@@ -24,13 +24,14 @@ var Concat = require('concat-stream')
 var Crypto = require('crypto')
 var Http = require('http')
 var Https = require('https')
-var Moment = require('moment')
 var Package = require('../../package.json')
 var ParseXml = require('xml-parser')
 var Stream = require('stream')
 var Through2 = require('through2')
 var Url = require('url')
 var Xml = require('xml')
+var signV4 = require('./signing.js')
+var helpers = require('./helpers.js')
 
 class Client {
   constructor(params, transport) {
@@ -87,7 +88,7 @@ class Client {
       return cb('bucket name cannot be empty')
     }
 
-    var region = getRegion(this.params.host)
+    var region = helpers.getRegion(this.params.host)
     if (region === 'milkyway') {
       region = null;
     }
@@ -99,7 +100,7 @@ class Client {
     })
     if (region) {
       createBucketConfiguration.push({
-        LocationConstraint: getRegion(this.params.host)
+        LocationConstraint: helpers.getRegion(this.params.host)
       })
     }
     var payloadObject = {
@@ -618,129 +619,7 @@ var parseError = (response, cb) => {
   }))
 }
 
-var getStringToSign = function(canonicalRequestHash, requestDate, region) {
-  var stringToSign = "AWS4-HMAC-SHA256\n"
-  stringToSign += requestDate.format('YYYYMMDDTHHmmSS') + 'Z\n'
-  stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
-  stringToSign += canonicalRequestHash
-  return stringToSign
-}
 
-var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
-  if (!accessKey || !secretKey) {
-    return
-  }
-
-  var requestDate = Moment().utc()
-
-  if (!dataShaSum256) {
-    dataShaSum256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-  }
-
-  if (!request.headers) {
-    request.headers = {}
-  }
-
-  var region = getRegion(request.host)
-
-  request.headers['host'] = request.host
-  request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmSS') + 'Z'
-  request.headers['x-amz-content-sha256'] = dataShaSum256
-
-  var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256)
-  var canonicalRequest = canonicalRequestAndSignedHeaders[0]
-  var signedHeaders = canonicalRequestAndSignedHeaders[1]
-  var hash = Crypto.createHash('sha256')
-  hash.update(canonicalRequest)
-  var canonicalRequestHash = hash.digest('hex')
-
-  var stringToSign = getStringToSign(canonicalRequestHash, requestDate, region)
-
-  var signingKey = getSigningKey(requestDate, region, secretKey)
-
-  var hmac = Crypto.createHmac('sha256', signingKey)
-
-  hmac.update(stringToSign)
-  var signedRequest = hmac.digest('hex').toLowerCase().trim()
-
-  var credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`
-
-  request.headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
-
-  function getSigningKey(date, region, secretKey) {
-    var key = "AWS4" + secretKey
-    var dateLine = date.format('YYYYMMDD')
-
-    var hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary')
-    var hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary')
-    var hmac3 = Crypto.createHmac('sha256', hmac2).update("s3").digest('binary')
-    return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
-  }
-
-  function getCanonicalRequest(request, dataShaSum1) {
-    var headerKeys = []
-    var headers = []
-
-    for (var key in request.headers) {
-      if (request.headers.hasOwnProperty(key)) {
-        var value = request.headers[key]
-        headers.push(`${key.toLowerCase()}:${value}`)
-        headerKeys.push(key.toLowerCase())
-      }
-    }
-
-    headers.sort()
-    headerKeys.sort()
-
-    var signedHeaders = ""
-    headerKeys.forEach(element => {
-      if (signedHeaders) {
-        signedHeaders += ';'
-      }
-      signedHeaders += element
-    })
-
-    var splitPath = request.path.split('?')
-    var requestResource = splitPath[0]
-    var requestQuery = ''
-    if (splitPath.length == 2) {
-      requestQuery = splitPath[1]
-        .split('&')
-        .sort()
-        .map(element => {
-          if (element.indexOf('=') === -1) {
-            element = element + '='
-          }
-          return element
-        })
-        .join('&')
-    }
-
-    var canonicalString = ""
-    canonicalString += canonicalString + request.method.toUpperCase() + '\n'
-    canonicalString += requestResource + '\n'
-    canonicalString += requestQuery + '\n';
-    headers.forEach(element => {
-      canonicalString += element + '\n'
-    })
-    canonicalString += '\n'
-    canonicalString += signedHeaders + '\n'
-    canonicalString += dataShaSum1
-    return [canonicalString, signedHeaders]
-  }
-}
-
-var uriEscape = function uriEscape(string) {
-  var output = encodeURIComponent(string);
-  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, escape);
-
-  // AWS percent-encodes some extra non-standard characters in a URI
-  output = output.replace(/[*]/g, function(ch) {
-    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
-  });
-
-  return output;
-}
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {
   var errorred = null
@@ -795,7 +674,7 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
 
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
   var queries = []
-  var escape = uriEscape
+  var escape = helpers.uriEscape
   if (key) {
     queries.push(`prefix=${escape(key)}`)
   }
@@ -1050,7 +929,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
 
 var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
   var queries = []
-  var escape = uriEscape; // escape every value, for query string
+  var escape = helpers.uriEscape; // escape every value, for query string
   if (prefix) {
     prefix = escape(prefix)
     queries.push(`prefix=${prefix}`)
@@ -1264,36 +1143,6 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   request.end()
 }
 
-function getRegion(host) {
-  switch (host) {
-    case "s3.amazonaws.com":
-      return "us-east-1"
-    case "s3-ap-northeast-1.amazonaws.com":
-      return "ap-northeast-1"
-    case "s3-ap-southeast-1.amazonaws.com":
-      return "ap-southeast-1"
-    case "s3-ap-southeast-2.amazonaws.com":
-      return "ap-southeast-2"
-    case "s3-eu-central-1.amazonaws.com":
-      return "eu-central-1"
-    case "s3-eu-west-1.amazonaws.com":
-      return "eu-west-1"
-    case "s3-sa-east-1.amazonaws.com":
-      return "sa-east-1"
-    case "s3-external-1.amazonaws.com":
-      return "us-east-1"
-    case "s3-us-west-1.amazonaws.com":
-      return "us-west-1"
-    case "s3-us-west-2.amazonaws.com":
-      return "us-west-2"
-    case "s3.cn-north-1.amazonaws.com.cn":
-      return "cn-north-1"
-    case "s3-fips-us-gov-west-1.amazonaws.com":
-      return "us-gov-west-1"
-    default:
-      return "milkyway"
-  }
-}
 
 function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
   var part = 1
