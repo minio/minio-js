@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/*jshint sub: true */
+
 require('source-map-support').install()
 
 var Assert = require('assert')
