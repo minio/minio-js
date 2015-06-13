@@ -82,7 +82,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       var hash = Crypto.createHash('md5')
       hash.update(data)
       var md5 = hash.digest('hex').toLowerCase()
-      if (curPart.etag == md5) {
+      if (curPart.etag === md5) {
         etags.push({
           part: curPart,
           etag: md5

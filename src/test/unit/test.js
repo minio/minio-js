@@ -22,14 +22,14 @@ var Assert = require('assert')
 var Concat = require('concat-stream')
 var Http = require('http')
 var Nock = require('nock')
-var Package = require('../../package.json')
+var Package = require('../../../package.json')
 var Through2 = require('through2')
 var Stream = require('stream')
 
 var Rewire = require('rewire')
-var minio = Rewire('../..')
-var upload = require('../../dist/main/upload.js')
-var multipart = require('../../dist/main/multipart.js')
+var minio = Rewire('../../..')
+var upload = require('../../../dist/main/upload.js')
+var multipart = require('../../../dist/main/multipart.js')
 
 var MockTransport = require('./transport.js')
 
