@@ -71,28 +71,27 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     size: blockSize,
     zeroPadding: false
   })).pipe(Through2.obj(function(data, enc, done) {
-    if (errorred) {
-      return done()
-    }
-
-    var curPart = part
-    part = part + 1
-    if (partsArray.length > 0) {
-      curPart = partsArray.shift()
-      var hash = Crypto.createHash('md5')
-      hash.update(data)
-      var md5 = hash.digest('hex').toLowerCase()
-      if (curPart.etag === md5) {
-        etags.push({
-          part: curPart,
-          etag: md5
-        })
-        done()
-      } else {
-        errorred = 'mismatched etag'
+      if (errorred) {
         return done()
       }
-    } else {
+
+      var curPart = part
+      part = part + 1
+      if (partsArray.length > 0) {
+        var curJob = partsArray.shift()
+        var hash = Crypto.createHash('md5')
+        hash.update(data)
+        var md5 = hash.digest('hex').toLowerCase()
+        if (curJob.etag === md5) {
+          etags.push({
+            part: curPart,
+            etag: md5
+          })
+          done()
+          return
+        }
+      }
+
       var dataStream = new Stream.Readable()
       dataStream.push(data)
       dataStream.push(null)
@@ -111,15 +110,15 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
         })
         return done()
       })
-    }
-  }, function(done) {
-    done()
-    if (errorred) {
-      return cb(errorred)
-    } else {
-      return cb(null, etags)
-    }
-  }))
+    },
+    function(done) {
+      done()
+      if (errorred) {
+        return cb(errorred)
+      } else {
+        return cb(null, etags)
+      }
+    }))
 
   function calculateBlockSize(size) {
     var minimumPartSize = 5 * 1024 * 1024; // 5MB
