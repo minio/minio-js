@@ -15,7 +15,6 @@
  */
 
 var babel = require('gulp-babel')
-var concat = require('gulp-concat')
 var exec = require('child_process').exec
 var gulp = require('gulp')
 var sourcemaps = require('gulp-sourcemaps')
@@ -32,7 +31,17 @@ gulp.task('test:compile', ['compile'], function(cb) {
 
 gulp.task('test', ['compile', 'test:compile'], function() {
   var mocha = require('gulp-mocha')
-  gulp.src('dist/test/*.js', {
+  gulp.src('dist/test/unit/*.js', {
+      read: false
+    })
+    .pipe(mocha({
+      reporter: 'spec'
+    }))
+})
+
+gulp.task('integration', ['compile', 'test:compile'], function() {
+  var mocha = require('gulp-mocha')
+  gulp.src('dist/test/integration/*.js', {
       read: false
     })
     .pipe(mocha({
@@ -57,7 +66,6 @@ gulp.task('example', ['compile', 'example:compile'], function(cb) {
 function compile(src, name, dest, cb) {
   gulp.src(src)
     .pipe(sourcemaps.init())
-    //.pipe(concat(name))
     .pipe(babel())
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(dest))

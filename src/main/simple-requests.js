@@ -40,7 +40,7 @@ function request(self, method, path, cb) {
   signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
 
   var req = self.transport.request(requestParams, response => {
-    if (response.statusCode !== 204) {
+    if (response.statusCode >= 300) {
       return xmlParsers.parseError(response, cb)
     }
     cb()
