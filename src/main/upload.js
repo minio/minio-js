@@ -125,7 +125,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
         return cb(errorred)
       }
       if(totalSeen !== totalSize) {
-        return cb("actual size !== specified size", null)
+        return cb('actual size !== specified size', null)
       }
       return cb(null, etags)
     }))
@@ -147,6 +147,9 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
   }
 
   r.pipe(Concat(data => {
+    if(data.length !== size) {
+      return cb('actual size !== specified size')
+    }
     var hash256 = Crypto.createHash('sha256')
     var hashMD5 = Crypto.createHash('md5')
     hash256.update(data)
