@@ -345,6 +345,11 @@ class Client {
               return done(e)
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, [], size, r, (e, etags) => {
+              if(e) {
+                done()
+                cb(e)
+                return
+              }
               return upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
                 done()
                 cb(e)
