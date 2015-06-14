@@ -65,6 +65,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
   var etags = []
     // compute size
   var blockSize = calculateBlockSize(totalSize)
+  var totalSeen = 0
 
   r.on('finish', () => {})
   r.pipe(BlockStream2({
@@ -72,6 +73,13 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     zeroPadding: false
   })).pipe(Through2.obj(function(data, enc, done) {
       if (errorred) {
+        return done()
+      }
+
+      totalSeen += data.length
+
+      if(totalSeen > totalSize) {
+        errorred = "actual size !== specified size"
         return done()
       }
 
@@ -115,9 +123,11 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       done()
       if (errorred) {
         return cb(errorred)
-      } else {
-        return cb(null, etags)
       }
+      if(totalSeen !== totalSize) {
+        return cb("actual size !== specified size", null)
+      }
+      return cb(null, etags)
     }))
 
   function calculateBlockSize(size) {
