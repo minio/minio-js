@@ -709,6 +709,28 @@ describe('Client', () => {
             done()
           })
         })
+        it('should fail when data is smaller than specified', (done) => {
+          var s = new Stream.Readable()
+          s._read = function() {}
+          s.push('hello world')
+          s.push(null)
+          client.putObject("bucket", "object", '', 12, s, (e) => {
+            if(e) {
+              done()
+            }
+          })
+        })
+        it('should fail when data is larger than specified', (done) => {
+          var s = new Stream.Readable()
+          s._read = function() {}
+          s.push('hello world')
+          s.push(null)
+          client.putObject("bucket", "object", '', 10, s, (e)=> {
+            if(e) {
+              done()
+            }
+          })
+        })
         it('should fail on empty bucket', (done) => {
           client.putObject("", "hello", '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
