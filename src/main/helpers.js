@@ -59,12 +59,6 @@ function getRegion(host) {
   }
 }
 
-function checkBucket(bucket) {
-  if (bucket === null || bucket.trim() === "") {
-    return cb('bucket name cannot be empty')
-  }
-}
-
 module.exports = {
   uriEscape: uriEscape,
   getRegion: getRegion

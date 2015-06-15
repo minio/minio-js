@@ -97,7 +97,7 @@ describe('Client', () => {
     })
     it('should fail with no url', (done) => {
       try {
-        new minio({
+        new minio({ // jshint ignore:line
           accessKey: "accesskey",
           secretKey: "secretkey"
         })
@@ -107,7 +107,7 @@ describe('Client', () => {
     })
     it('should fail with no scheme', (done) => {
       try {
-        new minio({
+        new minio({ // jshint ignore:line
           url: 'localhost',
           accessKey: "accesskey",
           secretKey: "secretkey"
