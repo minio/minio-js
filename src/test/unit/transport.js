@@ -18,12 +18,10 @@ var Stream = require('stream')
 
 class MockTransport {
   constructor() {
-    "use strict"
     this.requests = []
   }
 
   addRequest(verifyParams, statusCode, responseHeaders, responseStream) {
-    "use strict"
     var req = {
       verifyParams: verifyParams,
       statusCode: statusCode,
@@ -35,12 +33,10 @@ class MockTransport {
 
   //noinspection JSUnusedGlobalSymbols
   clearRequests() {
-    "use strict"
     this.requests = []
   }
 
   request(params, callback) {
-    "use strict"
     var req = this.requests.shift()
     return new Request(req, params, callback)
   }
@@ -48,7 +44,6 @@ class MockTransport {
 
 class Request {
   constructor(req, params, callback) {
-    "use strict";
     this.req = req
     this.params = params
     this.callback = callback
@@ -56,12 +51,10 @@ class Request {
 
   //noinspection JSUnusedGlobalSymbols
   end() {
-    "use strict";
     this._r()
   }
 
   _r() {
-    "use strict";
     var stream = new Stream.Readable()
     stream._read = () => {}
     if (this.req.responseStream) {
