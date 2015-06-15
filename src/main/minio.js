@@ -80,7 +80,7 @@ class Client {
     if (name && version) {
       this.params.agent = `${this.params.agent} ${name}/${version}${formattedComments}`
     } else {
-      throw new Exception('Invalid user agent')
+      throw 'Invalid user agent'
     }
   }
 
