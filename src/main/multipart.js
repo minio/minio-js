@@ -78,17 +78,16 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
 
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
   var queries = []
-  var escape = helpers.uriEscape
   if (key) {
-    key = escape(key)
+    key = helpers.uriEscape(key)
     queries.push(`prefix=${key}`)
   }
   if (keyMarker) {
-    keyMarker = escape(keyMarker)
+    keyMarker = helpers.uriEscape(keyMarker)
     queries.push(`key-marker=${keyMarker}`)
   }
   if (uploadIdMarker) {
-    uploadIdMarker = escape(uploadIdMarker)
+    uploadIdMarker = helpers.uriEscape(uploadIdMarker)
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
   var maxuploads = 1000;
