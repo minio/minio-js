@@ -715,7 +715,7 @@ describe('Client', () => {
           s.push('hello world')
           s.push(null)
           client.putObject("bucket", "object", '', 12, s, (e) => {
-            if(e) {
+            if (e) {
               done()
             }
           })
@@ -725,8 +725,8 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 10, s, (e)=> {
-            if(e) {
+          client.putObject("bucket", "object", '', 10, s, (e) => {
+            if (e) {
               done()
             }
           })
@@ -855,7 +855,7 @@ describe('Client', () => {
             etag: 'etag2'
           })
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            return body.length === 1 * 1024 * 1024;
+            return body.length === 1024 * 1024;
 
           }).reply(200, '', {
             etag: 'etag3'
@@ -867,6 +867,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject("bucket", "object", '', 12 * 1024 * 1024, s, (e) => {
+            Assert.equal(e, 'actual size !== specified size')
             done()
           })
         })
@@ -890,7 +891,8 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
+            Assert.equal(e, 'actual size !== specified size')
             done()
           })
         })
