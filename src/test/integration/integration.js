@@ -118,7 +118,7 @@ describe('minio', () => {
     it('should put a large object', function(done) {
       var file = '11mb'
       var size = 0
-      this.timeout(10000)
+      this.timeout(30000)
       Fs.stat(file, function(e, stat) {
         var fileStream = Fs.createReadStream(file)
         var r = fileStream.pipe(Through2(function(chunk, enc, end) {

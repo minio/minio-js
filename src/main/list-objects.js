@@ -25,18 +25,17 @@ var signV4 = require('./signing.js')
 
 var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
   var queries = []
-  var escape = helpers.uriEscape;
   // escape every value in query string, except maxKeys
   if (prefix) {
-    prefix = escape(prefix)
+    prefix = helpers.uriEscape(prefix)
     queries.push(`prefix=${prefix}`)
   }
   if (marker) {
-    marker = escape(marker)
+    marker = helpers.uriEscape(marker)
     queries.push(`marker=${marker}`)
   }
   if (delimiter) {
-    delimiter = escape(delimiter)
+    delimiter = helpers.uriEscape(delimiter)
     queries.push(`delimiter=${delimiter}`)
   }
   // no need to escape maxKeys
