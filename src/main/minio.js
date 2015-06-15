@@ -345,7 +345,7 @@ class Client {
               return done(e)
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, [], size, r, (e, etags) => {
-              if(e) {
+              if (e) {
                 done()
                 cb(e)
                 return

@@ -29,12 +29,10 @@ describe('minio', () => {
       })
     })
     it('should create a new bucket', (done) => {
-      client.makeBucket(bucket, (done))
+      client.makeBucket(bucket, done)
     })
-    it('should fail to cretae an existing', (done) => {
-      client.makeBucket(bucket, (e) => {
-        done()
-      })
+    it('should fail to create an existing', (done) => {
+      client.makeBucket(bucket, done)
     })
     it('should list buckets', (done) => {
       var bucketStream = client.listBuckets()
@@ -88,7 +86,7 @@ describe('minio', () => {
   })
   describe('object integration', () => {
     it('get object should return an error on no object', (done) => {
-      client.getObject(bucket, 'noobject', (e, r) => {
+      client.getObject(bucket, 'noobject', (e) => {
         if (!e) {
           done('expecting error')
         }
@@ -119,7 +117,8 @@ describe('minio', () => {
       var file = '11mb'
       var size = 0
       this.timeout(30000)
-      Fs.stat(file, function(e, stat) {
+      Fs.stat(file, function(e) {
+        Assert.equal(e, null)
         var fileStream = Fs.createReadStream(file)
         var r = fileStream.pipe(Through2(function(chunk, enc, end) {
           size += chunk.length
