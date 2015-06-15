@@ -18,7 +18,7 @@ describe('minio', () => {
     })
     var bucket = 'goroutine-js-integration'
     describe('bucket integration', () => {
-      it.skip('should clean up old buckets', (done) => {
+      it('should clean up old buckets', (done) => {
         client.bucketExists(bucket, (e) => {
           if (e) {
             return done()
@@ -28,15 +28,15 @@ describe('minio', () => {
           })
         })
       })
-      it.skip('should create a new bucket', (done) => {
+      it('should create a new bucket', (done) => {
         client.makeBucket(bucket, (done))
       })
-      it.skip('should fail to cretae an existing', (done) => {
+      it('should fail to cretae an existing', (done) => {
         client.makeBucket(bucket, (e) => {
           done()
         })
       })
-      it.skip('should list buckets', (done) => {
+      it('should list buckets', (done) => {
         var bucketStream = client.listBuckets()
         var found = false
         var foundError = null
@@ -58,28 +58,28 @@ describe('minio', () => {
           foundError = e
         })
       })
-      it.skip('should head bucket', (done) => {
+      it('should head bucket', (done) => {
         client.bucketExists(bucket, done)
       })
-      it.skip('should get acl private', (done) => {
+      it('should get acl private', (done) => {
         client.getBucketACL(bucket, (e, r) => {
           Assert.equal(r, 'private')
           done(e)
         })
       })
-      it.skip('should set acl authenticated read', (done) => {
+      it('should set acl authenticated read', (done) => {
         client.setBucketACL(bucket, 'authenticated-read', done)
       })
-      it.skip('should get acl authenticated read', (done) => {
+      it('should get acl authenticated read', (done) => {
         client.getBucketACL(bucket, (e, r) => {
           Assert.equal(r, 'authenticated-read')
           done(e)
         })
       })
-      it.skip('should set acl private', (done) => {
+      it('should set acl private', (done) => {
         client.setBucketACL(bucket, 'private', done)
       })
-      it.skip('should get acl', (done) => {
+      it('should get acl', (done) => {
         client.getBucketACL(bucket, (e, r) => {
           Assert.equal(r, 'private')
           done(e)
@@ -87,7 +87,7 @@ describe('minio', () => {
       })
     })
     describe('object integration', () => {
-      it.skip('get object should return an error on no object', (done) => {
+      it('get object should return an error on no object', (done) => {
         client.getObject(bucket, 'noobject', (e, r) => {
           if (!e) {
             done('expecting error')
@@ -95,7 +95,7 @@ describe('minio', () => {
           done()
         })
       })
-      it.skip('should put an object', (done) => {
+      it('should put an object', (done) => {
         var stream = new Stream.Readable()
         stream._read = () => {}
         stream.push('hello')
@@ -104,7 +104,7 @@ describe('minio', () => {
         stream.push(null)
         client.putObject(bucket, 'hello/world', '', 11, stream, done)
       })
-      it.skip('should get an object', (done) => {
+      it('should get an object', (done) => {
         client.getObject(bucket, 'hello/world', (e, r) => {
           if (e) {
             return done(e)
@@ -115,11 +115,11 @@ describe('minio', () => {
           }))
         })
       })
-      it.skip('should put a large object', function(done) {
+      it('should put a large object', function(done) {
         var file = '11mb'
         var size = 0
         this.timeout(10000)
-        var fileStat = Fs.stat(file, function(e, stat) {
+        Fs.stat(file, function(e, stat) {
           var fileStream = Fs.createReadStream(file)
           var r = fileStream.pipe(Through2(function(chunk, enc, end) {
             size += chunk.length
@@ -133,10 +133,10 @@ describe('minio', () => {
           })
         })
       })
-      it.skip('should drop multipart uploads', (done) => {
+      it('should drop multipart uploads', (done) => {
         client.dropAllIncompleteUploads(bucket, done)
       })
-      it.skip('should delete objects', (done) => {
+      it('should delete objects', (done) => {
         var objects = client.listObjects(bucket)
         objects.pipe(Through2.obj(function(chunk, enc, end) {
           console.log(chunk)
@@ -148,19 +148,3 @@ describe('minio', () => {
       })
     })
   })
-  /*
-  CreateBucket   -> MakeBucket(bucket, cb)
-  ListBuckets    -> ListBuckets() Stream
-  HeadBucket     -> BucketExists(bucket, cb)
-  DeleteBucket   -> RemoveBucket(bucket, cb)
-  GetBucketACL   -> GetBucketACL(bucket, cb)
-  SetBucketACL   -> SetBucketACL(bucket, acl, cb)
-  _              -> DropAllIncompleteUploads(bucket, cb)
-  ======
-  GetObject            -> GetObject(bucket, key) Stream
-  PutObject            -> PutObject(bucket, key, Stream, cb)
-  ListObjects          -> ListObjects(bucket, {prefix: prefix, recursive: true}) Stream
-  HeadObject           -> StatObject(bucket, key, cb)
-  DeleteObject         -> RemoveObject(bucket, key, cb)
-  AbortMultipartUpload -> DropIncompleteUpload(bucket, key, cb)
-  */
