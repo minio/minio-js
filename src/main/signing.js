@@ -97,7 +97,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     var splitPath = request.path.split('?')
     var requestResource = splitPath[0]
     var requestQuery = ''
-    if (splitPath.length == 2) {
+    if (splitPath.length === 2) {
       requestQuery = splitPath[1]
         .split('&')
         .sort()
