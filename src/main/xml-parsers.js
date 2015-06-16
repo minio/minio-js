@@ -20,42 +20,42 @@ var Concat = require('concat-stream')
 var ParseXml = require('xml-parser')
 
 var parseError = (response, cb) => {
-  if (response.statusCode === 301) {
-    return cb({
-      code: 'MovedPermanently',
-      message: 'Moved Permanently',
-      requestId: null,
-      hostId: null,
-      resource: null
-    })
-  }
-  if (response.statusCode === 404) {
-    return cb({
-      code: 'NotFound',
-      message: '404: Not Found',
-      requestId: null,
-      hostId: null,
-      resource: null
-    })
-  }
-  response.pipe(Concat(errorXml => {
-    var parsedXml = ParseXml(errorXml.toString())
-    var e = {}
-    parsedXml.root.children.forEach(element => {
-      if (element.name === 'Code') {
-        e.code = element.content
-      } else if (element.name === 'Message') {
-        e.message = element.content
-      } else if (element.name === 'RequestId') {
-        e.requestid = element.content
-      } else if (element.name === 'Resource') {
-        e.resource = element.content
-      } else if (element.name === 'HostId') {
-        e.hostid = element.content
+  if (typeof response !== 'undefined') {
+    response.pipe(Concat(errorXml => {
+      var parsedXml = ParseXml(errorXml.toString())
+      var e = {}
+      if (typeof parsedXml.root !== 'undefined') {
+        parsedXml.root.children.forEach(element => {
+          if (element.name === 'Code') {
+            e.code = element.content
+          } else if (element.name === 'Message') {
+            e.message = element.content
+          } else if (element.name === 'RequestId') {
+            e.requestid = element.content
+          } else if (element.name === 'Resource') {
+            e.resource = element.content
+          } else if (element.name === 'HostId') {
+            e.hostid = element.content
+          }
+        })
+        cb(e)
       }
-    })
-    cb(e)
-  }))
+    }))
+    if (response.statusCode === 301) {
+      var e = {}
+      e.code = 'MovedPermanently'
+      e.message = 'Moved Permanently'
+      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+      return cb(e)
+    }
+    if (response.statusCode === 404) {
+      var e = {}
+      e.code = 'NotFound'
+      e.message = 'Not Found'
+      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+      return cb(e)
+    }
+  }
 }
 
 function parseListMultipartResult(bucket, key, response, cb) {
