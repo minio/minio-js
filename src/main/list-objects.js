@@ -113,8 +113,8 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
                   default:
                 }
               })
-              result.objects.push(commonPrefixes);
-              break;
+              result.objects.push(commonPrefixes)
+              break
             default:
           }
         })

@@ -131,9 +131,9 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     }))
 
   function calculateBlockSize(size) {
-    var minimumPartSize = 5 * 1024 * 1024; // 5MB
-    var partSize = Math.floor(size / 9999); // using 10000 may cause part size to become too small, and not fit the entire object in
-    return Math.max(minimumPartSize, partSize);
+    var minimumPartSize = 5 * 1024 * 1024 // 5MB
+    var partSize = Math.floor(size / 9999) // using 10000 may cause part size to become too small, and not fit the entire object in
+    return Math.max(minimumPartSize, partSize)
   }
 }
 

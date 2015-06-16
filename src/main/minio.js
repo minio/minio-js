@@ -94,7 +94,7 @@ class Client {
 
     var region = helpers.getRegion(this.params.host)
     if (region === 'milkyway' || region === 'us-east-1') {
-      region = null;
+      region = null
     }
     var createBucketConfiguration = []
     createBucketConfiguration.push({
@@ -191,7 +191,7 @@ class Client {
       return cb('bucket name cannot be empty')
     }
 
-    var query = `?acl`;
+    var query = `?acl`
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
@@ -221,7 +221,7 @@ class Client {
 
     // we should make sure to set this query parameter, but on the other hand
     // the call apparently succeeds without it to s3.  For clarity lets do it anyways
-    var query = `?acl`;
+    var query = `?acl`
     var requestParams = {
       host: this.params.host,
       port: this.params.port,

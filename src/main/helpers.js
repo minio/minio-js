@@ -17,16 +17,16 @@
 /*jshint sub: true */
 
 var uriEscape = function uriEscape(string) {
-  var output = encodeURIComponent(string);
+  var output = encodeURIComponent(string)
   // this was originally escape instead of encodeURIComponent but escape is deprecated.
-  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent);
+  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
 
   // AWS percent-encodes some extra non-standard characters in a URI
   output = output.replace(/[*]/g, function(ch) {
-    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
-  });
+    return '%' + ch.charCodeAt(0).toString(16).toUpperCase()
+  })
 
-  return output;
+  return output
 }
 
 function getRegion(host) {
