@@ -36,7 +36,7 @@ var parseError = (response, cb) => {
           e.message = 'Not Found'
         } else {
           e.code = 'UnknownError'
-          e.message = response.statusCode
+          e.message = `${response.statusCode}`
         }
         return cb(e)
       }
