@@ -489,5 +489,4 @@ class Client {
   }
 }
 
-var inst = Client
-module.exports = inst
+module.exports = Client

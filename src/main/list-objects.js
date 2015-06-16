@@ -25,7 +25,8 @@ var signV4 = require('./signing.js')
 
 var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
   var queries = []
-    // escape every value in query string, except maxKeys
+
+  // escape every value in query string, except maxKeys
   if (prefix) {
     prefix = helpers.uriEscape(prefix)
     queries.push(`prefix=${prefix}`)
