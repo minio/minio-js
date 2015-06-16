@@ -22,20 +22,25 @@ var ParseXml = require('xml-parser')
 var parseError = (response, cb) => {
   if (typeof response !== 'undefined') {
 
-    var e = {}
-    e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
-    if (response.statusCode === 301) {
-      e.code = 'MovedPermanently'
-      e.message = 'Moved Permanently'
-      return cb(e)
-    }
-    if (response.statusCode === 404) {
-      e.code = 'NotFound'
-      e.message = 'Not Found'
-      return cb(e)
-    }
 
     response.pipe(Concat(errorXml => {
+      var e = {}
+      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+
+      if (errorXml.length === 0) {
+        if (response.statusCode === 301) {
+          e.code = 'MovedPermanently'
+          e.message = 'Moved Permanently'
+        } else if (response.statusCode === 404) {
+          e.code = 'NotFound'
+          e.message = 'Not Found'
+        } else {
+          e.code = 'UnknownError'
+          e.message = response.statusCode
+        }
+        return cb(e)
+      }
+
       var parsedXml = ParseXml(errorXml.toString())
       if (typeof parsedXml.root !== 'undefined') {
         parsedXml.root.children.forEach(element => {
