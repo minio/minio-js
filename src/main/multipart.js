@@ -26,18 +26,18 @@ var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {
-  var errorred = null
+  var errored = null
   var queue = new Stream.Readable({
     objectMode: true
   })
   queue._read = () => {}
 
   var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
-    if (errorred) {
+    if (errored) {
       return done()
     }
     listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
-      if (errorred) {
+      if (errored) {
         return done()
       }
       // TODO handle error
@@ -60,8 +60,8 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
       done()
     })
   }, function(done) {
-    if (errorred) {
-      return done(errorred)
+    if (errored) {
+      return done(errored)
     }
     return done()
   }))
@@ -90,8 +90,8 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     uploadIdMarker = helpers.uriEscape(uploadIdMarker)
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
-  var maxuploads = 1000;
-  queries.push(`max-uploads=${maxuploads}`)
+  var maxUploads = 1000;
+  queries.push(`max-uploads=${maxUploads}`)
   queries.sort()
   queries.unshift('uploads')
   var query = ''
@@ -137,22 +137,22 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 
 var dropUploads = (transport, params, bucket, key, cb) => {
 
-  var errorred = null
+  var errored = null
 
   var queue = new Stream.Readable({
     objectMode: true
   })
   queue._read = () => {}
   queue.pipe(Through2.obj(function(job, enc, done) {
-      if (errorred) {
+      if (errored) {
         return done()
       }
       listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
-        if (errorred) {
+        if (errored) {
           return done()
         }
         if (e) {
-          errorred = e
+          errored = e
           queue.push(null)
           return done()
         }
@@ -173,22 +173,22 @@ var dropUploads = (transport, params, bucket, key, cb) => {
       })
     }))
     .pipe(Through2.obj(function(upload, enc, done) {
-      if (errorred) {
+      if (errored) {
         return done()
       }
       abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-        if (errorred) {
+        if (errored) {
           return done()
         }
         if (e) {
-          errorred = e
+          errored = e
           queue.push(null)
           return done()
         }
         done()
       })
     }, function(done) {
-      cb(errorred)
+      cb(errored)
       done()
     }))
   queue.push({
@@ -200,22 +200,22 @@ var dropUploads = (transport, params, bucket, key, cb) => {
 }
 
 var listAllParts = (transport, params, bucket, key, uploadId) => {
-  var errorred = null
+  var errored = null
   var queue = new Stream.Readable({
     objectMode: true
   })
   queue._read = () => {}
   var stream = queue
     .pipe(Through2.obj(function(job, enc, done) {
-      if (errorred) {
+      if (errored) {
         return done()
       }
       listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
-        if (errorred) {
+        if (errored) {
           return done()
         }
         if (e) {
-          errorred = e
+          errored = e
           queue.push(null)
           return done()
         }
@@ -230,7 +230,7 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
         done()
       })
     }, function(end) {
-      end(errorred)
+      end(errored)
     }))
   queue.push({
     bucket: bucket,

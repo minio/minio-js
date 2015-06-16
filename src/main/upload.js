@@ -61,7 +61,7 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
 
 function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
   var part = 1
-  var errorred = null
+  var errored = null
   var etags = []
     // compute size
   var blockSize = calculateBlockSize(totalSize)
@@ -72,14 +72,14 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     size: blockSize,
     zeroPadding: false
   })).pipe(Through2.obj(function(data, enc, done) {
-      if (errorred) {
+      if (errored) {
         return done()
       }
 
       totalSeen += data.length
 
       if (totalSeen > totalSize) {
-        errorred = 'actual size !== specified size'
+        errored = 'actual size !== specified size'
         return done()
       }
 
@@ -105,11 +105,11 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       dataStream.push(null)
       dataStream._read = () => {}
       doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
-        if (errorred) {
+        if (errored) {
           return done()
         }
         if (e) {
-          errorred = e
+          errored = e
           return done()
         }
         etags.push({
@@ -121,8 +121,8 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
     },
     function(done) {
       done()
-      if (errorred) {
-        return cb(errorred)
+      if (errored) {
+        return cb(errored)
       }
       if (totalSeen !== totalSize) {
         return cb('actual size !== specified size', null)
@@ -143,7 +143,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     query = `?partNumber=${part}&uploadId=${uploadId}`
   }
   if (contentType === null || contentType === '') {
-    contentType = 'aplication/octet-stream'
+    contentType = 'application/octet-stream'
   }
 
   r.pipe(Concat(data => {

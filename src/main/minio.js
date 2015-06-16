@@ -71,6 +71,7 @@ class Client {
 
   // CLIENT LEVEL CALLS
 
+  //noinspection JSUnusedGlobalSymbols
   addUserAgent(name, version, comments) {
     var formattedComments = ''
     if (comments && comments.length > 0) {
@@ -357,17 +358,17 @@ class Client {
           parts.on('error', (e) => {
             cb(e)
           })
-          var partsErrorred = null
+          var partsErrored = null
           var partsArray = []
           parts.pipe(Through2.obj(function(part, enc, partDone) {
             partsArray.push(part)
             partDone()
           }, function(partDone) {
-            if (partsErrorred) {
-              return partDone(partsErrorred)
+            if (partsErrored) {
+              return partDone(partsErrored)
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, partsArray, size, r, (e, etags) => {
-              if (partsErrorred) {
+              if (partsErrored) {
                 partDone()
               }
               if (e) {
