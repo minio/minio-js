@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// ignore x.['foo'] recommneded as x.foo
+// ignore x.['foo'] recommended as x.foo
 /*jshint sub: true */
 
 require('source-map-support').install()
@@ -84,7 +84,7 @@ class Client {
     }
   }
 
-  // SERIVCE LEVEL CALLS
+  // SERVICE LEVEL CALLS
 
   makeBucket(bucket, cb) {
     if (bucket === null || bucket.trim() === '') {
@@ -441,7 +441,6 @@ class Client {
       maxKeys: 1000
     })
     return stream
-
   }
 
   statObject(bucket, object, cb) {
