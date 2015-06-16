@@ -90,7 +90,7 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     uploadIdMarker = helpers.uriEscape(uploadIdMarker)
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
-  var maxUploads = 1000;
+  var maxUploads = 1000
   queries.push(`max-uploads=${maxUploads}`)
   queries.sort()
   queries.unshift('uploads')

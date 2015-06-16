@@ -113,7 +113,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     var canonicalString = ''
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
     canonicalString += requestResource + '\n'
-    canonicalString += requestQuery + '\n';
+    canonicalString += requestQuery + '\n'
     headers.forEach(element => {
       canonicalString += element + '\n'
     })
