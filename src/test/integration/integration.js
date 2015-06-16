@@ -49,7 +49,7 @@ describe('minio', () => {
     })
     it('should fail to create an existing', (done) => {
       client.makeBucket(bucket, (e) => {
-        if(e) {
+        if (e) {
           done()
         }
       })
