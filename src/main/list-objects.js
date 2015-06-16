@@ -73,27 +73,27 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
       var marker = null
       xml.root.children.forEach(element => {
           switch (element.name) {
-            case "IsTruncated":
+            case 'IsTruncated':
               result.isTruncated = element.content === 'true'
               break
-            case "NextMarker":
+            case 'NextMarker':
               result.nextMarker = element.content
               break
-            case "Contents":
+            case 'Contents':
               var content = {}
               element.children.forEach(xmlObject => {
                 switch (xmlObject.name) {
-                  case "Key":
+                  case 'Key':
                     content.name = xmlObject.content
                     marker = content.name
                     break
-                  case "LastModified":
+                  case 'LastModified':
                     content.lastModified = xmlObject.content
                     break
-                  case "Size":
+                  case 'Size':
                     content.size = +xmlObject.content
                     break
-                  case "ETag":
+                  case 'ETag':
                     content.etag = xmlObject.content
                     break
                   default:
@@ -101,11 +101,11 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
               })
               result.objects.push(content)
               break
-            case "CommonPrefixes": // todo, this is the only known way for now to propagate delimited entries
+            case 'CommonPrefixes': // todo, this is the only known way for now to propagate delimited entries
               var commonPrefixes = {}
               element.children.forEach(xmlPrefix => {
                 switch (xmlPrefix.name) {
-                  case "Prefix":
+                  case 'Prefix':
                     commonPrefixes.name = xmlPrefix.content
                     commonPrefixes.size = 0
                     break

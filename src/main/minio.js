@@ -87,7 +87,7 @@ class Client {
   // SERIVCE LEVEL CALLS
 
   makeBucket(bucket, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
@@ -172,21 +172,21 @@ class Client {
   }
 
   bucketExists(bucket, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
     simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
     simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
@@ -210,17 +210,17 @@ class Client {
   }
 
   setBucketACL(bucket, acl, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (acl === null || acl.trim() === "") {
+    if (acl === null || acl.trim() === '') {
       return cb('acl name cannot be empty')
     }
 
     // we should make sure to set this query parameter, but the call apparently succeeds without it to s3
     // To differentiate this functionality from makeBucket() lets do it anyways.
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
     var query = `?acl`;
@@ -246,7 +246,7 @@ class Client {
   }
 
   dropAllIncompleteUploads(bucket, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
@@ -254,11 +254,11 @@ class Client {
   }
 
   dropIncompleteUpload(bucket, key, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (key === null || key.trim() === "") {
+    if (key === null || key.trim() === '') {
       return cb('object key cannot be empty')
     }
 
@@ -270,11 +270,11 @@ class Client {
   }
 
   getPartialObject(bucket, object, offset, length, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (object === null || object.trim() === "") {
+    if (object === null || object.trim() === '') {
       return cb('object key cannot be empty')
     }
 
@@ -319,11 +319,11 @@ class Client {
   }
 
   putObject(bucket, key, contentType, size, r, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (key === null || key.trim() === "") {
+    if (key === null || key.trim() === '') {
       return cb('object key cannot be empty')
     }
 
@@ -449,11 +449,11 @@ class Client {
   }
 
   statObject(bucket, object, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (object === null || object.trim() === "") {
+    if (object === null || object.trim() === '') {
       return cb('object key cannot be empty')
     }
 
@@ -482,11 +482,11 @@ class Client {
   }
 
   removeObject(bucket, object, cb) {
-    if (bucket === null || bucket.trim() === "") {
+    if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (object === null || object.trim() === "") {
+    if (object === null || object.trim() === '') {
       return cb('object key cannot be empty')
     }
     simpleRequests.objectRequest(this, 'DELETE', bucket, object, cb)

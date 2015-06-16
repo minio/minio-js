@@ -62,13 +62,13 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   request.headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
   function getSigningKey(date, region, secretKey) {
-    var key = "AWS4" + secretKey
+    var key = 'AWS4' + secretKey
     var dateLine = date.format('YYYYMMDD')
 
     var hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary')
     var hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary')
-    var hmac3 = Crypto.createHmac('sha256', hmac2).update("s3").digest('binary')
-    return Crypto.createHmac('sha256', hmac3).update("aws4_request").digest('binary')
+    var hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
+    return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
   }
 
   function getCanonicalRequest(request, dataShaSum1) {
@@ -86,7 +86,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     headers.sort()
     headerKeys.sort()
 
-    var signedHeaders = ""
+    var signedHeaders = ''
     headerKeys.forEach(element => {
       if (signedHeaders) {
         signedHeaders += ';'
@@ -110,7 +110,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
         .join('&')
     }
 
-    var canonicalString = ""
+    var canonicalString = ''
     canonicalString += canonicalString + request.method.toUpperCase() + '\n'
     canonicalString += requestResource + '\n'
     canonicalString += requestQuery + '\n';
@@ -125,7 +125,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 }
 
 var getStringToSign = function(canonicalRequestHash, requestDate, region) {
-  var stringToSign = "AWS4-HMAC-SHA256\n"
+  var stringToSign = 'AWS4-HMAC-SHA256\n'
   stringToSign += requestDate.format('YYYYMMDDTHHmmSS') + 'Z\n'
   stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
   stringToSign += canonicalRequestHash

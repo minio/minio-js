@@ -79,7 +79,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       totalSeen += data.length
 
       if (totalSeen > totalSize) {
-        errorred = "actual size !== specified size"
+        errorred = 'actual size !== specified size'
         return done()
       }
 
@@ -164,9 +164,9 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       path: `/${bucket}/${key}${query}`,
       method: 'PUT',
       headers: {
-        "Content-Length": size,
-        "Content-Type": contentType,
-        "Content-MD5": md5
+        'Content-Length': size,
+        'Content-Type': contentType,
+        'Content-MD5': md5
       }
     }
 

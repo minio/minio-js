@@ -73,16 +73,16 @@ function parseListMultipartResult(bucket, key, response, cb) {
     var ignoreTruncated = false
     parsedXml.root.children.forEach(element => {
       switch (element.name) {
-        case "IsTruncated":
+        case 'IsTruncated':
           result.isTruncated = element.content === 'true'
           break
-        case "NextKeyMarker":
+        case 'NextKeyMarker':
           nextJob.keyMarker = decodeURI(element.content)
           break
-        case "NextUploadIdMarker":
+        case 'NextUploadIdMarker':
           nextJob.uploadIdMarker = decodeURI(element.content)
           break
-        case "Upload":
+        case 'Upload':
           var upload = {
             bucket: bucket,
             key: null,
@@ -90,10 +90,10 @@ function parseListMultipartResult(bucket, key, response, cb) {
           }
           element.children.forEach(xmlObject => {
             switch (xmlObject.name) {
-              case "Key":
+              case 'Key':
                 upload.key = decodeURI(xmlObject.content)
                 break
-              case "UploadId":
+              case 'UploadId':
                 upload.uploadId = decodeURI(xmlObject.content)
                 break
               default:
@@ -130,10 +130,10 @@ function parseListBucketResult(response, stream) {
           var bucket = {}
           bucketListing.children.forEach(prop => {
             switch (prop.name) {
-              case "Name":
+              case 'Name':
                 bucket.name = prop.content
                 break
-              case "CreationDate":
+              case 'CreationDate':
                 bucket.creationDate = prop.content
                 break
             }
@@ -157,22 +157,22 @@ function parseAcl(response, cb) {
 
     xml.root.children.forEach(element => {
       switch (element.name) {
-        case "AccessControlList":
+        case 'AccessControlList':
           element.children.forEach(grant => {
             var granteeURL = null
             var permission = null
             grant.children.forEach(grantChild => {
               switch (grantChild.name) {
-                case "Grantee":
+                case 'Grantee':
                   grantChild.children.forEach(grantee => {
                     switch (grantee.name) {
-                      case "URI":
+                      case 'URI':
                         granteeURL = grantee.content
                         break
                     }
                   })
                   break
-                case "Permission":
+                case 'Permission':
                   permission = grantChild.content
                   break
               }
