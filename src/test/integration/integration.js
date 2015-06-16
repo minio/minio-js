@@ -104,7 +104,7 @@ describe('minio', () => {
     it('get object should return an error on no object', (done) => {
       client.getObject(bucket, 'noobject', (e) => {
         if (!e) {
-          done('expecting error')
+          return done('expecting error')
         }
         done()
       })
