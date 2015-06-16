@@ -23,7 +23,6 @@ var parseError = (response, cb) => {
   if (typeof response !== 'undefined') {
     response.pipe(Concat(errorXml => {
       var parsedXml = ParseXml(errorXml.toString())
-      var e = {}
       if (typeof parsedXml.root !== 'undefined') {
         parsedXml.root.children.forEach(element => {
           if (element.name === 'Code') {
@@ -41,18 +40,16 @@ var parseError = (response, cb) => {
         cb(e)
       }
     }))
+    var e = {}
+    e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
     if (response.statusCode === 301) {
-      var e = {}
       e.code = 'MovedPermanently'
       e.message = 'Moved Permanently'
-      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
       return cb(e)
     }
     if (response.statusCode === 404) {
-      var e = {}
       e.code = 'NotFound'
       e.message = 'Not Found'
-      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
       return cb(e)
     }
   }
