@@ -21,6 +21,20 @@ var ParseXml = require('xml-parser')
 
 var parseError = (response, cb) => {
   if (typeof response !== 'undefined') {
+
+    var e = {}
+    e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+    if (response.statusCode === 301) {
+      e.code = 'MovedPermanently'
+      e.message = 'Moved Permanently'
+      return cb(e)
+    }
+    if (response.statusCode === 404) {
+      e.code = 'NotFound'
+      e.message = 'Not Found'
+      return cb(e)
+    }
+
     response.pipe(Concat(errorXml => {
       var parsedXml = ParseXml(errorXml.toString())
       if (typeof parsedXml.root !== 'undefined') {
@@ -37,21 +51,11 @@ var parseError = (response, cb) => {
             e.hostid = element.content
           }
         })
-        cb(e)
+        return cb(e)
       }
     }))
-    var e = {}
-    e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
-    if (response.statusCode === 301) {
-      e.code = 'MovedPermanently'
-      e.message = 'Moved Permanently'
-      return cb(e)
-    }
-    if (response.statusCode === 404) {
-      e.code = 'NotFound'
-      e.message = 'Not Found'
-      return cb(e)
-    }
+  } else {
+    return cb('No response was received')
   }
 }
 
