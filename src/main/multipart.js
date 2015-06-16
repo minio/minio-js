@@ -274,26 +274,26 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
       }
       xml.root.children.forEach(element => {
         switch (element.name) {
-          case "IsTruncated":
+          case 'IsTruncated':
             result.isTruncated = element.content === 'true'
             break
-          case "NextPartNumberMarker":
+          case 'NextPartNumberMarker':
             nextJob.marker = +element.content
             break
-          case "Part":
+          case 'Part':
             var object = {}
             element.children.forEach(xmlObject => {
               switch (xmlObject.name) {
-                case "PartNumber":
+                case 'PartNumber':
                   object.part = +xmlObject.content
                   break
-                case "LastModified":
+                case 'LastModified':
                   object.lastModified = xmlObject.content
                   break
-                case "ETag":
+                case 'ETag':
                   object.etag = xmlObject.content
                   break
-                case "Size":
+                case 'Size':
                   object.size = +xmlObject.content
                   break
                 default:

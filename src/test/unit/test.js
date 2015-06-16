@@ -34,7 +34,7 @@ var multipart = require('../../../dist/main/multipart.js')
 var MockTransport = require('./transport.js')
 
 describe('Client', () => {
-  "use strict";
+  'use strict';
 
   var nockRequests = []
   beforeEach(() => {
@@ -59,47 +59,47 @@ describe('Client', () => {
   }
   var client = new minio({
     url: 'http://localhost:9000',
-    accessKey: "accesskey",
-    secretKey: "secretkey"
+    accessKey: 'accesskey',
+    secretKey: 'secretkey'
   })
   describe('new client', () => {
     it('should work with http', () => {
       var client = new minio({
         url: 'http://localhost',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       Assert.equal(client.params.port, 80)
     })
     it('should override port with http', () => {
       var client = new minio({
         url: 'http://localhost:9000',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       Assert.equal(client.params.port, 9000)
     })
     it('should work with https', () => {
       var client = new minio({
         url: 'https://localhost',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       Assert.equal(client.params.port, 443)
     })
     it('should override port with https', () => {
       var client = new minio({
         url: 'https://localhost:9000',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       Assert.equal(client.params.port, 9000)
     })
     it('should fail with no url', (done) => {
       try {
         new minio({ // jshint ignore:line
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
       } catch (e) {
         done()
@@ -109,8 +109,8 @@ describe('Client', () => {
       try {
         new minio({ // jshint ignore:line
           url: 'localhost',
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
       } catch (e) {
         done()
@@ -121,16 +121,16 @@ describe('Client', () => {
     it('should have a default user agent', () => {
       var client = new minio({
         url: 'https://localhost:9000',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.agent)
     })
     it('should add to the user agent', () => {
       var client = new minio({
         url: 'https://localhost:9000',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       client.addUserAgent('test', '1.0.0', ['comment', 'on', 'life'])
       Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; on; life)`, client.params.agent)
@@ -138,8 +138,8 @@ describe('Client', () => {
     it('should add to the user agent without comments', () => {
       var client = new minio({
         url: 'https://localhost:9000',
-        accessKey: "accesskey",
-        secretKey: "secretkey"
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
       })
       client.addUserAgent('test', '1.0.0', [])
       Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.agent)
@@ -148,8 +148,8 @@ describe('Client', () => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
         client.addUserAgent(null, '1.0.0')
       } catch (e) {
@@ -160,8 +160,8 @@ describe('Client', () => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
         client.addUserAgent('', '1.0.0')
       } catch (e) {
@@ -172,8 +172,8 @@ describe('Client', () => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
         client.addUserAgent('test', null)
       } catch (e) {
@@ -184,8 +184,8 @@ describe('Client', () => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
-          accessKey: "accesskey",
-          secretKey: "secretkey"
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
         })
         client.addUserAgent('test', '')
       } catch (e) {
@@ -280,30 +280,30 @@ describe('Client', () => {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.makeBucket("", (e) => {
+        client.makeBucket('', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.makeBucket("  \n  \t  ", (e) => {
+        client.makeBucket('  \n  \t  ', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
     })
 
-    describe("#listBuckets()", () => {
+    describe('#listBuckets()', () => {
       it('should generate a bucket iterator', (done) => {
-        MockResponse('http://localhost:9000').get('/').reply(200, "<ListAllMyBucketsResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>")
+        MockResponse('http://localhost:9000').get('/').reply(200, '<ListAllMyBucketsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>')
         var stream = client.listBuckets()
         var results = []
         var expectedResults = [{
           name: 'bucket',
-          creationDate: "2015-05-05T20:35:51.410Z"
+          creationDate: '2015-05-05T20:35:51.410Z'
         }, {
           name: 'foo',
-          creationDate: "2015-05-05T20:35:47.170Z"
+          creationDate: '2015-05-05T20:35:47.170Z'
         }]
         stream.pipe(Through2.obj(function(bucket, enc, end) {
           results.push(bucket)
@@ -365,13 +365,13 @@ describe('Client', () => {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.bucketExists("", (e) => {
+        client.bucketExists('', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.bucketExists("  \n  \t  ", (e) => {
+        client.bucketExists('  \n  \t  ', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
@@ -399,13 +399,13 @@ describe('Client', () => {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.removeBucket("", (e) => {
+        client.removeBucket('', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.removeBucket("  \n  \t  ", (e) => {
+        client.removeBucket('  \n  \t  ', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
@@ -414,18 +414,18 @@ describe('Client', () => {
 
     describe('#getBucketACL(bucket, cb)', () => {
       it('should return public-read-write acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns=\"http://s3.amazonaws.com/doc/2006-03-01\"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
           Assert.equal(e, null)
-          Assert.equal(r, "public-read-write")
+          Assert.equal(r, 'public-read-write')
           done()
         })
       })
       it('should return public-read acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns=\"http://s3.amazonaws.com/doc/2006-03-01\"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
+        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
           Assert.equal(e, null)
-          Assert.equal(r, "public-read")
+          Assert.equal(r, 'public-read')
           done()
         })
       })
@@ -456,13 +456,13 @@ describe('Client', () => {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.getBucketACL("", (e) => {
+        client.getBucketACL('', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.getBucketACL("  \n  \t  ", (e) => {
+        client.getBucketACL('  \n  \t  ', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
@@ -503,37 +503,37 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.setBucketACL(null, "public", (e) => {
+        client.setBucketACL(null, 'public', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.setBucketACL("", "public", (e) => {
+        client.setBucketACL('', 'public', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.setBucketACL("  \n  \t  ", "public", (e) => {
+        client.setBucketACL('  \n  \t  ', 'public', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on null acl', (done) => {
-        client.setBucketACL("hello", null, (e) => {
+        client.setBucketACL('hello', null, (e) => {
           Assert(e, 'acl name cannot be empty')
           done()
         })
       })
       it('should fail on empty acl', (done) => {
-        client.setBucketACL("hello", "", (e) => {
+        client.setBucketACL('hello', '', (e) => {
           Assert(e, 'acl name cannot be empty')
           done()
         })
       })
       it('should fail on empty acl', (done) => {
-        client.setBucketACL("hello", "  \n  \t  ", (e) => {
+        client.setBucketACL('hello', '  \n  \t  ', (e) => {
           Assert(e, 'acl name cannot be empty')
           done()
         })
@@ -570,13 +570,13 @@ describe('Client', () => {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.dropAllIncompleteUploads("", (e) => {
+        client.dropAllIncompleteUploads('', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.dropAllIncompleteUploads("  \n  \t  ", (e) => {
+        client.dropAllIncompleteUploads('  \n  \t  ', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
@@ -584,57 +584,57 @@ describe('Client', () => {
     })
   })
 
-  describe("object level", () => {
+  describe('object level', () => {
     describe('#getObject(bucket, object, callback)', () => {
       it('should return a stream object', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket/object').reply(200, "hello world")
-        client.getObject("bucket", "object", (e, r) => {
+        MockResponse('http://localhost:9000').get('/bucket/object').reply(200, 'hello world')
+        client.getObject('bucket', 'object', (e, r) => {
           Assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, "hello world")
+            Assert.equal(buf, 'hello world')
             done()
           }))
         })
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/bucket/object').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket/object'))
-        client.getObject("bucket", "object", checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', (r) => {
+        client.getObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', (r) => {
           Assert.equal(r, null)
           done()
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.getObject(null, "hello", (e) => {
+        client.getObject(null, 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.getObject("", "hello", (e) => {
+        client.getObject('', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.getObject("  \n  \t  ", "hello", (e) => {
+        client.getObject('  \n  \t  ', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on null object', (done) => {
-        client.getObject("hello", null, (e) => {
+        client.getObject('hello', null, (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.getObject("hello", "", (e) => {
+        client.getObject('hello', '', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.getObject("hello", "  \n  \t  ", (e) => {
+        client.getObject('hello', '  \n  \t  ', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
@@ -646,11 +646,11 @@ describe('Client', () => {
           reqHeaders: {
             'range': '10-21'
           }
-        }).get('/bucket/object').reply(206, "hello world")
-        client.getPartialObject("bucket", "object", 10, 11, (e, r) => {
+        }).get('/bucket/object').reply(206, 'hello world')
+        client.getPartialObject('bucket', 'object', 10, 11, (e, r) => {
           Assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, "hello world")
+            Assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -660,11 +660,11 @@ describe('Client', () => {
           reqHeaders: {
             'range': '10-'
           }
-        }).get('/bucket/object').reply(206, "hello world")
-        client.getPartialObject("bucket", "object", 10, null, (e, r) => {
+        }).get('/bucket/object').reply(206, 'hello world')
+        client.getPartialObject('bucket', 'object', 10, null, (e, r) => {
           Assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, "hello world")
+            Assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -674,18 +674,18 @@ describe('Client', () => {
           reqHeaders: {
             'range': '0-21'
           }
-        }).get('/bucket/object').reply(206, "hello world")
-        client.getPartialObject("bucket", "object", null, 11, (e, r) => {
+        }).get('/bucket/object').reply(206, 'hello world')
+        client.getPartialObject('bucket', 'object', null, 11, (e, r) => {
           Assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, "hello world")
+            Assert.equal(buf, 'hello world')
             done()
           }))
         })
       })
     })
 
-    describe("#putObject(bucket, object, contentType, size, source, callback)", () => {
+    describe('#putObject(bucket, object, contentType, size, source, callback)', () => {
       describe('with small objects using single put', () => {
         it('should put an object', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
@@ -693,7 +693,7 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 11, s, done)
+          client.putObject('bucket', 'object', '', 11, s, done)
         })
         it('should pass error to callback', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
@@ -701,10 +701,10 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 11, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', '', 11, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should fail on null bucket', (done) => {
-          client.putObject(null, "hello", '', 1, new Stream.Readable(), (e) => {
+          client.putObject(null, 'hello', '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
@@ -714,7 +714,7 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 12, s, (e) => {
+          client.putObject('bucket', 'object', '', 12, s, (e) => {
             if (e) {
               done()
             }
@@ -725,38 +725,38 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", '', 10, s, (e) => {
+          client.putObject('bucket', 'object', '', 10, s, (e) => {
             if (e) {
               done()
             }
           })
         })
         it('should fail on empty bucket', (done) => {
-          client.putObject("", "hello", '', 1, new Stream.Readable(), (e) => {
+          client.putObject('', 'hello', '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
         })
         it('should fail on empty bucket', (done) => {
-          client.putObject(" \n \t ", "hello", '', 1, new Stream.Readable(), (e) => {
+          client.putObject(' \n \t ', 'hello', '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
         })
         it('should fail on null object', (done) => {
-          client.putObject("hello", null, '', 1, new Stream.Readable(), (e) => {
+          client.putObject('hello', null, '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
         })
         it('should fail on empty object', (done) => {
-          client.putObject("hello", '', '', 1, new Stream.Readable(), (e) => {
+          client.putObject('hello', '', '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
         })
         it('should fail on empty object', (done) => {
-          client.putObject("hello", " \n \t ", '', 1, new Stream.Readable(), (e) => {
+          client.putObject('hello', ' \n \t ', '', 1, new Stream.Readable(), (e) => {
             Assert(e, 'bucket name cannot be empty')
             done()
           })
@@ -795,7 +795,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
         })
         it('should resume an object upload', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -813,7 +813,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
             done(e)
           })
         })
@@ -838,7 +838,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, done)
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
         })
         it('should fail if actual size is smaller than expected', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncataed><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -866,7 +866,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 12 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', '', 12 * 1024 * 1024, s, (e) => {
             Assert.equal(e, 'actual size !== specified size')
             done()
           })
@@ -904,7 +904,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass part list error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -915,7 +915,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass put error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -930,7 +930,7 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass complete upload error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -948,48 +948,48 @@ describe('Client', () => {
             s.push(uploadBlock)
           }
           s.push(null)
-          client.putObject("bucket", "object", '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
       })
     })
 
-    describe("#listObjects()", () => {
+    describe('#listObjects()', () => {
       it('should iterate without a prefix', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+        MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket')
         var results = []
         var expectedResults = [{
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key1",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key1',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key2",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key2',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key3",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key3',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key4",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key4',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key5",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key5',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key6",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key6',
+          'size': 1661
         }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
@@ -1001,43 +1001,43 @@ describe('Client', () => {
         }))
       })
       it('should iterate with a prefix', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?max-keys=1000&prefix=key').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000&prefix=key').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000&prefix=key').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+        MockResponse('http://localhost:9000').get('/bucket?max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket', {
           prefix: 'key'
         })
         var results = []
         var expectedResults = [{
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key1",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key1',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key2",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key2',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key3",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key3',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key4",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key4',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key5",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key5',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key6",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key6',
+          'size': 1661
         }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
@@ -1049,43 +1049,43 @@ describe('Client', () => {
         }))
       })
       it.skip('should iterate with recursion', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?delimiter=/&max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?delimiter=%2F&marker=key2&max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
-        MockResponse('http://localhost:9000').get('/bucket?delimiter=%2F&marker=key4&max-keys=1000').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+        MockResponse('http://localhost:9000').get('/bucket?delimiter=/&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?delimiter=%2F&marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?delimiter=%2F&marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket', {
           recursive: false
         })
         var results = []
         var expectedResults = [{
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key1",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key1',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key2",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key2',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key3",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key3',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key4",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key4',
+          'size': 1661
         }, {
-          "etag": "5eb63bbbe01eeed093cb22bb8f5acdc3",
-          "lastModified": "2015-05-05T02:21:15.716Z",
-          "name": "key5",
-          "size": 11
+          'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+          'lastModified': '2015-05-05T02:21:15.716Z',
+          'name': 'key5',
+          'size': 11
         }, {
-          "etag": "2a60eaffa7a82804bdc682ce1df6c2d4",
-          "lastModified": "2015-05-05T20:36:17.498Z",
-          "name": "key6",
-          "size": 1661
+          'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+          'lastModified': '2015-05-05T20:36:17.498Z',
+          'name': 'key6',
+          'size': 1661
         }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
@@ -1114,7 +1114,7 @@ describe('Client', () => {
       it('should pass error in stream on subsequent error', (done) => {
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
-        }).get('/bucket').reply(200, "<ListBucketResult xmlns=\"http://doc.s3.amazonaws.com/2006-03-01\"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>")
+        }).get('/bucket').reply(200, '<ListBucketResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>5eb63bbbe01eeed093cb22bb8f5acdc3</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>2a60eaffa7a82804bdc682ce1df6c2d4</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
         }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
@@ -1131,7 +1131,7 @@ describe('Client', () => {
       })
     })
 
-    describe("#statObject(bucket, object, callback)", () => {
+    describe('#statObject(bucket, object, callback)', () => {
       it('should retrieve object metadata', (done) => {
         MockResponse('http://localhost:9000').head('/bucket/object').reply(200, '', {
           'ETag': 'etag',
@@ -1158,44 +1158,44 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.statObject(null, "hello", (e) => {
+        client.statObject(null, 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.statObject("", "hello", (e) => {
+        client.statObject('', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.statObject("  \n  \t  ", "hello", (e) => {
+        client.statObject('  \n  \t  ', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on null object', (done) => {
-        client.statObject("hello", null, (e) => {
+        client.statObject('hello', null, (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.statObject("hello", "", (e) => {
+        client.statObject('hello', '', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.statObject("hello", "  \n  \t  ", (e) => {
+        client.statObject('hello', '  \n  \t  ', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
     })
 
-    describe("#removeObject(bucket, object, callback)", () => {
+    describe('#removeObject(bucket, object, callback)', () => {
       it('should delete an object', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket/object').reply(204)
         client.removeObject('bucket', 'object', (e) => {
@@ -1212,44 +1212,44 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.removeObject(null, "hello", (e) => {
+        client.removeObject(null, 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.removeObject("", "hello", (e) => {
+        client.removeObject('', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.removeObject("  \n  \t  ", "hello", (e) => {
+        client.removeObject('  \n  \t  ', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on null object', (done) => {
-        client.removeObject("hello", null, (e) => {
+        client.removeObject('hello', null, (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.removeObject("hello", "", (e) => {
+        client.removeObject('hello', '', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.removeObject("hello", "  \n  \t  ", (e) => {
+        client.removeObject('hello', '  \n  \t  ', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
     })
 
-    describe("#dropIncompleteUpload(bucket, object, callback)", () => {
+    describe('#dropIncompleteUpload(bucket, object, callback)', () => {
       it('should drop an incomplete upload', (done) => {
         MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://doc.s3.amazonaws.com/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(204)
@@ -1274,37 +1274,37 @@ describe('Client', () => {
         client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
-        client.dropIncompleteUpload(null, "hello", (e) => {
+        client.dropIncompleteUpload(null, 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.dropIncompleteUpload("", "hello", (e) => {
+        client.dropIncompleteUpload('', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.dropIncompleteUpload("  \n  \t  ", "hello", (e) => {
+        client.dropIncompleteUpload('  \n  \t  ', 'hello', (e) => {
           Assert(e, 'bucket name cannot be empty')
           done()
         })
       })
       it('should fail on null object', (done) => {
-        client.dropIncompleteUpload("hello", null, (e) => {
+        client.dropIncompleteUpload('hello', null, (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.dropIncompleteUpload("hello", "", (e) => {
+        client.dropIncompleteUpload('hello', '', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
       })
       it('should fail on empty object', (done) => {
-        client.dropIncompleteUpload("hello", "  \n  \t  ", (e) => {
+        client.dropIncompleteUpload('hello', '  \n  \t  ', (e) => {
           Assert(e, 'object key cannot be empty')
           done()
         })
@@ -1688,7 +1688,7 @@ describe('Client', () => {
 
 var checkError = (code, message, requestid, hostid, resource, callback) => {
   return (e, ...rest) => {
-    "use strict";
+    'use strict';
     if (e === null) {
       callback('expected error, received success')
     }
