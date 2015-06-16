@@ -48,7 +48,11 @@ describe('minio', () => {
       client.makeBucket(bucket, done)
     })
     it('should fail to create an existing', (done) => {
-      client.makeBucket(bucket, done)
+      client.makeBucket(bucket, (e) => {
+        if(e) {
+          done()
+        }
+      })
     })
     it('should list buckets', (done) => {
       var bucketStream = client.listBuckets()
