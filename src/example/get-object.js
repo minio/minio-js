@@ -28,11 +28,15 @@ s3client.getObject('goroutine', 'hello/11mb', function(e, dataStream) {
   if (e) {
     return console.log(e)
   }
-  dataStream.pipe(Through2(function(chunk, enc, done) {
-    size += chunk.length
-    done()
-  }, function(done) {
-    console.log('total size: ' + size)
-    done()
-  }))
+
+  dataStream.pipe(Through2(
+    function(chunk, enc, done) {
+      size += chunk.length
+      done()
+    },
+
+    function(done) {
+      console.log('total size: ' + size)
+      done()
+    }))
 })

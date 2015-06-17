@@ -26,5 +26,6 @@ s3client.statObject('mybucket', 'hello/11mb', function(e, stat) {
   if (e) {
     return console.log(e)
   }
+
   console.log(stat)
 })
