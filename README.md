@@ -9,6 +9,8 @@ $ npm install --save minio
 ## Example
 
 ```js
+#!/usr/bin/env node
+
 var Minio = require('minio')
 var Through2 = require('through2')
 
@@ -29,35 +31,35 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
 
 ### Bucket
 
-[MakeBucket(bucket, cb)](src/example/make-bucket.js)
+[makeBucket(bucket, cb)](src/example/make-bucket.js)
 
-[ListBuckets() : Stream](src/example/list-buckets.js)
+[listBuckets() : Stream](src/example/list-buckets.js)
 
-[BucketExists(bucket, cb)](src/example/bucket-exists.js)
+[bucketExists(bucket, cb)](src/example/bucket-exists.js)
 
-[RemoveBucket(bucket, cb)](src/example/remove-bucket.js)
+[removeBucket(bucket, cb)](src/example/remove-bucket.js)
 
-[GetBucketACL(bucket, cb)](src/example/get-bucket-acl.js)
+[getBucketACL(bucket, cb)](src/example/get-bucket-acl.js)
 
-[SetBucketACL(bucket, acl, cb)](src/example/set-bucket-acl.js)
+[setBucketACL(bucket, acl, cb)](src/example/set-bucket-acl.js)
 
-[DropAllIncompleteUploads(bucket, cb)](src/example/drop-incomplete-upload.js)
+[dropAllIncompleteUploads(bucket, cb)](src/example/drop-incomplete-upload.js)
 
 ### Object
 
-[GetObject(bucket, key) Stream](src/example/get-object.js)
+[getObject(bucket, key) Stream](src/example/get-object.js)
 
-[GetPartialObject(bucket, key, offset, length) Stream](src/example/get-partialobject.js)
+[getPartialObject(bucket, key, offset, length) Stream](src/example/get-partialobject.js)
 
-[PutObject(bucket, key, Stream, cb)](src/example/put-object.js)
+[putObject(bucket, key, Stream, cb)](src/example/put-object.js)
 
-[ListObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/example/list-objects.js)
+[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/example/list-objects.js)
 
-[StatObject(bucket, key, cb)](src/example/stat-object.js)
+[statObject(bucket, key, cb)](src/example/stat-object.js)
 
-[RemoveObject(bucket, key, cb)](src/example/remove-object.js)
+[removeObject(bucket, key, cb)](src/example/remove-object.js)
 
-[DropIncompleteUpload(bucket, key, cb)](src/example/drop-incomplete-upload.js)
+[dropIncompleteUpload(bucket, key, cb)](src/example/drop-incomplete-upload.js)
 
 ## Join The Community
 * Community hangout on Gitter    [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
