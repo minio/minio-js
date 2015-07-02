@@ -47,6 +47,8 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
 
 [GetObject(bucket, key) Stream](src/example/get-object.js)
 
+[GetPartialObject(bucket, key, offset, length) Stream](src/example/get-partialobject.js)
+
 [PutObject(bucket, key, Stream, cb)](src/example/put-object.js)
 
 [ListObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/example/list-objects.js)
