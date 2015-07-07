@@ -130,7 +130,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.addUserAgent('test', '1.0.0', ['comment', 'on', 'life'])
+      client.setUserAgent('test', '1.0.0', ['comment', 'on', 'life'])
       Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; on; life)`, client.params.agent)
     })
     it('should add to the user agent without comments', () => {
@@ -139,7 +139,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.addUserAgent('test', '1.0.0', [])
+      client.setUserAgent('test', '1.0.0', [])
       Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.agent)
     })
     it('should add to the user agent without name', (done) => {
@@ -149,7 +149,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.addUserAgent(null, '1.0.0')
+        client.setUserAgent(null, '1.0.0')
       } catch (e) {
         done()
       }
@@ -161,7 +161,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.addUserAgent('', '1.0.0')
+        client.setUserAgent('', '1.0.0')
       } catch (e) {
         done()
       }
@@ -173,7 +173,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.addUserAgent('test', null)
+        client.setUserAgent('test', null)
       } catch (e) {
         done()
       }
@@ -185,7 +185,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.addUserAgent('test', '')
+        client.setUserAgent('test', '')
       } catch (e) {
         done()
       }
