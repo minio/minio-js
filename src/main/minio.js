@@ -72,7 +72,7 @@ class Client {
   // CLIENT LEVEL CALLS
 
   //noinspection JSUnusedGlobalSymbols
-  addUserAgent(name, version, comments) {
+  setUserAgent(name, version, comments) {
     var formattedComments = ''
     if (comments && comments.length > 0) {
       var joinedComments = comments.join('; ')
