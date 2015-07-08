@@ -122,27 +122,27 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.agent)
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.userAgent)
     })
-    it('should add to the user agent', () => {
+    it('should set user agent', () => {
       var client = new minio({
         url: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.setUserAgent('test', '1.0.0', ['comment', 'on', 'life'])
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; on; life)`, client.params.agent)
+      client.setUserAgent('test', '1.0.0', ['comment', 'arch', 'os'])
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; arch; os)`, client.params.userAgent)
     })
-    it('should add to the user agent without comments', () => {
+    it('should set user agent without comments', () => {
       var client = new minio({
         url: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
       client.setUserAgent('test', '1.0.0', [])
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.agent)
+      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
     })
-    it('should add to the user agent without name', (done) => {
+    it('should not set user agent without name', (done) => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
@@ -154,7 +154,7 @@ describe('Client', () => {
         done()
       }
     })
-    it('should add to the user agent with empty name', (done) => {
+    it('should not set user agent with empty name', (done) => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
@@ -166,7 +166,7 @@ describe('Client', () => {
         done()
       }
     })
-    it('should add to the user agent without version', (done) => {
+    it('should not set user agent without version', (done) => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
@@ -178,7 +178,7 @@ describe('Client', () => {
         done()
       }
     })
-    it('should add to the user agent with empty version', (done) => {
+    it('should not set user agent with empty version', (done) => {
       try {
         var client = new minio({
           url: 'https://localhost:9000',
@@ -186,6 +186,20 @@ describe('Client', () => {
           secretKey: 'secretkey'
         })
         client.setUserAgent('test', '')
+      } catch (e) {
+        done()
+      }
+    })
+    it('should not set user agent twice', (done) => {
+      try {
+        var client = new minio({
+          url: 'https://localhost:9000',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
+        })
+        client.setUserAgent('test', '1.0.0')
+        Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
+        client.setUserAgent('test', '1.0.0')
       } catch (e) {
         done()
       }
