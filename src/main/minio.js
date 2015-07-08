@@ -65,21 +65,25 @@ class Client {
       port: port,
       accessKey: params.accessKey,
       secretKey: params.secretKey,
-      agent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`
+      userAgent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`,
+      userAgentSet: false
     }
   }
 
   // CLIENT LEVEL CALLS
 
-  //noinspection JSUnusedGlobalSymbols
   setUserAgent(name, version, comments) {
     var formattedComments = ''
     if (comments && comments.length > 0) {
       var joinedComments = comments.join('; ')
       formattedComments = ` (${joinedComments})`
     }
+    if (this.params.userAgentSet) {
+      throw 'user agent already set'
+    }
     if (name && version) {
-      this.params.agent = `${this.params.agent} ${name}/${version}${formattedComments}`
+      this.params.userAgent = `${this.params.userAgent} ${name}/${version}${formattedComments}`
+      this.params.userAgentSet = true
     } else {
       throw 'Invalid user agent'
     }
