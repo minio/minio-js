@@ -105,7 +105,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     var ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent'];
 
     for (var key in request.headers) {
-      if (request.headers.hasOwnProperty(key) && ignoredHeaders.indexOf('Authorization') === -1) {
+      if (request.headers.hasOwnProperty(key) && ignoredHeaders.indexOf(key) === -1) {
         var value = request.headers[key]
         headers.push(`${key.toLowerCase()}:${value}`)
         headerKeys.push(key.toLowerCase())
