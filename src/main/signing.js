@@ -38,7 +38,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   var region = helpers.getRegion(request.host)
 
   request.headers['host'] = request.host
-  request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmSS') + 'Z'
+  request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   request.headers['x-amz-content-sha256'] = dataShaSum256
 
   var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256)
@@ -155,7 +155,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
 var getStringToSign = function(canonicalRequestHash, requestDate, region) {
   var stringToSign = 'AWS4-HMAC-SHA256\n'
-  stringToSign += requestDate.format('YYYYMMDDTHHmmSS') + 'Z\n'
+  stringToSign += requestDate.format('YYYYMMDDTHHmmss') + 'Z\n'
   stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
   stringToSign += canonicalRequestHash
   return stringToSign
