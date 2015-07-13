@@ -307,7 +307,7 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${key}`,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
       method: 'GET',
       headers
     }
@@ -456,19 +456,19 @@ class Client {
     return stream
   }
 
-  statObject(bucket, object, cb) {
+  statObject(bucket, key, cb) {
     if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (object === null || object.trim() === '') {
+    if (key === null || key.trim() === '') {
       return cb('object key cannot be empty')
     }
 
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${object}`,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
       method: 'HEAD'
     }
 
