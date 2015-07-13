@@ -377,6 +377,13 @@ describe('Client', () => {
         }))
       })
       it('should return an error on 404', (done) => {
+        MockResponse('http://localhost:9000').head('/bucket').reply(403)
+        client.bucketExists('bucket', checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, (r) => {
+          Assert.equal(r, null)
+          done()
+        }))
+      })
+      it('should return an error on 404', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(404)
         client.bucketExists('bucket', checkError('NotFound', 'Not Found', null, null, null, (r) => {
           Assert.equal(r, null)
