@@ -272,28 +272,31 @@ class Client {
     multipart.dropUploads(this.transport, this.params, bucket, key, cb)
   }
 
-  getObject(bucket, object, cb) {
-    this.getPartialObject(bucket, object, 0, 0, cb)
+  getObject(bucket, key, cb) {
+    this.getPartialObject(bucket, key, 0, 0, cb)
   }
 
-  getPartialObject(bucket, object, offset, length, cb) {
+  getPartialObject(bucket, key, offset, length, cb) {
     if (bucket === null || bucket.trim() === '') {
       return cb('bucket name cannot be empty')
     }
 
-    if (object === null || object.trim() === '') {
+    if (key === null || key.trim() === '') {
       return cb('object key cannot be empty')
     }
 
     var range = ''
 
-    if (offset) {
-      range = `${+offset}-`
-    } else {
-      offset = 0
-    }
-    if (length) {
-      range += `${+length + offset}`
+    if(offset || length) {
+      if (offset) {
+        range = `bytes=${+offset}-`
+      } else {
+        range = 'bytes=0-'
+        offset = 0
+      }
+      if (length) {
+        range += `${(+length + offset) - 1}`
+      }
     }
 
     var headers = {}
@@ -304,7 +307,7 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${object}`,
+      path: `/${bucket}/${key}`,
       method: 'GET',
       headers
     }
