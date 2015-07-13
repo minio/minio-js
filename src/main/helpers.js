@@ -16,8 +16,8 @@
 
 /*jshint sub: true */
 
-var uriEscape = function uriEscape(string) {
-  var output = encodeURIComponent(string)
+function uriEscape(string) {
+  var output = string
   // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
 
@@ -25,6 +25,15 @@ var uriEscape = function uriEscape(string) {
   output = output.replace(/[*]/g, function(ch) {
     return '%' + ch.charCodeAt(0).toString(16).toUpperCase()
   })
+
+  return output
+}
+
+function uriResourceEscape(string) {
+  var output = string
+  // this was originally escape instead of encodeURIComponent but escape is deprecated.
+  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
+  output = output.replace('%2F', '/')
 
   return output
 }
@@ -62,5 +71,6 @@ function getRegion(host) {
 
 module.exports = {
   uriEscape: uriEscape,
-  getRegion: getRegion
+  getRegion: getRegion,
+  uriResourceEscape: uriResourceEscape
 }

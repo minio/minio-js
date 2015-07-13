@@ -26,6 +26,7 @@ var Xml = require('xml')
 
 var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
+var helpers = require('./helpers.js')
 
 var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
   var requestParams = {
@@ -161,7 +162,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     var requestParams = {
       host: params.host,
       port: params.port,
-      path: `/${bucket}/${key}${query}`,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
       method: 'PUT',
       headers: {
         'Content-Length': size,
@@ -197,7 +198,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
   var requestParams = {
     host: params.host,
     port: params.port,
-    path: `/${bucket}/${key}?uploadId=${uploadId}`,
+    path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploadId=${uploadId}`,
     method: 'POST'
   }
 
