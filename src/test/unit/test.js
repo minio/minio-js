@@ -339,6 +339,19 @@ describe('Client', () => {
           done()
         })
       })
+      it('should convert 307 to 403', (done) => {
+        MockResponse('http://localhost:9000').get('/').reply(307)
+        var stream = client.listBuckets()
+        stream.pipe(Through2.obj(function(part, enc, end) {
+          end()
+        }, function(end) {
+          end()
+        }))
+        stream.on('error', (e) => {
+          checkError('AccessDenied', 'Unauthenticated access prohibited', null, null, null)(e)
+          done()
+        })
+      })
     })
 
     describe('#bucketExists(bucket, cb)', () => {

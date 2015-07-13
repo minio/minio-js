@@ -166,11 +166,16 @@ class Client {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
         stream.push(xmlParsers.parseError(response, (error) => {
+          if(error.code === 'TemporaryRedirect') {
+            error.code = 'AccessDenied'
+            error.message = 'Unauthenticated access prohibited'
+          }
           stream.emit('error', error)
         }))
         stream.push(null)
+      } else {
+        xmlParsers.parseListBucketResult(response, stream)
       }
-      xmlParsers.parseListBucketResult(response, stream)
     })
     req.end()
     return stream
