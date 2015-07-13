@@ -31,6 +31,9 @@ var parseError = (response, cb) => {
         if (response.statusCode === 301) {
           e.code = 'MovedPermanently'
           e.message = 'Moved Permanently'
+        } else if (response.statusCode === 307) {
+          e.code = 'TemporaryRedirect'
+          e.message = 'Are you using the correct endpoint URL?'
         } else if (response.statusCode === 404) {
           e.code = 'NotFound'
           e.message = 'Not Found'
