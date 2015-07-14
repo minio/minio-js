@@ -94,6 +94,10 @@ class Client {
   // SERVICE LEVEL CALLS
 
   makeBucket(bucket, cb) {
+    return this.makeBucketWithACL(bucket, 'private', cb)
+  }
+
+  makeBucketWithACL(bucket, acl, cb) {
     if(!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
@@ -134,7 +138,8 @@ class Client {
       method: 'PUT',
       path: `/${bucket}`,
       headers: {
-        'Content-Length': payload.length
+        'Content-Length': payload.length,
+        'x-amz-acl': acl
       }
     }
 
