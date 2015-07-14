@@ -86,7 +86,6 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     queries.push(`key-marker=${keyMarker}`)
   }
   if (uploadIdMarker) {
-    uploadIdMarker = helpers.uriEscape(uploadIdMarker)
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
   var maxUploads = 1000
@@ -249,7 +248,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   var requestParams = {
     host: params.host,
     port: params.port,
-    path: `/${bucket}/${key}${query}`,
+    path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
     method: 'GET'
   }
 

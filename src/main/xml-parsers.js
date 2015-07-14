@@ -91,10 +91,10 @@ function parseListMultipartResult(bucket, key, response, cb) {
           result.isTruncated = element.content === 'true'
           break
         case 'NextKeyMarker':
-          nextJob.keyMarker = decodeURI(element.content)
+          nextJob.keyMarker = element.content
           break
         case 'NextUploadIdMarker':
-          nextJob.uploadIdMarker = decodeURI(element.content)
+          nextJob.uploadIdMarker = element.content
           break
         case 'Upload':
           var upload = {
@@ -108,13 +108,13 @@ function parseListMultipartResult(bucket, key, response, cb) {
                 upload.key = helpers.uriResourceEscape(xmlObject.content)
                 break
               case 'UploadId':
-                upload.uploadId = helpers.uriResourceEscape(xmlObject.content)
+                upload.uploadId = xmlObject.content
                 break
               default:
             }
           })
           if (key) {
-            if (key === upload.key) {
+            if (helpers.uriResourceEscape(key) === upload.key) {
               result.uploads.push(upload)
             } else {
               ignoreTruncated = true

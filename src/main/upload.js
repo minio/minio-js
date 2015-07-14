@@ -32,7 +32,7 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
   var requestParams = {
     host: params.host,
     port: params.port,
-    path: `/${bucket}/${key}?uploads`,
+    path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
     method: 'POST'
   }
 
