@@ -30,3 +30,6 @@ objectsStream.pipe(Through2.obj(function(object, enc, done) {
   console.log(object)
   done()
 }))
+objectsStream.on('error', function(e) {
+  console.log(e)
+})

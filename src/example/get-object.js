@@ -39,4 +39,7 @@ s3client.getObject('goroutine', 'hello/11mb', function(e, dataStream) {
       console.log('total size: ' + size)
       done()
     }))
+  dataStream.on('error', function(e) {
+    console.log(e)
+  })
 })
