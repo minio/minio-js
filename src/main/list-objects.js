@@ -95,7 +95,7 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
                     content.size = +xmlObject.content
                     break
                   case 'ETag':
-                    content.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34/g, '')
+                    content.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34;/g, '')
                     break
                   default:
                 }
