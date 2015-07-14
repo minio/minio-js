@@ -16,6 +16,7 @@
 
 /*jshint sub: true */
 
+var helpers = require('./helpers.js')
 var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
 
@@ -25,7 +26,7 @@ function bucketRequest(self, method, bucket, cb) {
 }
 
 function objectRequest(self, method, bucket, object, cb) {
-  var path = `/${bucket}/${object}`
+  var path = `/${bucket}/${helpers.uriResourceEscape(object)}`
   request(self, method, path, cb)
 }
 
