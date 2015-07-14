@@ -351,7 +351,8 @@ class Client {
         if (!uploadId) {
           upload.initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
             if (e) {
-              return done(e)
+              done(e)
+              return
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, [], size, r, (e, etags) => {
               if (e) {
