@@ -289,7 +289,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
                   object.lastModified = xmlObject.content
                   break
                 case 'ETag':
-                  object.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34/g, '')
+                  object.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34;/g, '')
                   break
                 case 'Size':
                   object.size = +xmlObject.content
