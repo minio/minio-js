@@ -28,13 +28,17 @@ var signV4 = require('./signing.js')
 var xmlParsers = require('./xml-parsers.js')
 var helpers = require('./helpers.js')
 
-var initiateNewMultipartUpload = (transport, params, bucket, key, cb) => {
+var initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
   var requestParams = {
     host: params.host,
     port: params.port,
     path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
-    method: 'POST'
+    method: 'POST',
+    headers: {
+      'Content-Type': contentType
+    }
   }
+
 
   signV4(requestParams, '', params.accessKey, params.secretKey)
 
