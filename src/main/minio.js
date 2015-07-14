@@ -46,12 +46,14 @@ class Client {
       switch (parsedUrl.protocol) {
         case 'http:':
           this.transport = Http
+          this.scheme = 'http'
           if (port === 0) {
             port = 80
           }
           break
         case 'https:':
           this.transport = Https
+          this.scheme = 'https'
           if (port === 0) {
             port = 443
           }
