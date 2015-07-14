@@ -282,11 +282,11 @@ describe('Client', () => {
   describe('Bucket API calls', () => {
     describe('#makeBucket(bucket, callback)', () => {
       it('should call the callback on success', (done) => {
-        MockResponse('http://localhost:9000').put('/bucket', '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"></CreateBucketConfiguration>').reply(200)
+        MockResponse('http://localhost:9000').put('/bucket').reply(200)
         client.makeBucket('bucket', done)
       })
       it('pass an error into the callback on failure', (done) => {
-        MockResponse('http://localhost:9000').put('/bucket', '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"></CreateBucketConfiguration>').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
+        MockResponse('http://localhost:9000').put('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
         client.makeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should fail on null bucket', (done) => {
