@@ -19,6 +19,8 @@
 var Concat = require('concat-stream')
 var ParseXml = require('xml-parser')
 
+var helpers = require("./helpers.js")
+
 var parseError = (response, cb) => {
   if (typeof response !== 'undefined') {
 
@@ -103,10 +105,10 @@ function parseListMultipartResult(bucket, key, response, cb) {
           element.children.forEach(xmlObject => {
             switch (xmlObject.name) {
               case 'Key':
-                upload.key = decodeURI(xmlObject.content)
+                upload.key = helpers.uriResourceEscape(xmlObject.content)
                 break
               case 'UploadId':
-                upload.uploadId = decodeURI(xmlObject.content)
+                upload.uploadId = helpers.uriResourceEscape(xmlObject.content)
                 break
               default:
             }
