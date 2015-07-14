@@ -37,7 +37,13 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
 
   var region = helpers.getRegion(request.host)
 
-  request.headers['host'] = request.host
+  var host = request.host
+
+  if((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
+    host = `${host}:${request.port}`
+  }
+
+  request.headers['host'] = host
   request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   request.headers['x-amz-content-sha256'] = dataShaSum256
 
