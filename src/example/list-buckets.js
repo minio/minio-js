@@ -28,3 +28,7 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
   console.log(bucket)
   done()
 }))
+bucketStream.on('error', function(e) {
+  console.log(e)
+})
+

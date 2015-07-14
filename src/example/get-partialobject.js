@@ -35,4 +35,7 @@ s3client.getPartialObject('goroutine', 'hello/11mb', 1024, 4096, function(e, dat
     console.log('total size: ' + size)
     done()
   }))
+  dataStream.on('error', function(e) {
+    console.log(e)
+  })
 })
