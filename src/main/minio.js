@@ -106,22 +106,22 @@ class Client {
     if (region === 'milkyway' || region === 'us-east-1') {
       region = null
     }
-    var createBucketConfiguration = []
-    createBucketConfiguration.push({
-      _attr: {
-        xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
-      }
-    })
-    if (region) {
+    var payload = ''
+    if(region) {
+      var createBucketConfiguration = []
+      createBucketConfiguration.push({
+        _attr: {
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
+        }
+      })
       createBucketConfiguration.push({
         LocationConstraint: helpers.getRegion(this.params.host)
       })
+      var payloadObject = {
+        CreateBucketConfiguration: createBucketConfiguration
+      }
+      payload = Xml(payloadObject)
     }
-    var payloadObject = {
-      CreateBucketConfiguration: createBucketConfiguration
-    }
-
-    var payload = Xml(payloadObject)
 
     var stream = new Stream.Readable()
     stream._read = function() {}
