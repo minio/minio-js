@@ -222,13 +222,15 @@ describe('Client', () => {
         }, 200, {
           'etag': 'etag',
           'content-length': 11,
-          'last-modified': 'lastmodified'
+          'last-modified': 'lastmodified',
+          'content-type': 'application/octet-stream'
         }, null)
         client.statObject('bucket', 'object', (e, r) => {
           Assert.deepEqual(r, {
-            size: '11',
+            size: 11,
             'lastModified': 'lastmodified',
-            etag: 'etag'
+            etag: 'etag',
+            contentType: 'application/octet-stream'
           })
           done()
         })
@@ -261,13 +263,15 @@ describe('Client', () => {
         }, 200, {
           'etag': 'etag',
           'content-length': 11,
-          'last-modified': 'lastmodified'
+          'last-modified': 'lastmodified',
+          'content-type': 'text/plain'
         }, null)
         client.statObject('bucket', 'object', (e, r) => {
           Assert.deepEqual(r, {
-            size: '11',
+            size: 11,
             'lastModified': 'lastmodified',
-            etag: 'etag'
+            etag: 'etag',
+            contentType: 'text/plain'
           })
           done()
         })
@@ -1168,14 +1172,16 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').head('/bucket/object').reply(200, '', {
           'ETag': 'etag',
           'Content-Length': 11,
-          'Last-Modified': 'lastmodified'
+          'Last-Modified': 'lastmodified',
+          'Content-Type': 'text/plain'
         })
 
         client.statObject('bucket', 'object', (e, r) => {
           Assert.deepEqual(r, {
-            size: '11',
+            size: 11,
             lastModified: 'lastmodified',
-            etag: 'etag'
+            etag: 'etag',
+            contentType: 'text/plain'
           })
           done()
         })
@@ -1517,7 +1523,7 @@ describe('Client', () => {
         })
       })
     })
-    describe('#initiateNewMultipartUpload(transport, params, bucket, object, cb)', () => {
+    describe('#initiateNewMultipartUpload(transport, params, bucket, object, contentType, cb)', () => {
       var method = upload.initiateNewMultipartUpload
       var params = {
         host: 'localhost',
@@ -1525,7 +1531,7 @@ describe('Client', () => {
       }
       it('should initiate a new multipart upload', (done) => {
         MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
-        method(Http, params, 'bucket', 'object', (e, uploadID) => {
+        method(Http, params, 'bucket', 'object', null, (e, uploadID) => {
           Assert.equal(e, null)
           Assert.equal(uploadID, 'uploadid')
           done()
@@ -1533,7 +1539,7 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        method(Http, params, 'bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+        method(Http, params, 'bucket', 'object', '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
     })
     describe('#completeMultipartUpload(transport, params, bucket, object, uploadID, etags cb)', () => {

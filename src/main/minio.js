@@ -336,6 +336,10 @@ class Client {
       return cb('object key cannot be empty')
     }
 
+    if (contentType === null || contentType.trim() === '') {
+      contentType = 'application/octet-stream'
+    }
+
     var self = this
 
     if (size > 5 * 1024 * 1024) {
@@ -349,7 +353,7 @@ class Client {
         done()
       }, function(done) {
         if (!uploadId) {
-          upload.initiateNewMultipartUpload(self.transport, self.params, bucket, key, (e, uploadId) => {
+          upload.initiateNewMultipartUpload(self.transport, self.params, bucket, key, contentType, (e, uploadId) => {
             if (e) {
               done(e)
               return
@@ -481,7 +485,8 @@ class Client {
       } else {
         var result = {
           size: +response.headers['content-length'],
-          etag: response.headers['etag'],
+          etag: response.headers['etag'].replace(/"/g, ''),
+          contentType: response.headers['content-type'],
           lastModified: response.headers['last-modified']
         }
         cb(null, result)
