@@ -79,8 +79,7 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
 function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
   var queries = []
   if (key) {
-    key = helpers.uriEscape(key)
-    queries.push(`prefix=${key}`)
+    queries.push(`prefix=${helpers.uriEscape(key)}`)
   }
   if (keyMarker) {
     keyMarker = helpers.uriEscape(keyMarker)
@@ -291,7 +290,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
                   object.lastModified = xmlObject.content
                   break
                 case 'ETag':
-                  object.etag = xmlObject.content.replace(/"/g, "")
+                  object.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '')
                   break
                 case 'Size':
                   object.size = +xmlObject.content
