@@ -92,8 +92,8 @@ class Client {
   // SERVICE LEVEL CALLS
 
   makeBucket(bucket, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     var region = helpers.getRegion(this.params.host)
@@ -182,22 +182,22 @@ class Client {
   }
 
   bucketExists(bucket, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
     simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
     simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     var query = `?acl`
@@ -220,8 +220,8 @@ class Client {
   }
 
   setBucketACL(bucket, acl, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     if (acl === null || acl.trim() === '') {
@@ -253,16 +253,16 @@ class Client {
   }
 
   dropAllIncompleteUploads(bucket, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     multipart.dropUploads(this.transport, this.params, bucket, null, cb)
   }
 
   dropIncompleteUpload(bucket, key, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     if (key === null || key.trim() === '') {
@@ -277,8 +277,8 @@ class Client {
   }
 
   getPartialObject(bucket, key, offset, length, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     if (key === null || key.trim() === '') {
@@ -328,8 +328,8 @@ class Client {
   }
 
   putObject(bucket, key, contentType, size, r, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     if (key === null || key.trim() === '') {
@@ -406,6 +406,10 @@ class Client {
   }
 
   listObjects(bucket, params) {
+    var bucketNameError = false
+    if(!helpers.validBucketName(bucket)) {
+      bucketNameError = true
+    }
     var self = this
 
     var prefix = null
@@ -425,6 +429,9 @@ class Client {
     })
     queue._read = () => {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
+      if(bucketNameError) {
+        return done('bucket name invalid')
+      }
       objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
         if (e) {
           return done(e)
@@ -462,8 +469,8 @@ class Client {
   }
 
   statObject(bucket, key, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
     if (key === null || key.trim() === '') {
@@ -495,15 +502,15 @@ class Client {
     req.end()
   }
 
-  removeObject(bucket, object, cb) {
-    if (bucket === null || bucket.trim() === '') {
-      return cb('bucket name cannot be empty')
+  removeObject(bucket, key, cb) {
+    if(!helpers.validBucketName(bucket)) {
+      return cb('invalid bucket name')
     }
 
-    if (object === null || object.trim() === '') {
+    if (key === null || key.trim() === '') {
       return cb('object key cannot be empty')
     }
-    simpleRequests.objectRequest(this, 'DELETE', bucket, object, cb)
+    simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
   }
 }
 

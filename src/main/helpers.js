@@ -69,8 +69,36 @@ function getRegion(host) {
   }
 }
 
+function validateBucketName(bucket) {
+  // test for null
+  if(bucket === null) {
+    return false
+  }
+
+  // bucket length between 3 and 63
+  if (bucket.length < 3 || bucket.length > 63) {
+    return false
+  }
+
+  // lower case, numbers, hyphens
+  // starts and ends with letters or numbers
+  var re1 = /^[a-z0-9]+[a-z0-9\-]*[a-z0-9]+$/
+  if(bucket.match(re1) === null) {
+    return false
+  }
+
+  // no ip address style
+  var re2 = /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/
+  if(bucket.match(re2) !== null) {
+    return false
+  }
+
+  return true
+}
+
 module.exports = {
   uriEscape: uriEscape,
   getRegion: getRegion,
-  uriResourceEscape: uriResourceEscape
+  uriResourceEscape: uriResourceEscape,
+  validBucketName: validateBucketName
 }
