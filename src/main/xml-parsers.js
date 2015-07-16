@@ -42,6 +42,12 @@ var parseError = (response, cb) => {
         } else if (response.statusCode === 404) {
           e.code = 'NotFound'
           e.message = 'Not Found'
+        } else if (response.statusCode === 405) {
+          e.code = 'MethodNotAllowed'
+          e.message = 'Method Not Allowed'
+        } else if (response.statusCode === 501) {
+          e.code = 'MethodNotAllowed'
+          e.message = 'Method Not Allowed'
         } else {
           e.code = 'UnknownError'
           e.message = `${response.statusCode}`
