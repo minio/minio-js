@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var Concat = require('concat-stream')
-var ParseXml = require('xml-parser')
-
-var helpers = require("./helpers.js")
+var Concat = require('concat-stream'),
+    ParseXml = require('xml-parser'),
+    helpers = require('./helpers.js')
 
 var parseError = (response, cb) => {
   if (typeof response !== 'undefined') {
-
-
     response.pipe(Concat(errorXml => {
       var e = {}
       e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
@@ -80,17 +75,17 @@ var parseError = (response, cb) => {
 
 function parseListMultipartResult(bucket, key, response, cb) {
   response.pipe(Concat(xml => {
-    var parsedXml = ParseXml(xml.toString())
-    var result = {
-      uploads: [],
-      isTruncated: false,
-      nextJob: null
-    }
-    var nextJob = {
-      bucket: bucket,
-      key: key
-    }
-    var ignoreTruncated = false
+    var parsedXml = ParseXml(xml.toString()),
+        result = {
+          uploads: [],
+          isTruncated: false,
+          nextJob: null
+        },
+        nextJob = {
+          bucket: bucket,
+          key: key
+        },
+        ignoreTruncated = false
     parsedXml.root.children.forEach(element => {
       switch (element.name) {
         case 'IsTruncated':
@@ -168,12 +163,11 @@ function parseListBucketResult(response, stream) {
 
 function parseAcl(response, cb) {
   response.pipe(Concat((body) => {
-    var xml = ParseXml(body.toString())
-
-    var publicRead = false
-    var publicWrite = false
-    var authenticatedRead = false
-    var authenticatedWrite = false
+    var xml = ParseXml(body.toString()),
+        publicRead = false,
+        publicWrite = false,
+        authenticatedRead = false,
+        authenticatedWrite = false
 
     xml.root.children.forEach(element => {
       switch (element.name) {

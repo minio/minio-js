@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
 require('source-map-support').install()
 
 var Assert = require('assert')
@@ -95,7 +93,7 @@ describe('Client', () => {
     })
     it('should fail with no url', (done) => {
       try {
-        new minio({ // jshint ignore:line
+        new minio({
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -105,7 +103,7 @@ describe('Client', () => {
     })
     it('should fail with no scheme', (done) => {
       try {
-        new minio({ // jshint ignore:line
+        new minio({
           url: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -903,7 +901,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 12 * 1024 * 1024, s, (e) => {
-            Assert.equal(e, 'actual size !== specified size')
+            Assert.equal(e, 'actual size does not match specified size')
             done()
           })
         })
@@ -928,7 +926,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
-            Assert.equal(e, 'actual size !== specified size')
+            Assert.equal(e, 'actual size does not match specified size')
             done()
           })
         })

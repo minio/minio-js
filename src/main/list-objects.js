@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var Concat = require('concat-stream')
-var ParseXml = require('xml-parser')
-var xmlParsers = require('./xml-parsers.js')
-
-var helpers = require('./helpers.js')
-var signV4 = require('./signing.js')
+var Concat = require('concat-stream'),
+    ParseXml = require('xml-parser'),
+    xmlParsers = require('./xml-parsers.js'),
+    helpers = require('./helpers.js'),
+    signV4 = require('./signing.js')
 
 var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
   var queries = []
@@ -65,60 +62,69 @@ var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKe
       return xmlParsers.parseError(response, cb)
     }
     response.pipe(Concat((body) => {
-      var xml = ParseXml(body.toString())
-      var result = {
-        objects: [],
-        marker: null,
-        isTruncated: false
-      }
-      var marker = null
+      var xml = ParseXml(body.toString()),
+          result = {
+            objects: [],
+            marker: null,
+            isTruncated: false
+          },
+          marker = null
       xml.root.children.forEach(element => {
           switch (element.name) {
-            case 'IsTruncated':
-              result.isTruncated = element.content === 'true'
-              break
-            case 'NextMarker':
-              result.nextMarker = element.content
-              break
-            case 'Contents':
-              var content = {}
-              element.children.forEach(xmlObject => {
-                switch (xmlObject.name) {
-                  case 'Key':
-                    content.name = xmlObject.content
-                    marker = content.name
-                    break
-                  case 'LastModified':
-                    content.lastModified = xmlObject.content
-                    break
-                  case 'Size':
-                    content.size = +xmlObject.content
-                    break
-                  case 'ETag':
-                    content.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34;/g, '')
-                    break
-                  default:
-                }
-              })
-              result.objects.push(content)
-              break
-            case 'CommonPrefixes': // todo, this is the only known way for now to propagate delimited entries
-              var commonPrefixes = {}
-              element.children.forEach(xmlPrefix => {
-                switch (xmlPrefix.name) {
-                  case 'Prefix':
-                    commonPrefixes.name = xmlPrefix.content
-                    commonPrefixes.size = 0
-                    break
-                  default:
-                }
-              })
-              result.objects.push(commonPrefixes)
-              break
-            default:
+          case 'IsTruncated': {
+            result.isTruncated = element.content === 'true'
+            break
+          }
+          case 'NextMarker': {
+            result.nextMarker = element.content
+            break
+          }
+          case 'Contents': {
+            var content = {}
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+              case 'Key': {
+                content.name = xmlObject.content
+                marker = content.name
+                break
+              }
+              case 'LastModified': {
+                content.lastModified = xmlObject.content
+                break
+              }
+              case 'Size': {
+                content.size = +xmlObject.content
+                break
+              }
+              case 'ETag': {
+                content.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
+                break
+              }
+              default:
+              }
+            })
+            result.objects.push(content)
+            break
+          }
+          case 'CommonPrefixes': {  // todo, this is the only known way for now to propagate delimited entries
+            var commonPrefixes = {}
+            element.children.forEach(xmlPrefix => {
+              switch (xmlPrefix.name) {
+              case 'Prefix': {
+                commonPrefixes.name = xmlPrefix.content
+                commonPrefixes.size = 0
+                break
+              }
+              default:
+              }
+            })
+            result.objects.push(commonPrefixes)
+            break
+          }
+          default:
           }
         })
-        // if truncated but no marker set, we set it
+      // if truncated but no marker set, we set it
       if (!result.marker && result.isTruncated) {
         result.marker = marker
       }

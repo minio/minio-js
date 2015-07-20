@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var Moment = require('moment')
-var Crypto = require('crypto')
-var helpers = require('./helpers.js')
+var Moment = require('moment'),
+    Crypto = require('crypto'),
+    helpers = require('./helpers.js')
 
 var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   if (!accessKey || !secretKey) {
@@ -26,7 +24,6 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   }
 
   var requestDate = Moment().utc()
-
   if (!dataShaSum256) {
     dataShaSum256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
   }
@@ -35,51 +32,47 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     request.headers = {}
   }
 
-  var region = helpers.getRegion(request.host)
-
-  var host = request.host
+  var region = helpers.getRegion(request.host),
+      host = request.host
 
   if((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
 
-  request.headers['host'] = host
+  request.headers.host = host
   request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   request.headers['x-amz-content-sha256'] = dataShaSum256
 
-  var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256)
-  var canonicalRequest = canonicalRequestAndSignedHeaders[0]
-  var signedHeaders = canonicalRequestAndSignedHeaders[1]
-  var hash = Crypto.createHash('sha256')
+  var canonicalRequestAndSignedHeaders = getCanonicalRequest(request, dataShaSum256),
+      canonicalRequest = canonicalRequestAndSignedHeaders[0],
+      signedHeaders = canonicalRequestAndSignedHeaders[1],
+      hash = Crypto.createHash('sha256')
+
   hash.update(canonicalRequest)
-  var canonicalRequestHash = hash.digest('hex')
 
-  var stringToSign = getStringToSign(canonicalRequestHash, requestDate, region)
-
-  var signingKey = getSigningKey(requestDate, region, secretKey)
-
-  var hmac = Crypto.createHmac('sha256', signingKey)
+  var canonicalRequestHash = hash.digest('hex'),
+      stringToSign = getStringToSign(canonicalRequestHash, requestDate, region),
+      signingKey = getSigningKey(requestDate, region, secretKey),
+      hmac = Crypto.createHmac('sha256', signingKey)
 
   hmac.update(stringToSign)
-  var signedRequest = hmac.digest('hex').toLowerCase().trim()
+  var signedRequest = hmac.digest('hex').toLowerCase().trim(),
+      credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`
 
-  var credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`
-
-  request.headers['authorization'] = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
+  request.headers.authorization = `AWS4-HMAC-SHA256 Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
   function getSigningKey(date, region, secretKey) {
-    var key = 'AWS4' + secretKey
-    var dateLine = date.format('YYYYMMDD')
-
-    var hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary')
-    var hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary')
-    var hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
+    var key = 'AWS4' + secretKey,
+        dateLine = date.format('YYYYMMDD'),
+        hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary'),
+        hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
+        hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
     return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
   }
 
   function getCanonicalRequest(request, dataShaSum1) {
-    var headerKeys = []
-    var headers = []
+    var headerKeys = [],
+        headers = []
 
     // Excerpts from @lsegal - https://github.com/aws/aws-sdk-js/issues/659#issuecomment-120477258
     //
@@ -129,9 +122,10 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
       signedHeaders += element
     })
 
-    var splitPath = request.path.split('?')
-    var requestResource = splitPath[0]
-    var requestQuery = ''
+    var splitPath = request.path.split('?'),
+        requestResource = splitPath[0],
+        requestQuery = ''
+
     if (splitPath.length === 2) {
       requestQuery = splitPath[1]
         .split('&')
