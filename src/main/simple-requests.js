@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var helpers = require('./helpers.js')
-var signV4 = require('./signing.js')
-var xmlParsers = require('./xml-parsers.js')
+var helpers = require('./helpers.js'),
+    signV4 = require('./signing.js'),
+    xmlParsers = require('./xml-parsers.js')
 
 function bucketRequest(self, method, bucket, cb) {
   var path = `/${bucket}`

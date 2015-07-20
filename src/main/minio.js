@@ -14,52 +14,52 @@
  * limitations under the License.
  */
 
-// ignore x.['foo'] recommended as x.foo
-/*jshint sub: true */
-
 require('source-map-support').install()
 
-var Crypto = require('crypto')
-var Http = require('http')
-var Https = require('https')
-var Package = require('../../package.json')
-var Stream = require('stream')
-var Through2 = require('through2')
-var Url = require('url')
-var Xml = require('xml')
-
-var helpers = require('./helpers.js')
-var multipart = require('./multipart.js')
-var objectList = require('./list-objects.js')
-var signV4 = require('./signing.js')
-var simpleRequests = require('./simple-requests.js')
-var upload = require('./upload.js')
-var xmlParsers = require('./xml-parsers.js')
+var Crypto = require('crypto'),
+    Http = require('http'),
+    Https = require('https'),
+    Package = require('../../package.json'),
+    Stream = require('stream'),
+    Through2 = require('through2'),
+    Url = require('url'),
+    Xml = require('xml'),
+    helpers = require('./helpers.js'),
+    multipart = require('./multipart.js'),
+    objectList = require('./list-objects.js'),
+    signV4 = require('./signing.js'),
+    simpleRequests = require('./simple-requests.js'),
+    upload = require('./upload.js'),
+    xmlParsers = require('./xml-parsers.js')
 
 class Client {
   constructor(params, transport) {
-    var parsedUrl = Url.parse(params.url)
-    var port = +parsedUrl.port
+    var parsedUrl = Url.parse(params.url),
+        port = +parsedUrl.port
+
     if (transport) {
       this.transport = transport
     } else {
       switch (parsedUrl.protocol) {
-        case 'http:':
-          this.transport = Http
-          this.scheme = 'http'
-          if (port === 0) {
-            port = 80
-          }
-          break
-        case 'https:':
-          this.transport = Https
-          this.scheme = 'https'
-          if (port === 0) {
-            port = 443
-          }
-          break
-        default:
-          throw new Error('Unknown protocol: ' + parsedUrl.protocol)
+      case 'http:': {
+        this.transport = Http
+        this.scheme = 'http'
+        if (port === 0) {
+          port = 80
+        }
+        break
+      }
+      case 'https:': {
+        this.transport = Https
+        this.scheme = 'https'
+        if (port === 0) {
+          port = 443
+        }
+        break
+      }
+      default: {
+        throw new Error('Unknown protocol: ' + parsedUrl.protocol)
+      }
       }
     }
     this.params = {
@@ -98,7 +98,7 @@ class Client {
   }
 
   makeBucketWithACL(bucket, acl, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -107,7 +107,7 @@ class Client {
       region = null
     }
     var payload = ''
-    if(region) {
+    if (region) {
       var createBucketConfiguration = []
       createBucketConfiguration.push({
         _attr: {
@@ -173,7 +173,7 @@ class Client {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
         stream.push(xmlParsers.parseError(response, (error) => {
-          if(error.code === 'TemporaryRedirect') {
+          if (error.code === 'TemporaryRedirect') {
             error.code = 'AccessDenied'
             error.message = 'Unauthenticated access prohibited'
           }
@@ -189,31 +189,31 @@ class Client {
   }
 
   bucketExists(bucket, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
     simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
     simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
-    var query = `?acl`
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      method: 'GET',
-      path: `/${bucket}${query}`
-    }
+    var query = `?acl`,
+        requestParams = {
+          host: this.params.host,
+          port: this.params.port,
+          method: 'GET',
+          path: `/${bucket}${query}`
+        }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
@@ -227,7 +227,7 @@ class Client {
   }
 
   setBucketACL(bucket, acl, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -237,16 +237,16 @@ class Client {
 
     // we should make sure to set this query parameter, but on the other hand
     // the call apparently succeeds without it to s3.  For clarity lets do it anyways
-    var query = `?acl`
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      method: 'PUT',
-      path: `/${bucket}${query}`,
-      headers: {
-        'x-amz-acl': acl
-      }
-    }
+    var query = `?acl`,
+        requestParams = {
+          host: this.params.host,
+          port: this.params.port,
+          method: 'PUT',
+          path: `/${bucket}${query}`,
+          headers: {
+            'x-amz-acl': acl
+          }
+        }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
@@ -260,7 +260,7 @@ class Client {
   }
 
   dropAllIncompleteUploads(bucket, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -268,7 +268,7 @@ class Client {
   }
 
   dropIncompleteUpload(bucket, key, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -284,7 +284,7 @@ class Client {
   }
 
   getPartialObject(bucket, key, offset, length, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -294,7 +294,7 @@ class Client {
 
     var range = ''
 
-    if(offset || length) {
+    if (offset || length) {
       if (offset) {
         range = `bytes=${+offset}-`
       } else {
@@ -335,7 +335,7 @@ class Client {
   }
 
   putObject(bucket, key, contentType, size, r, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -350,8 +350,8 @@ class Client {
     var self = this
 
     if (size > 5 * 1024 * 1024) {
-      var stream = multipart.listAllIncompleteUploads(this.transport, this.params, bucket, key)
-      var uploadId = null
+      var stream = multipart.listAllIncompleteUploads(this.transport, this.params, bucket, key),
+          uploadId = null
       stream.on('error', (e) => {
         cb(e)
       })
@@ -382,8 +382,8 @@ class Client {
           parts.on('error', (e) => {
             cb(e)
           })
-          var partsErrored = null
-          var partsArray = []
+          var partsErrored = null,
+              partsArray = []
           parts.pipe(Through2.obj(function(part, enc, partDone) {
             partsArray.push(part)
             partDone()
@@ -414,13 +414,12 @@ class Client {
 
   listObjects(bucket, params) {
     var bucketNameError = false
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       bucketNameError = true
     }
-    var self = this
-
-    var prefix = null
-    var delimiter = null
+    var self = this,
+        prefix = null,
+        delimiter = null
     if (params) {
       if (params.prefix) {
         prefix = params.prefix
@@ -436,7 +435,7 @@ class Client {
     })
     queue._read = () => {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
-      if(bucketNameError) {
+      if (bucketNameError) {
         return done('bucket name invalid')
       }
       objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
@@ -476,7 +475,7 @@ class Client {
   }
 
   statObject(bucket, key, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 
@@ -499,7 +498,7 @@ class Client {
       } else {
         var result = {
           size: +response.headers['content-length'],
-          etag: response.headers['etag'].replace(/"/g, ''),
+          etag: response.headers.etag.replace(/"/g, ''),
           contentType: response.headers['content-type'],
           lastModified: response.headers['last-modified']
         }
@@ -510,7 +509,7 @@ class Client {
   }
 
   removeObject(bucket, key, cb) {
-    if(!helpers.validBucketName(bucket)) {
+    if (!helpers.validBucketName(bucket)) {
       return cb('invalid bucket name')
     }
 

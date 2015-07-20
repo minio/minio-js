@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var Concat = require('concat-stream')
-var Stream = require('stream')
-var ParseXml = require('xml-parser')
-var Through2 = require('through2')
-
-var helpers = require('./helpers.js')
-var signV4 = require('./signing.js')
-var xmlParsers = require('./xml-parsers.js')
+var Concat = require('concat-stream'),
+    Stream = require('stream'),
+    ParseXml = require('xml-parser'),
+    Through2 = require('through2'),
+    helpers = require('./helpers.js'),
+    signV4 = require('./signing.js'),
+    xmlParsers = require('./xml-parsers.js')
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {
   var errored = null
@@ -289,7 +286,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
                   object.lastModified = xmlObject.content
                   break
                 case 'ETag':
-                  object.etag = xmlObject.content.replace(/"/g, "").replace(/&quot;/g, '').replace(/&#34;/g, '')
+                  object.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
                   break
                 case 'Size':
                   object.size = +xmlObject.content

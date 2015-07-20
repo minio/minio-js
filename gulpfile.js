@@ -18,6 +18,9 @@ var babel = require('gulp-babel')
 var exec = require('child_process').exec
 var gulp = require('gulp')
 var sourcemaps = require('gulp-sourcemaps')
+var notify = require('gulp-notify');
+var jscs = require('gulp-jscs');
+var jshint = require('gulp-jshint');
 
 gulp.task('default', ['test'], function() {})
 
@@ -39,16 +42,6 @@ gulp.task('test', ['compile', 'test:compile'], function() {
     }))
 })
 
-gulp.task('integration', ['compile', 'test:compile'], function() {
-  var mocha = require('gulp-mocha')
-  gulp.src('dist/test/integration/*.js', {
-      read: false
-    })
-    .pipe(mocha({
-      reporter: 'spec'
-    }))
-})
-
 gulp.task('example:compile', ['compile'], function(cb) {
   "use strict";
   compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
@@ -62,6 +55,26 @@ gulp.task('example', ['compile', 'example:compile'], function(cb) {
     cb(err)
   })
 })
+
+gulp.task('jscs', function() {
+  gulp.src('src/main/*.js')
+    .pipe(jscs())
+    .pipe(notify({
+      title: 'JSCS',
+      message: 'JSCS Passed. Let it fly!'
+    }))
+});
+
+gulp.task('lint', function() {
+  gulp.src('src/main/*.js')
+    .pipe(jshint('.jshintrc'))
+    .pipe(jshint.reporter('jshint-stylish'))
+    .pipe(jshint.reporter('fail'))
+    .pipe(notify({
+      title: 'JSHint',
+      message: 'JSHint Passed. Let it fly!',
+    }))
+});
 
 function compile(src, name, dest, cb) {
   gulp.src(src)

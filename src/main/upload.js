@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
-var BlockStream2 = require('block-stream2')
-var Concat = require('concat-stream')
-var Crypto = require('crypto')
-var ParseXml = require('xml-parser')
-var Stream = require('stream')
-var Through2 = require('through2')
-var Xml = require('xml')
-
-var signV4 = require('./signing.js')
-var xmlParsers = require('./xml-parsers.js')
-var helpers = require('./helpers.js')
+var BlockStream2 = require('block-stream2'),
+    Concat = require('concat-stream'),
+    Crypto = require('crypto'),
+    ParseXml = require('xml-parser'),
+    Stream = require('stream'),
+    Through2 = require('through2'),
+    Xml = require('xml'),
+    signV4 = require('./signing.js'),
+    xmlParsers = require('./xml-parsers.js'),
+    helpers = require('./helpers.js')
 
 var initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
   var requestParams = {
@@ -47,8 +44,8 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, contentType, c
       return xmlParsers.parseError(response, cb)
     }
     response.pipe(Concat(xml => {
-      var parsedXml = ParseXml(xml.toString())
-      var uploadId = null
+      var parsedXml = ParseXml(xml.toString()),
+          uploadId = null
       parsedXml.root.children.forEach(element => {
         if (element.name === 'UploadId') {
           uploadId = element.content
@@ -65,12 +62,12 @@ var initiateNewMultipartUpload = (transport, params, bucket, key, contentType, c
 }
 
 function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
-  var part = 1
-  var errored = null
-  var etags = []
-    // compute size
-  var blockSize = calculateBlockSize(totalSize)
-  var totalSeen = 0
+  var part = 1,
+      errored = null,
+      etags = [],
+      // compute size
+      blockSize = calculateBlockSize(totalSize),
+      totalSeen = 0
 
   r.on('finish', () => {})
   r.pipe(BlockStream2({
@@ -82,17 +79,16 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       }
 
       totalSeen += data.length
-
       if (totalSeen > totalSize) {
-        errored = 'actual size !== specified size'
+        errored = 'actual size does not match specified size'
         return done()
       }
 
       var curPart = part
       part = part + 1
       if (partsArray.length > 0) {
-        var curJob = partsArray.shift()
-        var hash = Crypto.createHash('md5')
+        var curJob = partsArray.shift(),
+            hash = Crypto.createHash('md5')
         hash.update(data)
         var md5 = hash.digest('hex').toLowerCase()
         if (curJob.etag === md5) {
@@ -130,14 +126,18 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
         return cb(errored)
       }
       if (totalSeen !== totalSize) {
-        return cb('actual size !== specified size', null)
+        return cb('actual size does not match specified size', null)
       }
       return cb(null, etags)
     }))
 
   function calculateBlockSize(size) {
-    var minimumPartSize = 5 * 1024 * 1024 // 5MB
-    var partSize = Math.floor(size / 9999) // using 10000 may cause part size to become too small, and not fit the entire object in
+    var minimumPartSize = 5 * 1024 * 1024, // 5MB
+        maximumPartSize = 5 * 1025 * 1024 * 1024,
+        partSize = Math.floor(size / 9999) // using 10000 may cause part size to become too small, and not fit the entire object in
+    if (partSize > maximumPartSize) {
+      return maximumPartSize
+    }
     return Math.max(minimumPartSize, partSize)
   }
 }
@@ -155,25 +155,24 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     if (data.length !== size) {
       return cb('actual size !== specified size')
     }
-    var hash256 = Crypto.createHash('sha256')
-    var hashMD5 = Crypto.createHash('md5')
+    var hash256 = Crypto.createHash('sha256'),
+        hashMD5 = Crypto.createHash('md5')
     hash256.update(data)
     hashMD5.update(data)
 
-    var sha256 = hash256.digest('hex').toLowerCase()
-    var md5 = hashMD5.digest('base64')
-
-    var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
-      method: 'PUT',
-      headers: {
-        'Content-Length': size,
-        'Content-Type': contentType,
-        'Content-MD5': md5
-      }
-    }
+    var sha256 = hash256.digest('hex').toLowerCase(),
+        md5 = hashMD5.digest('base64'),
+        requestParams = {
+          host: params.host,
+          port: params.port,
+          path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
+          method: 'PUT',
+          headers: {
+            'Content-Length': size,
+            'Content-Type': contentType,
+            'Content-MD5': md5
+          }
+        }
 
     signV4(requestParams, sha256, params.accessKey, params.secretKey)
 
@@ -186,7 +185,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       if (response.statusCode !== 200) {
         return xmlParsers.parseError(response, cb)
       }
-      var etag = response.headers['etag']
+      var etag = response.headers.etag
       cb(null, etag)
     })
     dataStream.pipe(request)
@@ -204,9 +203,8 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
     port: params.port,
     path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploadId=${uploadId}`,
     method: 'POST'
-  }
-
-  var parts = []
+  },
+      parts = []
 
   etags.forEach(element => {
     parts.push({
@@ -220,15 +218,15 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
 
   var payloadObject = {
     CompleteMultipartUpload: parts
-  }
+  },
+      payload = Xml(payloadObject),
+      hash = Crypto.createHash('sha256')
 
-  var payload = Xml(payloadObject)
-
-  var hash = Crypto.createHash('sha256')
   hash.update(payload)
-  var sha256 = hash.digest('hex').toLowerCase()
 
-  var stream = new Stream.Readable()
+  var sha256 = hash.digest('hex').toLowerCase(),
+      stream = new Stream.Readable()
+
   stream._read = () => {}
   stream.push(payload)
   stream.push(null)

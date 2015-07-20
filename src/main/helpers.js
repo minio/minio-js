@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/*jshint sub: true */
-
 function uriEscape(string) {
   var output = string
   // this was originally escape instead of encodeURIComponent but escape is deprecated.
@@ -63,7 +61,7 @@ function getRegion(host) {
 
 function validateBucketName(bucket) {
   // test for null
-  if(bucket === null) {
+  if (bucket === null) {
     return false
   }
 
@@ -75,13 +73,13 @@ function validateBucketName(bucket) {
   // lower case, numbers, hyphens
   // starts and ends with letters or numbers
   var re1 = /^[a-z0-9]+[a-z0-9\-]*[a-z0-9]+$/
-  if(bucket.match(re1) === null) {
+  if (bucket.match(re1) === null) {
     return false
   }
 
   // no ip address style
   var re2 = /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/
-  if(bucket.match(re2) !== null) {
+  if (bucket.match(re2) !== null) {
     return false
   }
 
