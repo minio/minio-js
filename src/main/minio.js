@@ -130,18 +130,17 @@ class Client {
 
     var hash = Crypto.createHash('sha256')
     hash.update(payload)
-    var sha256 = hash.digest('hex').toLowerCase()
-
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      method: 'PUT',
-      path: `/${bucket}`,
-      headers: {
-        'Content-Length': payload.length,
-        'x-amz-acl': acl
-      }
-    }
+    var sha256 = hash.digest('hex').toLowerCase(),
+        requestParams = {
+          host: this.params.host,
+          port: this.params.port,
+          method: 'PUT',
+          path: `/${bucket}`,
+          headers: {
+            'Content-Length': payload.length,
+            'x-amz-acl': acl
+          }
+        }
 
     signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
 
@@ -167,7 +166,7 @@ class Client {
     var stream = new Stream.Readable({
       objectMode: true
     })
-    stream._read = () => {}
+    stream._read = function() {}
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
@@ -365,7 +364,8 @@ class Client {
               done(e)
               return
             }
-            upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, [], size, r, (e, etags) => {
+            upload.streamUpload(self.transport, self.params, bucket, key, contentType,
+                                uploadId, [], size, r, (e, etags) => {
               if (e) {
                 done()
                 cb(e)
@@ -391,7 +391,8 @@ class Client {
             if (partsErrored) {
               return partDone(partsErrored)
             }
-            upload.streamUpload(self.transport, self.params, bucket, key, contentType, uploadId, partsArray, size, r, (e, etags) => {
+            upload.streamUpload(self.transport, self.params, bucket, key, contentType,
+                                uploadId, partsArray, size, r, (e, etags) => {
               if (partsErrored) {
                 partDone()
               }
@@ -433,12 +434,13 @@ class Client {
     var queue = new Stream.Readable({
       objectMode: true
     })
-    queue._read = () => {}
+    queue._read = function() {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
       if (bucketNameError) {
         return done('bucket name invalid')
       }
-      objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker, currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
+      objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
+                      currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
         if (e) {
           return done(e)
         }
