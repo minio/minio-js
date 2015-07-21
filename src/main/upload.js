@@ -69,7 +69,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       blockSize = calculateBlockSize(totalSize),
       totalSeen = 0
 
-  r.on('finish', () => {})
+  r.on('finish', function() {})
   r.pipe(BlockStream2({
     size: blockSize,
     zeroPadding: false
@@ -104,7 +104,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       var dataStream = new Stream.Readable()
       dataStream.push(data)
       dataStream.push(null)
-      dataStream._read = () => {}
+      dataStream._read = function() {}
       doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
         if (errored) {
           return done()
@@ -177,7 +177,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     signV4(requestParams, sha256, params.accessKey, params.secretKey)
 
     var dataStream = new Stream.Readable()
-    dataStream._read = () => {}
+    dataStream._read = function() {}
     dataStream.push(data)
     dataStream.push(null)
 
@@ -227,7 +227,7 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
   var sha256 = hash.digest('hex').toLowerCase(),
       stream = new Stream.Readable()
 
-  stream._read = () => {}
+  stream._read = function() {}
   stream.push(payload)
   stream.push(null)
 

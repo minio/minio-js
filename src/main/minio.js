@@ -425,10 +425,12 @@ class Client {
       if (params.prefix) {
         prefix = params.prefix
       }
-      // we delimit when recursive is false
-      if (params.recursive === false) {
-        delimiter = '/'
+      // we delimit by default, turn off recursive if True
+      delimiter = '/'
+      if (params.recursive === true) {
+        delimiter = null
       }
+      console.log(delimiter, params.recursive)
     }
 
     var queue = new Stream.Readable({
