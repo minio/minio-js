@@ -56,7 +56,7 @@ class Request {
 
   _r() {
     var stream = new Stream.Readable()
-    stream._read = () => {}
+    stream._read = function() {}
     if (this.req.responseStream) {
       this.req.responseStream.pipe(stream)
     } else {
