@@ -18,121 +18,119 @@ var Concat = require('concat-stream'),
     ParseXml = require('xml-parser'),
     xmlParsers = require('./xml-parsers.js'),
     helpers = require('./helpers.js'),
-    signV4 = require('./signing.js')
-
-var getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
-  var queries = []
-
-  // escape every value in query string, except maxKeys
-  if (prefix) {
-    prefix = helpers.uriEscape(prefix)
-    queries.push(`prefix=${prefix}`)
-  }
-  if (marker) {
-    marker = helpers.uriEscape(marker)
-    queries.push(`marker=${marker}`)
-  }
-  if (delimiter) {
-    delimiter = helpers.uriEscape(delimiter)
-    queries.push(`delimiter=${delimiter}`)
-  }
-  // no need to escape maxKeys
-  if (maxKeys) {
-    if (maxKeys >= 1000) {
-      maxKeys = 1000
-    }
-    queries.push(`max-keys=${maxKeys}`)
-  }
-  queries.sort()
-  var query = ''
-  if (queries.length > 0) {
-    query = `?${queries.join('&')}`
-  }
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    path: `/${bucket}${query}`,
-    method: 'GET'
-  }
-
-  signV4(requestParams, '', params.accessKey, params.secretKey)
-
-  var req = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 200) {
-      return xmlParsers.parseError(response, cb)
-    }
-    response.pipe(Concat((body) => {
-      var xml = ParseXml(body.toString()),
-          result = {
-            objects: [],
-            marker: null,
-            isTruncated: false
-          },
-          marker = null
-      xml.root.children.forEach(element => {
-          switch (element.name) {
-          case 'IsTruncated': {
-            result.isTruncated = element.content === 'true'
-            break
-          }
-          case 'NextMarker': {
-            result.nextMarker = element.content
-            break
-          }
-          case 'Contents': {
-            var content = {}
-            element.children.forEach(xmlObject => {
-              switch (xmlObject.name) {
-              case 'Key': {
-                content.name = xmlObject.content
-                marker = content.name
-                break
-              }
-              case 'LastModified': {
-                content.lastModified = xmlObject.content
-                break
-              }
-              case 'Size': {
-                content.size = +xmlObject.content
-                break
-              }
-              case 'ETag': {
-                content.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
-                break
-              }
-              default:
-              }
-            })
-            result.objects.push(content)
-            break
-          }
-          case 'CommonPrefixes': {  // todo, this is the only known way for now to propagate delimited entries
-            var commonPrefixes = {}
-            element.children.forEach(xmlPrefix => {
-              switch (xmlPrefix.name) {
-              case 'Prefix': {
-                commonPrefixes.name = xmlPrefix.content
-                commonPrefixes.size = 0
-                break
-              }
-              default:
-              }
-            })
-            result.objects.push(commonPrefixes)
-            break
-          }
-          default:
-          }
-        })
-      // if truncated but no marker set, we set it
-      if (!result.marker && result.isTruncated) {
-        result.marker = marker
+    signV4 = require('./signing.js'),
+    getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
+      var queries = []
+      // escape every value in query string, except maxKeys
+      if (prefix) {
+        prefix = helpers.uriEscape(prefix)
+        queries.push(`prefix=${prefix}`)
       }
-      cb(null, result)
-    }))
-  })
-  req.end()
-}
+      if (marker) {
+        marker = helpers.uriEscape(marker)
+        queries.push(`marker=${marker}`)
+      }
+      if (delimiter) {
+        delimiter = helpers.uriEscape(delimiter)
+        queries.push(`delimiter=${delimiter}`)
+      }
+      // no need to escape maxKeys
+      if (maxKeys) {
+        if (maxKeys >= 1000) {
+          maxKeys = 1000
+        }
+        queries.push(`max-keys=${maxKeys}`)
+      }
+      queries.sort()
+      var query = ''
+      if (queries.length > 0) {
+        query = `?${queries.join('&')}`
+      }
+      var requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}${query}`,
+        method: 'GET'
+      }
+
+      signV4(requestParams, '', params.accessKey, params.secretKey)
+
+      var req = transport.request(requestParams, (response) => {
+        if (response.statusCode !== 200) {
+          return xmlParsers.parseError(response, cb)
+        }
+        response.pipe(Concat((body) => {
+          var xml = ParseXml(body.toString()),
+              result = {
+                objects: [],
+                marker: null,
+                isTruncated: false
+              },
+              marker = null
+          xml.root.children.forEach(element => {
+            switch (element.name) {
+            case 'IsTruncated': {
+              result.isTruncated = element.content === 'true'
+              break
+            }
+            case 'NextMarker': {
+              result.nextMarker = element.content
+              break
+            }
+            case 'Contents': {
+              var content = {}
+              element.children.forEach(xmlObject => {
+                switch (xmlObject.name) {
+                case 'Key': {
+                  content.name = xmlObject.content
+                  marker = content.name
+                  break
+                }
+                case 'LastModified': {
+                  content.lastModified = xmlObject.content
+                  break
+                }
+                case 'Size': {
+                  content.size = +xmlObject.content
+                  break
+                }
+                case 'ETag': {
+                  content.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
+                  break
+                }
+                default:
+                }
+              })
+              result.objects.push(content)
+              break
+            }
+            case 'CommonPrefixes': {  // todo, this is the only known way for now to propagate delimited entries
+              var commonPrefixes = {}
+              element.children.forEach(xmlPrefix => {
+                switch (xmlPrefix.name) {
+                case 'Prefix': {
+                  commonPrefixes.name = xmlPrefix.content
+                  commonPrefixes.size = 0
+                  break
+                }
+                default:
+                }
+              })
+              result.objects.push(commonPrefixes)
+              break
+            }
+            default:
+            }
+          })
+          // if truncated but no marker set, we set it
+          if (!result.marker && result.isTruncated) {
+            result.marker = marker
+          }
+          cb(null, result)
+        }))
+      })
+      req.end()
+    }
 
 module.exports = {
   list: getObjectList
