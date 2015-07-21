@@ -27,7 +27,7 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
   var queue = new Stream.Readable({
     objectMode: true
   })
-  queue._read = () => {}
+  queue._read = function() {}
 
   var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
     if (errored) {
@@ -137,7 +137,7 @@ var dropUploads = (transport, params, bucket, key, cb) => {
   var queue = new Stream.Readable({
     objectMode: true
   })
-  queue._read = () => {}
+  queue._read = function() {}
   queue.pipe(Through2.obj(function(job, enc, done) {
       if (errored) {
         return done()
@@ -199,7 +199,7 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
   var queue = new Stream.Readable({
     objectMode: true
   })
-  queue._read = () => {}
+  queue._read = function() {}
   var stream = queue
     .pipe(Through2.obj(function(job, enc, done) {
       if (errored) {
