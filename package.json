@@ -1,7 +1,7 @@
 {
   "name": "minio",
   "version": "0.2.2",
-  "description": "S3 compatible object storage client",
+  "description": "S3 compatible cloud storage client",
   "main": "./dist/main/minio.js",
   "scripts": {
     "postinstall": "gulp compile",
