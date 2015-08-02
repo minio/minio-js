@@ -20,6 +20,7 @@
   "dependencies": {
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
+    "gulp": "^3.9.0",
     "moment": "^2.10.3",
     "source-map-support": "^0.2.10",
     "through2": "^0.6.5",
@@ -27,7 +28,6 @@
     "xml-parser": "^1.2.0"
   },
   "devDependencies": {
-    "gulp": "^3.9.0",
     "gulp-babel": "^5.1.0",
     "gulp-jscs": "^1.6.0",
     "gulp-jshint": "^1.11.2",
