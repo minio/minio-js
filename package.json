@@ -1,6 +1,6 @@
 {
   "name": "minio",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "S3 compatible cloud storage client",
   "main": "./dist/main/minio.js",
   "scripts": {
@@ -21,6 +21,11 @@
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
     "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.0",
+    "gulp-jscs": "^2.0.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-notify": "^2.2.0",
+    "gulp-sourcemaps": "^1.5.2",
     "moment": "^2.10.3",
     "source-map-support": "^0.2.10",
     "through2": "^0.6.5",
@@ -28,12 +33,7 @@
     "xml-parser": "^1.2.0"
   },
   "devDependencies": {
-    "gulp-babel": "^5.1.0",
-    "gulp-jscs": "^1.6.0",
-    "gulp-jshint": "^1.11.2",
     "gulp-mocha": "^2.1.0",
-    "gulp-notify": "^2.2.0",
-    "gulp-sourcemaps": "^1.5.2",
     "jshint-stylish": "^2.0.1",
     "mocha": "^2.2.5",
     "nock": "^2.2.0",
