@@ -59,7 +59,7 @@ var Moment = require('moment'),
           credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`,
           authorization = `Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
-      request.headers.authorization = 'AWS4-HMAC-SHA256' + authorization
+      request.headers.authorization = 'AWS4-HMAC-SHA256 ' + authorization
 
       function getSigningKey(date, region, secretKey) {
         var key = 'AWS4' + secretKey,
