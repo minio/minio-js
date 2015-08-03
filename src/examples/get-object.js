@@ -15,30 +15,27 @@
  */
 
 var Minio = require('minio')
-var Through2 = require('through2')
+
+// find out your s3 end point here:
+// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3client = new Minio({
-  url: 'https://s3.amazonaws.com',
+  url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 var size = 0
-s3client.getObject('goroutine', 'hello/11mb', function(e, dataStream) {
+s3client.getObject('nutty', 'passwd', function(e, dataStream) {
   if (e) {
     return console.log(e)
   }
-
-  dataStream.pipe(Through2(
-    function(chunk, enc, done) {
-      size += chunk.length
-      done()
-    },
-
-    function(done) {
-      console.log('total size: ' + size)
-      done()
-    }))
+  dataStream.on('data', function(chunk) {
+    size += chunk.length
+  })
+  dataStream.on('end', function() {
+    console.log("End. Total size = " + size)
+  })
   dataStream.on('error', function(e) {
     console.log(e)
   })
