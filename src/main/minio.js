@@ -412,7 +412,7 @@ class Client {
     }
   }
 
-  listObjects(bucket, params) {
+  listObjectsAll(bucket, params) {
     var bucketNameError = false
     if (!helpers.validBucketName(bucket)) {
       bucketNameError = true
