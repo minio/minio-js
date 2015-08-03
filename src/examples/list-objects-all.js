@@ -15,7 +15,6 @@
  */
 
 var Minio = require('minio')
-var Through2 = require('through2')
 
 var s3client = new Minio({
   url: 'https://s3.amazonaws.com',
@@ -23,13 +22,15 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var objectsStream = s3client.listObjects('your-bucket', {
+var objectsStream = s3client.listObjectsAll('your-bucket', {
   recursive: true
 })
-objectsStream.pipe(Through2.obj(function(object, enc, done) {
-  console.log(object)
-  done()
-}))
+objectsStream.on('data', function(obj) {
+	console.log(obj)
+})
+objectsStream.on('end', function() {
+	console.log("End")
+})
 objectsStream.on('error', function(e) {
   console.log(e)
 })

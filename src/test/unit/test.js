@@ -972,12 +972,12 @@ describe('Client', () => {
       })
     })
 
-    describe('#listObjects()', () => {
+    describe('#listObjectsAll()', () => {
       it('should iterate without a prefix', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
-        var stream = client.listObjects('bucket', {
+        var stream = client.listObjectsAll('bucket', {
           recursive: true,
         }),
             results = [],
@@ -1025,7 +1025,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket?max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
-        var stream = client.listObjects('bucket', {
+        var stream = client.listObjectsAll('bucket', {
           prefix: 'key',
           recursive: true,
         }),
@@ -1074,7 +1074,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
-        var stream = client.listObjects('bucket', {
+        var stream = client.listObjectsAll('bucket', {
           recursive: true
         }),
             results = [],
@@ -1122,7 +1122,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
         }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
-        var stream = client.listObjects('bucket')
+        var stream = client.listObjectsAll('bucket')
         stream.pipe(Through2.obj(function(part, enc, end) {
           end()
         }, function(end) {
@@ -1140,7 +1140,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
         }).get('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
-        var stream = client.listObjects('bucket')
+        var stream = client.listObjectsAll('bucket')
         stream.pipe(Through2.obj(function(part, enc, end) {
           end()
         }, function(end) {
