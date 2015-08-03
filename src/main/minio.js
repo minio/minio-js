@@ -153,7 +153,7 @@ class Client {
     stream.pipe(req)
   }
 
-  listBuckets() {
+  listBuckets(cb) {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
@@ -171,20 +171,19 @@ class Client {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
-        stream.push(xmlParsers.parseError(response, (error) => {
+        xmlParsers.parseError(response, (error) => {
           if (error.code === 'TemporaryRedirect') {
             error.code = 'AccessDenied'
             error.message = 'Unauthenticated access prohibited'
           }
-          stream.emit('error', error)
-        }))
-        stream.push(null)
+          cb(error)
+        })
       } else {
+        cb(null, stream)
         xmlParsers.parseListBucketResult(response, stream)
       }
     })
     req.end()
-    return stream
   }
 
   bucketExists(bucket, cb) {

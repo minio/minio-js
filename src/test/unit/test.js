@@ -307,46 +307,34 @@ describe('Client', () => {
     describe('#listBuckets()', () => {
       it('should generate a bucket iterator', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(200, '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>')
-        var stream = client.listBuckets(),
-            results = [],
-            expectedResults = [{
+        var results = []
+        var expectedResults = [{
           name: 'bucket',
           creationDate: '2015-05-05T20:35:51.410Z'
         }, {
           name: 'foo',
           creationDate: '2015-05-05T20:35:47.170Z'
         }]
-        stream.pipe(Through2.obj(function(bucket, enc, end) {
-          results.push(bucket)
-          end()
-        }, function(end) {
-          Assert.deepEqual(results, expectedResults)
-          end()
-          done()
-        }))
+        client.listBuckets(function(e, stream) {
+          stream.on('data', function(obj) {
+            results.push(obj)
+          })
+          stream.on('end', function() {
+            Assert.deepEqual(results, expectedResults)
+            done()
+          })
+        })
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/'))
-        var stream = client.listBuckets()
-        stream.pipe(Through2.obj(function(part, enc, end) {
-          end()
-        }, function(end) {
-          end()
-        }))
-        stream.on('error', (e) => {
+        client.listBuckets(function(e, stream) {
           checkError('code', 'message', 'requestid', 'hostid', '/')(e)
           done()
         })
       })
       it('should convert 307 to 403', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(307)
-        var stream = client.listBuckets()
-        stream.pipe(Through2.obj(function(part, enc, end) {
-          end()
-        }, function(end) {
-          end()
-        }))
-        stream.on('error', (e) => {
+        client.listBuckets(function(e, stream) {
           checkError('AccessDenied', 'Unauthenticated access prohibited', null, null, null)(e)
           done()
         })
