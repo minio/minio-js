@@ -4,8 +4,9 @@
   "description": "S3 compatible cloud storage client",
   "main": "./dist/main/minio.js",
   "scripts": {
-    "postinstall": "gulp compile",
-    "test": "gulp test"
+    "compile": "gulp compile",
+    "test": "gulp test",
+    "prepublish": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -20,12 +21,6 @@
   "dependencies": {
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
-    "gulp": "^3.9.0",
-    "gulp-babel": "^5.2.0",
-    "gulp-jscs": "^2.0.0",
-    "gulp-jshint": "^1.11.2",
-    "gulp-notify": "^2.2.0",
-    "gulp-sourcemaps": "^1.5.2",
     "moment": "^2.10.3",
     "source-map-support": "^0.2.10",
     "through2": "^0.6.5",
@@ -33,6 +28,12 @@
     "xml-parser": "^1.2.0"
   },
   "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.0",
+    "gulp-jscs": "^2.0.0",
+    "gulp-jshint": "^1.11.2",
+    "gulp-notify": "^2.2.0",
+    "gulp-sourcemaps": "^1.5.2",
     "gulp-mocha": "^2.1.0",
     "jshint-stylish": "^2.0.1",
     "mocha": "^2.2.5",
