@@ -26,7 +26,7 @@ var s3client = new Minio({
 })
 
 var size = 0
-s3client.getPartialObject('goroutine', 'hello/11mb', 1024, 4096, function(e, dataStream) {
+s3client.getPartialObject('mybucket', 'hello/11mb', 1024, 4096, function(e, dataStream) {
   if (e) {
     return console.log(e)
   }

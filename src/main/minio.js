@@ -429,7 +429,6 @@ class Client {
       if (params.recursive === true) {
         delimiter = null
       }
-      console.log(delimiter, params.recursive)
     }
 
     var queue = new Stream.Readable({
