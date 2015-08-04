@@ -31,35 +31,35 @@ bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
 
 ### Bucket
 
-[makeBucket(bucket, cb)](src/example/make-bucket.js)
+[makeBucket(bucket, cb)](src/examples/make-bucket.js)
 
-[listBuckets() : Stream](src/example/list-buckets.js)
+[listBuckets() : Stream](src/examples/list-buckets.js)
 
-[bucketExists(bucket, cb)](src/example/bucket-exists.js)
+[bucketExists(bucket, cb)](src/examples/bucket-exists.js)
 
-[removeBucket(bucket, cb)](src/example/remove-bucket.js)
+[removeBucket(bucket, cb)](src/examples/remove-bucket.js)
 
-[getBucketACL(bucket, cb)](src/example/get-bucket-acl.js)
+[getBucketACL(bucket, cb)](src/examples/get-bucket-acl.js)
 
-[setBucketACL(bucket, acl, cb)](src/example/set-bucket-acl.js)
+[setBucketACL(bucket, acl, cb)](src/examples/set-bucket-acl.js)
 
-[dropAllIncompleteUploads(bucket, cb)](src/example/drop-incomplete-upload.js)
+[dropAllIncompleteUploads(bucket, cb)](src/examples/drop-incomplete-upload.js)
 
 ### Object
 
-[getObject(bucket, key) Stream](src/example/get-object.js)
+[getObject(bucket, key) Stream](src/examples/get-object.js)
 
-[getPartialObject(bucket, key, offset, length) Stream](src/example/get-partialobject.js)
+[getPartialObject(bucket, key, offset, length) Stream](src/examples/get-partialobject.js)
 
-[putObject(bucket, key, Stream, cb)](src/example/put-object.js)
+[putObject(bucket, key, Stream, cb)](src/examples/put-object.js)
 
-[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/example/list-objects.js)
+[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/examples/list-objects.js)
 
-[statObject(bucket, key, cb)](src/example/stat-object.js)
+[statObject(bucket, key, cb)](src/examples/stat-object.js)
 
-[removeObject(bucket, key, cb)](src/example/remove-object.js)
+[removeObject(bucket, key, cb)](src/examples/remove-object.js)
 
-[dropIncompleteUpload(bucket, key, cb)](src/example/drop-incomplete-upload.js)
+[dropIncompleteUpload(bucket, key, cb)](src/examples/drop-incomplete-upload.js)
 
 ## Contribute
 
