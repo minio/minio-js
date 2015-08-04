@@ -23,43 +23,41 @@ var BlockStream2 = require('block-stream2'),
     Xml = require('xml'),
     signV4 = require('./signing.js'),
     xmlParsers = require('./xml-parsers.js'),
-    helpers = require('./helpers.js')
-
-var initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
-    method: 'POST',
-    headers: {
-      'Content-Type': contentType
-    }
-  }
-
-
-  signV4(requestParams, '', params.accessKey, params.secretKey)
-
-  var request = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 200) {
-      return xmlParsers.parseError(response, cb)
-    }
-    response.pipe(Concat(xml => {
-      var parsedXml = ParseXml(xml.toString()),
-          uploadId = null
-      parsedXml.root.children.forEach(element => {
-        if (element.name === 'UploadId') {
-          uploadId = element.content
+    helpers = require('./helpers.js'),
+    initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
+        var requestParams = {
+            host: params.host,
+            port: params.port,
+            path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
+            method: 'POST',
+            headers: {
+                'Content-Type': contentType
+            }
         }
-      })
 
-      if (uploadId) {
-        return cb(null, uploadId)
-      }
-      cb('unable to get upload id')
-    }))
-  })
-  request.end()
-}
+        signV4(requestParams, '', params.accessKey, params.secretKey)
+
+        var request = transport.request(requestParams, (response) => {
+            if (response.statusCode !== 200) {
+                return xmlParsers.parseError(response, cb)
+            }
+            response.pipe(Concat(xml => {
+                var parsedXml = ParseXml(xml.toString()),
+                uploadId = null
+                parsedXml.root.children.forEach(element => {
+                    if (element.name === 'UploadId') {
+                        uploadId = element.content
+                    }
+                })
+
+                if (uploadId) {
+                    return cb(null, uploadId)
+                }
+                cb('unable to get upload id')
+            }))
+        })
+        request.end()
+    }
 
 function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
   var part = 1,
@@ -105,7 +103,8 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       dataStream.push(data)
       dataStream.push(null)
       dataStream._read = function() {}
-      doPutObject(transport, params, bucket, key, contentType, data.length, uploadId, curPart, dataStream, (e, etag) => {
+      doPutObject(transport, params, bucket, key, contentType, data.length,
+                  uploadId, curPart, dataStream, (e, etag) => {
         if (errored) {
           return done()
         }
@@ -134,7 +133,9 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
   function calculateBlockSize(size) {
     var minimumPartSize = 5 * 1024 * 1024, // 5MB
         maximumPartSize = 5 * 1025 * 1024 * 1024,
-        partSize = Math.floor(size / 9999) // using 10000 may cause part size to become too small, and not fit the entire object in
+        // using 10000 may cause part size to become too small, and not fit the entire object in
+        partSize = Math.floor(size / 9999)
+
     if (partSize > maximumPartSize) {
       return maximumPartSize
     }
