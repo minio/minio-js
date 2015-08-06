@@ -21,7 +21,7 @@ var BlockStream2 = require('block-stream2'),
     Stream = require('stream'),
     Through2 = require('through2'),
     Xml = require('xml'),
-    signV4 = require('./signing.js'),
+    signV4 = require('./signing.js').signV4,
     xmlParsers = require('./xml-parsers.js'),
     helpers = require('./helpers.js'),
     initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {

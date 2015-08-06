@@ -18,7 +18,7 @@ var Concat = require('concat-stream'),
     ParseXml = require('xml-parser'),
     xmlParsers = require('./xml-parsers.js'),
     helpers = require('./helpers.js'),
-    signV4 = require('./signing.js'),
+    signV4 = require('./signing.js').signV4,
     getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
       var queries = []
       // escape every value in query string, except maxKeys
