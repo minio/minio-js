@@ -28,7 +28,7 @@ var Crypto = require('crypto'),
     multipart = require('./multipart.js'),
     objectList = require('./list-objects.js'),
     signV4 = require('./signing.js').signV4,
-    PresignedUrl = require('./signing.js').PresignedUrl,
+    getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
     simpleRequests = require('./simple-requests.js'),
     upload = require('./upload.js'),
     xmlParsers = require('./xml-parsers.js')
@@ -522,7 +522,7 @@ class Client {
     simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
   }
 
-  presignGetObject(bucket, key, expires) {
+  presignedGetObject(bucket, key, expires) {
     if (!helpers.validBucketName(bucket)) {
       throw new Error('invalid bucket name')
     }
@@ -537,7 +537,7 @@ class Client {
       scheme: this.scheme,
       expires: expires
     }
-    return PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
+    return getV4PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
   }
 }
 

@@ -110,6 +110,39 @@ describe('Client', () => {
       }
     })
   })
+  describe('Presigned URL', () => {
+    it('should not generate presigned url with no access key', (done) => {
+      try {
+        var client = new Minio({
+          url: 'https://localhost:9000',
+        })
+        client.presignedGetObject('bucket', 'object', '1000')
+      } catch (e) {
+        done()
+      }
+    })
+    it('should not generate presigned url with wrong expires param', (done) => {
+      try {
+        var client = new Minio({
+          url: 'https://localhost:9000',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
+        })
+        client.presignedGetObject('bucket', 'object', '0')
+      } catch (e) {
+        done()
+      }
+    })
+    it('should generate presigned url', () => {
+      var client = new Minio({
+        url: 'https://localhost:9000',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey'
+      })
+      var url = client.presignedGetObject('bucket', 'object', '86400')
+      Assert.equal(url.length > 0, true) // TODO perform a better check
+    })
+  })
   describe('User Agent', () => {
     it('should have a default user agent', () => {
       var client = new Minio({

@@ -161,19 +161,18 @@ var getStringToSign = function(canonicalRequestHash, requestDate, region) {
       return stringToSign
     }
 
-var PresignedUrl = function(request, accessKey, secretKey) {
+var getV4PresignedUrl = function(request, accessKey, secretKey) {
       function getCanonicalRequest(request) {
         var headerKeys = [],
             headers = [],
-            ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent']
+            ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent'],
+            expires = request.expires ? request.expires : "604800"
 
-        var expires = request.expires ? request.expires : "86400"
-
-        // TODO: support signing of other headers too. Right now only "host" being signed
-
-        if (!request.headers) {
-          request.headers = {}
-          request.headers.host = request.host
+        if (request.expires < 1) {
+            throw new Error('expires param cannot be less than 1 seconds')
+        }
+        if (request.expires > 604800) {
+            throw new Error('expires param cannot be larger than 7 days')
         }
 
         for (var key in request.headers) {
@@ -187,13 +186,26 @@ var PresignedUrl = function(request, accessKey, secretKey) {
         headers.sort()
         headerKeys.sort()
 
-        var signedHeaders = 'host'
-        var requestResource = request.path
-        requestQuery = 'X-Amz-Algorithm=AWS4-HMAC-SHA256&'
-        requestQuery += `X-Amz-Credential=${accessKey}%2F${requestDate.format('YYYYMMDD')}%2F${region}%2Fs3%2Faws4_request&`
-        requestQuery += 'X-Amz-Date=' + requestDate.format('YYYYMMDDTHHmmss') + 'Z&'
+        var signedHeaders = ''
+        headerKeys.forEach(element => {
+          if (signedHeaders) {
+            signedHeaders += ';'
+          }
+          signedHeaders += element
+        })
+
+        var requestResource = request.path,
+            credential = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`,
+            authHeader = 'AWS4-HMAC-SHA256',
+            iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
+
+        requestQuery = `X-Amz-Algorithm=${authHeader}&`
+        var escapedCredential = helpers.uriEscape(credential)
+        requestQuery += `X-Amz-Credential=${escapedCredential}&`
+        requestQuery += `X-Amz-Date=${iso8601Date}&`
         requestQuery += `X-Amz-Expires=${expires}&`
-        requestQuery += 'X-Amz-SignedHeaders=host'
+        var escapedSignedHeaders = helpers.uriEscape(signedHeaders)
+        requestQuery += `X-Amz-SignedHeaders=${escapedSignedHeaders}`
 
         var canonicalString = ''
         canonicalString += canonicalString + request.method.toUpperCase() + '\n'
@@ -207,30 +219,49 @@ var PresignedUrl = function(request, accessKey, secretKey) {
         canonicalString += 'UNSIGNED-PAYLOAD'
         return canonicalString
       }
-      var requestQuery = ''
-      var host = request.host
-      var region = helpers.getRegion(host)
-      var requestDate = Moment().utc()
-      var canonicalRequest = getCanonicalRequest(request)
-      var hash = Crypto.createHash('sha256')
-      hash.update(canonicalRequest)
-      var canonicalRequestHash = hash.digest('hex')
-      var stringToSign = getStringToSign(canonicalRequestHash, requestDate, region)
-      var signingKey = getSigningKey(requestDate, region, secretKey)
-      var hmac = Crypto.createHmac('sha256', signingKey)
 
-      hmac.update(stringToSign)
-      var signature = hmac.digest('hex').toLowerCase().trim()
+      if (!accessKey) {
+          throw new Error('accessKey is required for presigning')
+      }
+      if (!secretKey) {
+          throw new Error('secretKey is required for presigning')
+      }
+
+      var requestQuery = '',
+          region = helpers.getRegion(request.host),
+          host = request.host
 
       if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
         host = `${host}:${request.port}`
       }
 
-      var presignedUrl = request.scheme + "://" + host + request.path + "?" + requestQuery + "&X-Amz-Signature=" + signature
+      if (!request.headers) {
+        request.headers = {}
+      }
+
+      request.headers.host = host
+
+      var requestDate = Moment().utc(),
+          canonicalRequest = getCanonicalRequest(request),
+          hash = Crypto.createHash('sha256')
+
+      hash.update(canonicalRequest)
+
+      var canonicalRequestHash = hash.digest('hex'),
+          stringToSign = getStringToSign(canonicalRequestHash, requestDate, region),
+          signingKey = getSigningKey(requestDate, region, secretKey),
+          hmac = Crypto.createHmac('sha256', signingKey)
+
+      hmac.update(stringToSign)
+
+      var signature = hmac.digest('hex').toLowerCase().trim(),
+          url = request.scheme + '://' + host + request.path,
+          presignedUrl = url + '?' + requestQuery + '&X-Amz-Signature=' + signature
+
       return presignedUrl
 }
 
 module.exports = {
   signV4: signV4,
-  PresignedUrl: PresignedUrl
+  getV4PresignedUrl: getV4PresignedUrl
 }
