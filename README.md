@@ -12,19 +12,32 @@ $ npm install --save minio
 #!/usr/bin/env node
 
 var Minio = require('minio')
-var Through2 = require('through2')
+
+// find out your s3 end point here:
+// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3client = new Minio({
-  url: 'https://s3.amazonaws.com',
+  url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketStream = s3client.listBuckets()
-bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
-  console.log(bucket)
-  done()
-}))
+s3client.listBuckets(function(e, bucketStream) {
+  if (e) {
+    console.log(e)
+    return
+  }
+  bucketStream.on('data', function(obj) {
+    console.log(obj)
+  })
+  bucketStream.on('end', function() {
+    console.log("End")
+  })
+  bucketStream.on('error', function(e) {
+    console.log("Error", e)
+  })
+})
+
 ```
 
 ## Documentation
