@@ -19,7 +19,7 @@ var Concat = require('concat-stream'),
     ParseXml = require('xml-parser'),
     Through2 = require('through2'),
     helpers = require('./helpers.js'),
-    signV4 = require('./signing.js'),
+    signV4 = require('./signing.js').signV4,
     xmlParsers = require('./xml-parsers.js')
 
 var listAllIncompleteUploads = function(transport, params, bucket, object) {

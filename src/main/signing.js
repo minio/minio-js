@@ -16,8 +16,9 @@
 
 var Moment = require('moment'),
     Crypto = require('crypto'),
-    helpers = require('./helpers.js'),
-    signV4 = (request, dataShaSum256, accessKey, secretKey) => {
+    helpers = require('./helpers.js')
+
+var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
       if (!accessKey || !secretKey) {
         return
       }
@@ -60,15 +61,6 @@ var Moment = require('moment'),
           authorization = `Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
       request.headers.authorization = 'AWS4-HMAC-SHA256 ' + authorization
-
-      function getSigningKey(date, region, secretKey) {
-        var key = 'AWS4' + secretKey,
-            dateLine = date.format('YYYYMMDD'),
-            hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary'),
-            hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
-            hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
-        return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
-      }
 
       function getCanonicalRequest(request, dataShaSum1) {
         var headerKeys = [],
@@ -150,7 +142,18 @@ var Moment = require('moment'),
         canonicalString += dataShaSum1
         return [canonicalString, signedHeaders]
       }
-    }, getStringToSign = function(canonicalRequestHash, requestDate, region) {
+    }
+
+var getSigningKey = function(date, region, secretKey) {
+      var key = 'AWS4' + secretKey,
+          dateLine = date.format('YYYYMMDD'),
+          hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary'),
+          hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
+          hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
+      return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
+    }
+
+var getStringToSign = function(canonicalRequestHash, requestDate, region) {
       var stringToSign = 'AWS4-HMAC-SHA256\n'
       stringToSign += requestDate.format('YYYYMMDDTHHmmss') + 'Z\n'
       stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
@@ -158,4 +161,76 @@ var Moment = require('moment'),
       return stringToSign
     }
 
-module.exports = signV4
+var PresignedUrl = function(request, accessKey, secretKey) {
+      function getCanonicalRequest(request) {
+        var headerKeys = [],
+            headers = [],
+            ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent']
+
+        var expires = request.expires ? request.expires : "86400"
+
+        // TODO: support signing of other headers too. Right now only "host" being signed
+
+        if (!request.headers) {
+          request.headers = {}
+          request.headers.host = request.host
+        }
+
+        for (var key in request.headers) {
+          if (request.headers.hasOwnProperty(key) && ignoredHeaders.indexOf(key) === -1) {
+            var value = request.headers[key]
+            headers.push(`${key.toLowerCase()}:${value}`)
+            headerKeys.push(key.toLowerCase())
+          }
+        }
+
+        headers.sort()
+        headerKeys.sort()
+
+        var signedHeaders = 'host'
+        var requestResource = request.path
+        requestQuery = 'X-Amz-Algorithm=AWS4-HMAC-SHA256&'
+        requestQuery += `X-Amz-Credential=${accessKey}%2F${requestDate.format('YYYYMMDD')}%2F${region}%2Fs3%2Faws4_request&`
+        requestQuery += 'X-Amz-Date=' + requestDate.format('YYYYMMDDTHHmmss') + 'Z&'
+        requestQuery += `X-Amz-Expires=${expires}&`
+        requestQuery += 'X-Amz-SignedHeaders=host'
+
+        var canonicalString = ''
+        canonicalString += canonicalString + request.method.toUpperCase() + '\n'
+        canonicalString += requestResource + '\n'
+        canonicalString += requestQuery + '\n'
+        headers.forEach(element => {
+          canonicalString += element + '\n'
+        })
+        canonicalString += '\n'
+        canonicalString += signedHeaders + '\n'
+        canonicalString += 'UNSIGNED-PAYLOAD'
+        return canonicalString
+      }
+      var requestQuery = ''
+      var host = request.host
+      var region = helpers.getRegion(host)
+      var requestDate = Moment().utc()
+      var canonicalRequest = getCanonicalRequest(request)
+      var hash = Crypto.createHash('sha256')
+      hash.update(canonicalRequest)
+      var canonicalRequestHash = hash.digest('hex')
+      var stringToSign = getStringToSign(canonicalRequestHash, requestDate, region)
+      var signingKey = getSigningKey(requestDate, region, secretKey)
+      var hmac = Crypto.createHmac('sha256', signingKey)
+
+      hmac.update(stringToSign)
+      var signature = hmac.digest('hex').toLowerCase().trim()
+
+      if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
+        host = `${host}:${request.port}`
+      }
+
+      var presignedUrl = request.scheme + "://" + host + request.path + "?" + requestQuery + "&X-Amz-Signature=" + signature
+      return presignedUrl
+}
+
+module.exports = {
+  signV4: signV4,
+  PresignedUrl: PresignedUrl
+}

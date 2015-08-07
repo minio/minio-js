@@ -15,7 +15,7 @@
  */
 
 var helpers = require('./helpers.js'),
-    signV4 = require('./signing.js'),
+    signV4 = require('./signing.js').signV4,
     xmlParsers = require('./xml-parsers.js')
 
 function bucketRequest(self, method, bucket, cb) {

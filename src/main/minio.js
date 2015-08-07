@@ -27,7 +27,8 @@ var Crypto = require('crypto'),
     helpers = require('./helpers.js'),
     multipart = require('./multipart.js'),
     objectList = require('./list-objects.js'),
-    signV4 = require('./signing.js'),
+    signV4 = require('./signing.js').signV4,
+    PresignedUrl = require('./signing.js').PresignedUrl,
     simpleRequests = require('./simple-requests.js'),
     upload = require('./upload.js'),
     xmlParsers = require('./xml-parsers.js')
@@ -519,6 +520,24 @@ class Client {
       return cb('object key cannot be empty')
     }
     simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
+  }
+
+  presignGetObject(bucket, key, expires) {
+    if (!helpers.validBucketName(bucket)) {
+      throw new Error('invalid bucket name')
+    }
+    if (!key || key.trim() === '') {
+      throw new Error('object key cannot be empty')
+    }
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      method: 'get',
+      scheme: this.scheme,
+      expires: expires
+    }
+    return PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
   }
 }
 
