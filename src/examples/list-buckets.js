@@ -26,17 +26,17 @@ var s3client = new Minio({
 })
 
 s3client.listBuckets(function(e, bucketStream) {
-	if (e) {
-		console.log(e)
-		return
-	}
-	bucketStream.on('data', function(obj) {
-		console.log(obj)
-	})
-	bucketStream.on('end', function() {
-		console.log("End")
-	})
-	bucketStream.on('error', function(e) {
-		console.log("Error", e)
-	})
+  if (e) {
+    console.log(e)
+    return
+  }
+  bucketStream.on('data', function(obj) {
+    console.log(obj)
+  })
+  bucketStream.on('end', function() {
+    console.log("End")
+  })
+  bucketStream.on('error', function(e) {
+    console.log("Error", e)
+  })
 })

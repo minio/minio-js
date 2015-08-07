@@ -12,7 +12,6 @@ $ npm install --save minio
 #!/usr/bin/env node
 
 var Minio = require('minio')
-var Through2 = require('through2')
 
 var s3client = new Minio({
   url: 'https://s3.amazonaws.com',
@@ -20,11 +19,21 @@ var s3client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketStream = s3client.listBuckets()
-bucketStream.pipe(Through2.obj(function(bucket, enc, done) {
-  console.log(bucket)
-  done()
-}))
+s3client.listBuckets(function(e, bucketStream) {
+  if (e) {
+    console.log(e)
+    return
+  }
+  bucketStream.on('data', function(obj) {
+    console.log(obj)
+  })
+  bucketStream.on('end', function() {
+    console.log("End")
+  })
+  bucketStream.on('error', function(e) {
+    console.log("Error", e)
+  })
+})
 ```
 
 ## Documentation

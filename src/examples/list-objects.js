@@ -30,11 +30,11 @@ var objectsStream = s3client.listObjects('mybucket', {
 })
 
 objectsStream.on('data', function(obj) {
-	console.log(obj)
+  console.log(obj)
 })
 objectsStream.on('end', function() {
-	console.log("End")
+  console.log("End")
 })
 objectsStream.on('error', function(e) {
-	console.log(e)
+  console.log(e)
 })
