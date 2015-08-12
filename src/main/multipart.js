@@ -131,12 +131,11 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 }
 
 var dropUploads = (transport, params, bucket, key, cb) => {
+  var errored = null,
+      queue = new Stream.Readable({
+        objectMode: true
+      })
 
-  var errored = null
-
-  var queue = new Stream.Readable({
-    objectMode: true
-  })
   queue._read = function() {}
   queue.pipe(Through2.obj(function(job, enc, done) {
       if (errored) {
@@ -171,17 +170,33 @@ var dropUploads = (transport, params, bucket, key, cb) => {
       if (errored) {
         return done()
       }
-      abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-        if (errored) {
-          return done()
+      if (key !== null) {
+        if (key == upload.key) {
+          abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
+            if (errored) {
+              return done()
+            }
+            if (e) {
+              errored = e
+              queue.push(null)
+              return done()
+            }
+            return done()
+          })
         }
-        if (e) {
-          errored = e
-          queue.push(null)
-          return done()
-        }
-        done()
-      })
+      } else {
+        abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
+          if (errored) {
+            return done()
+          }
+          if (e) {
+            errored = e
+            queue.push(null)
+            return done()
+          }
+          done()
+        })
+      }
     }, function(done) {
       cb(errored)
       done()
