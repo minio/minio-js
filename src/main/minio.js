@@ -355,7 +355,9 @@ class Client {
         cb(e)
       })
       stream.pipe(Through2.obj(function(upload, enc, done) {
-        uploadId = upload.uploadId
+        if (key === upload.key) {
+          uploadId = upload.uploadId
+        }
         done()
       }, function(done) {
         if (!uploadId) {
