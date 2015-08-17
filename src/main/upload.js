@@ -64,24 +64,27 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       errored = null,
       etags = [],
       // compute size
-      blockSize = calculateBlockSize(totalSize),
+      partSize = calculatePartSize(totalSize),
       totalSeen = 0
 
   r.on('finish', function() {})
   r.pipe(BlockStream2({
-    size: blockSize,
+    size: partSize,
     zeroPadding: false
   })).pipe(Through2.obj(function(data, enc, done) {
       if (errored) {
         return done()
       }
 
-      totalSeen += data.length
-      if (totalSeen > totalSize) {
-        errored = 'actual size does not match specified size'
-        return done()
+      if (data.length < partSize) {
+        var expectedSize = totalSize - totalSeen
+        if (expectedSize != data.length) {
+          errored = 'actual size does not match specified size'
+          return done()
+        }
       }
 
+      totalSeen += data.length
       var curPart = part
       part = part + 1
       if (partsArray.length > 0) {
@@ -130,7 +133,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       return cb(null, etags)
     }))
 
-  function calculateBlockSize(size) {
+  function calculatePartSize(size) {
     var minimumPartSize = 5 * 1024 * 1024, // 5MB
         maximumPartSize = 5 * 1025 * 1024 * 1024,
         // using 10000 may cause part size to become too small, and not fit the entire object in
@@ -158,6 +161,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
     }
     var hash256 = Crypto.createHash('sha256'),
         hashMD5 = Crypto.createHash('md5')
+
     hash256.update(data)
     hashMD5.update(data)
 

@@ -815,9 +815,9 @@ describe('Client', () => {
         })
       })
       describe('with large objects using multipart', () => {
-        var uploadBlock = ''
+        var uploadData = ''
         for (var i = 0; i < 1024; i++) {
-          uploadBlock += 'a'
+          uploadData += 'a'
         }
         it('should put an object with no resume needed', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -844,7 +844,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
@@ -862,7 +862,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
@@ -887,7 +887,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
@@ -906,16 +906,10 @@ describe('Client', () => {
           }).reply(200, '', {
             etag: 'etag2'
           })
-          MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            return body.length === 1024 * 1024
-
-          }).reply(200, '', {
-            etag: 'etag3'
-          })
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 12 * 1024 * 1024, s, (e) => {
@@ -940,7 +934,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 12 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
@@ -953,7 +947,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
@@ -964,7 +958,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
@@ -979,7 +973,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
@@ -997,7 +991,7 @@ describe('Client', () => {
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
-            s.push(uploadBlock)
+            s.push(uploadData)
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
