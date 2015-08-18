@@ -318,22 +318,25 @@ describe('Client', () => {
         client.makeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should fail on null bucket', (done) => {
-        client.makeBucket(null, (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.makeBucket(null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.makeBucket('', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.makeBucket('')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.makeBucket('  \n  \t  ', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.makeBucket('  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -411,22 +414,25 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.bucketExists(null, (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.bucketExists(null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.bucketExists('', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.bucketExists('')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.bucketExists('  \n  \t  ', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.BucketExists('  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -445,22 +451,25 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.removeBucket(null, (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeBucket(null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.removeBucket('', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeBucket('')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.removeBucket('  \n  \t  ', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeBucket('  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -502,22 +511,25 @@ describe('Client', () => {
         client.getBucketACL('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
-        client.getBucketACL(null, (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getBucketACL(null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.getBucketACL('', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getBucketACL('')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.getBucketACL('  \n  \t  ', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getBucketACL('  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -555,40 +567,46 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.setBucketACL(null, 'public', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.setBucketACL(null, 'public')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.setBucketACL('', 'public', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.setBucketACL('', 'public')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.setBucketACL('  \n  \t  ', 'public', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.setBucketACL('  \n  \t  ', 'public')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on null acl', (done) => {
-        client.setBucketACL('hello', null, (e) => {
-          Assert(e, 'acl name cannot be empty')
+        try {
+          client.setBucketACL('hello', null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty acl', (done) => {
-        client.setBucketACL('hello', '', (e) => {
-          Assert(e, 'acl name cannot be empty')
+        try {
+          client.setBucketACL('hello', '')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty acl', (done) => {
-        client.setBucketACL('hello', '  \n  \t  ', (e) => {
-          Assert(e, 'acl name cannot be empty')
+        try {
+          client.setBucketACL('hello', '  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -616,22 +634,25 @@ describe('Client', () => {
         client.dropAllIncompleteUploads('golang', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
-        client.dropAllIncompleteUploads(null, (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropAllIncompleteUploads(null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.dropAllIncompleteUploads('', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropAllIncompleteUploads('')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.dropAllIncompleteUploads('  \n  \t  ', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropAllIncompleteUploads('  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
   })
@@ -656,40 +677,46 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.getObject(null, 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getObject(null, 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.getObject('', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getObject('', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.getObject('  \n  \t  ', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.getObject('  \n  \t  ', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on null object', (done) => {
-        client.getObject('hello', null, (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.getObject('hello', null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.getObject('hello', '', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.getObject('hello', '')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.getObject('hello', '  \n  \t  ', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.getObject('hello', '  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
     describe('#getPartialObject(bucket, object, offset, range) callback)', () => {
@@ -755,12 +782,6 @@ describe('Client', () => {
           s.push(null)
           client.putObject('bucket', 'object', '', 11, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
-        it('should fail on null bucket', (done) => {
-          client.putObject(null, 'hello', '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
-            done()
-          })
-        })
         it('should fail when data is smaller than specified', (done) => {
           var s = new Stream.Readable()
           s._read = function() {}
@@ -783,35 +804,47 @@ describe('Client', () => {
             }
           })
         })
-        it('should fail on empty bucket', (done) => {
-          client.putObject('', 'hello', '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
+        it('should fail on null bucket', (done) => {
+          try {
+            client.putObject(null, 'hello', '', 1)
+          } catch (e) {
             done()
-          })
+          }
         })
         it('should fail on empty bucket', (done) => {
-          client.putObject(' \n \t ', 'hello', '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
+          try {
+            client.putObject(' \n \t ', 'hello', '', 1)
+          } catch (e) {
             done()
-          })
+          }
+        })
+        it('should fail on empty bucket', (done) => {
+          try {
+            client.putObject('', 'hello', '', 1)
+          } catch (e) {
+            done()
+          }
         })
         it('should fail on null object', (done) => {
-          client.putObject('hello', null, '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
+          try {
+            client.putObject('hello', null, '', 1)
+          } catch (e) {
             done()
-          })
+          }
         })
         it('should fail on empty object', (done) => {
-          client.putObject('hello', '', '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
+          try {
+            client.putObject('hello', '', '', 1)
+          } catch (e) {
             done()
-          })
+          }
         })
         it('should fail on empty object', (done) => {
-          client.putObject('hello', ' \n \t ', '', 1, new Stream.Readable(), (e) => {
-            Assert(e, 'bucket name cannot be empty')
+          try {
+            client.putObject('hello', ' \n \t ', '', 1)
+          } catch (e) {
             done()
-          })
+          }
         })
       })
       describe('with large objects using multipart', () => {
@@ -1209,40 +1242,46 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.statObject(null, 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.statObject(null, 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.statObject('', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.statObject('', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.statObject('  \n  \t  ', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.statObject('  \n  \t  ', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on null object', (done) => {
-        client.statObject('hello', null, (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.statObject('hello', null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.statObject('hello', '', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.statObject('hello', '')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.statObject('hello', '  \n  \t  ', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.statObject('hello', '  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -1263,40 +1302,46 @@ describe('Client', () => {
         }))
       })
       it('should fail on null bucket', (done) => {
-        client.removeObject(null, 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeObject(null, 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.removeObject('', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeObject('', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.removeObject('  \n  \t  ', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.removeObject('  \n  \t  ', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on null object', (done) => {
-        client.removeObject('hello', null, (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.removeObject('hello', null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.removeObject('hello', '', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.removeObject('hello', '')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.removeObject('hello', '  \n  \t  ', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.removeObject('hello', '  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
 
@@ -1325,40 +1370,46 @@ describe('Client', () => {
         client.dropIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
-        client.dropIncompleteUpload(null, 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropIncompleteUpload(null, 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.dropIncompleteUpload('', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropIncompleteUpload('', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty bucket', (done) => {
-        client.dropIncompleteUpload('  \n  \t  ', 'hello', (e) => {
-          Assert(e, 'bucket name cannot be empty')
+        try {
+          client.dropIncompleteUpload('  \n  \t  ', 'hello')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on null object', (done) => {
-        client.dropIncompleteUpload('hello', null, (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.dropIncompleteUpload('hello', null)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.dropIncompleteUpload('hello', '', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.dropIncompleteUpload('hello', '')
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should fail on empty object', (done) => {
-        client.dropIncompleteUpload('hello', '  \n  \t  ', (e) => {
-          Assert(e, 'object key cannot be empty')
+        try {
+          client.dropIncompleteUpload('hello', '  \n  \t  ')
+        } catch (e) {
           done()
-        })
+        }
       })
     })
   })
