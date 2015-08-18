@@ -31,7 +31,8 @@ var Crypto = require('crypto'),
     getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
     simpleRequests = require('./simple-requests.js'),
     upload = require('./upload.js'),
-    xmlParsers = require('./xml-parsers.js')
+    xmlParsers = require('./xml-parsers.js'),
+    errors = require('./errors.js')
 
 class Client {
   constructor(params, transport) {
@@ -59,7 +60,7 @@ class Client {
         break
       }
       default: {
-        throw new Error('Unknown protocol: ' + parsedUrl.protocol)
+        throw new errors.InvalidProtocolException('Unknown protocol: ' + parsedUrl.protocol)
       }
       }
     }
@@ -82,13 +83,13 @@ class Client {
       formattedComments = ` (${joinedComments})`
     }
     if (this.params.userAgentSet) {
-      throw 'user agent already set'
+      throw new errors.InternalClientException('user agent already set')
     }
     if (name && version) {
       this.params.userAgent = `${this.params.userAgent} ${name}/${version}${formattedComments}`
       this.params.userAgentSet = true
     } else {
-      throw 'Invalid user agent'
+      throw new errors.InvalidUserAgentException('Invalid user agent')
     }
   }
 
@@ -100,7 +101,7 @@ class Client {
 
   makeBucketWithACL(bucket, acl, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     var region = helpers.getRegion(this.params.host)
@@ -189,21 +190,21 @@ class Client {
 
   bucketExists(bucket, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
     simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
     simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     var query = `?acl`,
@@ -227,11 +228,11 @@ class Client {
 
   setBucketACL(bucket, acl, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (acl === null || acl.trim() === '') {
-      return cb('acl name cannot be empty')
+      throw new errors.InvalidEmptyACLException('Acl name cannot be empty')
     }
 
     // we should make sure to set this query parameter, but on the other hand
@@ -260,7 +261,7 @@ class Client {
 
   dropAllIncompleteUploads(bucket, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     multipart.dropUploads(this.transport, this.params, bucket, null, cb)
@@ -268,11 +269,11 @@ class Client {
 
   dropIncompleteUpload(bucket, key, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
-      return cb('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     multipart.dropUploads(this.transport, this.params, bucket, key, cb)
@@ -284,11 +285,11 @@ class Client {
 
   getPartialObject(bucket, key, offset, length, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
-      return cb('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     var range = ''
@@ -335,11 +336,11 @@ class Client {
 
   putObject(bucket, key, contentType, size, r, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
-      return cb('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     if (contentType === null || contentType.trim() === '') {
@@ -416,9 +417,8 @@ class Client {
   }
 
   listObjects(bucket, params) {
-    var bucketNameError = false
     if (!helpers.validBucketName(bucket)) {
-      bucketNameError = true
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
     var self = this,
         prefix = null,
@@ -439,9 +439,6 @@ class Client {
     })
     queue._read = function() {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
-      if (bucketNameError) {
-        return done('bucket name invalid')
-      }
       objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
                       currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
         if (e) {
@@ -481,11 +478,11 @@ class Client {
 
   statObject(bucket, key, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
-      return cb('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     var requestParams = {
@@ -515,21 +512,21 @@ class Client {
 
   removeObject(bucket, key, cb) {
     if (!helpers.validBucketName(bucket)) {
-      return cb('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
-      return cb('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
     simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
   }
 
   presignedGetObject(bucket, key, expires) {
     if (!helpers.validBucketName(bucket)) {
-      throw new Error('invalid bucket name')
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
     if (!key || key.trim() === '') {
-      throw new Error('object key cannot be empty')
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
     var requestParams = {
       host: this.params.host,
