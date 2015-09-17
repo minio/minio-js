@@ -37,18 +37,23 @@
   },
   "devDependencies": {
     "gulp": "^3.9.0",
-    "gulp-babel": "^5.2.0",
+    "gulp-babel": "^5.2.1",
     "gulp-jscs": "^2.0.0",
     "gulp-jshint": "^1.11.2",
+    "gulp-mocha": "^2.1.0",
     "gulp-notify": "^2.2.0",
     "gulp-sourcemaps": "^1.5.2",
-    "gulp-mocha": "^2.1.0",
     "jshint-stylish": "^2.0.1",
-    "mocha": "^2.2.5",
-    "nock": "^2.2.0",
+    "mocha": "^2.3.2",
+    "nock": "^2.12.0",
     "rewire": "^2.3.3"
   },
   "keywords": [
-    "api", "amazon", "minio", "cloud", "s3", "storage"
+    "api",
+    "amazon",
+    "minio",
+    "cloud",
+    "s3",
+    "storage"
   ]
 }
