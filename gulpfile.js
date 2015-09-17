@@ -15,7 +15,6 @@
  */
 
 var babel = require('gulp-babel')
-var exec = require('child_process').exec
 var gulp = require('gulp')
 var sourcemaps = require('gulp-sourcemaps')
 var notify = require('gulp-notify');
@@ -40,20 +39,6 @@ gulp.task('test', ['compile', 'test:compile'], function() {
     .pipe(mocha({
       reporter: 'spec'
     }))
-})
-
-gulp.task('example:compile', ['compile'], function(cb) {
-  "use strict";
-  compile('src/example/**/*.js', 'example.js', 'dist/example', cb)
-})
-
-gulp.task('example', ['compile', 'example:compile'], function(cb) {
-  "use strict";
-  exec('node dist/example/example.js', function(err, stdout, stderr) {
-    console.log(stdout)
-    console.log(stderr)
-    cb(err)
-  })
 })
 
 gulp.task('jscs', function() {
