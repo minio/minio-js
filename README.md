@@ -44,35 +44,35 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ### Bucket
 
-[makeBucket(bucket, cb)](src/examples/make-bucket.js)
+[makeBucket(bucket, cb)](examples/make-bucket.js)
 
-[listBuckets() : Stream](src/examples/list-buckets.js)
+[listBuckets() : Stream](examples/list-buckets.js)
 
-[bucketExists(bucket, cb)](src/examples/bucket-exists.js)
+[bucketExists(bucket, cb)](examples/bucket-exists.js)
 
-[removeBucket(bucket, cb)](src/examples/remove-bucket.js)
+[removeBucket(bucket, cb)](examples/remove-bucket.js)
 
-[getBucketACL(bucket, cb)](src/examples/get-bucket-acl.js)
+[getBucketACL(bucket, cb)](examples/get-bucket-acl.js)
 
-[setBucketACL(bucket, acl, cb)](src/examples/set-bucket-acl.js)
+[setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
-[dropAllIncompleteUploads(bucket, cb)](src/examples/drop-incomplete-upload.js)
+[dropAllIncompleteUploads(bucket, cb)](examples/drop-incomplete-upload.js)
 
 ### Object
 
-[getObject(bucket, key) Stream](src/examples/get-object.js)
+[getObject(bucket, key) Stream](examples/get-object.js)
 
-[getPartialObject(bucket, key, offset, length) Stream](src/examples/get-partialobject.js)
+[getPartialObject(bucket, key, offset, length) Stream](examples/get-partialobject.js)
 
-[putObject(bucket, key, Stream, cb)](src/examples/put-object.js)
+[putObject(bucket, key, Stream, cb)](examples/put-object.js)
 
-[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](src/examples/list-objects.js)
+[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](examples/list-objects.js)
 
-[statObject(bucket, key, cb)](src/examples/stat-object.js)
+[statObject(bucket, key, cb)](examples/stat-object.js)
 
-[removeObject(bucket, key, cb)](src/examples/remove-object.js)
+[removeObject(bucket, key, cb)](examples/remove-object.js)
 
-[dropIncompleteUpload(bucket, key, cb)](src/examples/drop-incomplete-upload.js)
+[dropIncompleteUpload(bucket, key, cb)](examples/drop-incomplete-upload.js)
 
 ## Contribute
 
