@@ -1,6 +1,6 @@
 # Minio Javascript (Nodejs) Library for Amazon S3 Compatible Cloud Storage [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Install from npm [![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
+## Install from npm
 
 ```sh
 $ npm install --save minio
@@ -81,3 +81,5 @@ s3client.listBuckets(function(e, bucketStream) {
 [![NPM](https://img.shields.io/npm/v/minio.svg)](https://www.npmjs.com/package/minio)
 [![NPM](https://img.shields.io/npm/l/minio.svg)](https://www.npmjs.com/package/minio)
 [![NPM](https://img.shields.io/npm/dm/minio.svg)](https://www.npmjs.com/package/minio)
+[![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
+[![Build status](https://ci.appveyor.com/api/projects/status/402thana800k00fv?svg=true)](https://ci.appveyor.com/project/harshavardhana/minio-js)
