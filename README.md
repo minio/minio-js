@@ -78,8 +78,6 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [Contributors Guide](./CONTRIBUTING.md)
 
-[![NPM](https://img.shields.io/npm/v/minio.svg)](https://www.npmjs.com/package/minio)
-[![NPM](https://img.shields.io/npm/l/minio.svg)](https://www.npmjs.com/package/minio)
-[![NPM](https://img.shields.io/npm/dm/minio.svg)](https://www.npmjs.com/package/minio)
+[![NPM](https://nodei.co/npm/minio.png)](https://nodei.co/npm/minio/)
 [![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
 [![Build status](https://ci.appveyor.com/api/projects/status/402thana800k00fv?svg=true)](https://ci.appveyor.com/project/harshavardhana/minio-js)
