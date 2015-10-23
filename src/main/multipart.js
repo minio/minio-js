@@ -130,7 +130,7 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
   req.end()
 }
 
-var dropUploads = (transport, params, bucket, key, cb) => {
+var removeUploads = (transport, params, bucket, key, cb) => {
   var errored = null,
       queue = new Stream.Readable({
         objectMode: true
@@ -327,7 +327,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
 module.exports = {
   listAllIncompleteUploads: listAllIncompleteUploads,
   listMultipartUploads: listMultipartUploads,
-  dropUploads: dropUploads,
+  removeUploads: removeUploads,
   abortMultipartUpload: abortMultipartUpload,
   listAllParts: listAllParts,
   listParts: listParts
