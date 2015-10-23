@@ -58,8 +58,6 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
-[dropAllIncompleteUploads(bucket, cb)](examples/drop-incomplete-upload.js)
-
 ### Object
 
 [getObject(bucket, key) Stream](examples/get-object.js)
@@ -74,7 +72,7 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [removeObject(bucket, key, cb)](examples/remove-object.js)
 
-[dropIncompleteUpload(bucket, key, cb)](examples/drop-incomplete-upload.js)
+[removeIncompleteUpload(bucket, key, cb)](examples/remove-incomplete-upload.js)
 
 ## Contribute
 

@@ -259,15 +259,7 @@ class Client {
     req.end()
   }
 
-  dropAllIncompleteUploads(bucket, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
-    }
-
-    multipart.dropUploads(this.transport, this.params, bucket, null, cb)
-  }
-
-  dropIncompleteUpload(bucket, key, cb) {
+  removeIncompleteUpload(bucket, key, cb) {
     if (!helpers.validBucketName(bucket)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
@@ -276,7 +268,7 @@ class Client {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
-    multipart.dropUploads(this.transport, this.params, bucket, key, cb)
+    multipart.removeUploads(this.transport, this.params, bucket, key, cb)
   }
 
   getObject(bucket, key, cb) {
