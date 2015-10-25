@@ -22,7 +22,7 @@ var Concat = require('concat-stream'),
     signV4 = require('./signing.js').signV4,
     xmlParsers = require('./xml-parsers.js')
 
-var listAllIncompleteUploads = function(transport, params, bucket, object) {
+var listAllIncompleteUploads = function(transport, params, bucket, object, delimiter) {
   var errored = null
   var queue = new Stream.Readable({
     objectMode: true
@@ -33,7 +33,7 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
     if (errored) {
       return done()
     }
-    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, (e, r) => {
+    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, currentJob.delimiter, (e, r) => {
       if (errored) {
         return done()
       }
@@ -49,7 +49,8 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
           bucket: bucket,
           object: decodeURI(object),
           objectMarker: decodeURI(r.objectMarker),
-          uploadIdMarker: decodeURI(r.uploadIdMarker)
+          uploadIdMarker: decodeURI(r.uploadIdMarker),
+          delimiter: delimiter
         })
       } else {
         queue.push(null)
@@ -67,13 +68,14 @@ var listAllIncompleteUploads = function(transport, params, bucket, object) {
     bucket: bucket,
     object: object,
     objectMarker: null,
-    uploadIdMarker: null
+    uploadIdMarker: null,
+    delimiter: delimiter
   })
 
   return stream
 }
 
-function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, cb) {
+function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, delimiter, cb) {
   var queries = []
   if (key) {
     queries.push(`prefix=${helpers.uriEscape(key)}`)
@@ -84,6 +86,9 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
   }
   if (uploadIdMarker) {
     queries.push(`upload-id-marker=${uploadIdMarker}`)
+  }
+  if (delimiter) {
+    queries.push(`delimiter=${helpers.uriEscape(delimiter)}`)
   }
   var maxUploads = 1000
   queries.push(`max-uploads=${maxUploads}`)
@@ -99,14 +104,13 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
     path: `/${bucket}${query}`,
     method: 'GET'
   }
-
   signV4(requestParams, '', params.accessKey, params.secretKey)
 
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
       return xmlParsers.parseError(response, cb)
     }
-    xmlParsers.parseListMultipartResult(bucket, key, response, cb)
+    xmlParsers.parseListMultipartResult(bucket, null, response, cb)
   })
   req.end()
 }
@@ -141,7 +145,7 @@ var removeUploads = (transport, params, bucket, key, cb) => {
       if (errored) {
         return done()
       }
-      listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, (e, result) => {
+      listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, job.delimiter, (e, result) => {
         if (errored) {
           return done()
         }

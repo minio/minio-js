@@ -188,6 +188,14 @@ class Client {
     req.end()
   }
 
+  listIncompleteUploads(bucket, prefix, recursive) {
+    var delimiter = null
+    if (!recursive) {
+        delimiter = "/"
+    }
+    return multipart.listAllIncompleteUploads(this.transport, this.params, bucket, prefix, delimiter)
+  }
+
   bucketExists(bucket, cb) {
     if (!helpers.validBucketName(bucket)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
