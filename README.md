@@ -74,6 +74,10 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [removeIncompleteUpload(bucket, key, cb)](examples/remove-incomplete-upload.js)
 
+### Presigned
+
+[presignedGetObject(bucket, key, expires) : String](examples/presinged-getobject.js)
+
 ## Contribute
 
 [Contributors Guide](./CONTRIBUTING.md)
