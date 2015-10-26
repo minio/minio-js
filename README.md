@@ -58,6 +58,8 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
+[listIncompleteUploads(bucket, prefix, recursive: true) : Stream](examples/list-incomplete-uploads.js)
+
 ### Object
 
 [getObject(bucket, key) Stream](examples/get-object.js)

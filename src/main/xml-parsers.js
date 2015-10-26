@@ -76,6 +76,7 @@ function parseListMultipartResult(bucket, key, response, cb) {
     var parsedXml = ParseXml(xml.toString()),
         result = {
           uploads: [],
+          prefixes: [],
           isTruncated: false,
           nextJob: null
         },
@@ -98,6 +99,23 @@ function parseListMultipartResult(bucket, key, response, cb) {
         nextJob.uploadIdMarker = element.content
         break
       }
+
+      case 'CommonPrefixes': {  // todo, this is the only known way for now to propagate delimited entries
+                  var prefix = {
+                    bucket: bucket,
+                    prefix: null
+                  }
+                   element.children.forEach(xmlPrefix => {
+                       switch (xmlPrefix.name) {
+                           case 'Prefix': {
+                               prefix.prefix = xmlPrefix.content
+                               break
+                           }
+                       }
+                   })
+                   result.prefixes.push(prefix)
+                   break
+                }
       case 'Upload': {
         var upload = {
           bucket: bucket,
@@ -107,7 +125,7 @@ function parseListMultipartResult(bucket, key, response, cb) {
         element.children.forEach(xmlObject => {
           switch (xmlObject.name) {
           case 'Key': {
-            upload.key = helpers.uriResourceEscape(xmlObject.content)
+            upload.key = xmlObject.content
             break
           }
           case 'UploadId': {
@@ -117,15 +135,7 @@ function parseListMultipartResult(bucket, key, response, cb) {
           default:
           }
         })
-        if (key) {
-          if (helpers.uriResourceEscape(key) === upload.key) {
-            result.uploads.push(upload)
-          } else {
-            ignoreTruncated = true
-          }
-        } else {
-          result.uploads.push(upload)
-        }
+        result.uploads.push(upload)
         break
       }
       default:
