@@ -34,8 +34,8 @@ gulp.task('test:compile', ['compile'], function(cb) {
 gulp.task('test', ['compile', 'test:compile'], function() {
   var mocha = require('gulp-mocha')
   gulp.src('dist/test/unit/*.js', {
-      read: false
-    })
+    read: false
+  })
     .pipe(mocha({
       reporter: 'spec'
     }))

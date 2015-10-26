@@ -15,130 +15,138 @@
  */
 
 var Concat = require('concat-stream'),
-    ParseXml = require('xml-parser'),
-    helpers = require('./helpers.js'),
-    parseError = (response, cb) => {
-      if (typeof response !== 'undefined') {
-        response.pipe(Concat(errorXml => {
-          var e = {}
-          e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
-          if (errorXml.length === 0) {
-            if (response.statusCode === 301) {
-              e.code = 'MovedPermanently'
-              e.message = 'Moved Permanently'
-            } else if (response.statusCode === 307) {
-              e.code = 'TemporaryRedirect'
-              e.message = 'Are you using the correct endpoint URL?'
-            } else if (response.statusCode === 403) {
-              e.code = 'AccessDenied'
-              e.message = 'Valid and authorized credentials required'
-            } else if (response.statusCode === 404) {
-              e.code = 'NotFound'
-              e.message = 'Not Found'
-            } else if (response.statusCode === 405) {
-              e.code = 'MethodNotAllowed'
-              e.message = 'Method Not Allowed'
-            } else if (response.statusCode === 501) {
-              e.code = 'MethodNotAllowed'
-              e.message = 'Method Not Allowed'
-            } else {
-              e.code = 'UnknownError'
-              e.message = `${response.statusCode}`
-            }
-            return cb(e)
+  ParseXml = require('xml-parser'),
+  helpers = require('./helpers.js'),
+  parseError = (response, cb) => {
+    if (typeof response !== 'undefined') {
+      response.pipe(Concat(errorXml => {
+        var e = {}
+        e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+        if (errorXml.length === 0) {
+          if (response.statusCode === 301) {
+            e.code = 'MovedPermanently'
+            e.message = 'Moved Permanently'
+          } else if (response.statusCode === 307) {
+            e.code = 'TemporaryRedirect'
+            e.message = 'Are you using the correct endpoint URL?'
+          } else if (response.statusCode === 403) {
+            e.code = 'AccessDenied'
+            e.message = 'Valid and authorized credentials required'
+          } else if (response.statusCode === 404) {
+            e.code = 'NotFound'
+            e.message = 'Not Found'
+          } else if (response.statusCode === 405) {
+            e.code = 'MethodNotAllowed'
+            e.message = 'Method Not Allowed'
+          } else if (response.statusCode === 501) {
+            e.code = 'MethodNotAllowed'
+            e.message = 'Method Not Allowed'
+          } else {
+            e.code = 'UnknownError'
+            e.message = `${response.statusCode}`
           }
+          return cb(e)
+        }
 
-          var parsedXml = ParseXml(errorXml.toString())
-          if (typeof parsedXml.root !== 'undefined') {
-            parsedXml.root.children.forEach(element => {
-              if (element.name === 'Code') {
-                e.code = element.content
-              } else if (element.name === 'Message') {
-                e.message = element.content
-              } else if (element.name === 'RequestId') {
-                e.requestid = element.content
-              } else if (element.name === 'Resource') {
-                e.resource = element.content
-              } else if (element.name === 'HostId') {
-                e.hostid = element.content
-              }
-            })
-            return cb(e)
-          }
-        }))
-      } else {
-        return cb('No response was received')
-      }
+        var parsedXml = ParseXml(errorXml.toString())
+        if (typeof parsedXml.root !== 'undefined') {
+          parsedXml.root.children.forEach(element => {
+            if (element.name === 'Code') {
+              e.code = element.content
+            } else if (element.name === 'Message') {
+              e.message = element.content
+            } else if (element.name === 'RequestId') {
+              e.requestid = element.content
+            } else if (element.name === 'Resource') {
+              e.resource = element.content
+            } else if (element.name === 'HostId') {
+              e.hostid = element.content
+            }
+          })
+          return cb(e)
+        }
+      }))
+    } else {
+      return cb('No response was received')
     }
+  }
 
 function parseListMultipartResult(bucket, key, response, cb) {
   response.pipe(Concat(xml => {
     var parsedXml = ParseXml(xml.toString()),
-        result = {
-          uploads: [],
-          prefixes: [],
-          isTruncated: false,
-          nextJob: null
-        },
-        nextJob = {
-          bucket: bucket,
-          key: key
-        },
-        ignoreTruncated = false
+      result = {
+        uploads: [],
+        prefixes: [],
+        isTruncated: false,
+        nextJob: null
+      },
+      nextJob = {
+        bucket: bucket,
+        key: key
+      },
+      ignoreTruncated = false
     parsedXml.root.children.forEach(element => {
       switch (element.name) {
-      case 'IsTruncated': {
-        result.isTruncated = element.content === 'true'
-        break
-      }
-      case 'NextKeyMarker': {
-        nextJob.keyMarker = element.content
-        break
-      }
-      case 'NextUploadIdMarker': {
-        nextJob.uploadIdMarker = element.content
-        break
-      }
+        case 'IsTruncated':
+          {
+            result.isTruncated = element.content === 'true'
+            break
+          }
+        case 'NextKeyMarker':
+          {
+            nextJob.keyMarker = element.content
+            break
+          }
+        case 'NextUploadIdMarker':
+          {
+            nextJob.uploadIdMarker = element.content
+            break
+          }
 
-      case 'CommonPrefixes': {  // todo, this is the only known way for now to propagate delimited entries
-                  var prefix = {
-                    bucket: bucket,
-                    prefix: null
+        case 'CommonPrefixes':
+          { // todo, this is the only known way for now to propagate delimited entries
+            var prefix = {
+              bucket: bucket,
+              prefix: null
+            }
+            element.children.forEach(xmlPrefix => {
+              switch (xmlPrefix.name) {
+                case 'Prefix':
+                  {
+                    prefix.prefix = xmlPrefix.content
+                    break
                   }
-                   element.children.forEach(xmlPrefix => {
-                       switch (xmlPrefix.name) {
-                           case 'Prefix': {
-                               prefix.prefix = xmlPrefix.content
-                               break
-                           }
-                       }
-                   })
-                   result.prefixes.push(prefix)
-                   break
-                }
-      case 'Upload': {
-        var upload = {
-          bucket: bucket,
-          key: null,
-          uploadId: null
-        }
-        element.children.forEach(xmlObject => {
-          switch (xmlObject.name) {
-          case 'Key': {
-            upload.key = xmlObject.content
+              }
+            })
+            result.prefixes.push(prefix)
             break
           }
-          case 'UploadId': {
-            upload.uploadId = xmlObject.content
+        case 'Upload':
+          {
+            var upload = {
+              bucket: bucket,
+              key: null,
+              uploadId: null
+            }
+            element.children.forEach(xmlObject => {
+              switch (xmlObject.name) {
+                case 'Key':
+                  {
+                    upload.key = xmlObject.content
+                    break
+                  }
+                case 'UploadId':
+                  {
+                    upload.uploadId = xmlObject.content
+                    break
+                  }
+                default:
+              }
+            })
+            result.uploads.push(upload)
             break
           }
-          default:
-          }
-        })
-        result.uploads.push(upload)
-        break
-      }
-      default:
+        default:
       }
     })
     if (result.isTruncated && !ignoreTruncated) {
@@ -159,14 +167,16 @@ function parseListBucketResult(response, stream) {
           var bucket = {}
           bucketListing.children.forEach(prop => {
             switch (prop.name) {
-            case 'Name': {
-              bucket.name = prop.content
-              break
-            }
-            case 'CreationDate': {
-              bucket.creationDate = prop.content
-              break
-            }
+              case 'Name':
+                {
+                  bucket.name = prop.content
+                  break
+                }
+              case 'CreationDate':
+                {
+                  bucket.creationDate = prop.content
+                  break
+                }
             }
           })
           stream.push(bucket)
@@ -180,52 +190,56 @@ function parseListBucketResult(response, stream) {
 function parseAcl(response, cb) {
   response.pipe(Concat((body) => {
     var xml = ParseXml(body.toString()),
-        publicRead = false,
-        publicWrite = false,
-        authenticatedRead = false,
-        authenticatedWrite = false
+      publicRead = false,
+      publicWrite = false,
+      authenticatedRead = false,
+      authenticatedWrite = false
 
     xml.root.children.forEach(element => {
       switch (element.name) {
-      case 'AccessControlList': {
-        element.children.forEach(grant => {
-          var granteeURL = null,
-              permission = null
-          grant.children.forEach(grantChild => {
-            switch (grantChild.name) {
-            case 'Grantee': {
-              grantChild.children.forEach(grantee => {
-                switch (grantee.name) {
-                case 'URI': {
-                  granteeURL = grantee.content
-                  break
-                }
+        case 'AccessControlList':
+          {
+            element.children.forEach(grant => {
+              var granteeURL = null,
+                permission = null
+              grant.children.forEach(grantChild => {
+                switch (grantChild.name) {
+                  case 'Grantee':
+                    {
+                      grantChild.children.forEach(grantee => {
+                        switch (grantee.name) {
+                          case 'URI':
+                            {
+                              granteeURL = grantee.content
+                              break
+                            }
+                        }
+                      })
+                      break
+                    }
+                  case 'Permission':
+                    {
+                      permission = grantChild.content
+                      break
+                    }
                 }
               })
-              break
-            }
-            case 'Permission': {
-              permission = grantChild.content
-              break
-            }
-            }
-          })
-          if (granteeURL === 'http://acs.amazonaws.com/groups/global/AllUsers') {
-            if (permission === 'READ') {
-              publicRead = true
-            } else if (permission === 'WRITE') {
-              publicWrite = true
-            }
-          } else if (granteeURL === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
-            if (permission === 'READ') {
-              authenticatedRead = true
-            } else if (permission === 'WRITE') {
-              authenticatedWrite = true
-            }
+              if (granteeURL === 'http://acs.amazonaws.com/groups/global/AllUsers') {
+                if (permission === 'READ') {
+                  publicRead = true
+                } else if (permission === 'WRITE') {
+                  publicWrite = true
+                }
+              } else if (granteeURL === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
+                if (permission === 'READ') {
+                  authenticatedRead = true
+                } else if (permission === 'WRITE') {
+                  authenticatedWrite = true
+                }
+              }
+            })
+            break
           }
-        })
-        break
-      }
       }
     })
     var cannedACL = 'unsupported-acl'

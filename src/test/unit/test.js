@@ -17,17 +17,17 @@
 require('source-map-support').install()
 
 var Assert = require('assert'),
-    Concat = require('concat-stream'),
-    Http = require('http'),
-    Nock = require('nock'),
-    Package = require('../../../package.json'),
-    Through2 = require('through2'),
-    Stream = require('stream'),
-    Rewire = require('rewire'),
-    Minio = Rewire('../../..'),
-    upload = require('../../../dist/main/upload.js'),
-    multipart = require('../../../dist/main/multipart.js'),
-    MockTransport = require('./transport.js')
+  Concat = require('concat-stream'),
+  Http = require('http'),
+  Nock = require('nock'),
+  Package = require('../../../package.json'),
+  Through2 = require('through2'),
+  Stream = require('stream'),
+  Rewire = require('rewire'),
+  Minio = Rewire('../../..'),
+  upload = require('../../../dist/main/upload.js'),
+  multipart = require('../../../dist/main/multipart.js'),
+  MockTransport = require('./transport.js')
 
 describe('Client', () => {
   var nockRequests = []
@@ -43,18 +43,19 @@ describe('Client', () => {
     })
   })
   var MockResponse = (address) => {
-    var request = Nock(address),
+      var request = Nock(address),
         trace = new Error().stack
-    nockRequests.push({
-      request: request,
-      trace: trace
+      nockRequests.push({
+        request: request,
+        trace: trace
+      })
+      return request
+    },
+    client = new Minio({
+      url: 'http://localhost:9000',
+      accessKey: 'accesskey',
+      secretKey: 'secretkey'
     })
-    return request
-  }, client = new Minio({
-    url: 'http://localhost:9000',
-    accessKey: 'accesskey',
-    secretKey: 'secretkey'
-  })
   describe('new client', () => {
     it('should work with http', () => {
       var client = new Minio({
@@ -236,9 +237,9 @@ describe('Client', () => {
   describe('Authentication', () => {
     describe('not set', () => {
       var transport = new MockTransport(),
-          client = new Minio({
-        url: 'http://localhost:9000'
-      }, transport)
+        client = new Minio({
+          url: 'http://localhost:9000'
+        }, transport)
       it('should not send auth info without keys', (done) => {
         client.transport.addRequest((params) => {
           Assert.deepEqual(params, {
@@ -267,11 +268,11 @@ describe('Client', () => {
     describe('set with access and secret keys', () => {
       it('should not send auth info without keys', (done) => {
         var transport = new MockTransport(),
-            client = new Minio({
-              url: 'http://localhost:9000',
-              accessKey: 'accessKey',
-              secretKey: 'secretKey'
-            }, transport)
+          client = new Minio({
+            url: 'http://localhost:9000',
+            accessKey: 'accessKey',
+            secretKey: 'secretKey'
+          }, transport)
         client.transport.addRequest((params) => {
           Assert.equal(true, params.headers.authorization !== null)
           Assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
@@ -536,9 +537,9 @@ describe('Client', () => {
     describe('#setBucketACL(bucket, acl, cb)', () => {
       it('should set acl', (done) => {
         var transport = new MockTransport(),
-            client = new Minio({
-              url: 'http://localhost:9000'
-            }, transport)
+          client = new Minio({
+            url: 'http://localhost:9000'
+          }, transport)
         client.transport.addRequest((params) => {
           Assert.deepEqual(params, {
             host: 'localhost',
@@ -992,40 +993,40 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket', {
-          recursive: true,
-        }),
-            results = [],
-            expectedResults = [{
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key1',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key2',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key3',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key4',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key5',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key6',
-              'size': 1661
-            }]
+            recursive: true,
+          }),
+          results = [],
+          expectedResults = [{
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key1',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key2',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key3',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key4',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key5',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key6',
+            'size': 1661
+          }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
           end()
@@ -1040,41 +1041,41 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000&prefix=key').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket', {
-          prefix: 'key',
-          recursive: true,
-        }),
-            results = [],
-            expectedResults = [{
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key1',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key2',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key3',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key4',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key5',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key6',
-              'size': 1661
-            }]
+            prefix: 'key',
+            recursive: true,
+          }),
+          results = [],
+          expectedResults = [{
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key1',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key2',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key3',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key4',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key5',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key6',
+            'size': 1661
+          }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
           end()
@@ -1089,40 +1090,40 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         var stream = client.listObjects('bucket', {
-          recursive: true
-        }),
-            results = [],
-            expectedResults = [{
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key1',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key2',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key3',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key4',
-              'size': 1661
-            }, {
-              'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-              'lastModified': '2015-05-05T02:21:15.716Z',
-              'name': 'key5',
-              'size': 11
-            }, {
-              'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-              'lastModified': '2015-05-05T20:36:17.498Z',
-              'name': 'key6',
-              'size': 1661
-            }]
+            recursive: true
+          }),
+          results = [],
+          expectedResults = [{
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key1',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key2',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key3',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key4',
+            'size': 1661
+          }, {
+            'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
+            'lastModified': '2015-05-05T02:21:15.716Z',
+            'name': 'key5',
+            'size': 11
+          }, {
+            'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
+            'lastModified': '2015-05-05T20:36:17.498Z',
+            'name': 'key6',
+            'size': 1661
+          }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
           end()
@@ -1367,10 +1368,10 @@ describe('Client', () => {
   describe('unexposed functions', () => {
     describe('listMultipartUploads(transport, params, bucket, key, objectMarker, uploadIdMarker, delimiter, callback', () => {
       var method = multipart.listMultipartUploads,
-          params = {
-            host: 'localhost',
-            port: 9000
-          }
+        params = {
+          host: 'localhost',
+          port: 9000
+        }
       describe('without a key', () => {
         it('should list uploads', (done) => {
           MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -1514,15 +1515,15 @@ describe('Client', () => {
                 bucket: 'golang',
                 key: 'go1.4.2.1',
                 uploadId: 'lpF5gD3b1bFxPjseZwJSf4FR_3UjP0grnAMy2iRwzXx5Ph0'
-                }, {
+              }, {
                 bucket: 'golang',
                 key: 'go1.4.2',
                 uploadId: '0Elr5Z_OhUOdiivZabenC5JOaHCH0ThAdpC0rrLT5ns-pqh'
-                }, {
-                  bucket: "golang",
-                  key: "go1.4.2.linux-amd64.tar.gz",
-                  uploadId: "vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ"
-                }],
+              }, {
+                bucket: "golang",
+                key: "go1.4.2.linux-amd64.tar.gz",
+                uploadId: "vYir4Iyo0-wVnZqxZ7PK6KwNVZktv-5uULHiM-t50bO3_LJ"
+              }],
               nextJob: null
             })
             done()
@@ -1532,10 +1533,10 @@ describe('Client', () => {
     })
     describe('abortMultipartUpload', () => {
       var method = multipart.abortMultipartUpload,
-          params = {
-            host: 'localhost',
-            port: 9000
-          }
+        params = {
+          host: 'localhost',
+          port: 9000
+        }
       it('should remove an incomplete upload', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket/object?uploadId=uploadid').reply(204)
         method(Http, params, 'bucket', 'object', 'uploadid', (e) => {
@@ -1553,10 +1554,10 @@ describe('Client', () => {
     })
     describe('#initiateNewMultipartUpload(transport, params, bucket, object, contentType, cb)', () => {
       var method = upload.initiateNewMultipartUpload,
-          params = {
-            host: 'localhost',
-            port: 9000
-          }
+        params = {
+          host: 'localhost',
+          port: 9000
+        }
       it('should initiate a new multipart upload', (done) => {
         MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
         method(Http, params, 'bucket', 'object', null, (e, uploadID) => {
@@ -1572,20 +1573,20 @@ describe('Client', () => {
     })
     describe('#completeMultipartUpload(transport, params, bucket, object, uploadID, etags cb)', () => {
       var method = upload.completeMultipartUpload,
-          params = {
-            host: 'localhost',
-            port: 9000
-          },
-          etags = [{
-            part: 1,
-            etag: 'etag1'
-          }, {
-            part: 2,
-            etag: 'etag2'
-          }, {
-            part: 3,
-            etag: 'etag3'
-          }]
+        params = {
+          host: 'localhost',
+          port: 9000
+        },
+        etags = [{
+          part: 1,
+          etag: 'etag1'
+        }, {
+          part: 2,
+          etag: 'etag2'
+        }, {
+          part: 3,
+          etag: 'etag3'
+        }]
       it('should complete a multipart upload', (done) => {
         MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid', '<CompleteMultipartUpload><Part><PartNumber>1</PartNumber><ETag>etag1</ETag></Part><Part><PartNumber>2</PartNumber><ETag>etag2</ETag></Part><Part><PartNumber>3</PartNumber><ETag>etag3</ETag></Part></CompleteMultipartUpload>').reply(200)
         method(Http, params, 'bucket', 'object', 'uploadid', etags, done)
@@ -1597,10 +1598,10 @@ describe('Client', () => {
     })
     describe('#listParts(transport, params, bucket, object, uploadId, marker, cb)', () => {
       var method = multipart.listParts,
-          params = {
-            host: 'localhost',
-            port: 9000
-          }
+        params = {
+          host: 'localhost',
+          port: 9000
+        }
       it('should return etags and truncated false', (done) => {
         var etags = {
           isTruncated: false,
@@ -1669,10 +1670,10 @@ describe('Client', () => {
     })
     describe('#listAllParts(transport, params, bucket, object, uploadId)', () => {
       var method = multipart.listAllParts,
-          params = {
-            host: 'localhost',
-            port: 9000
-          }
+        params = {
+          host: 'localhost',
+          port: 9000
+        }
       it('should list all parts', (done) => {
         var expectedResults = [{
           part: 1,
@@ -1724,7 +1725,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').get('/bucket/object?part-number-marker=3&uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>6</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>true</IsTruncated><Part><PartNumber>4</PartNumber><ETag>etag4</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>5</PartNumber><ETag>etag5</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>6</PartNumber><ETag>etag6</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
         MockResponse('http://localhost:9000').get('/bucket/object?part-number-marker=6&uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>7</PartNumber><ETag>etag7</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>8</PartNumber><ETag>etag8</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>9</PartNumber><ETag>etag9</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
         var stream = method(Http, params, 'bucket', 'object', 'uploadid'),
-            results = []
+          results = []
         stream.pipe(Through2.obj(function(part, enc, end) {
           results.push(part)
           end()
