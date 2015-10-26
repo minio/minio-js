@@ -524,6 +524,24 @@ class Client {
     simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
   }
 
+  presignedPutObject(bucket, key, expires) {
+    if (!helpers.validBucketName(bucket)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    }
+    if (!key || key.trim() === '') {
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+    }
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      method: 'put',
+      scheme: this.scheme,
+      expires: expires
+    }
+    return getV4PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
+  }
+
   presignedGetObject(bucket, key, expires) {
     if (!helpers.validBucketName(bucket)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
