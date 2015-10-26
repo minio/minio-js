@@ -15,12 +15,12 @@
  */
 
 var Concat = require('concat-stream'),
-    Stream = require('stream'),
-    ParseXml = require('xml-parser'),
-    Through2 = require('through2'),
-    helpers = require('./helpers.js'),
-    signV4 = require('./signing.js').signV4,
-    xmlParsers = require('./xml-parsers.js')
+  Stream = require('stream'),
+  ParseXml = require('xml-parser'),
+  Through2 = require('through2'),
+  helpers = require('./helpers.js'),
+  signV4 = require('./signing.js').signV4,
+  xmlParsers = require('./xml-parsers.js')
 
 var listAllIncompleteUploads = function(transport, params, bucket, object, delimiter) {
   var errored = null
@@ -45,7 +45,7 @@ var listAllIncompleteUploads = function(transport, params, bucket, object, delim
         this.push(upload)
       })
       r.prefixes.forEach(prefix => {
-          this.push(prefix)
+        this.push(prefix)
       })
       if (r.isTruncated) {
         queue.push({
@@ -139,43 +139,43 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 var removeUploads = (transport, params, bucket, key, cb) => {
   var ignoreTruncated = false
   var errored = null,
-      queue = new Stream.Readable({
-        objectMode: true
-      })
+    queue = new Stream.Readable({
+      objectMode: true
+    })
 
   queue._read = function() {}
   queue.pipe(Through2.obj(function(job, enc, done) {
+    if (errored) {
+      return done()
+    }
+    listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, job.delimiter, (e, result) => {
       if (errored) {
         return done()
       }
-      listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, job.delimiter, (e, result) => {
-        if (errored) {
-          return done()
+      if (e) {
+        errored = e
+        queue.push(null)
+        return done()
+      }
+      result.uploads.forEach(element => {
+        if (element.key === key) {
+          ignoreTruncated = true
+          this.push(element)
         }
-        if (e) {
-          errored = e
-          queue.push(null)
-          return done()
-        }
-        result.uploads.forEach(element => {
-          if (element.key === key) {
-              ignoreTruncated = true
-              this.push(element)
-          }
-        })
-        if (result.isTruncated && !ignoreTruncated) {
-          queue.push({
-            bucket: result.nextJob.bucket,
-            key: result.nextJob.key,
-            keyMarker: result.nextJob.keyMarker,
-            uploadIdMarker: result.nextJob.uploadIdMarker
-          })
-        } else {
-          queue.push(null)
-        }
-        done()
       })
-    }))
+      if (result.isTruncated && !ignoreTruncated) {
+        queue.push({
+          bucket: result.nextJob.bucket,
+          key: result.nextJob.key,
+          keyMarker: result.nextJob.keyMarker,
+          uploadIdMarker: result.nextJob.uploadIdMarker
+        })
+      } else {
+        queue.push(null)
+      }
+      done()
+    })
+  }))
     .pipe(Through2.obj(function(upload, enc, done) {
       if (errored) {
         return done()

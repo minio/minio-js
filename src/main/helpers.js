@@ -16,7 +16,7 @@
 
 function uriEscape(string) {
   var output = string
-  // this was originally escape instead of encodeURIComponent but escape is deprecated.
+    // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
 
   // AWS percent-encodes some extra non-standard characters in a URI
@@ -29,7 +29,7 @@ function uriEscape(string) {
 
 function uriResourceEscape(string) {
   var output = string
-  // this was originally escape instead of encodeURIComponent but escape is deprecated.
+    // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
   output = output.replace('%2F', '/')
 

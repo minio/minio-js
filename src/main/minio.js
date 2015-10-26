@@ -17,51 +17,54 @@
 require('source-map-support').install()
 
 var Crypto = require('crypto'),
-    Http = require('http'),
-    Https = require('https'),
-    Package = require('../../package.json'),
-    Stream = require('stream'),
-    Through2 = require('through2'),
-    Url = require('url'),
-    Xml = require('xml'),
-    helpers = require('./helpers.js'),
-    multipart = require('./multipart.js'),
-    objectList = require('./list-objects.js'),
-    signV4 = require('./signing.js').signV4,
-    getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
-    simpleRequests = require('./simple-requests.js'),
-    upload = require('./upload.js'),
-    xmlParsers = require('./xml-parsers.js'),
-    errors = require('./errors.js')
+  Http = require('http'),
+  Https = require('https'),
+  Package = require('../../package.json'),
+  Stream = require('stream'),
+  Through2 = require('through2'),
+  Url = require('url'),
+  Xml = require('xml'),
+  helpers = require('./helpers.js'),
+  multipart = require('./multipart.js'),
+  objectList = require('./list-objects.js'),
+  signV4 = require('./signing.js').signV4,
+  getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
+  simpleRequests = require('./simple-requests.js'),
+  upload = require('./upload.js'),
+  xmlParsers = require('./xml-parsers.js'),
+  errors = require('./errors.js')
 
 class Client {
   constructor(params, transport) {
     var parsedUrl = Url.parse(params.url),
-        port = +parsedUrl.port
+      port = +parsedUrl.port
 
     if (transport) {
       this.transport = transport
     } else {
       switch (parsedUrl.protocol) {
-      case 'http:': {
-        this.transport = Http
-        this.scheme = 'http'
-        if (port === 0) {
-          port = 80
-        }
-        break
-      }
-      case 'https:': {
-        this.transport = Https
-        this.scheme = 'https'
-        if (port === 0) {
-          port = 443
-        }
-        break
-      }
-      default: {
-        throw new errors.InvalidProtocolException('Unknown protocol: ' + parsedUrl.protocol)
-      }
+        case 'http:':
+          {
+            this.transport = Http
+            this.scheme = 'http'
+            if (port === 0) {
+              port = 80
+            }
+            break
+          }
+        case 'https:':
+          {
+            this.transport = Https
+            this.scheme = 'https'
+            if (port === 0) {
+              port = 443
+            }
+            break
+          }
+        default:
+          {
+            throw new errors.InvalidProtocolException('Unknown protocol: ' + parsedUrl.protocol)
+          }
       }
     }
     this.params = {
@@ -133,16 +136,16 @@ class Client {
     var hash = Crypto.createHash('sha256')
     hash.update(payload)
     var sha256 = hash.digest('hex').toLowerCase(),
-        requestParams = {
-          host: this.params.host,
-          port: this.params.port,
-          method: 'PUT',
-          path: `/${bucket}`,
-          headers: {
-            'Content-Length': payload.length,
-            'x-amz-acl': acl
-          }
+      requestParams = {
+        host: this.params.host,
+        port: this.params.port,
+        method: 'PUT',
+        path: `/${bucket}`,
+        headers: {
+          'Content-Length': payload.length,
+          'x-amz-acl': acl
         }
+      }
 
     signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
 
@@ -191,7 +194,7 @@ class Client {
   listIncompleteUploads(bucket, prefix, recursive) {
     var delimiter = null
     if (!recursive) {
-        delimiter = "/"
+      delimiter = "/"
     }
     return multipart.listAllIncompleteUploads(this.transport, this.params, bucket, prefix, delimiter)
   }
@@ -216,12 +219,12 @@ class Client {
     }
 
     var query = `?acl`,
-        requestParams = {
-          host: this.params.host,
-          port: this.params.port,
-          method: 'GET',
-          path: `/${bucket}${query}`
-        }
+      requestParams = {
+        host: this.params.host,
+        port: this.params.port,
+        method: 'GET',
+        path: `/${bucket}${query}`
+      }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
@@ -246,15 +249,15 @@ class Client {
     // we should make sure to set this query parameter, but on the other hand
     // the call apparently succeeds without it to s3.  For clarity lets do it anyways
     var query = `?acl`,
-        requestParams = {
-          host: this.params.host,
-          port: this.params.port,
-          method: 'PUT',
-          path: `/${bucket}${query}`,
-          headers: {
-            'x-amz-acl': acl
-          }
+      requestParams = {
+        host: this.params.host,
+        port: this.params.port,
+        method: 'PUT',
+        path: `/${bucket}${query}`,
+        headers: {
+          'x-amz-acl': acl
         }
+      }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
@@ -351,7 +354,7 @@ class Client {
 
     if (size > 5 * 1024 * 1024) {
       var stream = multipart.listAllIncompleteUploads(this.transport, this.params, bucket, key),
-          uploadId = null
+        uploadId = null
       stream.on('error', (e) => {
         cb(e)
       })
@@ -368,17 +371,17 @@ class Client {
               return
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType,
-                                uploadId, [], size, r, (e, etags) => {
-              if (e) {
-                done()
-                cb(e)
-                return
-              }
-              return upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                done()
-                cb(e)
+              uploadId, [], size, r, (e, etags) => {
+                if (e) {
+                  done()
+                  cb(e)
+                  return
+                }
+                return upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                  done()
+                  cb(e)
+                })
               })
-            })
           })
         } else {
           var parts = multipart.listAllParts(self.transport, self.params, bucket, key, uploadId)
@@ -386,7 +389,7 @@ class Client {
             cb(e)
           })
           var partsErrored = null,
-              partsArray = []
+            partsArray = []
           parts.pipe(Through2.obj(function(part, enc, partDone) {
             partsArray.push(part)
             partDone()
@@ -395,19 +398,19 @@ class Client {
               return partDone(partsErrored)
             }
             upload.streamUpload(self.transport, self.params, bucket, key, contentType,
-                                uploadId, partsArray, size, r, (e, etags) => {
-              if (partsErrored) {
-                partDone()
-              }
-              if (e) {
-                partDone()
-                return cb(e)
-              }
-              upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                partDone()
-                return cb(e)
+              uploadId, partsArray, size, r, (e, etags) => {
+                if (partsErrored) {
+                  partDone()
+                }
+                if (e) {
+                  partDone()
+                  return cb(e)
+                }
+                upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                  partDone()
+                  return cb(e)
+                })
               })
-            })
           }))
         }
       }))
@@ -421,8 +424,8 @@ class Client {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
     }
     var self = this,
-        prefix = null,
-        delimiter = null
+      prefix = null,
+      delimiter = null
     if (params) {
       if (params.prefix) {
         prefix = params.prefix
@@ -440,31 +443,31 @@ class Client {
     queue._read = function() {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
       objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
-                      currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
-        if (e) {
-          return done(e)
-        }
-        var marker = null
-        r.objects.forEach(object => {
-          marker = object.name
-          this.push(object)
-        })
-        if (r.isTruncated) {
-          if (delimiter) {
-            marker = r.nextMarker
+        currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
+          if (e) {
+            return done(e)
           }
-          queue.push({
-            bucket: currentRequest.bucket,
-            prefix: currentRequest.prefix,
-            marker: marker,
-            delimiter: currentRequest.delimiter,
-            maxKeys: currentRequest.maxKeys
+          var marker = null
+          r.objects.forEach(object => {
+            marker = object.name
+            this.push(object)
           })
-        } else {
-          queue.push(null)
-        }
-        done()
-      })
+          if (r.isTruncated) {
+            if (delimiter) {
+              marker = r.nextMarker
+            }
+            queue.push({
+              bucket: currentRequest.bucket,
+              prefix: currentRequest.prefix,
+              marker: marker,
+              delimiter: currentRequest.delimiter,
+              maxKeys: currentRequest.maxKeys
+            })
+          } else {
+            queue.push(null)
+          }
+          done()
+        })
     }))
     queue.push({
       bucket: bucket,

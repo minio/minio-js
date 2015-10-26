@@ -15,57 +15,57 @@
  */
 
 var BlockStream2 = require('block-stream2'),
-    Concat = require('concat-stream'),
-    Crypto = require('crypto'),
-    ParseXml = require('xml-parser'),
-    Stream = require('stream'),
-    Through2 = require('through2'),
-    Xml = require('xml'),
-    signV4 = require('./signing.js').signV4,
-    xmlParsers = require('./xml-parsers.js'),
-    helpers = require('./helpers.js'),
-    initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
-        var requestParams = {
-            host: params.host,
-            port: params.port,
-            path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
-            method: 'POST',
-            headers: {
-                'Content-Type': contentType
-            }
-        }
-
-        signV4(requestParams, '', params.accessKey, params.secretKey)
-
-        var request = transport.request(requestParams, (response) => {
-            if (response.statusCode !== 200) {
-                return xmlParsers.parseError(response, cb)
-            }
-            response.pipe(Concat(xml => {
-                var parsedXml = ParseXml(xml.toString()),
-                uploadId = null
-                parsedXml.root.children.forEach(element => {
-                    if (element.name === 'UploadId') {
-                        uploadId = element.content
-                    }
-                })
-
-                if (uploadId) {
-                    return cb(null, uploadId)
-                }
-                cb('unable to get upload id')
-            }))
-        })
-        request.end()
+  Concat = require('concat-stream'),
+  Crypto = require('crypto'),
+  ParseXml = require('xml-parser'),
+  Stream = require('stream'),
+  Through2 = require('through2'),
+  Xml = require('xml'),
+  signV4 = require('./signing.js').signV4,
+  xmlParsers = require('./xml-parsers.js'),
+  helpers = require('./helpers.js'),
+  initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
+    var requestParams = {
+      host: params.host,
+      port: params.port,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType
+      }
     }
+
+    signV4(requestParams, '', params.accessKey, params.secretKey)
+
+    var request = transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        return xmlParsers.parseError(response, cb)
+      }
+      response.pipe(Concat(xml => {
+        var parsedXml = ParseXml(xml.toString()),
+          uploadId = null
+        parsedXml.root.children.forEach(element => {
+          if (element.name === 'UploadId') {
+            uploadId = element.content
+          }
+        })
+
+        if (uploadId) {
+          return cb(null, uploadId)
+        }
+        cb('unable to get upload id')
+      }))
+    })
+    request.end()
+  }
 
 function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
   var part = 1,
-      errored = null,
-      etags = [],
-      // compute size
-      partSize = calculatePartSize(totalSize),
-      totalSeen = 0
+    errored = null,
+    etags = [],
+    // compute size
+    partSize = calculatePartSize(totalSize),
+    totalSeen = 0
 
   r.on('finish', function() {})
   r.pipe(BlockStream2({
@@ -89,7 +89,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       part = part + 1
       if (partsArray.length > 0) {
         var curJob = partsArray.shift(),
-            hash = Crypto.createHash('md5')
+          hash = Crypto.createHash('md5')
         hash.update(data)
         var md5 = hash.digest('hex').toLowerCase()
         if (curJob.etag === md5) {
@@ -107,20 +107,20 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
       dataStream.push(null)
       dataStream._read = function() {}
       doPutObject(transport, params, bucket, key, contentType, data.length,
-                  uploadId, curPart, dataStream, (e, etag) => {
-        if (errored) {
+        uploadId, curPart, dataStream, (e, etag) => {
+          if (errored) {
+            return done()
+          }
+          if (e) {
+            errored = e
+            return done()
+          }
+          etags.push({
+            part: curPart,
+            etag: etag
+          })
           return done()
-        }
-        if (e) {
-          errored = e
-          return done()
-        }
-        etags.push({
-          part: curPart,
-          etag: etag
         })
-        return done()
-      })
     },
     function(done) {
       done()
@@ -135,9 +135,9 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
 
   function calculatePartSize(size) {
     var minimumPartSize = 5 * 1024 * 1024, // 5MB
-        maximumPartSize = 5 * 1025 * 1024 * 1024,
-        // using 10000 may cause part size to become too small, and not fit the entire object in
-        partSize = Math.floor(size / 9999)
+      maximumPartSize = 5 * 1025 * 1024 * 1024,
+      // using 10000 may cause part size to become too small, and not fit the entire object in
+      partSize = Math.floor(size / 9999)
 
     if (partSize > maximumPartSize) {
       return maximumPartSize
@@ -160,24 +160,24 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       return cb('actual size !== specified size')
     }
     var hash256 = Crypto.createHash('sha256'),
-        hashMD5 = Crypto.createHash('md5')
+      hashMD5 = Crypto.createHash('md5')
 
     hash256.update(data)
     hashMD5.update(data)
 
     var sha256 = hash256.digest('hex').toLowerCase(),
-        md5 = hashMD5.digest('base64'),
-        requestParams = {
-          host: params.host,
-          port: params.port,
-          path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
-          method: 'PUT',
-          headers: {
-            'Content-Length': size,
-            'Content-Type': contentType,
-            'Content-MD5': md5
-          }
+      md5 = hashMD5.digest('base64'),
+      requestParams = {
+        host: params.host,
+        port: params.port,
+        path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
+        method: 'PUT',
+        headers: {
+          'Content-Length': size,
+          'Content-Type': contentType,
+          'Content-MD5': md5
         }
+      }
 
     signV4(requestParams, sha256, params.accessKey, params.secretKey)
 
@@ -204,12 +204,12 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
 
 function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
   var requestParams = {
-    host: params.host,
-    port: params.port,
-    path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploadId=${uploadId}`,
-    method: 'POST'
-  },
-      parts = []
+      host: params.host,
+      port: params.port,
+      path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploadId=${uploadId}`,
+      method: 'POST'
+    },
+    parts = []
 
   etags.forEach(element => {
     parts.push({
@@ -222,15 +222,15 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
   })
 
   var payloadObject = {
-    CompleteMultipartUpload: parts
-  },
-      payload = Xml(payloadObject),
-      hash = Crypto.createHash('sha256')
+      CompleteMultipartUpload: parts
+    },
+    payload = Xml(payloadObject),
+    hash = Crypto.createHash('sha256')
 
   hash.update(payload)
 
   var sha256 = hash.digest('hex').toLowerCase(),
-      stream = new Stream.Readable()
+    stream = new Stream.Readable()
 
   stream._read = function() {}
   stream.push(payload)
