@@ -36,6 +36,10 @@ function uriResourceEscape(string) {
   return output
 }
 
+function getScope(region, date) {
+  return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
+}
+
 function getRegion(host) {
   var region = {
     's3.amazonaws.com': 'us-east-1',
@@ -89,6 +93,7 @@ function validateBucketName(bucket) {
 module.exports = {
   uriEscape: uriEscape,
   getRegion: getRegion,
+  getScope: getScope,
   uriResourceEscape: uriResourceEscape,
   validBucketName: validateBucketName
 }

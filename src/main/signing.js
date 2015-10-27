@@ -57,7 +57,8 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   hmac.update(stringToSign)
 
   var signedRequest = hmac.digest('hex').toLowerCase().trim(),
-    credentials = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`,
+    scope = helpers.getScope(region, requestDate),
+    credentials = `${accessKey}/ ${scope}`,
     authorization = `Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
   request.headers.authorization = 'AWS4-HMAC-SHA256 ' + authorization
@@ -154,9 +155,10 @@ var getSigningKey = function(date, region, secretKey) {
 }
 
 var getStringToSign = function(canonicalRequestHash, requestDate, region) {
+  var scope = helpers.getScope(region, requestDate)
   var stringToSign = 'AWS4-HMAC-SHA256\n'
   stringToSign += requestDate.format('YYYYMMDDTHHmmss') + 'Z\n'
-  stringToSign += `${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request\n`
+  stringToSign += `${scope}\n`
   stringToSign += canonicalRequestHash
   return stringToSign
 }
@@ -204,7 +206,8 @@ var getV4PresignedUrl = function(request, accessKey, secretKey) {
     })
 
     var requestResource = request.path,
-      credential = `${accessKey}/${requestDate.format('YYYYMMDD')}/${region}/s3/aws4_request`,
+      scope = helpers.getScope(region, requestDate),
+      credential = `${accessKey}/${scope}`,
       authHeader = 'AWS4-HMAC-SHA256',
       iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
 
