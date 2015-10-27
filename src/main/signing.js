@@ -161,6 +161,15 @@ var getStringToSign = function(canonicalRequestHash, requestDate, region) {
   return stringToSign
 }
 
+var postPresignSignature = function(region, date, secretKey, policyBase64) {
+  var signingKey = getSigningKey(date, region, secretKey)
+  var hmac = Crypto.createHmac('sha256', signingKey)
+
+  hmac.update(policyBase64)
+
+  return hmac.digest('hex').toLowerCase().trim()
+}
+
 var getV4PresignedUrl = function(request, accessKey, secretKey) {
   function getCanonicalRequest(request) {
     var headerKeys = [],
@@ -263,5 +272,6 @@ var getV4PresignedUrl = function(request, accessKey, secretKey) {
 
 module.exports = {
   signV4: signV4,
-  getV4PresignedUrl: getV4PresignedUrl
+  getV4PresignedUrl: getV4PresignedUrl,
+  postPresignSignature: postPresignSignature
 }
