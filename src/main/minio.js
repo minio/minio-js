@@ -24,9 +24,11 @@ var Crypto = require('crypto'),
   Through2 = require('through2'),
   Url = require('url'),
   Xml = require('xml'),
+  Moment = require('moment'),
   helpers = require('./helpers.js'),
   multipart = require('./multipart.js'),
   objectList = require('./list-objects.js'),
+  sign = require('./signing.js'),
   signV4 = require('./signing.js').signV4,
   getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
   simpleRequests = require('./simple-requests.js'),
@@ -558,6 +560,92 @@ class Client {
       expires: expires
     }
     return getV4PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
+  }
+
+  newPostPolicy() {
+    return new PostPolicy()
+  }
+
+  presignedPostPolicy(postPolicy) {
+    var date = Moment.utc()
+    var region = helpers.getRegion(this.params.host)
+    var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
+
+    function getScope() {
+      return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
+    }
+
+    postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
+    postPolicy.formData['x-amz-date'] = dateStr
+
+    postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
+    postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
+
+    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope()])
+    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope()
+
+    var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
+
+    postPolicy.formData.policy = policyBase64
+
+    var signature = sign.postPresignSignature(region, date, this.params.secretKey, policyBase64)
+
+    postPolicy.formData['x-amz-signature'] = signature
+
+    return postPolicy.formData
+  }
+}
+
+class PostPolicy {
+  constructor() {
+    this.policy = {
+      conditions: []
+    }
+    this.formData = {}
+  }
+
+  setExpires(nativedate) {
+    date = Moment(nativedate)
+    if (!date) {
+      throw new errors("date can not be null")
+    }
+
+    function getExpirationString(date) {
+      return date.format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
+    }
+    this.policy.expiration = getExpirationString(date)
+  }
+
+  setKey(key) {
+    if (!key) {
+      throw new errors("key can not be null")
+    }
+    this.policy.conditions.push(["eq", "$key", key])
+    this.formData.key = key
+  }
+
+  setKeyStartsWith(prefix) {
+    if (!prefix) {
+      throw new errors("key prefix can not be null")
+    }
+    this.policy.conditions.push(["starts-with", "$key", keyStartsWith])
+    this.formData.key = key
+  }
+
+  setBucket(bucket) {
+    if (!bucket) {
+      throw new errors("bucket can not be null")
+    }
+    this.policy.conditions.push(["eq", "$bucket", bucket])
+    this.formData.bucket = bucket
+  }
+
+  setContentType(type) {
+    if (!type) {
+      throw new errors("content-type can not be null")
+    }
+    this.policy.conditions.push(["eq", "$Content-Type", type])
+    this.formData["Content-Type"] = type
   }
 }
 
