@@ -571,18 +571,14 @@ class Client {
     var region = helpers.getRegion(this.params.host)
     var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
 
-    function getScope() {
-      return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
-    }
-
     postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
     postPolicy.formData['x-amz-date'] = dateStr
 
     postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
     postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
 
-    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope()])
-    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope()
+    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + helpers.getScope(region, date)])
+    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + helpers.getScope(region, date)
 
     var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
 
@@ -605,7 +601,7 @@ class PostPolicy {
   }
 
   setExpires(nativedate) {
-    date = Moment(nativedate)
+    var date = Moment(nativedate)
     if (!date) {
       throw new errors("date can not be null")
     }
