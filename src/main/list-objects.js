@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-var Concat = require('concat-stream'),
-  ParseXml = require('xml-parser'),
-  xmlParsers = require('./xml-parsers.js'),
-  helpers = require('./helpers.js'),
-  signV4 = require('./signing.js').signV4,
-  getObjectList = (transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) => {
+import Concat from 'concat-stream';
+import ParseXml from 'xml-parser';
+
+import { parseError } from './xml-parsers.js';
+import { uriEscape, uriResourceEscape } from './helpers.js';
+import { signV4 } from './signing.js';
+
+export function getObjectList(transport, params, bucket, prefix, marker, delimiter, maxKeys, cb) {
     var queries = []
       // escape every value in query string, except maxKeys
     if (prefix) {
-      prefix = helpers.uriEscape(prefix)
+      prefix = uriEscape(prefix)
       queries.push(`prefix=${prefix}`)
     }
     if (marker) {
-      marker = helpers.uriEscape(marker)
+      marker = uriEscape(marker)
       queries.push(`marker=${marker}`)
     }
     if (delimiter) {
-      delimiter = helpers.uriEscape(delimiter)
+      delimiter = uriEscape(delimiter)
       queries.push(`delimiter=${delimiter}`)
     }
     // no need to escape maxKeys
@@ -57,7 +59,7 @@ var Concat = require('concat-stream'),
 
     var req = transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       response.pipe(Concat((body) => {
         var xml = ParseXml(body.toString()),
@@ -140,7 +142,3 @@ var Concat = require('concat-stream'),
     })
     req.end()
   }
-
-module.exports = {
-  list: getObjectList
-}

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-var Moment = require('moment'),
-  Crypto = require('crypto'),
-  helpers = require('./helpers.js')
+import Moment from 'moment';
+import Crypto from 'crypto';
+import { uriEscape, getRegion, getScope } from './helpers.js';
 
-var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
+export function signV4(request, dataShaSum256, accessKey, secretKey) {
   if (!accessKey || !secretKey) {
     return
   }
@@ -31,7 +31,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
     request.headers = {}
   }
 
-  var region = helpers.getRegion(request.host),
+  var region = getRegion(request.host),
     host = request.host
 
   if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
@@ -57,7 +57,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   hmac.update(stringToSign)
 
   var signedRequest = hmac.digest('hex').toLowerCase().trim(),
-    scope = helpers.getScope(region, requestDate),
+    scope = getScope(region, requestDate),
     credentials = `${accessKey}/ ${scope}`,
     authorization = `Credential=${credentials}, SignedHeaders=${signedHeaders}, Signature=${signedRequest}`
 
@@ -145,7 +145,7 @@ var signV4 = (request, dataShaSum256, accessKey, secretKey) => {
   }
 }
 
-var getSigningKey = function(date, region, secretKey) {
+export function getSigningKey(date, region, secretKey) {
   var key = 'AWS4' + secretKey,
     dateLine = date.format('YYYYMMDD'),
     hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary'),
@@ -154,8 +154,8 @@ var getSigningKey = function(date, region, secretKey) {
   return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
 }
 
-var getStringToSign = function(canonicalRequestHash, requestDate, region) {
-  var scope = helpers.getScope(region, requestDate)
+export function getStringToSign(canonicalRequestHash, requestDate, region) {
+  var scope = getScope(region, requestDate)
   var stringToSign = 'AWS4-HMAC-SHA256\n'
   stringToSign += requestDate.format('YYYYMMDDTHHmmss') + 'Z\n'
   stringToSign += `${scope}\n`
@@ -163,16 +163,14 @@ var getStringToSign = function(canonicalRequestHash, requestDate, region) {
   return stringToSign
 }
 
-var postPresignSignature = function(region, date, secretKey, policyBase64) {
+export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
   var signingKey = getSigningKey(date, region, secretKey)
   var hmac = Crypto.createHmac('sha256', signingKey)
-
   hmac.update(policyBase64)
-
   return hmac.digest('hex').toLowerCase().trim()
 }
 
-var getV4PresignedUrl = function(request, accessKey, secretKey) {
+export function presignSignatureV4(request, accessKey, secretKey) {
   function getCanonicalRequest(request) {
     var headerKeys = [],
       headers = [],
@@ -206,17 +204,17 @@ var getV4PresignedUrl = function(request, accessKey, secretKey) {
     })
 
     var requestResource = request.path,
-      scope = helpers.getScope(region, requestDate),
+      scope = getScope(region, requestDate),
       credential = `${accessKey}/${scope}`,
       authHeader = 'AWS4-HMAC-SHA256',
       iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
 
     requestQuery = `X-Amz-Algorithm=${authHeader}&`
-    var escapedCredential = helpers.uriEscape(credential)
+    var escapedCredential = uriEscape(credential)
     requestQuery += `X-Amz-Credential=${escapedCredential}&`
     requestQuery += `X-Amz-Date=${iso8601Date}&`
     requestQuery += `X-Amz-Expires=${expires}&`
-    var escapedSignedHeaders = helpers.uriEscape(signedHeaders)
+    var escapedSignedHeaders = uriEscape(signedHeaders)
     requestQuery += `X-Amz-SignedHeaders=${escapedSignedHeaders}`
 
     var canonicalString = ''
@@ -235,12 +233,13 @@ var getV4PresignedUrl = function(request, accessKey, secretKey) {
   if (!accessKey) {
     throw new Error('accessKey is required for presigning')
   }
+
   if (!secretKey) {
     throw new Error('secretKey is required for presigning')
   }
 
   var requestQuery = '',
-    region = helpers.getRegion(request.host),
+    region = getRegion(request.host),
     host = request.host
 
   if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
@@ -271,10 +270,4 @@ var getV4PresignedUrl = function(request, accessKey, secretKey) {
     presignedUrl = url + '?' + requestQuery + '&X-Amz-Signature=' + signature
 
   return presignedUrl
-}
-
-module.exports = {
-  signV4: signV4,
-  getV4PresignedUrl: getV4PresignedUrl,
-  postPresignSignature: postPresignSignature
 }

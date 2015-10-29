@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-function uriEscape(string) {
+export function uriEscape(string) {
   var output = string
     // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
@@ -27,7 +27,7 @@ function uriEscape(string) {
   return output
 }
 
-function uriResourceEscape(string) {
+export function uriResourceEscape(string) {
   var output = string
     // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
@@ -36,11 +36,11 @@ function uriResourceEscape(string) {
   return output
 }
 
-function getScope(region, date) {
+export function getScope(region, date) {
   return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
 }
 
-function getRegion(host) {
+export function getRegion(host) {
   var region = {
     's3.amazonaws.com': 'us-east-1',
     's3-ap-northeast-1.amazonaws.com': 'ap-northeast-1',
@@ -63,7 +63,7 @@ function getRegion(host) {
   }
 }
 
-function validateBucketName(bucket) {
+export function validateBucketName(bucket) {
   // test for null
   if (bucket === null) {
     return false
@@ -88,12 +88,4 @@ function validateBucketName(bucket) {
   }
 
   return true
-}
-
-module.exports = {
-  uriEscape: uriEscape,
-  getRegion: getRegion,
-  getScope: getScope,
-  uriResourceEscape: uriResourceEscape,
-  validBucketName: validateBucketName
 }

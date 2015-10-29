@@ -16,25 +16,26 @@
 
 require('source-map-support').install()
 
-var Crypto = require('crypto'),
-  Http = require('http'),
-  Https = require('https'),
-  Package = require('../../package.json'),
-  Stream = require('stream'),
-  Through2 = require('through2'),
-  Url = require('url'),
-  Xml = require('xml'),
-  Moment = require('moment'),
-  helpers = require('./helpers.js'),
-  multipart = require('./multipart.js'),
-  objectList = require('./list-objects.js'),
-  sign = require('./signing.js'),
-  signV4 = require('./signing.js').signV4,
-  getV4PresignedUrl = require('./signing.js').getV4PresignedUrl,
-  simpleRequests = require('./simple-requests.js'),
-  upload = require('./upload.js'),
-  xmlParsers = require('./xml-parsers.js'),
-  errors = require('./errors.js')
+import Crypto from 'crypto';
+import Http from 'http';
+import Https from 'https';
+import Stream from 'stream';
+import Through2 from 'through2';
+import Url from 'url';
+import Xml from 'xml';
+import Moment from 'moment';
+
+import { validateBucketName, getRegion, getScope, uriEscape, uriResourceEscape } from './helpers.js';
+import { listAllParts, listAllIncompleteUploads, removeUploads } from './multipart.js';
+import { getObjectList } from './list-objects.js';
+import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
+
+import { bucketRequest, objectRequest } from './simple-requests.js';
+import { initiateNewMultipartUpload, streamUpload, doPutObject, completeMultipartUpload } from './upload.js';
+import { parseError, parseAcl, parseListBucketResult } from './xml-parsers.js';
+
+var errors = require('./errors.js');
+var Package = require('../../package.json');
 
 class Client {
   constructor(params, transport) {
@@ -105,11 +106,11 @@ class Client {
   }
 
   makeBucketWithACL(bucket, acl, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
-    var region = helpers.getRegion(this.params.host)
+    var region = getRegion(this.params.host)
     if (region === 'milkyway' || region === 'us-east-1') {
       region = null
     }
@@ -122,7 +123,7 @@ class Client {
         }
       })
       createBucketConfiguration.push({
-        LocationConstraint: helpers.getRegion(this.params.host)
+        LocationConstraint: getRegion(this.params.host)
       })
       var payloadObject = {
         CreateBucketConfiguration: createBucketConfiguration
@@ -153,7 +154,7 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       cb()
     })
@@ -178,7 +179,7 @@ class Client {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         // TODO work out how to handle errors with stream
-        xmlParsers.parseError(response, (error) => {
+        parseError(response, (error) => {
           if (error.code === 'TemporaryRedirect') {
             error.code = 'AccessDenied'
             error.message = 'Unauthenticated access prohibited'
@@ -187,7 +188,7 @@ class Client {
         })
       } else {
         cb(null, stream)
-        xmlParsers.parseListBucketResult(response, stream)
+        parseListBucketResult(response, stream)
       }
     })
     req.end()
@@ -198,26 +199,26 @@ class Client {
     if (!recursive) {
       delimiter = "/"
     }
-    return multipart.listAllIncompleteUploads(this.transport, this.params, bucket, prefix, delimiter)
+    return listAllIncompleteUploads(this.transport, this.params, bucket, prefix, delimiter)
   }
 
   bucketExists(bucket, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
-    simpleRequests.bucketRequest(this, 'HEAD', bucket, cb)
+    bucketRequest(this, 'HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
-    simpleRequests.bucketRequest(this, 'DELETE', bucket, cb)
+    bucketRequest(this, 'DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     var query = `?acl`,
@@ -232,16 +233,16 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
-      xmlParsers.parseAcl(response, cb)
+      parseAcl(response, cb)
     })
     req.end()
   }
 
   setBucketACL(bucket, acl, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (acl === null || acl.trim() === '') {
@@ -265,7 +266,7 @@ class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       cb()
     })
@@ -273,15 +274,15 @@ class Client {
   }
 
   removeIncompleteUpload(bucket, key, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
-    multipart.removeUploads(this.transport, this.params, bucket, key, cb)
+    removeUploads(this.transport, this.params, bucket, key, cb)
   }
 
   getObject(bucket, key, cb) {
@@ -289,8 +290,8 @@ class Client {
   }
 
   getPartialObject(bucket, key, offset, length, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
@@ -319,7 +320,7 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'GET',
       headers
     }
@@ -328,7 +329,7 @@ class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (!(response.statusCode === 200 || response.statusCode === 206)) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       // wrap it in a new pipe to strip additional response data
       cb(null, response.pipe(Through2((data, enc, done) => {
@@ -340,8 +341,8 @@ class Client {
   }
 
   putObject(bucket, key, contentType, size, r, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
@@ -355,7 +356,7 @@ class Client {
     var self = this
 
     if (size > 5 * 1024 * 1024) {
-      var stream = multipart.listAllIncompleteUploads(this.transport, this.params, bucket, key),
+      var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key),
         uploadId = null
       stream.on('error', (e) => {
         cb(e)
@@ -367,26 +368,26 @@ class Client {
         done()
       }, function(done) {
         if (!uploadId) {
-          upload.initiateNewMultipartUpload(self.transport, self.params, bucket, key, contentType, (e, uploadId) => {
+          initiateNewMultipartUpload(self.transport, self.params, bucket, key, contentType, (e, uploadId) => {
             if (e) {
               done(e)
               return
             }
-            upload.streamUpload(self.transport, self.params, bucket, key, contentType,
+            streamUpload(self.transport, self.params, bucket, key, contentType,
               uploadId, [], size, r, (e, etags) => {
                 if (e) {
                   done()
                   cb(e)
                   return
                 }
-                return upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
                   done()
                   cb(e)
                 })
               })
           })
         } else {
-          var parts = multipart.listAllParts(self.transport, self.params, bucket, key, uploadId)
+          var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
           parts.on('error', (e) => {
             cb(e)
           })
@@ -399,7 +400,7 @@ class Client {
             if (partsErrored) {
               return partDone(partsErrored)
             }
-            upload.streamUpload(self.transport, self.params, bucket, key, contentType,
+            streamUpload(self.transport, self.params, bucket, key, contentType,
               uploadId, partsArray, size, r, (e, etags) => {
                 if (partsErrored) {
                   partDone()
@@ -408,7 +409,7 @@ class Client {
                   partDone()
                   return cb(e)
                 }
-                upload.completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
+                completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
                   partDone()
                   return cb(e)
                 })
@@ -417,13 +418,13 @@ class Client {
         }
       }))
     } else {
-      upload.doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
+      doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
     }
   }
 
   listObjects(bucket, params) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
     var self = this,
       prefix = null,
@@ -444,7 +445,7 @@ class Client {
     })
     queue._read = function() {}
     var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
-      objectList.list(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
+      getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
         currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
           if (e) {
             return done(e)
@@ -482,8 +483,8 @@ class Client {
   }
 
   statObject(bucket, key, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
@@ -493,7 +494,7 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'HEAD'
     }
 
@@ -501,7 +502,7 @@ class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       } else {
         var result = {
           size: +response.headers['content-length'],
@@ -516,19 +517,19 @@ class Client {
   }
 
   removeObject(bucket, key, cb) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
     if (key === null || key.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
-    simpleRequests.objectRequest(this, 'DELETE', bucket, key, cb)
+    objectRequest(this, 'DELETE', bucket, key, cb)
   }
 
   presignedPutObject(bucket, key, expires) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
     if (!key || key.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
@@ -536,17 +537,17 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'put',
       scheme: this.scheme,
       expires: expires
     }
-    return getV4PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
+    return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
   }
 
   presignedGetObject(bucket, key, expires) {
-    if (!helpers.validBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
     if (!key || key.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
@@ -554,12 +555,12 @@ class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}`,
+      path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'get',
       scheme: this.scheme,
       expires: expires
     }
-    return getV4PresignedUrl(requestParams, this.params.accessKey, this.params.secretKey)
+    return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
   }
 
   newPostPolicy() {
@@ -568,7 +569,7 @@ class Client {
 
   presignedPostPolicy(postPolicy) {
     var date = Moment.utc()
-    var region = helpers.getRegion(this.params.host)
+    var region = getRegion(this.params.host)
     var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
 
     postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
@@ -577,14 +578,14 @@ class Client {
     postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
     postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
 
-    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + helpers.getScope(region, date)])
-    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + helpers.getScope(region, date)
+    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope(region, date)])
+    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope(region, date)
 
     var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
 
     postPolicy.formData.policy = policyBase64
 
-    var signature = sign.postPresignSignature(region, date, this.params.secretKey, policyBase64)
+    var signature = postPresignSignature(region, date, this.params.secretKey, policyBase64)
 
     postPolicy.formData['x-amz-signature'] = signature
 

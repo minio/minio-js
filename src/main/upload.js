@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-var BlockStream2 = require('block-stream2'),
-  Concat = require('concat-stream'),
-  Crypto = require('crypto'),
-  ParseXml = require('xml-parser'),
-  Stream = require('stream'),
-  Through2 = require('through2'),
-  Xml = require('xml'),
-  signV4 = require('./signing.js').signV4,
-  xmlParsers = require('./xml-parsers.js'),
-  helpers = require('./helpers.js'),
-  initiateNewMultipartUpload = (transport, params, bucket, key, contentType, cb) => {
+import BlockStream2 from 'block-stream2';
+import Concat from 'concat-stream';
+import Crypto from 'crypto';
+import ParseXml from 'xml-parser';
+import Stream from 'stream';
+import Through2 from 'through2';
+import Xml from 'xml';
+
+import { signV4 } from './signing.js';
+import { parseError } from './xml-parsers.js';
+import { uriResourceEscape, uriEscape } from './helpers.js';
+
+export function initiateNewMultipartUpload(transport, params, bucket, key, contentType, cb) {
     var requestParams = {
       host: params.host,
       port: params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploads`,
+      path: `/${bucket}/${uriResourceEscape(key)}?uploads`,
       method: 'POST',
       headers: {
         'Content-Type': contentType
@@ -39,7 +41,7 @@ var BlockStream2 = require('block-stream2'),
 
     var request = transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       response.pipe(Concat(xml => {
         var parsedXml = ParseXml(xml.toString()),
@@ -59,7 +61,7 @@ var BlockStream2 = require('block-stream2'),
     request.end()
   }
 
-function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
+export function streamUpload(transport, params, bucket, key, contentType, uploadId, partsArray, totalSize, r, cb) {
   var part = 1,
     errored = null,
     etags = [],
@@ -146,7 +148,7 @@ function streamUpload(transport, params, bucket, key, contentType, uploadId, par
   }
 }
 
-function doPutObject(transport, params, bucket, key, contentType, size, uploadId, part, r, cb) {
+export function doPutObject(transport, params, bucket, key, contentType, size, uploadId, part, r, cb) {
   var query = ''
   if (part) {
     query = `?partNumber=${part}&uploadId=${uploadId}`
@@ -170,7 +172,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
       requestParams = {
         host: params.host,
         port: params.port,
-        path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
+        path: `/${bucket}/${uriResourceEscape(key)}${query}`,
         method: 'PUT',
         headers: {
           'Content-Length': size,
@@ -188,7 +190,7 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
 
     var request = transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        return xmlParsers.parseError(response, cb)
+        return parseError(response, cb)
       }
       var etag = response.headers.etag
       cb(null, etag)
@@ -202,11 +204,11 @@ function doPutObject(transport, params, bucket, key, contentType, size, uploadId
   })
 }
 
-function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
+export function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
   var requestParams = {
       host: params.host,
       port: params.port,
-      path: `/${bucket}/${helpers.uriResourceEscape(key)}?uploadId=${uploadId}`,
+      path: `/${bucket}/${uriResourceEscape(key)}?uploadId=${uploadId}`,
       method: 'POST'
     },
     parts = []
@@ -240,16 +242,9 @@ function completeMultipartUpload(transport, params, bucket, key, uploadId, etags
 
   var request = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return xmlParsers.parseError(response, cb)
+      return parseError(response, cb)
     }
     cb()
   })
   stream.pipe(request)
-}
-
-module.exports = {
-  doPutObject: doPutObject,
-  initiateNewMultipartUpload: initiateNewMultipartUpload,
-  completeMultipartUpload: completeMultipartUpload,
-  streamUpload: streamUpload
 }
