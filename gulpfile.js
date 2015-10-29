@@ -37,7 +37,8 @@ gulp.task('test', ['compile', 'test:compile'], function() {
     read: false
   })
     .pipe(mocha({
-      reporter: 'spec'
+      reporter: 'spec',
+      ui: 'bdd',
     }))
 })
 
