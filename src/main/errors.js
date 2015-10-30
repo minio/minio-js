@@ -58,4 +58,4 @@ Error.prototype = {
   }
 };
 
-module.exports = Error;
+export default Error;

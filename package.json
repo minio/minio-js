@@ -36,6 +36,7 @@
     "xml-parser": "^1.2.0"
   },
   "devDependencies": {
+    "chai": "^3.4.0",
     "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
     "gulp-jscs": "^2.0.0",

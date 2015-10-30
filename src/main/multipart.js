@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-var Concat = require('concat-stream'),
-  Stream = require('stream'),
-  ParseXml = require('xml-parser'),
-  Through2 = require('through2'),
-  helpers = require('./helpers.js'),
-  signV4 = require('./signing.js').signV4,
-  xmlParsers = require('./xml-parsers.js')
+import Concat from 'concat-stream';
+import Stream from 'stream';
+import ParseXml from 'xml-parser';
+import Through2 from 'through2';
 
-var listAllIncompleteUploads = function(transport, params, bucket, object, delimiter) {
+import { uriEscape, uriResourceEscape } from './helpers.js';
+import { signV4 } from './signing.js';
+import { parseError, parseListMultipartResult } from './xml-parsers.js';
+
+export function listAllIncompleteUploads(transport, params, bucket, object, delimiter) {
   var errored = null
   var queue = new Stream.Readable({
     objectMode: true
@@ -78,20 +79,20 @@ var listAllIncompleteUploads = function(transport, params, bucket, object, delim
   return stream
 }
 
-function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, delimiter, cb) {
+export function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, delimiter, cb) {
   var queries = []
   if (key) {
-    queries.push(`prefix=${helpers.uriEscape(key)}`)
+    queries.push(`prefix=${uriEscape(key)}`)
   }
   if (keyMarker) {
-    keyMarker = helpers.uriEscape(keyMarker)
+    keyMarker = uriEscape(keyMarker)
     queries.push(`key-marker=${keyMarker}`)
   }
   if (uploadIdMarker) {
     queries.push(`upload-id-marker=${uploadIdMarker}`)
   }
   if (delimiter) {
-    queries.push(`delimiter=${helpers.uriEscape(delimiter)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
   }
   var maxUploads = 1000
   queries.push(`max-uploads=${maxUploads}`)
@@ -110,14 +111,14 @@ function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadI
   signV4(requestParams, '', params.accessKey, params.secretKey)
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return xmlParsers.parseError(response, cb)
+      return parseError(response, cb)
     }
-    xmlParsers.parseListMultipartResult(bucket, key, response, cb)
+    parseListMultipartResult(bucket, key, response, cb)
   })
   req.end()
 }
 
-var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
+export function abortMultipartUpload(transport, params, bucket, key, uploadId, cb) {
   var requestParams = {
     host: params.host,
     port: params.port,
@@ -129,14 +130,14 @@ var abortMultipartUpload = (transport, params, bucket, key, uploadId, cb) => {
 
   var req = transport.request(requestParams, (response) => {
     if (response.statusCode !== 204) {
-      return xmlParsers.parseError(response, cb)
+      return parseError(response, cb)
     }
     cb()
   })
   req.end()
 }
 
-var removeUploads = (transport, params, bucket, key, cb) => {
+export function removeUploads(transport, params, bucket, key, cb) {
   var ignoreTruncated = false
   var errored = null,
     queue = new Stream.Readable({
@@ -207,7 +208,7 @@ var removeUploads = (transport, params, bucket, key, cb) => {
   })
 }
 
-var listAllParts = (transport, params, bucket, key, uploadId) => {
+export function listAllParts(transport, params, bucket, key, uploadId) {
   var errored = null
   var queue = new Stream.Readable({
     objectMode: true
@@ -249,7 +250,7 @@ var listAllParts = (transport, params, bucket, key, uploadId) => {
   return stream
 }
 
-var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
+export function listParts(transport, params, bucket, key, uploadId, marker, cb) {
   var query = '?'
   if (marker && marker !== 0) {
     query += `part-number-marker=${marker}&`
@@ -258,7 +259,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
   var requestParams = {
     host: params.host,
     port: params.port,
-    path: `/${bucket}/${helpers.uriResourceEscape(key)}${query}`,
+    path: `/${bucket}/${uriResourceEscape(key)}${query}`,
     method: 'GET'
   }
 
@@ -266,7 +267,7 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
 
   var request = transport.request(requestParams, (response) => {
     if (response.statusCode !== 200) {
-      return xmlParsers.parseError(response, cb)
+      return parseError(response, cb)
     }
     response.pipe(Concat(body => {
       var xml = ParseXml(body.toString())
@@ -320,13 +321,4 @@ var listParts = (transport, params, bucket, key, uploadId, marker, cb) => {
     }))
   })
   request.end()
-}
-
-module.exports = {
-  listAllIncompleteUploads: listAllIncompleteUploads,
-  listMultipartUploads: listMultipartUploads,
-  removeUploads: removeUploads,
-  abortMultipartUpload: abortMultipartUpload,
-  listAllParts: listAllParts,
-  listParts: listParts
 }

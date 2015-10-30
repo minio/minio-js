@@ -14,64 +14,64 @@
  * limitations under the License.
  */
 
-var Concat = require('concat-stream'),
-  ParseXml = require('xml-parser'),
-  helpers = require('./helpers.js'),
-  parseError = (response, cb) => {
-    if (typeof response !== 'undefined') {
-      response.pipe(Concat(errorXml => {
-        var e = {}
-        e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
-        if (errorXml.length === 0) {
-          if (response.statusCode === 301) {
-            e.code = 'MovedPermanently'
-            e.message = 'Moved Permanently'
-          } else if (response.statusCode === 307) {
-            e.code = 'TemporaryRedirect'
-            e.message = 'Are you using the correct endpoint URL?'
-          } else if (response.statusCode === 403) {
-            e.code = 'AccessDenied'
-            e.message = 'Valid and authorized credentials required'
-          } else if (response.statusCode === 404) {
-            e.code = 'NotFound'
-            e.message = 'Not Found'
-          } else if (response.statusCode === 405) {
-            e.code = 'MethodNotAllowed'
-            e.message = 'Method Not Allowed'
-          } else if (response.statusCode === 501) {
-            e.code = 'MethodNotAllowed'
-            e.message = 'Method Not Allowed'
-          } else {
-            e.code = 'UnknownError'
-            e.message = `${response.statusCode}`
+import Concat from 'concat-stream';
+import ParseXml from 'xml-parser';
+
+export function parseError(response, cb) {
+  if (typeof response !== 'undefined') {
+    response.pipe(Concat(errorXml => {
+      var e = {}
+      e.requestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+      if (errorXml.length === 0) {
+        if (response.statusCode === 301) {
+          e.code = 'MovedPermanently'
+          e.message = 'Moved Permanently'
+        } else if (response.statusCode === 307) {
+          e.code = 'TemporaryRedirect'
+          e.message = 'Are you using the correct endpoint URL?'
+        } else if (response.statusCode === 403) {
+          e.code = 'AccessDenied'
+          e.message = 'Valid and authorized credentials required'
+        } else if (response.statusCode === 404) {
+          e.code = 'NotFound'
+          e.message = 'Not Found'
+        } else if (response.statusCode === 405) {
+          e.code = 'MethodNotAllowed'
+          e.message = 'Method Not Allowed'
+        } else if (response.statusCode === 501) {
+          e.code = 'MethodNotAllowed'
+          e.message = 'Method Not Allowed'
+        } else {
+          e.code = 'UnknownError'
+          e.message = `${response.statusCode}`
+        }
+        return cb(e)
+      }
+
+      var parsedXml = ParseXml(errorXml.toString())
+      if (typeof parsedXml.root !== 'undefined') {
+        parsedXml.root.children.forEach(element => {
+          if (element.name === 'Code') {
+            e.code = element.content
+          } else if (element.name === 'Message') {
+            e.message = element.content
+          } else if (element.name === 'RequestId') {
+            e.requestid = element.content
+          } else if (element.name === 'Resource') {
+            e.resource = element.content
+          } else if (element.name === 'HostId') {
+            e.hostid = element.content
           }
-          return cb(e)
-        }
-
-        var parsedXml = ParseXml(errorXml.toString())
-        if (typeof parsedXml.root !== 'undefined') {
-          parsedXml.root.children.forEach(element => {
-            if (element.name === 'Code') {
-              e.code = element.content
-            } else if (element.name === 'Message') {
-              e.message = element.content
-            } else if (element.name === 'RequestId') {
-              e.requestid = element.content
-            } else if (element.name === 'Resource') {
-              e.resource = element.content
-            } else if (element.name === 'HostId') {
-              e.hostid = element.content
-            }
-          })
-          return cb(e)
-        }
-      }))
-    } else {
-      return cb('No response was received')
-    }
+        })
+        return cb(e)
+      }
+    }))
+  } else {
+    return cb('No response was received')
   }
+}
 
-function parseListMultipartResult(bucket, key, response, cb) {
+export function parseListMultipartResult(bucket, key, response, cb) {
   response.pipe(Concat(xml => {
     var parsedXml = ParseXml(xml.toString()),
       result = {
@@ -158,7 +158,7 @@ function parseListMultipartResult(bucket, key, response, cb) {
   }))
 }
 
-function parseListBucketResult(response, stream) {
+export function parseListBucketResult(response, stream) {
   response.pipe(Concat(errorXml => {
     var parsedXml = ParseXml(errorXml.toString())
     parsedXml.root.children.forEach(element => {
@@ -187,7 +187,7 @@ function parseListBucketResult(response, stream) {
   }))
 }
 
-function parseAcl(response, cb) {
+export function parseAcl(response, cb) {
   response.pipe(Concat((body) => {
     var xml = ParseXml(body.toString()),
       publicRead = false,
@@ -254,11 +254,4 @@ function parseAcl(response, cb) {
     }
     cb(null, cannedACL)
   }))
-}
-
-module.exports = {
-  parseError: parseError,
-  parseListMultipartResult: parseListMultipartResult,
-  parseListBucketResult: parseListBucketResult,
-  parseAcl: parseAcl
 }

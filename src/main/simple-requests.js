@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-var helpers = require('./helpers.js'),
-  signV4 = require('./signing.js').signV4,
-  xmlParsers = require('./xml-parsers.js')
 
-function bucketRequest(self, method, bucket, cb) {
+import { uriResourceEscape } from './helpers.js';
+import { signV4 } from './signing.js';
+import { parseError } from './xml-parsers.js';
+
+export function bucketRequest(self, method, bucket, cb) {
   var path = `/${bucket}`
   request(self, method, path, cb)
 }
 
-function objectRequest(self, method, bucket, object, cb) {
-  var path = `/${bucket}/${helpers.uriResourceEscape(object)}`
+export function objectRequest(self, method, bucket, object, cb) {
+  var path = `/${bucket}/${uriResourceEscape(object)}`
   request(self, method, path, cb)
 }
 
@@ -40,14 +41,9 @@ function request(self, method, path, cb) {
 
   var req = self.transport.request(requestParams, response => {
     if (response.statusCode >= 300) {
-      return xmlParsers.parseError(response, cb)
+      return parseError(response, cb)
     }
     cb()
   })
   req.end()
-}
-
-module.exports = {
-  bucketRequest: bucketRequest,
-  objectRequest: objectRequest
 }
