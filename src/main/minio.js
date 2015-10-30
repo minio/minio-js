@@ -37,8 +37,9 @@ import { parseError, parseAcl, parseListBucketResult } from './xml-parsers.js';
 var errors = require('./errors.js');
 var Package = require('../../package.json');
 
-class Client {
+export default class Client {
   constructor(params, transport) {
+    var namespace = 'Minio'
     var parsedUrl = Url.parse(params.url),
       port = +parsedUrl.port
 
@@ -645,5 +646,3 @@ class PostPolicy {
     this.formData["Content-Type"] = type
   }
 }
-
-module.exports = Client

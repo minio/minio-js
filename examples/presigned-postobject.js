@@ -20,13 +20,13 @@ var _ = require('underscore')
 
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-var s3client = new Minio({
+var s3Client = new Minio({
   url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var policy = s3client.newPostPolicy()
+var policy = s3Client.newPostPolicy()
 
 policy.setKey("keyname")
 policy.setBucket("bucketname")
@@ -34,7 +34,7 @@ var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 
-formData = s3client.presignedPostPolicy(policy)
+formData = s3Client.presignedPostPolicy(policy)
 
 var req = superagent.post('https://s3-us-west-2.amazonaws.com/bucketname')
 _.each(formData, function(value, key) {

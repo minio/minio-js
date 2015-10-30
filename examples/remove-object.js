@@ -19,13 +19,13 @@ var Minio = require('minio')
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
-var s3client = new Minio({
+var s3Client = new Minio({
   url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.removeObject('mybucket', 'hello/11mb', function(e, stat) {
+s3Client.removeObject('mybucket', 'hello/11mb', function(e, stat) {
   if (e) {
     return console.log(e)
   }

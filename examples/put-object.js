@@ -20,7 +20,7 @@ var Fs = require('fs')
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
-var s3client = new Minio({
+var s3Client = new Minio({
   url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -33,7 +33,7 @@ var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3client.putObject('mybucket', 'hello/file.zip', 'application/octet-stream', stat.size, fileStream, function(e) {
+  s3Client.putObject('mybucket', 'hello/file.zip', 'application/octet-stream', stat.size, fileStream, function(e) {
     return console.log(e) // should be null
   })
 })

@@ -19,14 +19,14 @@ var Minio = require('minio')
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
-var s3client = new Minio({
+var s3Client = new Minio({
   url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 var size = 0
-s3client.getPartialObject('mybucket', 'hello/11mb', 1024, 4096, function(e, dataStream) {
+s3Client.getPartialObject('mybucket', 'hello/11mb', 1024, 4096, function(e, dataStream) {
   if (e) {
     return console.log(e)
   }
