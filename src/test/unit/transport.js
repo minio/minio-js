@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-var Stream = require('stream')
+import Stream from 'stream';
 
-class MockTransport {
+export default class MockTransport {
   constructor() {
     this.requests = []
   }
@@ -78,6 +78,3 @@ class Request {
     this.callback(stream)
   }
 }
-
-var inst = MockTransport
-module.exports = inst

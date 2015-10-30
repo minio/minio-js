@@ -16,16 +16,16 @@
 
 require('source-map-support').install()
 
-var Assert = require('chai').assert,
-  Concat = require('concat-stream'),
-  Http = require('http'),
-  Nock = require('nock'),
-  Package = require('../../../package.json'),
-  Through2 = require('through2'),
-  Stream = require('stream'),
-  Rewire = require('rewire'),
-  Minio = Rewire('../../..'),
-  MockTransport = require('./transport.js')
+import { assert } from 'chai';
+import Concat from 'concat-stream';
+import Http from 'http';
+import Nock from 'nock';
+import Through2 from 'through2';
+import Stream from 'stream';
+import Minio from '../../../dist/main/minio.js';
+import MockTransport from './transport.js';
+
+var Package = require('../../../package.json')
 
 describe('Client', () => {
   var nockRequests = []
@@ -61,7 +61,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(client.params.port, 80)
+      assert.equal(client.params.port, 80)
     })
     it('should override port with http', () => {
       var client = new Minio({
@@ -69,7 +69,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(client.params.port, 9000)
+      assert.equal(client.params.port, 9000)
     })
     it('should work with https', () => {
       var client = new Minio({
@@ -77,7 +77,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(client.params.port, 443)
+      assert.equal(client.params.port, 443)
     })
     it('should override port with https', () => {
       var client = new Minio({
@@ -85,7 +85,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(client.params.port, 9000)
+      assert.equal(client.params.port, 9000)
     })
     it('should fail with no url', (done) => {
       try {
@@ -140,7 +140,7 @@ describe('Client', () => {
           secretKey: 'secretkey'
         })
         var url = client.presignedGetObject('bucket', 'object', '86400')
-        Assert.equal(url.length > 0, true)
+        assert.equal(url.length > 0, true)
       })
     })
     describe('presigned-put', () => {
@@ -173,7 +173,7 @@ describe('Client', () => {
           secretKey: 'secretkey'
         })
         var url = client.presignedPutObject('bucket', 'object', '86400')
-        Assert.equal(url.length > 0, true) 
+        assert.equal(url.length > 0, true) 
       })
     })
   })
@@ -184,7 +184,7 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.userAgent)
+      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.userAgent)
     })
     it('should set user agent', () => {
       var client = new Minio({
@@ -193,7 +193,7 @@ describe('Client', () => {
         secretKey: 'secretkey'
       })
       client.setUserAgent('test', '1.0.0', ['comment', 'arch', 'os'])
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; arch; os)`, client.params.userAgent)
+      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; arch; os)`, client.params.userAgent)
     })
     it('should set user agent without comments', () => {
       var client = new Minio({
@@ -202,7 +202,7 @@ describe('Client', () => {
         secretKey: 'secretkey'
       })
       client.setUserAgent('test', '1.0.0', [])
-      Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
+      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
     })
     it('should not set user agent without name', (done) => {
       try {
@@ -260,7 +260,7 @@ describe('Client', () => {
           secretKey: 'secretkey'
         })
         client.setUserAgent('test', '1.0.0')
-        Assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
+        assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
         client.setUserAgent('test', '1.0.0')
       } catch (e) {
         done()
@@ -275,7 +275,7 @@ describe('Client', () => {
         }, transport)
       it('should not send auth info without keys', (done) => {
         client.transport.addRequest((params) => {
-          Assert.deepEqual(params, {
+          assert.deepEqual(params, {
             host: 'localhost',
             port: 9000,
             path: '/bucket/object',
@@ -288,7 +288,7 @@ describe('Client', () => {
           'content-type': 'application/octet-stream'
         }, null)
         client.statObject('bucket', 'object', (e, r) => {
-          Assert.deepEqual(r, {
+          assert.deepEqual(r, {
             size: 11,
             'lastModified': 'lastmodified',
             etag: 'etag',
@@ -307,12 +307,12 @@ describe('Client', () => {
             secretKey: 'secretKey'
           }, transport)
         client.transport.addRequest((params) => {
-          Assert.equal(true, params.headers.authorization !== null)
-          Assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
-          Assert.equal(true, params.headers['x-amz-date'] !== null)
+          assert.equal(true, params.headers.authorization !== null)
+          assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
+          assert.equal(true, params.headers['x-amz-date'] !== null)
           delete params.headers.authorization
           delete params.headers['x-amz-date']
-          Assert.deepEqual(params, {
+          assert.deepEqual(params, {
             host: 'localhost',
             port: 9000,
             path: '/bucket/object',
@@ -329,7 +329,7 @@ describe('Client', () => {
           'content-type': 'text/plain'
         }, null)
         client.statObject('bucket', 'object', (e, r) => {
-          Assert.deepEqual(r, {
+          assert.deepEqual(r, {
             size: 11,
             'lastModified': 'lastmodified',
             etag: 'etag',
@@ -390,7 +390,7 @@ describe('Client', () => {
             results.push(obj)
           })
           stream.on('end', function() {
-            Assert.deepEqual(results, expectedResults)
+            assert.deepEqual(results, expectedResults)
             done()
           })
         })
@@ -415,35 +415,35 @@ describe('Client', () => {
       it('should call callback with no options if successful', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(204)
         client.bucketExists('bucket', (e) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           done()
         })
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
       it('should return an error on moved permanently', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(301)
         client.bucketExists('bucket', checkError('MovedPermanently', 'Moved Permanently', null, null, null, (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
       it('should return an error on 404', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(403)
         client.bucketExists('bucket', checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
       it('should return an error on 404', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(404)
         client.bucketExists('bucket', checkError('NotFound', 'Not Found', null, null, null, (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -480,7 +480,7 @@ describe('Client', () => {
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -511,32 +511,32 @@ describe('Client', () => {
       it('should return public-read-write acl', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
-          Assert.equal(e, null)
-          Assert.equal(r, 'public-read-write')
+          assert.equal(e, null)
+          assert.equal(r, 'public-read-write')
           done()
         })
       })
       it('should return public-read acl', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
-          Assert.equal(e, null)
-          Assert.equal(r, 'public-read')
+          assert.equal(e, null)
+          assert.equal(r, 'public-read')
           done()
         })
       })
       it('should return authenticated-read acl', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AuthenticatedUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
-          Assert.equal(e, null)
-          Assert.equal(r, 'authenticated-read')
+          assert.equal(e, null)
+          assert.equal(r, 'authenticated-read')
           done()
         })
       })
       it('should return private acl', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
-          Assert.equal(e, null)
-          Assert.equal(r, 'private')
+          assert.equal(e, null)
+          assert.equal(r, 'private')
           done()
         })
       })
@@ -574,7 +574,7 @@ describe('Client', () => {
             url: 'http://localhost:9000'
           }, transport)
         client.transport.addRequest((params) => {
-          Assert.deepEqual(params, {
+          assert.deepEqual(params, {
             host: 'localhost',
             port: 9000,
             path: '/bucket?acl',
@@ -589,14 +589,14 @@ describe('Client', () => {
           'last-modified': 'lastmodified'
         }, null)
         client.setBucketACL('bucket', 'public', (e) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
         })
         done()
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').put('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.setBucketACL('bucket', 'public', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -650,9 +650,9 @@ describe('Client', () => {
       it('should return a stream object', (done) => {
         MockResponse('http://localhost:9000').get('/bucket/object').reply(200, 'hello world')
         client.getObject('bucket', 'object', (e, r) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, 'hello world')
+            assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -660,7 +660,7 @@ describe('Client', () => {
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/bucket/object').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket/object'))
         client.getObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -715,9 +715,9 @@ describe('Client', () => {
           }
         }).get('/bucket/object').reply(206, 'hello world')
         client.getPartialObject('bucket', 'object', 10, 11, (e, r) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, 'hello world')
+            assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -729,9 +729,9 @@ describe('Client', () => {
           }
         }).get('/bucket/object').reply(206, 'hello world')
         client.getPartialObject('bucket', 'object', 10, null, (e, r) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, 'hello world')
+            assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -743,9 +743,9 @@ describe('Client', () => {
           }
         }).get('/bucket/object').reply(206, 'hello world')
         client.getPartialObject('bucket', 'object', null, 11, (e, r) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           r.pipe(Concat(buf => {
-            Assert.equal(buf, 'hello world')
+            assert.equal(buf, 'hello world')
             done()
           }))
         })
@@ -934,7 +934,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 12 * 1024 * 1024, s, (e) => {
-            Assert.equal(e, 'actual size does not match specified size')
+            assert.equal(e, 'actual size does not match specified size')
             done()
           })
         })
@@ -959,7 +959,7 @@ describe('Client', () => {
           }
           s.push(null)
           client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
-            Assert.equal(e, 'actual size does not match specified size')
+            assert.equal(e, 'actual size does not match specified size')
             done()
           })
         })
@@ -1064,7 +1064,7 @@ describe('Client', () => {
           results.push(object)
           end()
         }, function(end) {
-          Assert.deepEqual(results, expectedResults)
+          assert.deepEqual(results, expectedResults)
           end()
           done()
         }))
@@ -1113,7 +1113,7 @@ describe('Client', () => {
           results.push(object)
           end()
         }, function(end) {
-          Assert.deepEqual(results, expectedResults)
+          assert.deepEqual(results, expectedResults)
           end()
           done()
         }))
@@ -1161,7 +1161,7 @@ describe('Client', () => {
           results.push(object)
           end()
         }, function(end) {
-          Assert.deepEqual(results, expectedResults)
+          assert.deepEqual(results, expectedResults)
           end()
           done()
         }))
@@ -1211,7 +1211,7 @@ describe('Client', () => {
         })
 
         client.statObject('bucket', 'object', (e, r) => {
-          Assert.deepEqual(r, {
+          assert.deepEqual(r, {
             size: 11,
             lastModified: 'lastmodified',
             etag: 'etag',
@@ -1225,7 +1225,7 @@ describe('Client', () => {
           .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
 
         client.statObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -1277,7 +1277,7 @@ describe('Client', () => {
       it('should delete an object', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket/object').reply(204)
         client.removeObject('bucket', 'object', (e) => {
-          Assert.equal(e, null)
+          assert.equal(e, null)
           done()
         })
       })
@@ -1285,7 +1285,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').delete('/bucket/object')
           .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          Assert.equal(r, null)
+          assert.equal(r, null)
           done()
         }))
       })
@@ -1404,11 +1404,11 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     if (e === null) {
       callback('expected error, received success')
     }
-    Assert.equal(e.code, code)
-    Assert.equal(e.message, message)
-    Assert.equal(e.requestid, requestid)
-    Assert.equal(e.hostid, hostid)
-    Assert.equal(e.resource, resource)
+    assert.equal(e.code, code)
+    assert.equal(e.message, message)
+    assert.equal(e.requestid, requestid)
+    assert.equal(e.hostid, hostid)
+    assert.equal(e.resource, resource)
     if (callback) {
       if (rest.length === 0) {
         callback()
@@ -1417,7 +1417,7 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
       }
     } else {
       if (rest.length > 0) {
-        Assert.fail('Data returned with no callback registered')
+        assert.fail('Data returned with no callback registered')
       }
     }
   }
