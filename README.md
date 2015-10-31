@@ -1,4 +1,4 @@
-# Minio Javascript (Nodejs) Library for Amazon S3 Compatible Cloud Storage [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# Minio Javascript Library for Amazon S3 Compatible Cloud Storage [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 [![NPM](https://nodei.co/npm/minio.png)](https://nodei.co/npm/minio/)
 
@@ -8,7 +8,7 @@
 $ npm install --save minio
 ```
 
-## Example
+## Example in node
 
 ```js
 #!/usr/bin/env node
@@ -40,6 +40,39 @@ s3client.listBuckets(function(e, bucketStream) {
   })
 })
 
+```
+
+## Example in browser
+
+```html
+<!doctype html>
+<html>
+  <body>
+    <script type="text/javascript" src="<your-cdn>/minio-browser.js"></script>
+    <script>
+     var s3Client = new Minio({
+      url: 'https://<your-s3-endpoint>',
+      accessKey: 'YOUR-ACCESSKEYID',
+      secretKey: 'YOUR-SECRETACCESSKEY'
+     });
+     s3Client.listBuckets(function(e, bucketStream) {
+       if (e) {
+         console.log(e);
+         return
+       }
+       bucketStream.on('data', function(obj) {
+         console.log(obj)
+       });
+       bucketStream.on('end', function() {
+         console.log("End")
+       });
+       bucketStream.on('error', function(e) {
+         console.log("Error", e)
+       });
+     })
+    </script>
+  </body>
+</html>
 ```
 
 ## Documentation
