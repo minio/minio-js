@@ -30,6 +30,7 @@ export function initiateNewMultipartUpload(transport, params, bucket, key, conte
     var requestParams = {
       host: params.host,
       port: params.port,
+      protocol: params.protocol,
       path: `/${bucket}/${uriResourceEscape(key)}?uploads`,
       method: 'POST',
       headers: {
@@ -172,6 +173,7 @@ export function doPutObject(transport, params, bucket, key, contentType, size, u
       requestParams = {
         host: params.host,
         port: params.port,
+        protocol: params.protocol,
         path: `/${bucket}/${uriResourceEscape(key)}${query}`,
         method: 'PUT',
         headers: {
@@ -206,12 +208,13 @@ export function doPutObject(transport, params, bucket, key, contentType, size, u
 
 export function completeMultipartUpload(transport, params, bucket, key, uploadId, etags, cb) {
   var requestParams = {
-      host: params.host,
-      port: params.port,
-      path: `/${bucket}/${uriResourceEscape(key)}?uploadId=${uploadId}`,
-      method: 'POST'
-    },
-    parts = []
+    host: params.host,
+    port: params.port,
+    protocol: params.protocol,
+    path: `/${bucket}/${uriResourceEscape(key)}?uploadId=${uploadId}`,
+    method: 'POST'
+  },
+      parts = []
 
   etags.forEach(element => {
     parts.push({

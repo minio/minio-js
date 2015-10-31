@@ -34,7 +34,7 @@ export function signV4(request, dataShaSum256, accessKey, secretKey) {
   var region = getRegion(request.host),
     host = request.host
 
-  if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
+  if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
 
@@ -242,7 +242,7 @@ export function presignSignatureV4(request, accessKey, secretKey) {
     region = getRegion(request.host),
     host = request.host
 
-  if ((request.scheme === 'http' && request.port !== 80) || (request.scheme === 'https' && request.port !== 443)) {
+  if ((request.protocol === 'http' && request.port !== 80) || (request.protocol === 'https' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
 
@@ -266,7 +266,7 @@ export function presignSignatureV4(request, accessKey, secretKey) {
   hmac.update(stringToSign)
 
   var signature = hmac.digest('hex').toLowerCase().trim(),
-    url = request.scheme + '://' + host + request.path,
+    url = request.protocol + '//' + host + request.path,
     presignedUrl = url + '?' + requestQuery + '&X-Amz-Signature=' + signature
 
   return presignedUrl

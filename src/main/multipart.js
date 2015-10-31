@@ -105,6 +105,7 @@ export function listMultipartUploads(transport, params, bucket, key, keyMarker, 
   var requestParams = {
     host: params.host,
     port: params.port,
+    protocol: params.protocol,    
     path: `/${bucket}${query}`,
     method: 'GET'
   }
@@ -122,6 +123,7 @@ export function abortMultipartUpload(transport, params, bucket, key, uploadId, c
   var requestParams = {
     host: params.host,
     port: params.port,
+    protocol: params.protocol,
     path: `/${bucket}/${key}?uploadId=${uploadId}`,
     method: 'DELETE'
   }
@@ -259,6 +261,7 @@ export function listParts(transport, params, bucket, key, uploadId, marker, cb) 
   var requestParams = {
     host: params.host,
     port: params.port,
+    protocol: params.protocol,
     path: `/${bucket}/${uriResourceEscape(key)}${query}`,
     method: 'GET'
   }

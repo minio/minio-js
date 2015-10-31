@@ -33,6 +33,7 @@ function request(self, method, path, cb) {
   var requestParams = {
     host: self.params.host,
     port: self.params.port,
+    protocol: self.params.protocol,
     method: method,
     path: path
   }
