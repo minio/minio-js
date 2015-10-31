@@ -33,8 +33,8 @@ import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js
 import { bucketRequest, objectRequest } from './simple-requests.js';
 import { initiateNewMultipartUpload, streamUpload, doPutObject, completeMultipartUpload } from './upload.js';
 import { parseError, parseAcl, parseListBucketResult } from './xml-parsers.js';
+import errors from './errors.js';
 
-var errors = require('./errors.js');
 var Package = require('../../package.json');
 
 export default class Client {
@@ -43,6 +43,9 @@ export default class Client {
     var parsedUrl = Url.parse(params.url),
       port = +parsedUrl.port
 
+    var host = parsedUrl.hostname
+    var protocol = ''
+
     if (transport) {
       this.transport = transport
     } else {
@@ -50,7 +53,7 @@ export default class Client {
         case 'http:':
           {
             this.transport = Http
-            this.scheme = 'http'
+            protocol = 'http:'
             if (port === 0) {
               port = 80
             }
@@ -59,7 +62,7 @@ export default class Client {
         case 'https:':
           {
             this.transport = Https
-            this.scheme = 'https'
+            protocol = 'https:'
             if (port === 0) {
               port = 443
             }
@@ -72,8 +75,9 @@ export default class Client {
       }
     }
     this.params = {
-      host: parsedUrl.hostname,
+      host: host,
       port: port,
+      protocol: protocol,
       accessKey: params.accessKey,
       secretKey: params.secretKey,
       userAgent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`,
@@ -143,6 +147,7 @@ export default class Client {
       requestParams = {
         host: this.params.host,
         port: this.params.port,
+        protocol: this.params.protocol,
         method: 'PUT',
         path: `/${bucket}`,
         headers: {
@@ -166,6 +171,7 @@ export default class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
+      protocol: this.params.protocol,
       path: '/',
       method: 'GET'
     }
@@ -226,6 +232,7 @@ export default class Client {
       requestParams = {
         host: this.params.host,
         port: this.params.port,
+        protocol: this.params.protocol,
         method: 'GET',
         path: `/${bucket}${query}`
       }
@@ -256,6 +263,7 @@ export default class Client {
       requestParams = {
         host: this.params.host,
         port: this.params.port,
+        protocol: this.params.protocol,
         method: 'PUT',
         path: `/${bucket}${query}`,
         headers: {
@@ -321,6 +329,7 @@ export default class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
+      protocol: this.params.protocol,
       path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'GET',
       headers
@@ -495,6 +504,7 @@ export default class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
+      protocol: this.params.protocol,
       path: `/${bucket}/${uriResourceEscape(key)}`,
       method: 'HEAD'
     }
@@ -538,9 +548,9 @@ export default class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
+      protocol: this.params.protocol,
       path: `/${bucket}/${uriResourceEscape(key)}`,
-      method: 'put',
-      scheme: this.scheme,
+      method: 'PUT',
       expires: expires
     }
     return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
@@ -556,9 +566,9 @@ export default class Client {
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
+      protocol: this.params.protocol,
       path: `/${bucket}/${uriResourceEscape(key)}`,
-      method: 'get',
-      scheme: this.scheme,
+      method: 'GET',
       expires: expires
     }
     return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)

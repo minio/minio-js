@@ -21,7 +21,19 @@ var notify = require('gulp-notify');
 var jscs = require('gulp-jscs');
 var jshint = require('gulp-jshint');
 
-gulp.task('default', ['test'], function() {})
+var fs = require("fs");
+var browserify = require("browserify");
+
+gulp.task('browserify', ['compile'], function() {
+  browserify("./dist/main/minio.js", {
+    standalone: 'Minio'
+  })
+    .bundle()
+    .on("error", function (err) { console.log("Error : " + err.message); })
+    .pipe(fs.createWriteStream("./dist/main/minio-browser.js"));
+})
+
+gulp.task('default', ['test', 'browserify'], function() {})
 
 gulp.task('compile', function(cb) {
   compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)

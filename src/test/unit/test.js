@@ -278,6 +278,7 @@ describe('Client', () => {
           assert.deepEqual(params, {
             host: 'localhost',
             port: 9000,
+            protocol: '',
             path: '/bucket/object',
             method: 'HEAD'
           })
@@ -315,6 +316,7 @@ describe('Client', () => {
           assert.deepEqual(params, {
             host: 'localhost',
             port: 9000,
+            protocol: '',
             path: '/bucket/object',
             method: 'HEAD',
             headers: {
@@ -579,6 +581,7 @@ describe('Client', () => {
             port: 9000,
             path: '/bucket?acl',
             method: 'PUT',
+            protocol: '',
             headers: {
               'x-amz-acl': 'public'
             }

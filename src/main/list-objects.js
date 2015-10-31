@@ -51,6 +51,7 @@ export function getObjectList(transport, params, bucket, prefix, marker, delimit
     var requestParams = {
       host: params.host,
       port: params.port,
+      protocol: params.protocol,
       path: `/${bucket}${query}`,
       method: 'GET'
     }

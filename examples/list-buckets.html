@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <body>
+    <script type="text/javascript" src="./dist/main/minio-browser.js"></script>
+    <script>
+     var s3Client = new Minio({
+       url: "http://127.0.0.1:9000"
+     });
+     s3Client.listBuckets(function(e, bucketStream) {
+       if (e) {
+         console.log(e);
+         return
+       }
+       bucketStream.on('data', function(obj) {
+         console.log(obj)
+       });
+       bucketStream.on('end', function() {
+         console.log("End")
+       });
+       bucketStream.on('error', function(e) {
+         console.log("Error", e)
+       });
+     })
+    </script>
+  </body>
+</html>
