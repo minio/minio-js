@@ -89,3 +89,13 @@ export function validateBucketName(bucket) {
 
   return true
 }
+
+// pipesetup sets up pipe() from left to right os streams array
+// pipesetup will also make sure that error emitted at any of the upstream Stream
+// will be emited at the last stream. This makes error handling simple
+export function pipesetup(streams) {
+  return streams.reduce((src, dst) => {
+    src.on('error', err => dst.emit('error', err))
+    return src.pipe(dst)
+  })
+}

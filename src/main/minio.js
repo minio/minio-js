@@ -21,23 +21,23 @@ import Http from 'http';
 import Https from 'https';
 import Stream from 'stream';
 import Through2 from 'through2';
+import BlockStream2 from 'block-stream2';
 import Url from 'url';
 import Xml from 'xml';
 import Moment from 'moment';
+import async from 'async';
 
-import { validateBucketName, getRegion, getScope, uriEscape, uriResourceEscape } from './helpers.js';
-import { listAllParts, listAllIncompleteUploads, removeUploads } from './multipart.js';
-import { getObjectList } from './list-objects.js';
+import { validateBucketName, getRegion, getScope, uriEscape, uriResourceEscape, pipesetup } from './helpers.js';
+import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
-import { bucketRequest, objectRequest } from './simple-requests.js';
-import { initiateNewMultipartUpload, streamUpload, doPutObject, completeMultipartUpload } from './upload.js';
-import { parseError, parseAcl, parseListBucketResult } from './xml-parsers.js';
+import * as transformers from './transformers'
+
 import errors from './errors.js';
 
 var Package = require('../../package.json');
 
-export default class Client {
+export default class Client extends Multipart {
   constructor(params, transport) {
     var namespace = 'Minio'
     var parsedUrl = Url.parse(params.url),
@@ -46,13 +46,11 @@ export default class Client {
     var host = parsedUrl.hostname
     var protocol = ''
 
-    if (transport) {
-      this.transport = transport
-    } else {
+    if (!transport) {
       switch (parsedUrl.protocol) {
         case 'http:':
           {
-            this.transport = Http
+            transport = Http
             protocol = 'http:'
             if (port === 0) {
               port = 80
@@ -61,7 +59,7 @@ export default class Client {
           }
         case 'https:':
           {
-            this.transport = Https
+            transport = Https
             protocol = 'https:'
             if (port === 0) {
               port = 443
@@ -74,7 +72,7 @@ export default class Client {
           }
       }
     }
-    this.params = {
+    var newParams = {
       host: host,
       port: port,
       protocol: protocol,
@@ -83,6 +81,9 @@ export default class Client {
       userAgent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`,
       userAgentSet: false
     }
+    super(newParams, transport)
+    this.params = newParams
+    this.transport = transport
   }
 
   // CLIENT LEVEL CALLS
@@ -106,6 +107,42 @@ export default class Client {
 
   // SERVICE LEVEL CALLS
 
+  bucketRequest(method, bucket, cb) {
+    var path = `/${bucket}`
+    this.request(method, path, cb)
+  }
+
+  objectRequest(method, bucket, object, cb) {
+    var path = `/${bucket}/${uriResourceEscape(object)}`
+    this.request(method, path, cb)
+  }
+
+  request(method, path, cb) {
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      protocol: this.params.protocol,
+      method: method,
+      path: path
+    }
+
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+    var req = this.transport.request(requestParams, response => {
+      if (response.statusCode >= 300) {
+        var concater = transformers.getConcater()
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
+      }
+      // no data expected
+      cb()
+    })
+    req.on('error', e => cb(e))
+    req.end()
+  }
+
   makeBucket(bucket, cb) {
     return this.makeBucketWithACL(bucket, 'private', cb)
   }
@@ -128,18 +165,13 @@ export default class Client {
         }
       })
       createBucketConfiguration.push({
-        LocationConstraint: getRegion(this.params.host)
+        LocationConstraint: region
       })
       var payloadObject = {
         CreateBucketConfiguration: createBucketConfiguration
       }
       payload = Xml(payloadObject)
     }
-
-    var stream = new Stream.Readable()
-    stream._read = function() {}
-    stream.push(payload.toString())
-    stream.push(null)
 
     var hash = Crypto.createHash('sha256')
     hash.update(payload)
@@ -160,11 +192,16 @@ export default class Client {
 
     var req = this.transport.request(requestParams, response => {
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        var errorTransformer = transformers.getErrorTransformer(response, true)
+        var concater = transformers.getConcater()
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
       cb()
     })
-    stream.pipe(req)
+    req.write(payload)
+    req.end()
   }
 
   listBuckets(cb) {
@@ -178,49 +215,60 @@ export default class Client {
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
-    var stream = new Stream.Readable({
-      objectMode: true
-    })
-    stream._read = function() {}
+    var concater = transformers.getConcater()
 
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
-        // TODO work out how to handle errors with stream
-        parseError(response, (error) => {
-          if (error.code === 'TemporaryRedirect') {
-            error.code = 'AccessDenied'
-            error.message = 'Unauthenticated access prohibited'
-          }
-          cb(error)
-        })
-      } else {
-        cb(null, stream)
-        parseListBucketResult(response, stream)
+        var errorTransformer = transformers.getErrorTransformer(response, true)
+        pipesetup([response, concater,  errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
+      var transformer = transformers.getListBucketTransformer();
+      pipesetup([response, concater, transformer])
+      cb(null, transformer)
     })
+    req.on('error', e => cb(e))
     req.end()
   }
 
   listIncompleteUploads(bucket, prefix, recursive) {
-    var delimiter = null
-    if (!recursive) {
-      delimiter = "/"
+    var delimiter = recursive ? null : "/"
+    var dummyTransformer = transformers.getDummyTransformer()
+    var self = this
+    function listNext(keyMarker, uploadIdMarker) {
+      self.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
+        .on('error', e => dummyTransformer.emit('error', e))
+        .on('data', result => {
+          result.uploads.forEach(upload => {
+            dummyTransformer.push(upload)
+          })
+          result.prefixes.forEach(prefix => {
+            dummyTransformer.push(prefix)
+          })
+          if (result.isTruncated) {
+            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
+            return
+          }
+          dummyTransformer.push(null) // signal 'end'
+        })
     }
-    return listAllIncompleteUploads(this.transport, this.params, bucket, prefix, delimiter)
+    listNext()
+    return dummyTransformer
   }
 
   bucketExists(bucket, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
-    bucketRequest(this, 'HEAD', bucket, cb)
+    this.bucketRequest('HEAD', bucket, cb)
   }
 
   removeBucket(bucket, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
-    bucketRequest(this, 'DELETE', bucket, cb)
+    this.bucketRequest('DELETE', bucket, cb)
   }
 
   getBucketACL(bucket, cb) {
@@ -238,13 +286,48 @@ export default class Client {
       }
 
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
     var req = this.transport.request(requestParams, response => {
+      var concater = transformers.getConcater()
+      var errorTransformer = transformers.getErrorTransformer(response)
+      var transformer = transformers.getAclTransformer()
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
-      parseAcl(response, cb)
+      pipesetup([response, concater, transformer])
+        .on('error', e => cb(e))
+        .on('data', data => {
+          var perm = data.acl.reduce(function(acc, grant) {
+            if (grant.grantee.uri === 'http://acs.amazonaws.com/groups/global/AllUsers') {
+              if (grant.permission === 'READ') {
+                acc.publicRead = true
+              } else if (grant.permission === 'WRITE') {
+                acc.publicWrite = true
+              }
+            } else if (grant.grantee.uri === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
+              if (grant.permission === 'READ') {
+                acc.authenticatedRead = true
+              } else if (grant.permission === 'WRITE') {
+                acc.authenticatedWrite = true
+              }
+            }
+            return acc
+          }, {})
+          var cannedACL = 'unsupported-acl'
+          if (perm.publicRead && perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
+            cannedACL = 'public-read-write'
+          } else if (perm.publicRead && !perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
+            cannedACL = 'public-read'
+          } else if (!perm.publicRead && !perm.publicWrite && perm.authenticatedRead && !perm.authenticatedWrite) {
+            cannedACL = 'authenticated-read'
+          } else if (!perm.publicRead && !perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
+            cannedACL = 'private'
+          }
+          cb(null, cannedACL)
+        })
     })
+    req.on('error', e => cb(e))
     req.end()
   }
 
@@ -274,11 +357,17 @@ export default class Client {
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, response => {
+      var concater = transformers.getConcater()
+      var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
       cb()
     })
+    // FIXME: the below line causes weird failure in 'gulp test'
+    // req.on('error', e => cb(e))
     req.end()
   }
 
@@ -291,7 +380,34 @@ export default class Client {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
-    removeUploads(this.transport, this.params, bucket, key, cb)
+    var self = this
+    this.findUploadId(bucket, key, (err, uploadId) => {
+      if (err || !uploadId) {
+        return cb(err)
+      }
+      var requestParams = {
+        host: self.params.host,
+        port: self.params.port,
+        protocol: self.params.protocol,
+        path: `/${bucket}/${key}?uploadId=${uploadId}`,
+        method: 'DELETE'
+      }
+
+      signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
+
+      var req = self.transport.request(requestParams, (response) => {
+        if (response.statusCode !== 204) {
+          var concater = transformers.getConcater()
+          var errorTransformer = transformers.getErrorTransformer(response)
+          pipesetup([response, concater, errorTransformer])
+            .on('error', e => cb(e))
+          return
+        }
+        cb()
+      })
+      req.on('error', e => cb(e))
+      req.end()
+    })
   }
 
   getObject(bucket, key, cb) {
@@ -339,14 +455,18 @@ export default class Client {
 
     var req = this.transport.request(requestParams, (response) => {
       if (!(response.statusCode === 200 || response.statusCode === 206)) {
-        return parseError(response, cb)
+        var concater = transformers.getConcater()
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
-      // wrap it in a new pipe to strip additional response data
-      cb(null, response.pipe(Through2((data, enc, done) => {
-        done(null, data)
-      })))
-
+      var dummyTransformer = transformers.getDummyTransformer()
+      pipesetup([response, dummyTransformer])
+      cb(null, dummyTransformer)
+      return
     })
+    req.on('error', e => cb(e))
     req.end()
   }
 
@@ -363,73 +483,112 @@ export default class Client {
       contentType = 'application/octet-stream'
     }
 
+    function calculatePartSize(size) {
+      var minimumPartSize = 5 * 1024 * 1024, // 5MB
+        maximumPartSize = 5 * 1025 * 1024 * 1024,
+        // using 10000 may cause part size to become too small, and not fit the entire object in
+        partSize = Math.floor(size / 9999)
+
+      if (partSize > maximumPartSize) {
+        return maximumPartSize
+      }
+      return Math.max(minimumPartSize, partSize)
+    }
+
     var self = this
 
-    if (size > 5 * 1024 * 1024) {
-      var stream = listAllIncompleteUploads(this.transport, this.params, bucket, key),
-        uploadId = null
-      stream.on('error', (e) => {
-        cb(e)
-      })
-      stream.pipe(Through2.obj(function(upload, enc, done) {
-        if (key === upload.key) {
-          uploadId = upload.uploadId
-        }
-        done()
-      }, function(done) {
-        if (!uploadId) {
-          initiateNewMultipartUpload(self.transport, self.params, bucket, key, contentType, (e, uploadId) => {
-            if (e) {
-              done(e)
-              return
-            }
-            streamUpload(self.transport, self.params, bucket, key, contentType,
-              uploadId, [], size, r, (e, etags) => {
-                if (e) {
-                  done()
-                  cb(e)
-                  return
-                }
-                return completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                  done()
-                  cb(e)
-                })
-              })
-          })
-        } else {
-          var parts = listAllParts(self.transport, self.params, bucket, key, uploadId)
-          parts.on('error', (e) => {
-            cb(e)
-          })
-          var partsErrored = null,
-            partsArray = []
-          parts.pipe(Through2.obj(function(part, enc, partDone) {
-            partsArray.push(part)
-            partDone()
-          }, function(partDone) {
-            if (partsErrored) {
-              return partDone(partsErrored)
-            }
-            streamUpload(self.transport, self.params, bucket, key, contentType,
-              uploadId, partsArray, size, r, (e, etags) => {
-                if (partsErrored) {
-                  partDone()
-                }
-                if (e) {
-                  partDone()
-                  return cb(e)
-                }
-                completeMultipartUpload(self.transport, self.params, bucket, key, uploadId, etags, (e) => {
-                  partDone()
-                  return cb(e)
-                })
-              })
-          }))
-        }
-      }))
-    } else {
-      doPutObject(this.transport, this.params, bucket, key, contentType, size, null, null, r, cb)
+    if (size <= 5*1024*1024) {
+      var concater = transformers.getConcater()
+      pipesetup([r, concater])
+        .on('error', e => cb(e))
+        .on('data', chunk => self.doPutObject(bucket, key, contentType, null, null, chunk, cb))
+      return
     }
+    async.waterfall([
+      function(cb) {
+        self.findUploadId(bucket, key, cb)
+      },
+      function(uploadId, cb) {
+        if (uploadId) {
+          self.listAllParts(bucket, key, uploadId,  (e, etags) => {
+            return cb(e, uploadId, etags)
+          })
+          return
+        }
+        self.initiateNewMultipartUpload(bucket, key, contentType, (e, uploadId) => {
+          return cb(e, uploadId, [])
+        })
+      },
+      function(uploadId, etags, cb) {
+        var partSize = calculatePartSize(size)
+        var sizeVerifier = transformers.getSizeVerifierTransformer(size)
+        var chunker = BlockStream2({size: partSize, zeroPadding: false})
+        var chunkUploader = self.chunkUploader(bucket, key, contentType, uploadId, etags)
+        pipesetup([r, chunker, sizeVerifier, chunkUploader])
+          .on('error', e => cb(e))
+          .on('data', etags => cb(null, etags, uploadId))
+      },
+      function(etags, uploadId, cb) {
+        self.completeMultipartUpload(bucket, key, uploadId, etags, cb)
+      }
+    ], function(err, etag) {
+      if (err) {
+        return cb(err)
+      }
+      cb(null, etag)
+    })
+  }
+
+  listObjectsOnce(bucket, prefix, marker, delimiter, maxKeys) {
+    var queries = []
+      // escape every value in query string, except maxKeys
+    if (prefix) {
+      prefix = uriEscape(prefix)
+      queries.push(`prefix=${prefix}`)
+    }
+    if (marker) {
+      marker = uriEscape(marker)
+      queries.push(`marker=${marker}`)
+    }
+    if (delimiter) {
+      delimiter = uriEscape(delimiter)
+      queries.push(`delimiter=${delimiter}`)
+    }
+    // no need to escape maxKeys
+    if (maxKeys) {
+      if (maxKeys >= 1000) {
+        maxKeys = 1000
+      }
+      queries.push(`max-keys=${maxKeys}`)
+    }
+    queries.sort()
+    var query = ''
+    if (queries.length > 0) {
+      query = `?${queries.join('&')}`
+    }
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      protocol: this.params.protocol,
+      path: `/${bucket}${query}`,
+      method: 'GET'
+    }
+
+    var dummyTransformer = transformers.getDummyTransformer()
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+    var req = this.transport.request(requestParams, (response) => {
+      var errorTransformer = transformers.getErrorTransformer(response)
+      var concater = transformers.getConcater()
+      var transformer = transformers.getListObjectsTransformer()
+      if (response.statusCode !== 200) {
+        pipesetup([response, concater, errorTransformer, dummyTransformer])
+        return
+      }
+      pipesetup([response, concater, transformer, dummyTransformer])
+    })
+    req.end()
+    return dummyTransformer
   }
 
   listObjects(bucket, params) {
@@ -438,58 +597,36 @@ export default class Client {
     }
     var self = this,
       prefix = null,
-      delimiter = null
+      delimiter = '/'
+      // we delimit by default, turn off recursive if True
+
     if (params) {
       if (params.prefix) {
         prefix = params.prefix
       }
-      // we delimit by default, turn off recursive if True
-      delimiter = '/'
       if (params.recursive === true) {
         delimiter = null
       }
     }
 
-    var queue = new Stream.Readable({
-      objectMode: true
-    })
-    queue._read = function() {}
-    var stream = queue.pipe(Through2.obj(function(currentRequest, enc, done) {
-      getObjectList(self.transport, self.params, currentRequest.bucket, currentRequest.prefix, currentRequest.marker,
-        currentRequest.delimiter, currentRequest.maxKeys, (e, r) => {
-          if (e) {
-            return done(e)
-          }
-          var marker = null
-          r.objects.forEach(object => {
-            marker = object.name
-            this.push(object)
+    var dummyTransformer = transformers.getDummyTransformer()
+
+    function listNext(marker) {
+      self.listObjectsOnce(bucket, prefix, marker, delimiter, 1000)
+        .on('error', e => dummyTransformer.emit('error', e))
+        .on('data', result => {
+          result.objects.forEach(object => {
+            dummyTransformer.push(object)
           })
-          if (r.isTruncated) {
-            if (delimiter) {
-              marker = r.nextMarker
-            }
-            queue.push({
-              bucket: currentRequest.bucket,
-              prefix: currentRequest.prefix,
-              marker: marker,
-              delimiter: currentRequest.delimiter,
-              maxKeys: currentRequest.maxKeys
-            })
-          } else {
-            queue.push(null)
+          if (result.isTruncated) {
+            listNext(result.nextMarker)
+            return
           }
-          done()
+          dummyTransformer.push(null) // signal 'end'
         })
-    }))
-    queue.push({
-      bucket: bucket,
-      prefix: prefix,
-      marker: null,
-      delimiter: delimiter,
-      maxKeys: 1000
-    })
-    return stream
+    }
+    listNext()
+    return dummyTransformer
   }
 
   statObject(bucket, key, cb) {
@@ -512,17 +649,20 @@ export default class Client {
     signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
 
     var req = this.transport.request(requestParams, (response) => {
+      var errorTransformer = transformers.getErrorTransformer(response)
+      var concater = transformers.getConcater()
       if (response.statusCode !== 200) {
-        return parseError(response, cb)
-      } else {
-        var result = {
-          size: +response.headers['content-length'],
-          etag: response.headers.etag.replace(/"/g, ''),
-          contentType: response.headers['content-type'],
-          lastModified: response.headers['last-modified']
-        }
-        cb(null, result)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+          return
       }
+      var result = {
+        size: +response.headers['content-length'],
+        etag: response.headers.etag.replace(/"/g, ''),
+        contentType: response.headers['content-type'],
+        lastModified: response.headers['last-modified']
+      }
+      cb(null, result)
     })
     req.end()
   }
@@ -535,7 +675,7 @@ export default class Client {
     if (key === null || key.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
-    objectRequest(this, 'DELETE', bucket, key, cb)
+    this.objectRequest('DELETE', bucket, key, cb)
   }
 
   presignedPutObject(bucket, key, expires) {
