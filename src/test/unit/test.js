@@ -173,7 +173,7 @@ describe('Client', () => {
           secretKey: 'secretkey'
         })
         var url = client.presignedPutObject('bucket', 'object', '86400')
-        assert.equal(url.length > 0, true) 
+        assert.equal(url.length > 0, true)
       })
     })
   })
@@ -407,7 +407,7 @@ describe('Client', () => {
       it('should convert 307 to 403', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(307)
         client.listBuckets(function(e, stream) {
-          checkError('AccessDenied', 'Unauthenticated access prohibited', null, null, null)(e)
+          checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null)(e)
           done()
         })
       })
@@ -864,7 +864,7 @@ describe('Client', () => {
           }).reply(200, '', {
             etag: 'etag3'
           })
-          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
+          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><Location>location</Location><ETag>"3858f62230ac3c915f300c664312c11f"</ETag></CompleteMultipartUploadResult>')
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
@@ -882,7 +882,7 @@ describe('Client', () => {
           }).reply(200, '', {
             etag: '79b281060d337b9b2b84ccf390adcf74'
           })
-          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
+          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><Location>location</Location><ETag>"3858f62230ac3c915f300c664312c11f"</ETag></CompleteMultipartUploadResult>')
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
@@ -907,7 +907,7 @@ describe('Client', () => {
           }).reply(200, '', {
             etag: '79b281060d337b9b2b84ccf390adcf74'
           })
-          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?mxl version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
+          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><Location>location</Location><ETag>"3858f62230ac3c915f300c664312c11f"</ETag></CompleteMultipartUploadResult>')
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
@@ -1352,7 +1352,7 @@ describe('Client', () => {
         client.removeIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should return error on delete failure', (done) => {
-        MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+        MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2.1</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })

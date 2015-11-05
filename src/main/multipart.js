@@ -14,314 +14,323 @@
  * limitations under the License.
  */
 
+import Crypto from 'crypto';
 import Concat from 'concat-stream';
 import Stream from 'stream';
-import ParseXml from 'xml-parser';
+import Xml from 'xml';
 import Through2 from 'through2';
 
-import { uriEscape, uriResourceEscape } from './helpers.js';
+import { uriEscape, uriResourceEscape, pipesetup } from './helpers.js';
 import { signV4 } from './signing.js';
-import { parseError, parseListMultipartResult } from './xml-parsers.js';
+import * as transformers from './transformers.js'
+import * as xmlParsers from './xml-parsers.js'
 
-export function listAllIncompleteUploads(transport, params, bucket, object, delimiter) {
-  var errored = null
-  var queue = new Stream.Readable({
-    objectMode: true
-  })
-  queue._read = function() {}
+export default class Multipart {
+  constructor(params, transport) {
+    this.params = params
+    this.transport = transport
+  }
 
-  var stream = queue.pipe(Through2.obj(function(currentJob, enc, done) {
-    if (errored) {
-      return done()
+  initiateNewMultipartUpload(bucket, key, contentType, cb) {
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      protocol: this.params.protocol,
+      path: `/${bucket}/${uriResourceEscape(key)}?uploads`,
+      method: 'POST',
+      headers: {
+        'Content-Type': contentType
+      }
     }
-    listMultipartUploads(transport, params, currentJob.bucket, currentJob.object, currentJob.objectMarker, currentJob.uploadIdMarker, currentJob.delimiter, (e, r) => {
-      if (errored) {
-        return done()
+
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+    var concater = transformers.getConcater()
+    var transformer = transformers.getInitiateMultipartTransformer()
+    var request = this.transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
-      // TODO handle error
-      if (e) {
-        return done(e)
-      }
-      r.uploads.forEach(upload => {
-        this.push(upload)
-      })
-      r.prefixes.forEach(prefix => {
-        this.push(prefix)
-      })
-      if (r.isTruncated) {
-        queue.push({
-          bucket: bucket,
-          object: decodeURI(object),
-          objectMarker: decodeURI(r.objectMarker),
-          uploadIdMarker: decodeURI(r.uploadIdMarker),
-          delimiter: delimiter
-        })
-      } else {
-        queue.push(null)
-      }
-      done()
+      pipesetup([response, concater, transformer])
+        .on('error', e => cb(e))
+        .on('data', uploadId => cb(null, uploadId))
     })
-  }, function(done) {
-    if (errored) {
-      return done(errored)
+    request.end()
+  }
+
+  completeMultipartUpload(bucket, key, uploadId, etags, cb) {
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      protocol: this.params.protocol,
+      path: `/${bucket}/${uriResourceEscape(key)}?uploadId=${uploadId}`,
+      method: 'POST'
     }
-    return done()
-  }))
+    var parts = []
 
-  queue.push({
-    bucket: bucket,
-    object: object,
-    objectMarker: null,
-    uploadIdMarker: null,
-    delimiter: delimiter
-  })
-
-  return stream
-}
-
-export function listMultipartUploads(transport, params, bucket, key, keyMarker, uploadIdMarker, delimiter, cb) {
-  var queries = []
-  if (key) {
-    queries.push(`prefix=${uriEscape(key)}`)
-  }
-  if (keyMarker) {
-    keyMarker = uriEscape(keyMarker)
-    queries.push(`key-marker=${keyMarker}`)
-  }
-  if (uploadIdMarker) {
-    queries.push(`upload-id-marker=${uploadIdMarker}`)
-  }
-  if (delimiter) {
-    queries.push(`delimiter=${uriEscape(delimiter)}`)
-  }
-  var maxUploads = 1000
-  queries.push(`max-uploads=${maxUploads}`)
-  queries.sort()
-  queries.unshift('uploads')
-  var query = ''
-  if (queries.length > 0) {
-    query = `?${queries.join('&')}`
-  }
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    protocol: params.protocol,    
-    path: `/${bucket}${query}`,
-    method: 'GET'
-  }
-  signV4(requestParams, '', params.accessKey, params.secretKey)
-  var req = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 200) {
-      return parseError(response, cb)
-    }
-    parseListMultipartResult(bucket, key, response, cb)
-  })
-  req.end()
-}
-
-export function abortMultipartUpload(transport, params, bucket, key, uploadId, cb) {
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    protocol: params.protocol,
-    path: `/${bucket}/${key}?uploadId=${uploadId}`,
-    method: 'DELETE'
-  }
-
-  signV4(requestParams, '', params.accessKey, params.secretKey)
-
-  var req = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 204) {
-      return parseError(response, cb)
-    }
-    cb()
-  })
-  req.end()
-}
-
-export function removeUploads(transport, params, bucket, key, cb) {
-  var ignoreTruncated = false
-  var errored = null,
-    queue = new Stream.Readable({
-      objectMode: true
+    etags.forEach(element => {
+      parts.push({
+        Part: [{
+          PartNumber: element.part
+        }, {
+          ETag: element.etag
+        }]
+      })
     })
 
-  queue._read = function() {}
-  queue.pipe(Through2.obj(function(job, enc, done) {
-    if (errored) {
-      return done()
-    }
-    listMultipartUploads(transport, params, job.bucket, job.key, job.keyMarker, job.uploadIdMarker, job.delimiter, (e, result) => {
-      if (errored) {
-        return done()
-      }
-      if (e) {
-        errored = e
-        queue.push(null)
-        return done()
-      }
-      result.uploads.forEach(element => {
-        if (element.key === key) {
-          ignoreTruncated = true
-          this.push(element)
-        }
-      })
-      if (result.isTruncated && !ignoreTruncated) {
-        queue.push({
-          bucket: result.nextJob.bucket,
-          key: result.nextJob.key,
-          keyMarker: result.nextJob.keyMarker,
-          uploadIdMarker: result.nextJob.uploadIdMarker
-        })
-      } else {
-        queue.push(null)
-      }
-      done()
-    })
-  }))
-    .pipe(Through2.obj(function(upload, enc, done) {
-      if (errored) {
-        return done()
-      }
-      if (key !== null) {
-        if (key == upload.key) {
-          abortMultipartUpload(transport, params, upload.bucket, upload.key, upload.uploadId, (e) => {
-            if (errored) {
-              return done()
-            }
-            if (e) {
-              errored = e
-              queue.push(null)
-              return done()
-            }
-            return done()
-          })
-        }
-      }
-    }, function(done) {
-      cb(errored)
-      done()
-    }))
-  queue.push({
-    bucket: bucket,
-    key: key,
-    keyMarker: null,
-    uploadIdMarker: null
-  })
-}
+    var payloadObject = {
+        CompleteMultipartUpload: parts
+      },
+      payload = Xml(payloadObject),
+      hash = Crypto.createHash('sha256')
 
-export function listAllParts(transport, params, bucket, key, uploadId) {
-  var errored = null
-  var queue = new Stream.Readable({
-    objectMode: true
-  })
-  queue._read = function() {}
-  var stream = queue
-    .pipe(Through2.obj(function(job, enc, done) {
-      if (errored) {
-        return done()
+    hash.update(payload)
+
+    var sha256 = hash.digest('hex').toLowerCase()
+
+    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
+
+    var concater = transformers.getConcater()
+    var transformer = transformers.getCompleteMultipartTransformer()
+
+    var request = this.transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
-      listParts(transport, params, bucket, key, uploadId, job.marker, (e, r) => {
-        if (errored) {
-          return done()
-        }
+      pipesetup([response, concater, transformer])
+        .on('error', e => cb(e))
+        .on('data', result => cb(null, result.etag))
+    })
+    request.write(payload)
+    request.end()
+  }
+
+  listAllParts(bucket, key, uploadId, cb) {
+    var parts = []
+    var self = this
+    function listNext(marker) {
+      self.listParts(bucket, key, uploadId, marker, (e, result) => {
         if (e) {
-          errored = e
-          queue.push(null)
-          return done()
+          cb(e)
+          return
         }
-        r.parts.forEach((element) => {
-          this.push(element)
-        })
-        if (r.isTruncated) {
-          queue.push(r.nextJob)
-        } else {
-          queue.push(null)
+        parts = parts.concat(result.parts)
+        if (result.isTruncated) {
+          listNext(result.marker)
+          return
         }
-        done()
+        cb(null, parts)
       })
-    }, function(end) {
-      end(errored)
-    }))
-  queue.push({
-    bucket: bucket,
-    key: key,
-    uploadId: uploadId,
-    marker: 0
-  })
-  return stream
-}
-
-export function listParts(transport, params, bucket, key, uploadId, marker, cb) {
-  var query = '?'
-  if (marker && marker !== 0) {
-    query += `part-number-marker=${marker}&`
-  }
-  query += `uploadId=${uploadId}`
-  var requestParams = {
-    host: params.host,
-    port: params.port,
-    protocol: params.protocol,
-    path: `/${bucket}/${uriResourceEscape(key)}${query}`,
-    method: 'GET'
-  }
-
-  signV4(requestParams, '', params.accessKey, params.secretKey)
-
-  var request = transport.request(requestParams, (response) => {
-    if (response.statusCode !== 200) {
-      return parseError(response, cb)
     }
-    response.pipe(Concat(body => {
-      var xml = ParseXml(body.toString())
-      var result = {
-        isTruncated: false,
-        parts: [],
-        nextJob: null
+    listNext(0)
+  }
+
+  listParts(bucket, key, uploadId, marker, cb) {
+    var query = '?'
+    if (marker && marker !== 0) {
+      query += `part-number-marker=${marker}&`
+    }
+    query += `uploadId=${uploadId}`
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      protocol: this.params.protocol,
+      path: `/${bucket}/${uriResourceEscape(key)}${query}`,
+      method: 'GET'
+    }
+
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+    var concater = transformers.getConcater()
+    var transformer = transformers.getListPartsTransformer()
+    var req = this.transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
       }
-      var nextJob = {
-        bucket: bucket,
-        key: key,
-        uploadId: uploadId
+      pipesetup([response, concater, transformer])
+        .on('error', e => cb(e))
+        .on('data', data => cb(null, data))
+    })
+    req.on('error', e => cb(e))
+    req.end()
+  }
+
+  listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter) {
+    var queries = []
+    if (prefix) {
+      queries.push(`prefix=${uriEscape(prefix)}`)
+    }
+    if (keyMarker) {
+      keyMarker = uriEscape(keyMarker)
+      queries.push(`key-marker=${keyMarker}`)
+    }
+    if (uploadIdMarker) {
+      queries.push(`upload-id-marker=${uploadIdMarker}`)
+    }
+    if (delimiter) {
+      queries.push(`delimiter=${uriEscape(delimiter)}`)
+    }
+    var maxUploads = 1000
+    queries.push(`max-uploads=${maxUploads}`)
+    queries.sort()
+    queries.unshift('uploads')
+    var query = ''
+    if (queries.length > 0) {
+      query = `?${queries.join('&')}`
+    }
+    var requestParams = {
+      host: this.params.host,
+      port: this.params.port,
+      path: `/${bucket}${query}`,
+      method: 'GET'
+    }
+    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
+
+    var transformer = transformers.getListMultipartTransformer()
+    var dummyTransformer = transformers.getDummyTransformer()
+    var concater = transformers.getConcater()
+
+    var req = this.transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer, dummyTransformer])
+        return
       }
-      xml.root.children.forEach(element => {
-        switch (element.name) {
-          case 'IsTruncated':
-            result.isTruncated = element.content === 'true'
-            break
-          case 'NextPartNumberMarker':
-            nextJob.marker = +element.content
-            break
-          case 'Part':
-            var object = {}
-            element.children.forEach(xmlObject => {
-              switch (xmlObject.name) {
-                case 'PartNumber':
-                  object.part = +xmlObject.content
-                  break
-                case 'LastModified':
-                  object.lastModified = xmlObject.content
-                  break
-                case 'ETag':
-                  object.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
-                  break
-                case 'Size':
-                  object.size = +xmlObject.content
-                  break
-                default:
-              }
-            })
-            result.parts.push(object)
-            break
-          default:
-            break
+      pipesetup([response, concater, transformer, dummyTransformer])
+    })
+    req.on('error', e => dummyTransformer.emit('error', e))
+    req.end()
+    return dummyTransformer
+  }
+
+  findUploadId(bucket, key, cb) {
+    var self = this
+    function listNext(keyMarker, uploadIdMarker) {
+      self.listIncompleteUploadsOnce(bucket, key, keyMarker, uploadIdMarker)
+        .on('error', e => cb(e))
+        .on('data', result => {
+          var keyFound = false
+          result.uploads.forEach(upload => {
+            if (upload.key === key) {
+              cb(null, upload.uploadId)
+              keyFound = true
+            }
+          })
+          if (keyFound) {
+            return
+          }
+          if (result.isTruncated) {
+            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
+            return
+          }
+          cb(null, undefined)
+        })
+    }
+    listNext()
+  }
+
+  chunkUploader(bucket, key, contentType, uploadId, partsArray) {
+    var partsDone = []
+    var self = this
+    var partNumber = 1
+
+    // convert array to object to make things easy
+    var parts = partsArray.reduce(function(acc, item) {
+      if (!acc[item.part]) {
+        acc[item.part] = item
+      }
+      return acc
+    }, {})
+
+    return Through2.obj(function(chunk, enc, cb) {
+      var part = parts[partNumber]
+      if (part) {
+        var hash = Crypto.createHash('md5')
+        hash.update(chunk)
+        var md5 = hash.digest('hex').toLowerCase()
+        if (md5 === part.etag) {
+          //md5 matches, chunk already uploaded
+          partsDone.push({part: part.part, etag: part.etag})
+          partNumber++
+          return cb()
         }
-      })
-      if (result.isTruncated) {
-        result.nextJob = nextJob
+        // md5 doesn't match, upload again
       }
-      cb(null, result)
-    }))
-  })
-  request.end()
+      self.doPutObject(bucket, key, contentType, uploadId, partNumber, chunk, (e, etag) => {
+        if (e) {
+          partNumber++
+          return cb(e)
+        }
+        var part = {
+          part: partNumber,
+          etag: etag
+        }
+        partsDone.push(part)
+        partNumber++
+        cb()
+      })
+    }, function(cb) {
+      this.push(partsDone)
+      this.push(null)
+      cb()
+    })
+  }
+
+  doPutObject(bucket, key, contentType, uploadId, part, data, cb) {
+    var query = ''
+    if (part) {
+      query = `?partNumber=${part}&uploadId=${uploadId}`
+    }
+    if (contentType === null || contentType === '') {
+      contentType = 'application/octet-stream'
+    }
+
+    var hash256 = Crypto.createHash('sha256')
+    var hashMD5 = Crypto.createHash('md5')
+
+    hash256.update(data)
+    hashMD5.update(data)
+
+    var sha256 = hash256.digest('hex').toLowerCase(),
+      md5 = hashMD5.digest('base64'),
+      requestParams = {
+        host: this.params.host,
+        port: this.params.port,
+        protocol: this.params.protocol,
+        path: `/${bucket}/${uriResourceEscape(key)}${query}`,
+        method: 'PUT',
+        headers: {
+          'Content-Length': data.length,
+          'Content-Type': contentType,
+          'Content-MD5': md5
+        }
+      }
+
+    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
+    var req = this.transport.request(requestParams, (response) => {
+      if (response.statusCode !== 200) {
+        var concater = transformers.getConcater()
+        var errorTransformer = transformers.getErrorTransformer(response)
+        pipesetup([response, concater, errorTransformer])
+          .on('error', e => cb(e))
+        return
+      }
+      var etag = response.headers.etag
+      if (etag) {
+        etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+      }
+      cb(null, etag)
+    })
+    req.on('error', e => cb(e))
+    req.write(data)
+    req.end()
+  }
 }
