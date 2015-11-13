@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('./minio-js')
+var Minio = require('minio')
 var superagent = require('superagent')
 var _ = require('underscore')
 
@@ -27,7 +27,6 @@ var s3Client = new Minio({
 })
 
 var policy = s3Client.newPostPolicy()
-
 policy.setKey("keyname")
 policy.setBucket("bucketname")
 var expires = new Date
@@ -35,8 +34,7 @@ expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 
 formData = s3Client.presignedPostPolicy(policy)
-
-var req = superagent.post('https://s3-us-west-2.amazonaws.com/bucketname')
+var req = superagent.post('https://<your-s3-endpoint>/bucketname')
 _.each(formData, function(value, key) {
   req.field(key, value)
 })
