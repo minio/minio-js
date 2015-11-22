@@ -240,17 +240,26 @@ export default class Client extends Multipart {
       self.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
-          result.uploads.forEach(upload => {
-            dummyTransformer.push(upload)
+          result.prefixes.forEach(prefix => dummyTransformer.write(prefix))
+          async.eachSeries(result.uploads, (upload, cb) => {
+            self.listAllParts(bucket, upload.key, upload.uploadId, (err, parts) => {
+              if (err) return cb(err)
+              upload.size = parts.reduce((acc, item) => acc + item.size, 0)
+              dummyTransformer.write(upload)
+              cb()
+            })
+          }, err => {
+            if (err) {
+              dummyTransformer.emit('error', e)
+              dummyTransformer.end()
+              return
+            }
+            if (result.isTruncated) {
+              listNext(result.nextKeyMarker, result.nextUploadIdMarker)
+              return
+            }
+            dummyTransformer.end() // signal 'end'
           })
-          result.prefixes.forEach(prefix => {
-            dummyTransformer.push(prefix)
-          })
-          if (result.isTruncated) {
-            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
-            return
-          }
-          dummyTransformer.push(null) // signal 'end'
         })
     }
     listNext()
