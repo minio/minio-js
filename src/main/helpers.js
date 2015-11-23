@@ -59,7 +59,7 @@ export function getRegion(host) {
   if (region[host] !== undefined) {
     return region[host]
   } else {
-    return 'milkyway'
+    return 'us-east-1'
   }
 }
 
