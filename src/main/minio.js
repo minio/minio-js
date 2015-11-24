@@ -153,7 +153,7 @@ export default class Client extends Multipart {
     }
 
     var region = getRegion(this.params.host)
-    if (region === 'milkyway' || region === 'us-east-1') {
+    if (region === 'us-east-1') {
       region = null
     }
     var payload = ''
