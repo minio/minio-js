@@ -77,6 +77,10 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ## Documentation
 
+[API](API.md)
+
+## Examples
+
 ### Bucket
 
 [makeBucket(bucket, cb)](examples/make-bucket.js)
@@ -91,6 +95,8 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
+[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](examples/list-objects.js)
+
 [listIncompleteUploads(bucket, prefix, recursive: true) : Stream](examples/list-incomplete-uploads.js)
 
 ### Object
@@ -100,8 +106,6 @@ s3client.listBuckets(function(e, bucketStream) {
 [getPartialObject(bucket, key, offset, length) Stream](examples/get-partialobject.js)
 
 [putObject(bucket, key, Stream, cb)](examples/put-object.js)
-
-[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](examples/list-objects.js)
 
 [statObject(bucket, key, cb)](examples/stat-object.js)
 
