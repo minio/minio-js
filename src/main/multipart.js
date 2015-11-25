@@ -50,11 +50,11 @@ export default class Multipart {
     var request = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
-      pipesetup([response, concater, transformer])
+      pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', uploadId => cb(null, uploadId))
     })
@@ -99,11 +99,11 @@ export default class Multipart {
     var request = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
-      pipesetup([response, concater, transformer])
+      pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', result => cb(null, result.etag))
     })
@@ -151,11 +151,11 @@ export default class Multipart {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
-      pipesetup([response, concater, transformer])
+      pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', data => cb(null, data))
     })
@@ -201,10 +201,10 @@ export default class Multipart {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer, dummyTransformer])
+        pipesetup(response, concater, errorTransformer, dummyTransformer)
         return
       }
-      pipesetup([response, concater, transformer, dummyTransformer])
+      pipesetup(response, concater, transformer, dummyTransformer)
     })
     req.on('error', e => dummyTransformer.emit('error', e))
     req.end()
@@ -319,7 +319,7 @@ export default class Multipart {
       if (response.statusCode !== 200) {
         var concater = transformers.getConcater()
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }

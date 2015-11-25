@@ -132,7 +132,7 @@ export default class Client extends Multipart {
       if (response.statusCode >= 300) {
         var concater = transformers.getConcater()
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
@@ -194,7 +194,7 @@ export default class Client extends Multipart {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response, true)
         var concater = transformers.getConcater()
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
@@ -220,12 +220,12 @@ export default class Client extends Multipart {
     var req = this.transport.request(requestParams, (response) => {
       if (response.statusCode !== 200) {
         var errorTransformer = transformers.getErrorTransformer(response, true)
-        pipesetup([response, concater,  errorTransformer])
+        pipesetup(response, concater,  errorTransformer)
           .on('error', e => cb(e))
         return
       }
       var transformer = transformers.getListBucketTransformer();
-      pipesetup([response, concater, transformer])
+      pipesetup(response, concater, transformer)
       cb(null, transformer)
     })
     req.on('error', e => cb(e))
@@ -300,11 +300,11 @@ export default class Client extends Multipart {
       var errorTransformer = transformers.getErrorTransformer(response)
       var transformer = transformers.getAclTransformer()
       if (response.statusCode !== 200) {
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
-      pipesetup([response, concater, transformer])
+      pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', data => {
           var perm = data.acl.reduce(function(acc, grant) {
@@ -369,7 +369,7 @@ export default class Client extends Multipart {
       var concater = transformers.getConcater()
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
@@ -408,7 +408,7 @@ export default class Client extends Multipart {
         if (response.statusCode !== 204) {
           var concater = transformers.getConcater()
           var errorTransformer = transformers.getErrorTransformer(response)
-          pipesetup([response, concater, errorTransformer])
+          pipesetup(response, concater, errorTransformer)
             .on('error', e => cb(e))
           return
         }
@@ -466,12 +466,12 @@ export default class Client extends Multipart {
       if (!(response.statusCode === 200 || response.statusCode === 206)) {
         var concater = transformers.getConcater()
         var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
       var dummyTransformer = transformers.getDummyTransformer()
-      pipesetup([response, dummyTransformer])
+      pipesetup(response, dummyTransformer)
       cb(null, dummyTransformer)
       return
     })
@@ -508,7 +508,7 @@ export default class Client extends Multipart {
 
     if (size <= 5*1024*1024) {
       var concater = transformers.getConcater()
-      pipesetup([r, concater])
+      pipesetup(r, concater)
         .on('error', e => cb(e))
         .on('data', chunk => self.doPutObject(bucket, key, contentType, null, null, chunk, cb))
       return
@@ -533,7 +533,7 @@ export default class Client extends Multipart {
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: partSize, zeroPadding: false})
         var chunkUploader = self.chunkUploader(bucket, key, contentType, uploadId, etags)
-        pipesetup([r, chunker, sizeVerifier, chunkUploader])
+        pipesetup(r, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
@@ -591,10 +591,10 @@ export default class Client extends Multipart {
       var concater = transformers.getConcater()
       var transformer = transformers.getListObjectsTransformer()
       if (response.statusCode !== 200) {
-        pipesetup([response, concater, errorTransformer, dummyTransformer])
+        pipesetup(response, concater, errorTransformer, dummyTransformer)
         return
       }
-      pipesetup([response, concater, transformer, dummyTransformer])
+      pipesetup(response, concater, transformer, dummyTransformer)
     })
     req.end()
     return dummyTransformer
@@ -661,7 +661,7 @@ export default class Client extends Multipart {
       var errorTransformer = transformers.getErrorTransformer(response)
       var concater = transformers.getConcater()
       if (response.statusCode !== 200) {
-        pipesetup([response, concater, errorTransformer])
+        pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
           return
       }
