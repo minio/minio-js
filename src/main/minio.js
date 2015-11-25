@@ -143,6 +143,11 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // Creates the bucket `bucketName`.
+  //
+  // __Arguments__
+  // * `bucketName` _string_ - Name of the bucket
+  // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
   makeBucket(bucket, cb) {
     return this.makeBucketWithACL(bucket, 'private', cb)
   }
@@ -204,6 +209,14 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // List of buckets created.
+  //
+  // __Arguments__
+  // * `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
+  //
+  // `bucketStream` emits Object with the format:
+  // * `obj.name` _string_ : bucket name
+  // * `obj.creationDate` _string_: date when bucket was created
   listBuckets(cb) {
     var requestParams = {
       host: this.params.host,
@@ -232,7 +245,22 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // Returns a stream that emits objects that are partially uploaded.
+  //
+  // __Arguments__
+  // * `bucketname` _string_: name of the bucket
+  // * `prefix` _string_: prefix of the object names that are partially uploaded
+  // * `recursive` bool: directory style listing when false, recursive listing when true
+  //
+  // __Return Value__
+  // * `stream` _Stream_ : emits objects of the format:
+  //   * `object.key` _string_: name of the object
+  //   * `object.uploadId` _string_: upload ID of the object
+  //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+    }
     var delimiter = recursive ? null : "/"
     var dummyTransformer = transformers.getDummyTransformer()
     var self = this
@@ -266,6 +294,11 @@ export default class Client extends Multipart {
     return dummyTransformer
   }
 
+  // To check if a bucket already exists.
+  //
+  // __Arguments__
+  // * `bucketName` _string_ : name of the bucket
+  // * `callback(err)` _function_ : `err` is `null` if the bucket exists
   bucketExists(bucket, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -273,6 +306,11 @@ export default class Client extends Multipart {
     this.bucketRequest('HEAD', bucket, cb)
   }
 
+  // Remove a bucket.
+  //
+  // __Arguments__
+  // * `bucketName` _string_ : name of the bucket
+  // * `callback(err)` _function_ : `err` is `null` if the bucket is removed successfully.
   removeBucket(bucket, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -280,6 +318,11 @@ export default class Client extends Multipart {
     this.bucketRequest('DELETE', bucket, cb)
   }
 
+  // get a bucket's ACL.
+  //
+  // __Arguments__
+  // * `bucketName` _string_ : name of the bucket
+  // * `callback(err, acl)` _function_ : `err` is not `null` in case of error. `acl` _string_ is the cannedACL which can have the values _private_, _public-read_, _public-read-write_.
   getBucketACL(bucket, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -340,6 +383,12 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // set a bucket's ACL.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `acl` _string_: acl can be _private_, _public-read_, _public-read-write_
+  // * `callback(err)` _function_: callback is called with error or `null`
   setBucketACL(bucket, acl, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -380,6 +429,12 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // Remove the partially uploaded object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeIncompleteUpload(bucket, key, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -419,10 +474,31 @@ export default class Client extends Multipart {
     })
   }
 
+  // Callback is called with readable stream of the object content.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getObject(bucket, key, cb) {
+    if (!validateBucketName(bucket)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+    }
+
+    if (key === null || key.trim() === '') {
+      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+    }
     this.getPartialObject(bucket, key, 0, 0, cb)
   }
 
+  // Callback is called with readable stream of the partial object content.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `offset` _number_: offset of the object from where the stream will start
+  // * `length` _number_: length of the object that will be read in the stream
+  // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getPartialObject(bucket, key, offset, length, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -479,6 +555,15 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // Uploads the object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `contentType` _string_: content type of the object
+  // * `size` _number_: size of the object
+  // * `stream` _Stream_: Readable stream
+  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   putObject(bucket, key, contentType, size, r, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -600,6 +685,20 @@ export default class Client extends Multipart {
     return dummyTransformer
   }
 
+  // List the objects in the bucket.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `params` _object_: parameters for object listing.
+  //   * `params.prefix` _string_: the prefix of the objects that should be listed
+  //   * `params.recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
+  //
+  // __Return Value__
+  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
+  //   * `stat.key` _string_: name of the object
+  //   * `stat.size` _number_: size of the object
+  //   * `stat.etag` _string_: etag of the object
+  //   * `stat.lastModified` _string_: modified time stamp
   listObjects(bucket, params) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -638,6 +737,16 @@ export default class Client extends Multipart {
     return dummyTransformer
   }
 
+  // Stat information of the object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
+  //   * `stat.size` _number_: size of the object
+  //   * `stat.etag` _string_: etag of the object
+  //   * `stat.contentType` _string_: Content-Type of the object
+  //   * `stat.lastModified` _string_: modified time stamp
   statObject(bucket, key, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -676,6 +785,12 @@ export default class Client extends Multipart {
     req.end()
   }
 
+  // Remove the specified object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucket, key, cb) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -687,6 +802,12 @@ export default class Client extends Multipart {
     this.objectRequest('DELETE', bucket, key, cb)
   }
 
+  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `expiry` _number_: expiry in seconds
   presignedPutObject(bucket, key, expires) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -705,6 +826,12 @@ export default class Client extends Multipart {
     return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
   }
 
+  // Generate a presigned URL for GET
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `expiry` _number_: expiry in seconds
   presignedGetObject(bucket, key, expires) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
@@ -723,10 +850,14 @@ export default class Client extends Multipart {
     return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
   }
 
+  // return PostPolicy object
   newPostPolicy() {
     return new PostPolicy()
   }
 
+  // presignedPostPolicy can be used in situations where we want more control on the upload than what
+  // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
+  // on the object's `name` `bucket` `expiry` `Content-Type`
   presignedPostPolicy(postPolicy) {
     var date = Moment.utc()
     var region = getRegion(this.params.host)
@@ -753,6 +884,7 @@ export default class Client extends Multipart {
   }
 }
 
+// Build PostPolicy object that can be signed by presignedPostPolicy
 class PostPolicy {
   constructor() {
     this.policy = {
@@ -761,6 +893,7 @@ class PostPolicy {
     this.formData = {}
   }
 
+  // set expiration date
   setExpires(nativedate) {
     var date = Moment(nativedate)
     if (!date) {
@@ -773,6 +906,7 @@ class PostPolicy {
     this.policy.expiration = getExpirationString(date)
   }
 
+  // set object name
   setKey(key) {
     if (!key) {
       throw new errors("key can not be null")
@@ -781,6 +915,7 @@ class PostPolicy {
     this.formData.key = key
   }
 
+  // set object name prefix, i.e policy allows any keys with this prefix
   setKeyStartsWith(prefix) {
     if (!prefix) {
       throw new errors("key prefix can not be null")
@@ -789,6 +924,7 @@ class PostPolicy {
     this.formData.key = key
   }
 
+  // set bucket name
   setBucket(bucket) {
     if (!bucket) {
       throw new errors("bucket can not be null")
@@ -797,6 +933,7 @@ class PostPolicy {
     this.formData.bucket = bucket
   }
 
+  // set Content-Type
   setContentType(type) {
     if (!type) {
       throw new errors("content-type can not be null")
