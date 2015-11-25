@@ -24,7 +24,7 @@ Email: (this IS public) (dev@minio.io)
 #### Modify package.json with new version
 
 ```bash
-$ tail package.json
+$ head package.json
 {
   "name": "minio",
   "version": "0.3.0",
