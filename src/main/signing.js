@@ -95,11 +95,11 @@ export function signV4(request, dataShaSum256, accessKey, secretKey) {
     //
     //      Is skipped for obvious reasons
 
-    for (var key in request.headers) {
-      if (request.headers.hasOwnProperty(key) && ignoredHeaders.indexOf(key) === -1) {
-        var value = request.headers[key]
-        headers.push(`${key.toLowerCase()}:${value}`)
-        headerKeys.push(key.toLowerCase())
+    for (var header in request.headers) {
+      if (request.headers.hasOwnProperty(header) && ignoredHeaders.indexOf(header) === -1) {
+        var value = request.headers[header]
+        headers.push(`${header.toLowerCase()}:${value}`)
+        headerKeys.push(header.toLowerCase())
       }
     }
 
@@ -146,9 +146,8 @@ export function signV4(request, dataShaSum256, accessKey, secretKey) {
 }
 
 export function getSigningKey(date, region, secretKey) {
-  var key = 'AWS4' + secretKey,
-    dateLine = date.format('YYYYMMDD'),
-    hmac1 = Crypto.createHmac('sha256', key).update(dateLine).digest('binary'),
+  var dateLine = date.format('YYYYMMDD'),
+    hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest('binary'),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
     hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
   return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
@@ -184,11 +183,11 @@ export function presignSignatureV4(request, accessKey, secretKey) {
       throw new Error('expires param cannot be larger than 7 days')
     }
 
-    for (var key in request.headers) {
-      if (request.headers.hasOwnProperty(key) && ignoredHeaders.indexOf(key) === -1) {
-        var value = request.headers[key]
-        headers.push(`${key.toLowerCase()}:${value}`)
-        headerKeys.push(key.toLowerCase())
+    for (var header in request.headers) {
+      if (request.headers.hasOwnProperty(header) && ignoredHeaders.indexOf(header) === -1) {
+        var value = request.headers[header]
+        headers.push(`${header.toLowerCase()}:${value}`)
+        headerKeys.push(header.toLowerCase())
       }
     }
 

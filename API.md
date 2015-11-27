@@ -404,7 +404,7 @@ var policy = s3Client.newPostPolicy()
 ```
 Apply upload policy restrictions:
 ```js
-policy.setKey("photo.png") OR policy.setKeyStartsWith("keyPrefix")
+policy.setKey("photo.png") or policy.setKeyStartsWith("keyPrefix")
 policy.setBucket("bucketname")
 var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days

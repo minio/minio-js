@@ -25,10 +25,9 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.getBucketACL('mybucket', function(e, acl) {
+s3Client.getBucketACL('bucket', function(e, acl) {
   if (e) {
-    console.log(e)
-    return
+    return console.log(e)
   }
   console.log(acl)
 })
