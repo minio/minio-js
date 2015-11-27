@@ -861,7 +861,7 @@ export default class Client extends Multipart {
 
     postPolicy.formData.policy = policyBase64
 
-    var signature = postPresignSignature(region, date, this.params.secretKey, policyBase64)
+    var signature = postPresignSignatureV4(region, date, this.params.secretKey, policyBase64)
 
     postPolicy.formData['x-amz-signature'] = signature
 

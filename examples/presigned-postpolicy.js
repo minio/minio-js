@@ -15,8 +15,6 @@
  */
 
 var Minio = require('minio')
-var superagent = require('superagent')
-var _ = require('underscore')
 
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
@@ -36,16 +34,13 @@ expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 
 formData = s3Client.presignedPostPolicy(policy)
-var req = superagent.post('https://<your-s3-endpoint>/bucketName')
-_.each(formData, function(value, key) {
-  req.field(key, value)
-})
-
-// file contents
-req.field('file', 'keyName')
-req.end(function(e, res) {
-  if (e) {
-    return console.log(e)
+var curl = []
+curl.push('curl https://<your-s3-endpoint>/bucketName')
+for (var key in formData) {
+  if (formData.hasOwnProperty(key)) {
+    var value = formData[key]
+    curl.push(`-F ${key}=${value}`)
   }
-  console.log("Success")
-})
+}
+curl.push('-F file=@<FILE>')
+console.log(curl.join(' '))
