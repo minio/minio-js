@@ -111,11 +111,11 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ### Presigned
 
-[presignedGetObject(bucket, key, expires) : String](examples/presinged-getobject.js)
+[presignedGetObject(bucket, key, expires) : String](examples/presigned-getobject.js)
 
-[presignedPutObject(bucket, key, expires) : String](examples/presinged-putobject.js)
+[presignedPutObject(bucket, key, expires) : String](examples/presigned-putobject.js)
 
-[presignedPostPolicy(postPolicy) : Object](examples/presigned-postobject.js)
+[presignedPostPolicy(postPolicy) : Object](examples/presigned-postpolicy.js)
 
 ## Contribute
 

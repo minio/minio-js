@@ -27,7 +27,8 @@ var s3Client = new Minio({
 
 s3Client.statObject('mybucket', 'hello/11mb', function(e, stat) {
   if (e) {
-    return console.log(e)
+    console.log(e)
+    return
   }
   console.log(stat)
 })

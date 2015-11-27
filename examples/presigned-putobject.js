@@ -26,5 +26,4 @@ var s3Client = new Minio({
 })
 
 var presignedUrl = s3Client.presignedPutObject('bucket', 'object', 1000)
-
 console.log(presignedUrl)
