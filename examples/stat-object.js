@@ -25,10 +25,9 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.statObject('mybucket', 'hello/11mb', function(e, stat) {
+s3Client.statObject('bucket', 'object', function(e, stat) {
   if (e) {
-    console.log(e)
-    return
+    return console.log(e)
   }
   console.log(stat)
 })

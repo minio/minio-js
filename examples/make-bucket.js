@@ -25,10 +25,9 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.makeBucket('mybucket', function(e) {
+s3Client.makeBucket('bucket', function(e) {
   if (e) {
-    console.log(e)
-    return
+    return console.log(e)
   }
   console.log("Success")
 })

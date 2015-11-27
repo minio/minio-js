@@ -25,10 +25,9 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.removeIncompleteUpload('mybucket', 'hello/11mb', function(e) {
+s3Client.removeIncompleteUpload('bucket', 'object', function(e) {
   if (e) {
-    console.log(e)
-    return
+    return console.log(e)
   }
   console.log("Success")
 })

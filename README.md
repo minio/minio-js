@@ -101,23 +101,23 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ### Object
 
-[getObject(bucket, key) Stream](examples/get-object.js)
+[getObject(bucket, object) Stream](examples/get-object.js)
 
-[getPartialObject(bucket, key, offset, length) Stream](examples/get-partialobject.js)
+[getPartialObject(bucket, object, offset, length) Stream](examples/get-partialobject.js)
 
-[putObject(bucket, key, Stream, cb)](examples/put-object.js)
+[putObject(bucket, object, Stream, cb)](examples/put-object.js)
 
-[statObject(bucket, key, cb)](examples/stat-object.js)
+[statObject(bucket, object, cb)](examples/stat-object.js)
 
-[removeObject(bucket, key, cb)](examples/remove-object.js)
+[removeObject(bucket, object, cb)](examples/remove-object.js)
 
-[removeIncompleteUpload(bucket, key, cb)](examples/remove-incomplete-upload.js)
+[removeIncompleteUpload(bucket, object, cb)](examples/remove-incomplete-upload.js)
 
 ### Presigned
 
-[presignedGetObject(bucket, key, expires) : String](examples/presigned-getobject.js)
+[presignedGetObject(bucket, object, expires) : String](examples/presigned-getobject.js)
 
-[presignedPutObject(bucket, key, expires) : String](examples/presigned-putobject.js)
+[presignedPutObject(bucket, object, expires) : String](examples/presigned-putobject.js)
 
 [presignedPostPolicy(postPolicy) : Object](examples/presigned-postpolicy.js)
 

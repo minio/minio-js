@@ -45,8 +45,7 @@ _.each(formData, function(value, key) {
 req.field('file', 'keyName')
 req.end(function(e, res) {
   if (e) {
-    console.log(e)
-    return
+    return console.log(e)
   }
   console.log("Success")
 })

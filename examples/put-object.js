@@ -27,13 +27,16 @@ var s3Client = new Minio({
 })
 
 // large object from file
-var file = 'file.zip'
+var file = 'testfile'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('mybucket', 'hello/file.zip', 'application/octet-stream', stat.size, fileStream, function(e) {
-    return console.log(e) // should be null
+  s3Client.putObject('bucket', 'object', 'application/octet-stream', stat.size, fileStream, function(e) {
+    if (e) {
+      return console.log(e)
+    }
+    console.log("Success")
   })
 })

@@ -435,17 +435,17 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeIncompleteUpload(bucket, key, cb) {
-    if (!validateBucketName(bucket)) {
+  removeIncompleteUpload(bucketName, objectName, cb) {
+    if (!validateBucketName(bucketName)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     var self = this
-    this.findUploadId(bucket, key, (err, uploadId) => {
+    this.findUploadId(bucketName, objectName, (err, uploadId) => {
       if (err || !uploadId) {
         return cb(err)
       }
@@ -453,7 +453,7 @@ export default class Client extends Multipart {
         host: self.params.host,
         port: self.params.port,
         protocol: self.params.protocol,
-        path: `/${bucket}/${key}?uploadId=${uploadId}`,
+        path: `/${bucketName}/${objectName}?uploadId=${uploadId}`,
         method: 'DELETE'
       }
 
@@ -480,15 +480,15 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucket, key, cb) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  getObject(bucketName, objectName, cb) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
-    this.getPartialObject(bucket, key, 0, 0, cb)
+    this.getPartialObject(bucketName, objectName, 0, 0, cb)
   }
 
   // Callback is called with readable stream of the partial object content.
@@ -499,17 +499,16 @@ export default class Client extends Multipart {
   // * `offset` _number_: offset of the object from where the stream will start
   // * `length` _number_: length of the object that will be read in the stream
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucket, key, offset, length, cb) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  getPartialObject(bucketName, objectName, offset, length, cb) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
     var range = ''
-
     if (offset || length) {
       if (offset) {
         range = `bytes=${+offset}-`
@@ -531,7 +530,7 @@ export default class Client extends Multipart {
       host: this.params.host,
       port: this.params.port,
       protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}`,
+      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
       method: 'GET',
       headers
     }
@@ -564,12 +563,12 @@ export default class Client extends Multipart {
   // * `size` _number_: size of the object
   // * `stream` _Stream_: Readable stream
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  putObject(bucket, key, contentType, size, r, cb) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  putObject(bucketName, objectName, contentType, size, r, cb) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
@@ -590,26 +589,25 @@ export default class Client extends Multipart {
     }
 
     var self = this
-
     if (size <= 5*1024*1024) {
       var concater = transformers.getConcater()
       pipesetup(r, concater)
         .on('error', e => cb(e))
-        .on('data', chunk => self.doPutObject(bucket, key, contentType, null, null, chunk, cb))
+        .on('data', chunk => self.doPutObject(bucketName, objectName, contentType, null, null, chunk, cb))
       return
     }
     async.waterfall([
       function(cb) {
-        self.findUploadId(bucket, key, cb)
+        self.findUploadId(bucketName, objectName, cb)
       },
       function(uploadId, cb) {
         if (uploadId) {
-          self.listAllParts(bucket, key, uploadId,  (e, etags) => {
+          self.listAllParts(bucketName, objectName, uploadId,  (e, etags) => {
             return cb(e, uploadId, etags)
           })
           return
         }
-        self.initiateNewMultipartUpload(bucket, key, contentType, (e, uploadId) => {
+        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => {
           return cb(e, uploadId, [])
         })
       },
@@ -617,13 +615,13 @@ export default class Client extends Multipart {
         var partSize = calculatePartSize(size)
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: partSize, zeroPadding: false})
-        var chunkUploader = self.chunkUploader(bucket, key, contentType, uploadId, etags)
+        var chunkUploader = self.chunkUploader(bucketName, objectName, contentType, uploadId, etags)
         pipesetup(r, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
       function(etags, uploadId, cb) {
-        self.completeMultipartUpload(bucket, key, uploadId, etags, cb)
+        self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
       }
     ], function(err, etag) {
       if (err) {
@@ -689,9 +687,8 @@ export default class Client extends Multipart {
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `params` _object_: parameters for object listing.
-  //   * `params.prefix` _string_: the prefix of the objects that should be listed
-  //   * `params.recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
+  // * `prefix` _string_: the prefix of the objects that should be listed
+  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -699,16 +696,16 @@ export default class Client extends Multipart {
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.lastModified` _string_: modified time stamp
-  listObjects(bucket, prefix, recursive) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  listObjects(bucketName, prefix, recursive) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
     // recursive is null set delimiter to '/'.
     var delimiter = recursive ? null : "/"
     var dummyTransformer = transformers.getDummyTransformer()
     var self = this
     function listNext(marker) {
-      self.listObjectsOnce(bucket, prefix, marker, delimiter, 1000)
+      self.listObjectsOnce(bucketName, prefix, marker, delimiter, 1000)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
           result.objects.forEach(object => {
@@ -735,12 +732,12 @@ export default class Client extends Multipart {
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.contentType` _string_: Content-Type of the object
   //   * `stat.lastModified` _string_: modified time stamp
-  statObject(bucket, key, cb) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  statObject(bucketName, objectName, cb) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
 
@@ -748,7 +745,7 @@ export default class Client extends Multipart {
       host: this.params.host,
       port: this.params.port,
       protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}`,
+      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
       method: 'HEAD'
     }
 
@@ -779,15 +776,15 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucket, key, cb) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  removeObject(bucketName, objectName, cb) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
 
-    if (key === null || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
-    this.objectRequest('DELETE', bucket, key, cb)
+    this.objectRequest('DELETE', bucketName, objectName, cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -796,18 +793,18 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
-  presignedPutObject(bucket, key, expires) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  presignedPutObject(bucketName, objectName, expires) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
-    if (!key || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
       protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}`,
+      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
       method: 'PUT',
       expires: expires
     }
@@ -820,18 +817,18 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
-  presignedGetObject(bucket, key, expires) {
-    if (!validateBucketName(bucket)) {
-      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
+  presignedGetObject(bucketName, objectName, expires) {
+    if (!validateBucketName(bucketName)) {
+      throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucketName)
     }
-    if (!key || key.trim() === '') {
+    if (objectName === null || objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
     var requestParams = {
       host: this.params.host,
       port: this.params.port,
       protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}`,
+      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
       method: 'GET',
       expires: expires
     }
