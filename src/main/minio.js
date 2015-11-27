@@ -699,26 +699,14 @@ export default class Client extends Multipart {
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.lastModified` _string_: modified time stamp
-  listObjects(bucket, params) {
+  listObjects(bucket, prefix, recursive) {
     if (!validateBucketName(bucket)) {
       throw new errors.InvalidateBucketNameException('Invalid bucket name: ' + bucket)
     }
-    var self = this,
-      prefix = null,
-      delimiter = '/'
-      // we delimit by default, turn off recursive if True
-
-    if (params) {
-      if (params.prefix) {
-        prefix = params.prefix
-      }
-      if (params.recursive === true) {
-        delimiter = null
-      }
-    }
-
+    // recursive is null set delimiter to '/'.
+    var delimiter = recursive ? null : "/"
     var dummyTransformer = transformers.getDummyTransformer()
-
+    var self = this
     function listNext(marker) {
       self.listObjectsOnce(bucket, prefix, marker, delimiter, 1000)
         .on('error', e => dummyTransformer.emit('error', e))

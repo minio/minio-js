@@ -158,14 +158,13 @@ s3Client.setBucketACL('mybucket', 'public-read-write', function(e) {
 
 ---------------------------------------
 <a name="listObjects">
-#### listObjects(bucketName, params)
+#### listObjects(bucketName, prefix, recursive)
 List the objects in the bucket.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
-* `params` _object_: parameters for object listing.
-  * `params.prefix` _string_: the prefix of the objects that should be listed
-  * `params.recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
+* `prefix` _string_: the prefix of the objects that should be listed
+* `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
 
 __Return Value__
 * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:

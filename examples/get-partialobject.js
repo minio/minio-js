@@ -26,9 +26,10 @@ var s3Client = new Minio({
 })
 
 var size = 0
-s3Client.getPartialObject('mybucket', 'hello/11mb', 1024, 4096, function(e, dataStream) {
+s3Client.getPartialObject('mybucket', 'key', 1024, 4096, function(e, dataStream) {
   if (e) {
-    return console.log(e)
+    console.log(e)
+    return
   }
   dataStream.on('data', function(chunk) {
     size += chunk.length
