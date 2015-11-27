@@ -26,5 +26,9 @@ var s3Client = new Minio({
 })
 
 s3Client.removeBucket('mybucket', function(e) {
-  console.log(e)
+  if (e) {
+    console.log(e)
+    return
+  }
+  console.log("Success")
 })

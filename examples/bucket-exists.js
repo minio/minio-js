@@ -26,5 +26,9 @@ var s3Client = new Minio({
 })
 
 s3Client.bucketExists('mybucket', function(e) {
-  console.log(e) // should be null
+  if (e) {
+    console.log(e) // should be null
+    return
+  }
+  console.log("True")
 })

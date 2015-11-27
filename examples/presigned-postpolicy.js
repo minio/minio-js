@@ -26,24 +26,27 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
+// construct a new postPolicy.
 var policy = s3Client.newPostPolicy()
-policy.setKey("keyname")
-policy.setBucket("bucketname")
+policy.setKey("keyName")
+policy.setBucket("bucketName")
+
 var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 
 formData = s3Client.presignedPostPolicy(policy)
-var req = superagent.post('https://<your-s3-endpoint>/bucketname')
+var req = superagent.post('https://<your-s3-endpoint>/bucketName')
 _.each(formData, function(value, key) {
   req.field(key, value)
 })
 
 // file contents
-req.field('file', 'ooooooooooooo')
-
-req.end(function(err, res) {
-  if (err) {
-    console.log(err.toString())
+req.field('file', 'keyName')
+req.end(function(e, res) {
+  if (e) {
+    console.log(e)
+    return
   }
+  console.log("Success")
 })

@@ -27,6 +27,8 @@ var s3Client = new Minio({
 
 s3Client.removeIncompleteUpload('mybucket', 'hello/11mb', function(e) {
   if (e) {
-    return console.log(e)
+    console.log(e)
+    return
   }
+  console.log("Success")
 })
