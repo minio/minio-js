@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var Minio = require('./minio-js')
+var Minio = require('minio')
 
 // find out your s3 end point here:
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
