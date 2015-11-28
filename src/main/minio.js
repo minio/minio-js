@@ -40,7 +40,7 @@ var Package = require('../../package.json');
 export default class Client extends Multipart {
   constructor(params, transport) {
     var namespace = 'Minio'
-    var parsedUrl = Url.parse(params.url),
+    var parsedUrl = Url.parse(params.endPoint),
       port = +parsedUrl.port
 
     var host = parsedUrl.hostname
