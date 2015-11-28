@@ -9,9 +9,9 @@ var Minio = require('minio')
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3Client = new Minio({
-  url: 'https://<your-s3-endpoint>',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
+  endPoint:  'https://<your-s3-endpoint>'
 })
 ```
 

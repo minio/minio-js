@@ -50,14 +50,14 @@ describe('Client', () => {
       return request
     },
     client = new Minio({
-      url: 'http://localhost:9000',
+      endPoint: 'http://localhost:9000',
       accessKey: 'accesskey',
       secretKey: 'secretkey'
     })
   describe('new client', () => {
     it('should work with http', () => {
       var client = new Minio({
-        url: 'http://localhost',
+        endPoint: 'http://localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -65,7 +65,7 @@ describe('Client', () => {
     })
     it('should override port with http', () => {
       var client = new Minio({
-        url: 'http://localhost:9000',
+        endPoint: 'http://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -73,7 +73,7 @@ describe('Client', () => {
     })
     it('should work with https', () => {
       var client = new Minio({
-        url: 'https://localhost',
+        endPoint: 'https://localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -81,7 +81,7 @@ describe('Client', () => {
     })
     it('should override port with https', () => {
       var client = new Minio({
-        url: 'https://localhost:9000',
+        endPoint: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -100,7 +100,7 @@ describe('Client', () => {
     it('should fail with no scheme', (done) => {
       try {
         new Minio({
-          url: 'localhost',
+          endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -114,7 +114,7 @@ describe('Client', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
           var client = new Minio({
-            url: 'https://localhost:9000',
+            endPoint: 'https://localhost:9000',
           })
           client.presignedGetObject('bucket', 'object', '1000')
         } catch (e) {
@@ -124,7 +124,7 @@ describe('Client', () => {
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
           var client = new Minio({
-            url: 'https://localhost:9000',
+            endPoint: 'https://localhost:9000',
             accessKey: 'accesskey',
             secretKey: 'secretkey',
           })
@@ -135,7 +135,7 @@ describe('Client', () => {
       })
       it('should generate presigned url', () => {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -147,7 +147,7 @@ describe('Client', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
           var client = new Minio({
-            url: 'https://localhost:9000',
+            endPoint: 'https://localhost:9000',
           })
           client.presignedPutObject('bucket', 'object', '1000')
         } catch (e) {
@@ -157,7 +157,7 @@ describe('Client', () => {
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
           var client = new Minio({
-            url: 'https://localhost:9000',
+            endPoint: 'https://localhost:9000',
             accessKey: 'accesskey',
             secretKey: 'secretkey',
           })
@@ -168,7 +168,7 @@ describe('Client', () => {
       })
       it('should generate presigned url', () => {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -180,7 +180,7 @@ describe('Client', () => {
   describe('User Agent', () => {
     it('should have a default user agent', () => {
       var client = new Minio({
-        url: 'https://localhost:9000',
+        endPoint: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -188,7 +188,7 @@ describe('Client', () => {
     })
     it('should set user agent', () => {
       var client = new Minio({
-        url: 'https://localhost:9000',
+        endPoint: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -197,7 +197,7 @@ describe('Client', () => {
     })
     it('should set user agent without comments', () => {
       var client = new Minio({
-        url: 'https://localhost:9000',
+        endPoint: 'https://localhost:9000',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
@@ -207,7 +207,7 @@ describe('Client', () => {
     it('should not set user agent without name', (done) => {
       try {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -219,7 +219,7 @@ describe('Client', () => {
     it('should not set user agent with empty name', (done) => {
       try {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -231,7 +231,7 @@ describe('Client', () => {
     it('should not set user agent without version', (done) => {
       try {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -243,7 +243,7 @@ describe('Client', () => {
     it('should not set user agent with empty version', (done) => {
       try {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -255,7 +255,7 @@ describe('Client', () => {
     it('should not set user agent twice', (done) => {
       try {
         var client = new Minio({
-          url: 'https://localhost:9000',
+          endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -271,7 +271,7 @@ describe('Client', () => {
     describe('not set', () => {
       var transport = new MockTransport(),
         client = new Minio({
-          url: 'http://localhost:9000'
+          endPoint: 'http://localhost:9000'
         }, transport)
       it('should not send auth info without keys', (done) => {
         client.transport.addRequest((params) => {
@@ -303,7 +303,7 @@ describe('Client', () => {
       it('should not send auth info without keys', (done) => {
         var transport = new MockTransport(),
           client = new Minio({
-            url: 'http://localhost:9000',
+            endPoint: 'http://localhost:9000',
             accessKey: 'accessKey',
             secretKey: 'secretKey'
           }, transport)
@@ -573,7 +573,7 @@ describe('Client', () => {
       it('should set acl', (done) => {
         var transport = new MockTransport(),
           client = new Minio({
-            url: 'http://localhost:9000'
+            endPoint: 'http://localhost:9000'
           }, transport)
         client.transport.addRequest((params) => {
           assert.deepEqual(params, {
