@@ -73,21 +73,11 @@ export function validateBucketName(bucket) {
   if (bucket.length < 3 || bucket.length > 63) {
     return false
   }
-
-  // lower case, numbers, hyphens
-  // starts and ends with letters or numbers
-  var re1 = /^[a-z0-9]+[a-z0-9\-]*[a-z0-9]+$/
-  if (bucket.match(re1) === null) {
-    return false
+  // should begin with alphabet and end with alphabet/number, with alphabet/number/- in the middle
+  if (bucket.match(/^[a-zA-Z][a-zA-Z0-9-]+[a-zA-Z0-9]$/)) {
+    return true
   }
-
-  // no ip address style
-  var re2 = /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/
-  if (bucket.match(re2) !== null) {
-    return false
-  }
-
-  return true
+  return false
 }
 
 // pipesetup sets up pipe() from left to right os streams array
