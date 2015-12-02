@@ -926,4 +926,18 @@ class PostPolicy {
     this.policy.conditions.push(["eq", "$Content-Type", type])
     this.formData["Content-Type"] = type
   }
+
+  // set minimum/maximum length of what Content-Length can be
+  setContentLength(min, max) {
+    if (min > max) {
+      throw new errrors("min can not be more than max")
+    }
+    if (min < 0) {
+      throw new errors("min has to be > 0")
+    }
+    if (max < 0) {
+      throw new errors("max has to be > 0")
+    }
+    this.policy.conditions.push(["content-length-range", min, max])
+  }
 }
