@@ -410,6 +410,7 @@ var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 policy.setContentType("image/png")
+policy.setContentLength(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
 ```
 Get the POST form key/value object:
 ```js
