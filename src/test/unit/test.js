@@ -139,7 +139,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        var url = client.presignedGetObject('bucket', 'object', '86400')
+        var url = client.presignedGetObject('bucket', 'object', 86400)
         assert.equal(url.length > 0, true)
       })
     })
@@ -149,7 +149,7 @@ describe('Client', () => {
           var client = new Minio({
             endPoint: 'https://localhost:9000',
           })
-          client.presignedPutObject('bucket', 'object', '1000')
+          client.presignedPutObject('bucket', 'object', 1000)
         } catch (e) {
           done()
         }
@@ -172,7 +172,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        var url = client.presignedPutObject('bucket', 'object', '86400')
+        var url = client.presignedPutObject('bucket', 'object', 86400)
         assert.equal(url.length > 0, true)
       })
     })
@@ -710,8 +710,8 @@ describe('Client', () => {
         }
       })
     })
-    describe('#getPartialObject(bucket, object, offset, range) callback)', () => {
-      it('should work with offset and range', (done) => {
+    describe('#getPartialObject(bucket, object, offset, length, callback)', () => {
+      it('should work with offset and length', (done) => {
         MockResponse('http://localhost:9000', {
           reqHeaders: {
             'range': '10-21'
@@ -725,13 +725,13 @@ describe('Client', () => {
           }))
         })
       })
-      it('should work with offset', (done) => {
+      it('should work with length as 0', (done) => {
         MockResponse('http://localhost:9000', {
           reqHeaders: {
             'range': '10-'
           }
         }).get('/bucket/object').reply(206, 'hello world')
-        client.getPartialObject('bucket', 'object', 10, null, (e, r) => {
+        client.getPartialObject('bucket', 'object', 10, 0, (e, r) => {
           assert.equal(e, null)
           r.pipe(Concat(buf => {
             assert.equal(buf, 'hello world')
@@ -739,13 +739,13 @@ describe('Client', () => {
           }))
         })
       })
-      it('should work with range', (done) => {
+      it('should work with offset as 0', (done) => {
         MockResponse('http://localhost:9000', {
           reqHeaders: {
             'range': '0-21'
           }
         }).get('/bucket/object').reply(206, 'hello world')
-        client.getPartialObject('bucket', 'object', null, 11, (e, r) => {
+        client.getPartialObject('bucket', 'object', 0, 11, (e, r) => {
           assert.equal(e, null)
           r.pipe(Concat(buf => {
             assert.equal(buf, 'hello world')

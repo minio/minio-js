@@ -14,48 +14,65 @@
  * limitations under the License.
  */
 
-function Error() {
-  this.name = '';
-  this.message = '';
+export class InvalidBucketNameException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidBucketNameException'
+  }
 }
 
-Error.prototype = {
-  InvalidBucketNameException: function(message) {
-    this.message = message;
-    this.name = 'InvalidBucketNameException';
-  },
-  InvalidObjectNameException: function(message) {
-    this.message = message;
-    this.name = 'InvalidObjectNameException';
-  },
-  AccessKeyRequiredException: function(message) {
-    this.message = message;
-    this.name = 'AccessKeyRequiredException';
-  },
-  SecretKeyRequiredException: function(message) {
-    this.message = message;
-    this.name = 'SecretKeyRequiredException';
-  },
-  InvalidProtocolException: function(message) {
-    this.message = message;
-    this.name = 'InvalidProtocolException';
-  },
-  ExpiresParamException: function(message) {
-    this.message = message;
-    this.name = 'ExpiresParamException';
-  },
-  InvalidUserAgentException: function(message) {
-    this.message = message;
-    this.name = 'InvalidUserAgentException';
-  },
-  InvalidEmptyACLException: function(message) {
-    this.message = message;
-    this.name = 'InvalidEmptyACLException';
-  },
-  InternalClientException: function(message) {
-    this.message = message;
-    this.name = 'InvalidClientException';
+export class InvalidObjectNameException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidObjectNameException'
   }
-};
+}
 
-export default Error;
+export class AccessKeyRequiredException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'AccessKeyRequiredException'
+  }
+}
+
+export class SecretKeyRequiredException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'SecretKeyRequiredException'
+  }
+}
+
+export class InvalidProtocolException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidProtocolException'
+  }
+}
+
+export class ExpiresParamException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'ExpiresParamException'
+  }
+}
+
+export class InvalidUserAgentException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidUserAgentException'
+  }
+}
+
+export class InvalidEmptyACLException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidEmptyACLException'
+  }
+}
+
+export class InternalClientException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InternalClientException'
+  }
+}

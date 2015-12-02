@@ -63,7 +63,7 @@ export function getRegion(host) {
   }
 }
 
-export function validateBucketName(bucket) {
+export function isValidBucketName(bucket) {
   // test for null
   if (bucket === null) {
     return false
@@ -78,6 +78,38 @@ export function validateBucketName(bucket) {
     return true
   }
   return false
+}
+
+// check if objectName is a valid object name
+export function isValidObjectName(objectName) {
+  if (!isString(objectName)) return false
+  if (objectName.length > 1024) return false
+  return true
+}
+
+// check if typeof arg boolean
+export function isBoolean(arg) {
+  return typeof(arg) === 'boolean'
+}
+
+// check if typeof arg number
+export function isNumber(arg) {
+  return typeof(arg) === 'number'
+}
+
+// check if typeof arg function
+export function isFunction(arg) {
+  return typeof(arg) === 'function';
+}
+
+// check if typeof arg string
+export function isString(arg) {
+  return typeof(arg) === 'string';
+}
+
+// check if typeof arg object
+export function isObject(arg) {
+  return typeof(arg) === 'object' && arg !== null;
 }
 
 // pipesetup sets up pipe() from left to right os streams array
