@@ -610,11 +610,11 @@ export default class Client extends Multipart {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `contentType` _string_: content type of the object
-  // * `size` _number_: size of the object
   // * `stream` _Stream_: Readable stream
+  // * `size` _number_: size of the object
+  // * `contentType` _string_: content type of the object
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  putObject(bucketName, objectName, contentType, size, r, cb) {
+  putObject(bucketName, objectName, stream, size, contentType, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
@@ -624,19 +624,18 @@ export default class Client extends Multipart {
     if (objectName.trim() === '') {
       throw new errors.InvalidObjectNameException('Object name cannot be empty')
     }
-    if (!isString(contentType)) {
-      throw new TypeError('contentType should be of type "string"')
+    if (!isObject(stream)) {
+      throw new TypeError('stream should be a "Stream"')
     }
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
     }
-    if (!isObject(r)) {
-      throw new TypeError('stream should be a "Stream"')
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-
     if (contentType.trim() === '') {
       contentType = 'application/octet-stream'
     }
@@ -656,7 +655,7 @@ export default class Client extends Multipart {
     var self = this
     if (size <= 5*1024*1024) {
       var concater = transformers.getConcater()
-      pipesetup(r, concater)
+      pipesetup(stream, concater)
         .on('error', e => cb(e))
         .on('data', chunk => self.doPutObject(bucketName, objectName, contentType, null, null, chunk, cb))
       return
@@ -681,7 +680,7 @@ export default class Client extends Multipart {
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: partSize, zeroPadding: false})
         var chunkUploader = self.chunkUploader(bucketName, objectName, contentType, uploadId, etags)
-        pipesetup(r, chunker, sizeVerifier, chunkUploader)
+        pipesetup(stream, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
