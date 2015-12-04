@@ -755,7 +755,7 @@ describe('Client', () => {
       })
     })
 
-    describe('#putObject(bucket, object, contentType, size, source, callback)', () => {
+    describe('#putObject(bucket, object, source, size, contentType, callback)', () => {
       describe('with small objects using single put', () => {
         it('should put an object', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(200)
@@ -763,7 +763,7 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', '', 11, s, done)
+          client.putObject('bucket', 'object', s, 11, '', done)
         })
         it('should pass error to callback', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
@@ -771,14 +771,14 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', '', 11, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', s, 11, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should fail when data is smaller than specified', (done) => {
           var s = new Stream.Readable()
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', '', 12, s, (e) => {
+          client.putObject('bucket', 'object', s, 12, '', (e) => {
             if (e) {
               done()
             }
@@ -789,7 +789,7 @@ describe('Client', () => {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', '', 10, s, (e) => {
+          client.putObject('bucket', 'object', s, 10, '', (e) => {
             if (e) {
               done()
             }
@@ -797,42 +797,42 @@ describe('Client', () => {
         })
         it('should fail on null bucket', (done) => {
           try {
-            client.putObject(null, 'hello', '', 1)
+            client.putObject(null, 'hello', null, 1, '')
           } catch (e) {
             done()
           }
         })
         it('should fail on empty bucket', (done) => {
           try {
-            client.putObject(' \n \t ', 'hello', '', 1)
+            client.putObject(' \n \t ', 'hello', null, 1, '')
           } catch (e) {
             done()
           }
         })
         it('should fail on empty bucket', (done) => {
           try {
-            client.putObject('', 'hello', '', 1)
+            client.putObject('', 'hello', null, 1, '')
           } catch (e) {
             done()
           }
         })
         it('should fail on null object', (done) => {
           try {
-            client.putObject('hello', null, '', 1)
+            client.putObject('hello', null, null, 1, '')
           } catch (e) {
             done()
           }
         })
         it('should fail on empty object', (done) => {
           try {
-            client.putObject('hello', '', '', 1)
+            client.putObject('hello', '', null, 1, '')
           } catch (e) {
             done()
           }
         })
         it('should fail on empty object', (done) => {
           try {
-            client.putObject('hello', ' \n \t ', '', 1)
+            client.putObject('hello', ' \n \t ', null, 1, '')
           } catch (e) {
             done()
           }
@@ -871,7 +871,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', done)
         })
         it('should resume an object upload', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -889,7 +889,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', (e) => {
             done(e)
           })
         })
@@ -914,7 +914,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, done)
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', done)
         })
         it('should fail if actual size is smaller than expected', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncataed><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -936,7 +936,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 12 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', s, 12 * 1024 * 1024, '', (e) => {
             assert.equal(e, 'actual size does not match specified size')
             done()
           })
@@ -961,7 +961,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, (e) => {
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', (e) => {
             assert.equal(e, 'actual size does not match specified size')
             done()
           })
@@ -974,7 +974,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass part list error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -985,7 +985,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass put error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -1000,7 +1000,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass complete upload error to callback', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -1018,7 +1018,7 @@ describe('Client', () => {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', '', 11 * 1024 * 1024, s, checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
+          client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
       })
     })

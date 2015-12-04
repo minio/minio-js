@@ -5,13 +5,10 @@ Minio client object is created using minio-js:
 ```js
 var Minio = require('minio')
 
-// find out your s3 end point here:
-// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-
 var s3Client = new Minio({
+  endPoint:  'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY',
-  endPoint:  'https://<your-s3-endpoint>'
+  secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
 
@@ -46,7 +43,7 @@ s3Client can be used to perform operations on S3 storage. APIs are described bel
 ---------------------------------------
 <a name="makeBucket">
 #### makeBucket(bucketName, callback)
-Creates the bucket `bucketName`.
+Create a new bucket.
 
 __Arguments__
 * `bucketName` _string_ - Name of the bucket
@@ -62,7 +59,7 @@ s3Client.makeBucket('mybucket', function(err) {
 ---------------------------------------
 <a name="listBuckets">
 #### listBuckets(callback)
-List of buckets created.
+List all buckets.
 
 __Arguments__
 * `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
@@ -92,7 +89,7 @@ s3Client.listBuckets(function(e, bucketStream) {
 ---------------------------------------
 <a name="bucketExists">
 #### bucketExists(bucketName, callback)
-To check if a bucket already exists.
+Check if bucket exists.
 
 __Arguments__
 * `bucketName` _string_ : name of the bucket
@@ -101,8 +98,8 @@ __Arguments__
 __Example__
 ```js
 s3Client.bucketExists('mybucket', function(e) {
-  if (e) return console.log('bucket already exists')
-  console.log('bucket does not exist')
+  if (e) return console.log('bucket does not exist.')
+  console.log('Bucket exists.')
 })
 ```
 ---------------------------------------
@@ -117,14 +114,14 @@ __Arguments__
 __Example__
 ```js
 s3Client.removeBucket('mybucket', function(e) {
-  if (e) return console.log('unable to remove bucket')
-  console.log('removed bucket successfully')
+  if (e) return console.log('unable to remove bucket.')
+  console.log('Bucket removed successfully.')
 })
 ```
 ---------------------------------------
 <a name="getBucketACL">
 #### getBucketACL(bucketName, callback)
-get a bucket's ACL.
+Get ACL of a bucket.
 
 __Arguments__
 * `bucketName` _string_ : name of the bucket
@@ -142,7 +139,7 @@ s3Client.getBucketACL('mybucket', function(e, acl) {
 ---------------------------------------
 <a name="setBucketACL">
 #### setBucketACL(bucketname, acl, callback)
-set a bucket's ACL.
+Set ACL on an existing bucket.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -152,14 +149,17 @@ __Arguments__
 __Example__
 ```js
 s3Client.setBucketACL('mybucket', 'public-read-write', function(e) {
-  console.log(e)
+  if (e) {
+    return console.log(e)
+  }
+  console.log('Successfully updated acl.')
 })
 ```
 
 ---------------------------------------
 <a name="listObjects">
 #### listObjects(bucketName, prefix, recursive)
-List the objects in the bucket.
+List objects in a bucket.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -173,18 +173,17 @@ __Return Value__
   * `stat.etag` _string_: etag of the object
   * `stat.lastModified` _string_: modified time stamp
 
-
 __Example__
 ```js
 var stream = s3Client.listObjects("mybucket", {recursive: false})
-stream.on('data', function(obj){console.log(obj)})
-stream.on('error', function(e){console.log(e)})
+stream.on('data', function(obj) { console.log(obj) } )
+stream.on('error', function(e) { console.log(e) } )
 ```
 
 ---------------------------------------
 <a name="listIncompleteUploads">
 #### listIncompleteUploads(bucketName, prefix, recursive)
-Returns a stream that emits objects that are partially uploaded.
+List partially uploaded objects in a bucket.
 
 __Arguments__
 * `bucketname` _string_: name of the bucket
@@ -215,7 +214,7 @@ Stream.on('error', function(e) {
 ### Object operations
 <a name="getObject">
 #### getObject(bucketName, objectName, callback)
-Callback is called with readable stream of the object content.
+Download an object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -243,7 +242,7 @@ s3Client.getObject('mybucket', 'photo.jpg', function(e, dataStream) {
 ---------------------------------------
 <a name="getPartialObject">
 #### getPartialObject(bucketName, objectName, offset, length, callback)
-Callback is called with readable stream of the partial object content.
+Download the specified range bytes of an object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -273,26 +272,26 @@ s3Client.getObject('mybucket', 'photo.jpg', 10, 30, function(e, dataStream) {
 ```
 ---------------------------------------
 <a name="putObject">
-#### putObject(bucketName, objectName, contentType, size, stream, callback)
-Uploads the object.
+#### putObject(bucketName, objectName, stream, size, contentType, callback)
+Upload an object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
 * `objectName` _string_: name of the object
-* `contentType` _string_: content type of the object
-* `size` _number_: size of the object
 * `stream` _Stream_: Readable stream
+* `size` _number_: size of the object
+* `contentType` _string_: content type of the object
 * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
 
 __Example__
 ```js
 var file = '/tmp/40mbfile'
 var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function(e, stat) {
+var fileStat = Fs.stat(file, function(e, stats) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('mybucket', '40mbfile', 'application/octet-stream', 40*1024*1024, fileStream, function(e, etag) {
+  s3Client.putObject('mybucket', '40mbfile', 'application/octet-stream', stats.size, fileStream, function(e, etag) {
     return console.log(e, etag) // e should be null
   })
 })
@@ -301,7 +300,7 @@ var fileStat = Fs.stat(file, function(e, stat) {
 ---------------------------------------
 <a name="statObject">
 #### statObject(bucketName, objectName, callback)
-Stat information of the object.
+Get metadata of an object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -324,7 +323,7 @@ s3Client.statObject('mybucket', 'photo.jpg', function(err, stat) {
 ---------------------------------------
 <a name="removeObject">
 #### removeObject(bucketName, objectName, callback)
-Remove the specified object.
+Remove an object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -343,7 +342,7 @@ s3Client.removeObject('mybucket', 'photo.jpg', function(err, stat) {
 ---------------------------------------
 <a name="removeIncompleteUpload">
 #### removeIncompleteUpload(bucketName, objectName, callback)
-Remove the partially uploaded object.
+Remove an partially uploaded object.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -354,9 +353,9 @@ __Example__
 ```js
 s3Client.removeIncompleteUpload('mybucket', 'photo.jpg', function(err, stat) {
   if (e) {
-    return console.log('Unable to remove object', err)
+    return console.log('Unable to remove incomplete object', err)
   }
-  console.log('Removed the object')
+  console.log('Incomplete object removed successfully.')
 })
 ```
 
@@ -364,23 +363,26 @@ s3Client.removeIncompleteUpload('mybucket', 'photo.jpg', function(err, stat) {
 ---------------------------------------
 <a name="presignedGetObject">
 #### presignedGetObject(bucketName, objectName, expiry)
-Generate a presigned URL for GET
+Generate a presigned URL for GET.
 
 __Arguments__
-* `bucketName` _string_: name of the bucket
-* `objectName` _string_: name of the object
-* `expiry` _number_: expiry in seconds
+* `bucketName` _string_: name of the bucket.
+* `objectName` _string_: name of the object.
+* `expiry` _number_: expiry in seconds.
 
 __Example__
 ```js
-// expires in 1 day
+// expires in a day
 var presignedUrl = s3Client.presignedGetObject('mybucket', 'photo.jpg', 24*60*60)
 ```
 
 ---------------------------------------
 <a name="presignedPutObject">
 #### presignedPutObject(bucketName, objectName, expiry)
-Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+Generate a presigned URL for PUT.
+<blockquote>
+NOTE: you can upload to S3 only with specified object name.
+</blockquote>
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
@@ -389,16 +391,18 @@ __Arguments__
 
 __Example__
 ```js
-// expires in 1 day
+// expires in a day
 var presignedUrl = s3Client.presignedPutObject('mybucket', 'photo.jpg', 24*60*60)
 ```
 
 ---------------------------------------
 <a name="presignedPostPolicy">
 #### presignedPostPolicy
-presignedPostPolicy can be used in situations where we want more control on the upload than what presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions on the object's `name` `bucket` `expiry` `Content-Type`
+presignedPostPolicy we can provide security policy specifying conditions restricting
+what you want to allow in the request, such as bucket name where objects can be
+uploaded, key name prefixes that you want to allow for the object being created and more.
 
-We need to get policy object first:
+We need to create our policy first:
 ```js
 var policy = s3Client.newPostPolicy()
 ```
@@ -406,17 +410,24 @@ Apply upload policy restrictions:
 ```js
 policy.setKey("photo.png") or policy.setKeyStartsWith("keyPrefix")
 policy.setBucket("bucketname")
+
 var expires = new Date
-expires.setSeconds(24 * 60 * 60 * 10) //10 days
+expires.setSeconds(24 * 60 * 60 * 10)
+// Policy expires in 10 days.
 policy.setExpires(expires)
+
+// Only allow 'png' images.
 policy.setContentType("image/png")
-policy.setContentLength(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
+
+// Only allow content size in range 1KB to 1MB.
+policy.setContentLength(1024, 1024*1024)
 ```
 Get the POST form key/value object:
 ```js
 formData = s3Client.presignedPostPolicy(policy)
 ```
-Do a POST operation (using `superagent` npm module) from the browser:
+
+POST your content from the browser using `superagent`:
 ```js
 var req = superagent.post('https://<your-s3-endpoint>/bucketname')
 _.each(formData, function(value, key) {
@@ -430,6 +441,6 @@ req.end(function(err, res) {
   if (err) {
     return console.log(err.toString())
   }
-  console.log("Upload successful")
+  console.log('Upload successful.')
 })
 ```

@@ -15,13 +15,10 @@ $ npm install --save minio
 
 var Minio = require('minio')
 
-// find out your s3 end point here:
-// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-
 var s3client = new Minio({
+  endPoint:  'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY',
-  endPoint:  'https://<your-s3-endpoint>'
+  secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 s3client.listBuckets(function(e, bucketStream) {
@@ -51,9 +48,9 @@ s3client.listBuckets(function(e, bucketStream) {
     <script type="text/javascript" src="<your-cdn>/minio-browser.js"></script>
     <script>
      var s3Client = new Minio({
+      endPoint:  'https://s3.amazonaws.com',
       accessKey: 'YOUR-ACCESSKEYID',
-      secretKey: 'YOUR-SECRETACCESSKEY',
-      endPoint:  'https://<your-s3-endpoint>'
+      secretKey: 'YOUR-SECRETACCESSKEY'
      });
      s3Client.listBuckets(function(e, bucketStream) {
        if (e) {
