@@ -133,14 +133,16 @@ describe('Client', () => {
           done()
         }
       })
-      it('should generate presigned url', () => {
+      it('should generate presigned url', (done) => {
         var client = new Minio({
           endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        var url = client.presignedGetObject('bucket', 'object', 86400)
-        assert.equal(url.length > 0, true)
+        client.presignedGetObject('bucket', 'object', 86400, (e, url) => {
+          assert.equal(url.length > 0, true)
+          done()
+        })
       })
     })
     describe('presigned-put', () => {
@@ -149,7 +151,10 @@ describe('Client', () => {
           var client = new Minio({
             endPoint: 'https://localhost:9000',
           })
-          client.presignedPutObject('bucket', 'object', 1000)
+          client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
+            assert.equal(url.length > 0, true)
+            done()
+          })
         } catch (e) {
           done()
         }
@@ -166,14 +171,16 @@ describe('Client', () => {
           done()
         }
       })
-      it('should generate presigned url', () => {
+      it('should generate presigned url', (done) => {
         var client = new Minio({
           endPoint: 'https://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        var url = client.presignedPutObject('bucket', 'object', 86400)
-        assert.equal(url.length > 0, true)
+        client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
+          assert.equal(url.length > 0, true)
+          done()
+        })
       })
     })
   })
@@ -404,7 +411,7 @@ describe('Client', () => {
 
     describe('#bucketExists(bucket, cb)', () => {
       it('should call callback with no options if successful', (done) => {
-        MockResponse('http://localhost:9000').head('/bucket').reply(204)
+        MockResponse('http://localhost:9000').head('/bucket').reply(200)
         client.bucketExists('bucket', (e) => {
           assert.equal(e, null)
           done()

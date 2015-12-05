@@ -15,6 +15,8 @@
  */
 
 import Stream from 'stream';
+import EventEmitter from 'events'
+import * as _ from 'lodash'
 
 export default class MockTransport {
   constructor() {
@@ -22,12 +24,8 @@ export default class MockTransport {
   }
 
   addRequest(verifyParams, statusCode, responseHeaders, responseStream) {
-    var req = {
-      verifyParams: verifyParams,
-      statusCode: statusCode,
-      responseHeaders: responseHeaders,
-      responseStream: responseStream
-    }
+    var req = new Request()
+    req = _.merge(req, {verifyParams, statusCode, responseHeaders, responseStream})
     this.requests.push(req)
   }
 
@@ -42,8 +40,9 @@ export default class MockTransport {
   }
 }
 
-class Request {
+class Request extends EventEmitter {
   constructor(req, params, callback) {
+    super()
     this.req = req
     this.params = params
     this.callback = callback

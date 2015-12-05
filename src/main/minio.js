@@ -30,6 +30,7 @@ import async from 'async';
 import { isValidBucketName, isValidObjectName, getRegion, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
 import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
+import {parseBucketRegion} from './xml-parsers.js'
 
 import * as transformers from './transformers'
 
@@ -39,12 +40,19 @@ var Package = require('../../package.json');
 
 export default class Client extends Multipart {
   constructor(params, transport) {
-    var namespace = 'Minio'
     var parsedUrl = Url.parse(params.endPoint),
       port = +parsedUrl.port
 
     var host = parsedUrl.hostname
     var protocol = ''
+
+    var minioStorage = true
+    if (host.match('.amazonaws.com$')) {
+      if (host !== 's3.amazonaws.com') {
+        throw new errors.InvalidEndPointException(`endPoint ${params.endPoint} invalid, endPoint has to be "https://s3.amazonaws.com" for AWS S3`)
+      }
+      minioStorage = false
+    }
 
     if (!transport) {
       switch (parsedUrl.protocol) {
@@ -90,9 +98,47 @@ export default class Client extends Multipart {
       secretKey: params.secretKey,
       userAgent: `${libraryAgent}`,
     }
-    super(newParams, transport)
+    super(newParams, transport, minioStorage)
     this.params = newParams
     this.transport = transport
+    this.minioStorage = minioStorage
+    this.regionMap = {}
+  }
+
+  getRequestOptions(opts) {
+    var method = opts.method
+    var bucketName = opts.bucketName
+    var objectName = opts.objectName
+    var headers = opts.headers
+    var query = opts.query
+
+    var reqOptions = {method}
+    if (this.params.port) reqOptions.port = this.params.port
+    reqOptions.protocol = this.params.protocol
+    reqOptions.port = this.params.port
+
+    if (headers) {
+      reqOptions.headers = headers
+    }
+
+    if (objectName) {
+      objectName = `${uriResourceEscape(objectName)}`
+    }
+
+    reqOptions.path = '/'
+    if (this.minioStorage) {
+      // for minioStorage we will always do path-style
+      reqOptions.host = this.params.host
+      if (bucketName) reqOptions.path = `/${bucketName}`
+      if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
+    } else {
+      // for AWS we will always do virtual-host-style
+      reqOptions.host = `${this.params.host}`
+      if (bucketName) reqOptions.host = `${bucketName}.${this.params.host}`
+      if (objectName) reqOptions.path = `/${objectName}`
+    }
+    if (query) reqOptions.path += `?${query}`
+    return reqOptions
   }
 
   // CLIENT LEVEL CALLS
@@ -124,39 +170,68 @@ export default class Client extends Multipart {
 
   // SERVICE LEVEL CALLS
 
-  bucketRequest(method, bucket, cb) {
-    var path = `/${bucket}`
-    this.request(method, path, cb)
-  }
-
-  objectRequest(method, bucket, object, cb) {
-    var path = `/${bucket}/${uriResourceEscape(object)}`
-    this.request(method, path, cb)
-  }
-
-  request(method, path, cb) {
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      method: method,
-      path: path
+  makeRequest(options, payload, statusCode, cb) {
+    if (typeof(payload) === 'number') {
+      cb = statusCode
+      statusCode = payload
+      payload = ''
     }
+    if (typeof(cb) !== 'function') {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var reqOptions = this.getRequestOptions(options)
+    var hash = Crypto.createHash('sha256')
+    hash.update(payload)
+    var sha256 = hash.digest('hex').toLowerCase()
+    this.getBucketRegion(options.bucketName, (e, region) => {
+      if (e) return cb(e)
+      signV4(reqOptions, sha256, this.params.accessKey, this.params.secretKey, region)
+      var req = this.transport.request(reqOptions, response => {
+        if (!statusCode) return cb(null, response)
+        if (statusCode != response.statusCode) {
+          var concater = transformers.getConcater()
+          var errorTransformer = transformers.getErrorTransformer(response)
+          pipesetup(response, concater, errorTransformer)
+            .on('error', e => cb(e))
+          return
+        }
+        cb(null, response)
+      })
+      req.on('error', e => cb(e))
+      req.end(payload)
+    })
+  }
 
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, response => {
-      if (response.statusCode >= 300) {
-        var concater = transformers.getConcater()
-        var errorTransformer = transformers.getErrorTransformer(response)
+  getBucketRegion(bucketName, cb) {
+    if (this.params.host !== 's3.amazonaws.com') return cb(null, 'us-east-1')
+    if (!bucketName) return cb(null, 'us-east-1')
+    if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
+    var reqOptions = {}
+    reqOptions.method = 'GET'
+    reqOptions.host = this.params.host
+    reqOptions.port = this.params.port
+    reqOptions.protocol = this.params.protocol
+    reqOptions.path = `/${bucketName}?location`
+    signV4(reqOptions, '', this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var req = this.transport.request(reqOptions)
+    req.on('error', e => cb(e))
+    req.on('response', response => {
+      var concater = transformers.getConcater()
+      var errorTransformer = transformers.getErrorTransformer(response)
+      if (response.statusCode !== 200) {
         pipesetup(response, concater, errorTransformer)
           .on('error', e => cb(e))
         return
       }
-      // no data expected
-      cb()
+      var transformer = transformers.getBucketRegionTransformer()
+      pipesetup(response, concater, transformer)
+        .on('error', e => cb(e))
+        .on('data', region => {
+          if (!region) region = 'us-east-1'
+          this.regionMap[bucketName] = region
+          cb(null, region)
+        })
     })
-    req.on('error', e => cb(e))
     req.end()
   }
 
@@ -165,13 +240,17 @@ export default class Client extends Multipart {
   // __Arguments__
   // * `bucketName` _string_ - Name of the bucket
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucket, cb) {
-    return this.makeBucketWithACL(bucket, 'private', cb)
+  makeBucket(bucketName, region, cb) {
+    if (typeof(region) === 'function') {
+      cb = region
+      region = 'us-east-1'
+    }
+    return this.makeBucketWithACL(bucketName, 'private', region, cb)
   }
 
-  makeBucketWithACL(bucket, acl, cb) {
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+  makeBucketWithACL(bucketName, acl, region, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
     if (!isString(acl)) {
       throw new TypeError('acl should be of type "string"')
@@ -180,10 +259,6 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
 
-    var region = getRegion(this.params.host)
-    if (region === 'us-east-1') {
-      region = null
-    }
     var payload = ''
     if (region) {
       var createBucketConfiguration = []
@@ -200,36 +275,9 @@ export default class Client extends Multipart {
       }
       payload = Xml(payloadObject)
     }
-
-    var hash = Crypto.createHash('sha256')
-    hash.update(payload)
-    var sha256 = hash.digest('hex').toLowerCase(),
-      requestParams = {
-        host: this.params.host,
-        port: this.params.port,
-        protocol: this.params.protocol,
-        method: 'PUT',
-        path: `/${bucket}`,
-        headers: {
-          'Content-Length': payload.length,
-          'x-amz-acl': acl
-        }
-      }
-
-    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, response => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response, true)
-        var concater = transformers.getConcater()
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
-      cb()
-    })
-    req.write(payload)
-    req.end()
+    var method = 'PUT'
+    var headers = {'x-amz-acl': acl}
+    this.makeRequest({method, bucketName, headers}, payload, 200, cb)
   }
 
   // List of buckets created.
@@ -244,32 +292,21 @@ export default class Client extends Multipart {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: '/',
-      method: 'GET'
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var concater = transformers.getConcater()
-
-    var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response, true)
-        pipesetup(response, concater,  errorTransformer)
-          .on('error', e => cb(e))
-        return
+    var method = 'GET'
+    this.makeRequest({method}, 200, (e, response) => {
+      if (e) {
+        if (e.code === 'TemporaryRedirect') {
+          // ListBucket operaton returns 'TemporaryRedirect' for 'AccessDenied'
+          e.code = 'AccessDenied'
+          e.message = 'Valid and authorized credentials required'
+        }
+        return cb(e)
       }
+      var concater = transformers.getConcater()
       var transformer = transformers.getListBucketTransformer();
       pipesetup(response, concater, transformer)
       cb(null, transformer)
     })
-    req.on('error', e => cb(e))
-    req.end()
   }
 
   // Returns a stream that emits objects that are partially uploaded.
@@ -332,14 +369,15 @@ export default class Client extends Multipart {
   // __Arguments__
   // * `bucketName` _string_ : name of the bucket
   // * `callback(err)` _function_ : `err` is `null` if the bucket exists
-  bucketExists(bucket, cb) {
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+  bucketExists(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.bucketRequest('HEAD', bucket, cb)
+    var method = 'HEAD'
+    this.makeRequest({method, bucketName}, 200, cb)
   }
 
   // Remove a bucket.
@@ -347,14 +385,15 @@ export default class Client extends Multipart {
   // __Arguments__
   // * `bucketName` _string_ : name of the bucket
   // * `callback(err)` _function_ : `err` is `null` if the bucket is removed successfully.
-  removeBucket(bucket, cb) {
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+  removeBucket(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.bucketRequest('DELETE', bucket, cb)
+    var method = 'DELETE'
+    this.makeRequest({method, bucketName}, 204, cb)
   }
 
   // get a bucket's ACL.
@@ -362,37 +401,23 @@ export default class Client extends Multipart {
   // __Arguments__
   // * `bucketName` _string_ : name of the bucket
   // * `callback(err, acl)` _function_ : `err` is not `null` in case of error. `acl` _string_ is the cannedACL which can have the values _private_, _public-read_, _public-read-write_.
-  getBucketACL(bucket, cb) {
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+  getBucketACL(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-
-    var query = `?acl`,
-      requestParams = {
-        host: this.params.host,
-        port: this.params.port,
-        protocol: this.params.protocol,
-        method: 'GET',
-        path: `/${bucket}${query}`
-      }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-    var req = this.transport.request(requestParams, response => {
+    var method = 'GET'
+    var query = 'acl'
+    this.makeRequest({method, bucketName, query}, 200, (e, response) => {
+      if (e) return cb(e)
       var concater = transformers.getConcater()
-      var errorTransformer = transformers.getErrorTransformer(response)
       var transformer = transformers.getAclTransformer()
-      if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
       pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', data => {
-          var perm = data.acl.reduce(function(acc, grant) {
+          var perm = data.acl.reduce((acc, grant) => {
             if (grant.grantee.uri === 'http://acs.amazonaws.com/groups/global/AllUsers') {
               if (grant.permission === 'READ') {
                 acc.publicRead = true
@@ -421,8 +446,6 @@ export default class Client extends Multipart {
           cb(null, cannedACL)
         })
     })
-    req.on('error', e => cb(e))
-    req.end()
   }
 
   // set a bucket's ACL.
@@ -431,9 +454,9 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `acl` _string_: acl can be _private_, _public-read_, _public-read-write_
   // * `callback(err)` _function_: callback is called with error or `null`
-  setBucketACL(bucket, acl, cb) {
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+  setBucketACL(bucketName, acl, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
     if (!isString(acl)) {
       throw new TypeError('acl should be of type "string"')
@@ -445,35 +468,10 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
 
-    // we should make sure to set this query parameter, but on the other hand
-    // the call apparently succeeds without it to s3.  For clarity lets do it anyways
-    var query = `?acl`,
-      requestParams = {
-        host: this.params.host,
-        port: this.params.port,
-        protocol: this.params.protocol,
-        method: 'PUT',
-        path: `/${bucket}${query}`,
-        headers: {
-          'x-amz-acl': acl
-        }
-      }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, response => {
-      var concater = transformers.getConcater()
-      var errorTransformer = transformers.getErrorTransformer(response)
-      if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
-      cb()
-    })
-    // FIXME: the below line causes weird failure in 'gulp test'
-    // req.on('error', e => cb(e))
-    req.end()
+    var query = 'acl'
+    var method = 'PUT'
+    var headers = {'x-amz-acl': acl}
+    this.makeRequest({method, bucketName, query, headers}, 200, cb)
   }
 
   // Remove the partially uploaded object.
@@ -496,34 +494,14 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
 
-    var self = this
-    this.findUploadId(bucketName, objectName, (err, uploadId) => {
-      if (err || !uploadId) {
-        return cb(err)
+    async.waterfall([
+      callback => this.findUploadId(bucketName, objectName, callback),
+      (uploadId, callback) => {
+        var method = 'DELETE'
+        var query = `uploadId=${uploadId}`
+        this.makeRequest({method, bucketName, objectName, query}, 204, callback)
       }
-      var requestParams = {
-        host: self.params.host,
-        port: self.params.port,
-        protocol: self.params.protocol,
-        path: `/${bucketName}/${objectName}?uploadId=${uploadId}`,
-        method: 'DELETE'
-      }
-
-      signV4(requestParams, '', self.params.accessKey, self.params.secretKey)
-
-      var req = self.transport.request(requestParams, (response) => {
-        if (response.statusCode !== 204) {
-          var concater = transformers.getConcater()
-          var errorTransformer = transformers.getErrorTransformer(response)
-          pipesetup(response, concater, errorTransformer)
-            .on('error', e => cb(e))
-          return
-        }
-        cb()
-      })
-      req.on('error', e => cb(e))
-      req.end()
-    })
+    ], cb)
   }
 
   // Callback is called with readable stream of the object content.
@@ -594,18 +572,9 @@ export default class Client extends Multipart {
       headers.Range = range
     }
 
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
-      method: 'GET',
-      headers
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, (response) => {
+    var method = 'GET'
+    this.makeRequest({method, bucketName, objectName, headers}, 0, (e, response) => {
+      if (e) return cb(e)
       if (!(response.statusCode === 200 || response.statusCode === 206)) {
         var concater = transformers.getConcater()
         var errorTransformer = transformers.getErrorTransformer(response)
@@ -616,10 +585,7 @@ export default class Client extends Multipart {
       var dummyTransformer = transformers.getDummyTransformer()
       pipesetup(response, dummyTransformer)
       cb(null, dummyTransformer)
-      return
     })
-    req.on('error', e => cb(e))
-    req.end()
   }
 
   // Uploads the object.
@@ -678,10 +644,8 @@ export default class Client extends Multipart {
       return
     }
     async.waterfall([
-      function(cb) {
-        self.findUploadId(bucketName, objectName, cb)
-      },
-      function(uploadId, cb) {
+      cb => self.findUploadId(bucketName, objectName, cb),
+      (uploadId, cb) => {
         if (uploadId) {
           self.listAllParts(bucketName, objectName, uploadId,  (e, etags) => {
             return cb(e, uploadId, etags)
@@ -692,7 +656,7 @@ export default class Client extends Multipart {
           return cb(e, uploadId, [])
         })
       },
-      function(uploadId, etags, cb) {
+      (uploadId, etags, cb) => {
         var partSize = calculatePartSize(size)
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: partSize, zeroPadding: false})
@@ -701,10 +665,10 @@ export default class Client extends Multipart {
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
-      function(etags, uploadId, cb) {
+      (etags, uploadId, cb) => {
         self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
       }
-    ], function(err, etag) {
+    ], (err, etag) => {
       if (err) {
         return cb(err)
       }
@@ -712,7 +676,7 @@ export default class Client extends Multipart {
     })
   }
 
-  listObjectsOnce(bucket, prefix, marker, delimiter, maxKeys) {
+  listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {
     var queries = []
       // escape every value in query string, except maxKeys
     if (prefix) {
@@ -737,30 +701,16 @@ export default class Client extends Multipart {
     queries.sort()
     var query = ''
     if (queries.length > 0) {
-      query = `?${queries.join('&')}`
+      query = `${queries.join('&')}`
     }
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucket}${query}`,
-      method: 'GET'
-    }
-
+    var method = 'GET'
     var dummyTransformer = transformers.getDummyTransformer()
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, (response) => {
-      var errorTransformer = transformers.getErrorTransformer(response)
+    this.makeRequest({method, bucketName, query}, 200, (e, response) => {
+      if (e) return dummyTransformer.emit('error', e)
       var concater = transformers.getConcater()
       var transformer = transformers.getListObjectsTransformer()
-      if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer, dummyTransformer)
-        return
-      }
       pipesetup(response, concater, transformer, dummyTransformer)
     })
-    req.end()
     return dummyTransformer
   }
 
@@ -833,24 +783,9 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
 
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
-      method: 'HEAD'
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var req = this.transport.request(requestParams, (response) => {
-      var errorTransformer = transformers.getErrorTransformer(response)
-      var concater = transformers.getConcater()
-      if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-          return
-      }
+    var method = 'HEAD'
+    this.makeRequest({method, bucketName, objectName}, 200, (e, response) => {
+      if (e) return cb(e)
       var result = {
         size: +response.headers['content-length'],
         etag: response.headers.etag.replace(/"/g, ''),
@@ -859,7 +794,6 @@ export default class Client extends Multipart {
       }
       cb(null, result)
     })
-    req.end()
   }
 
   // Remove the specified object.
@@ -881,7 +815,8 @@ export default class Client extends Multipart {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.objectRequest('DELETE', bucketName, objectName, cb)
+    var method = 'DELETE'
+    this.makeRequest({method, bucketName, objectName}, 204, cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -890,7 +825,7 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
-  presignedPutObject(bucketName, objectName, expires) {
+  presignedPutObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
@@ -903,16 +838,13 @@ export default class Client extends Multipart {
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
     }
-    expires = expires.toString()
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
-      method: 'PUT',
-      expires: expires
-    }
-    return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
+    var method = 'PUT'
+    var options = this.getRequestOptions({method, bucketName, objectName})
+    options.expires = expires.toString()
+    this.getBucketRegion(bucketName, (e, region) => {
+      if (e) return cb(e)
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+    })
   }
 
   // Generate a presigned URL for GET
@@ -921,7 +853,7 @@ export default class Client extends Multipart {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
-  presignedGetObject(bucketName, objectName, expires) {
+  presignedGetObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
@@ -934,16 +866,13 @@ export default class Client extends Multipart {
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
     }
-    expires = expires.toString()
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucketName}/${uriResourceEscape(objectName)}`,
-      method: 'GET',
-      expires: expires
-    }
-    return presignSignatureV4(requestParams, this.params.accessKey, this.params.secretKey)
+    var method = 'GET'
+    var options = this.getRequestOptions({method, bucketName, objectName})
+    options.expires = expires.toString()
+    this.getBucketRegion(bucketName, (e, region) => {
+      if (e) return cb(e)
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+    })
   }
 
   // return PostPolicy object
@@ -954,29 +883,31 @@ export default class Client extends Multipart {
   // presignedPostPolicy can be used in situations where we want more control on the upload than what
   // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
   // on the object's `name` `bucket` `expiry` `Content-Type`
-  presignedPostPolicy(postPolicy) {
-    var date = Moment.utc()
-    var region = getRegion(this.params.host)
-    var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
+  presignedPostPolicy(postPolicy, cb) {
+    this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
+      if (e) return cb(e)
+      console.log(postPolicy.formData.bucket, region)
+      var date = Moment.utc()
+      var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
 
-    postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
-    postPolicy.formData['x-amz-date'] = dateStr
+      postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
+      postPolicy.formData['x-amz-date'] = dateStr
 
-    postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
-    postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
+      postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
+      postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
 
-    postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope(region, date)])
-    postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope(region, date)
+      postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope(region, date)])
+      postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope(region, date)
 
-    var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
+      var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
 
-    postPolicy.formData.policy = policyBase64
+      postPolicy.formData.policy = policyBase64
 
-    var signature = postPresignSignatureV4(region, date, this.params.secretKey, policyBase64)
+      var signature = postPresignSignatureV4(region, date, this.params.secretKey, policyBase64)
 
-    postPolicy.formData['x-amz-signature'] = signature
-
-    return postPolicy.formData
+      postPolicy.formData['x-amz-signature'] = signature
+      cb(null, postPolicy.formData)
+    })
   }
 }
 
