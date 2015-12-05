@@ -72,14 +72,23 @@ export default class Client extends Multipart {
           }
       }
     }
+
+    // User Agent should always following the below style.
+    // Please open an issue to discuss any new changes here.
+    //
+    //       Minio (OS; ARCH) LIB/VER APP/VER
+    //
+    var libraryComments = `(${process.platform}; ${process.arch})`
+    var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
+    // User agent block ends.
+
     var newParams = {
       host: host,
       port: port,
       protocol: protocol,
       accessKey: params.accessKey,
       secretKey: params.secretKey,
-      userAgent: `minio-js/${Package.version} (${process.platform}; ${process.arch})`,
-      userAgentSet: false
+      userAgent: `${libraryAgent}`,
     }
     super(newParams, transport)
     this.params = newParams
@@ -88,21 +97,29 @@ export default class Client extends Multipart {
 
   // CLIENT LEVEL CALLS
 
-  setUserAgent(name, version, comments) {
-    var formattedComments = ''
-    if (comments && comments.length > 0) {
-      var joinedComments = comments.join('; ')
-      formattedComments = ` (${joinedComments})`
+  // Set application specific information.
+  //
+  // Generates User-Agent in the following style.
+  //
+  //       Minio (OS; ARCH) LIB/VER APP/VER
+  //
+  // __Arguments__
+  // * `appName` _string_ - Application name.
+  // * `appVersion` _string_ - Application version.
+  setAppInfo(appName, appVersion) {
+    if (!isString(appName)) {
+      throw new TypeError(`Invalid appName: ${appName}`)
     }
-    if (this.params.userAgentSet) {
-      throw new errors.InternalClientException('user agent already set')
+    if (appName.trim() === '') {
+      throw new errors.InvalidArgumentException('Input appName cannot be empty.')
     }
-    if (name && version) {
-      this.params.userAgent = `${this.params.userAgent} ${name}/${version}${formattedComments}`
-      this.params.userAgentSet = true
-    } else {
-      throw new errors.InvalidUserAgentException('Invalid user agent')
+    if (!isString(appVersion)) {
+      throw new TypeError(`Invalid appName: ${appVersion}`)
     }
+    if (appVersion.trim() === '') {
+      throw new errors.InvalidArgumentException('Input appVersion cannot be empty.')
+    }
+    this.params.userAgent = `${this.params.userAgent} ${appName}/${appVersion}`
   }
 
   // SERVICE LEVEL CALLS
