@@ -64,10 +64,7 @@ export function getRegion(host) {
 }
 
 export function isValidBucketName(bucket) {
-  // test for null
-  if (bucket === null) {
-    return false
-  }
+  if (!isString(bucket)) return false
 
   // bucket length between 3 and 63
   if (bucket.length < 3 || bucket.length > 63) {
@@ -85,6 +82,11 @@ export function isValidObjectName(objectName) {
   if (!isString(objectName)) return false
   if (objectName.length > 1024) return false
   return true
+}
+
+// check for allowed ACLs
+export function isValidACL(acl) {
+  return acl === 'private' || acl === 'public-read' || acl === 'public-read-write' || acl === 'authenticated-read'
 }
 
 // check if typeof arg boolean

@@ -25,15 +25,11 @@ export function getDummyTransformer() {
   })
 }
 
-export function getErrorTransformer(response, methodListBucket) {
+export function getErrorTransformer(response) {
   var requestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
   var statusCode = response.statusCode
   var e = {}
   e.requestid = requestid
-  if (methodListBucket && statusCode === 307) {
-    // ListBucket response sends 307 for unauthorized access
-    statusCode = 403
-  }
   if (statusCode === 301) {
     e.code = 'MovedPermanently'
     e.message = 'Moved Permanently'
@@ -155,4 +151,8 @@ export function getCompleteMultipartTransformer() {
     this.push(null)
     cb()
   })
+}
+
+export function getBucketRegionTransformer() {
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseBucketRegion(xmlbytes.toString())))
 }

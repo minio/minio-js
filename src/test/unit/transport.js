@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import Stream from 'stream';
+import Stream from 'stream'
+import {EventEmitter} from 'events'
 
 export default class MockTransport {
   constructor() {
@@ -22,12 +23,7 @@ export default class MockTransport {
   }
 
   addRequest(verifyParams, statusCode, responseHeaders, responseStream) {
-    var req = {
-      verifyParams: verifyParams,
-      statusCode: statusCode,
-      responseHeaders: responseHeaders,
-      responseStream: responseStream
-    }
+    var req = {verifyParams, statusCode, responseHeaders, responseStream}
     this.requests.push(req)
   }
 
@@ -42,8 +38,9 @@ export default class MockTransport {
   }
 }
 
-class Request {
+class Request extends EventEmitter {
   constructor(req, params, callback) {
+    super()
     this.req = req
     this.params = params
     this.callback = callback
