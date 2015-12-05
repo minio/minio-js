@@ -184,7 +184,8 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch})`, client.params.userAgent)
+      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
+                   client.params.userAgent)
     })
     it('should set user agent', () => {
       var client = new Minio({
@@ -192,8 +193,9 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.setUserAgent('test', '1.0.0', ['comment', 'arch', 'os'])
-      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0 (comment; arch; os)`, client.params.userAgent)
+      client.setAppInfo('test', '1.0.0')
+      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/1.0.0`,
+                   client.params.userAgent)
     })
     it('should set user agent without comments', () => {
       var client = new Minio({
@@ -201,8 +203,9 @@ describe('Client', () => {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.setUserAgent('test', '1.0.0', [])
-      assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
+      client.setAppInfo('test', '1.0.0')
+      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/1.0.0`,
+                   client.params.userAgent)
     })
     it('should not set user agent without name', (done) => {
       try {
@@ -211,7 +214,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setUserAgent(null, '1.0.0')
+        client.setAppInfo(null, '1.0.0')
       } catch (e) {
         done()
       }
@@ -223,7 +226,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setUserAgent('', '1.0.0')
+        client.setAppInfo('', '1.0.0')
       } catch (e) {
         done()
       }
@@ -235,7 +238,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setUserAgent('test', null)
+        client.setAppInfo('test', null)
       } catch (e) {
         done()
       }
@@ -247,21 +250,7 @@ describe('Client', () => {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setUserAgent('test', '')
-      } catch (e) {
-        done()
-      }
-    })
-    it('should not set user agent twice', (done) => {
-      try {
-        var client = new Minio({
-          endPoint: 'https://localhost:9000',
-          accessKey: 'accesskey',
-          secretKey: 'secretkey'
-        })
-        client.setUserAgent('test', '1.0.0')
-        assert.equal(`minio-js/${Package.version} (${process.platform}; ${process.arch}) test/1.0.0`, client.params.userAgent)
-        client.setUserAgent('test', '1.0.0')
+        client.setAppInfo('test', '')
       } catch (e) {
         done()
       }
