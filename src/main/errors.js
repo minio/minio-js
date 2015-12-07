@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+export class InvalidArgumentException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidArgumentException'
+  }
+}
+
 export class InvalidBucketNameException extends Error {
   constructor(message) {
     super(message)
@@ -53,13 +60,6 @@ export class ExpiresParamException extends Error {
   constructor(message) {
     super(message)
     this.name = 'ExpiresParamException'
-  }
-}
-
-export class InvalidUserAgentException extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'InvalidUserAgentException'
   }
 }
 
