@@ -1,5 +1,14 @@
 # For maintainers only
 
+## Responsibilities
+
+Please go through this link [Maintainer Responsibility](https://gist.github.com/abperiasamy/f4d9b31d3186bbd26522)
+
+## Current Maintainers
+
+- Krishna Srinivas
+- Harshavardhana
+
 ### Setup your minio-js Github Repository
 
 Fork [minio-js upstream](https://github.com/minio/minio-js/fork) source repository to your own personal repository.
