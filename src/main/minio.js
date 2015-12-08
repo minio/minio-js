@@ -615,19 +615,7 @@ export default class Client extends Multipart {
       expectedStatus = 206
     }
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, (e, response) => {
-      if (e) return cb(e)
-      if (expectedStatus !== response.statusCode) {
-        var concater = transformers.getConcater()
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
-      var dummyTransformer = transformers.getDummyTransformer()
-      pipesetup(response, dummyTransformer)
-      cb(null, dummyTransformer)
-    })
+    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, cb)
   }
 
   // Uploads the object.
@@ -688,15 +676,8 @@ export default class Client extends Multipart {
     async.waterfall([
       cb => self.findUploadId(bucketName, objectName, cb),
       (uploadId, cb) => {
-        if (uploadId) {
-          self.listAllParts(bucketName, objectName, uploadId,  (e, etags) => {
-            return cb(e, uploadId, etags)
-          })
-          return
-        }
-        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => {
-          return cb(e, uploadId, [])
-        })
+        if (uploadId) return self.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
         var partSize = calculatePartSize(size)
@@ -707,15 +688,8 @@ export default class Client extends Multipart {
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
-      (etags, uploadId, cb) => {
-        self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
-      }
-    ], (err, etag) => {
-      if (err) {
-        return cb(err)
-      }
-      cb(null, etag)
-    })
+      (etags, uploadId, cb) => self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
+    ], cb)
   }
 
   listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {
