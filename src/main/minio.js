@@ -676,15 +676,8 @@ export default class Client extends Multipart {
     async.waterfall([
       cb => self.findUploadId(bucketName, objectName, cb),
       (uploadId, cb) => {
-        if (uploadId) {
-          self.listAllParts(bucketName, objectName, uploadId,  (e, etags) => {
-            return cb(e, uploadId, etags)
-          })
-          return
-        }
-        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => {
-          return cb(e, uploadId, [])
-        })
+        if (uploadId) return self.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
         var partSize = calculatePartSize(size)
@@ -695,15 +688,8 @@ export default class Client extends Multipart {
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
-      (etags, uploadId, cb) => {
-        self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
-      }
-    ], (err, etag) => {
-      if (err) {
-        return cb(err)
-      }
-      cb(null, etag)
-    })
+      (etags, uploadId, cb) => self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
+    ], cb)
   }
 
   listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {

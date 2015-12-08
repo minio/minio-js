@@ -395,17 +395,11 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/'))
-        client.listBuckets(function(e, stream) {
-          checkError('code', 'message', 'requestid', 'hostid', '/')(e)
-          done()
-        })
+        client.listBuckets(checkError('code', 'message', 'requestid', 'hostid', '/', done))
       })
       it('should convert 307 to 403', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(307)
-        client.listBuckets(function(e, stream) {
-          checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null)(e)
-          done()
-        })
+        client.listBuckets(checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, done))
       })
     })
 
@@ -419,31 +413,19 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should return an error on moved permanently', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(301)
-        client.bucketExists('bucket', checkError('MovedPermanently', 'Moved Permanently', null, null, null, (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.bucketExists('bucket', checkError('MovedPermanently', 'Moved Permanently', null, null, null, done))
       })
       it('should return an error on 404', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(403)
-        client.bucketExists('bucket', checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.bucketExists('bucket', checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, done))
       })
       it('should return an error on 404', (done) => {
         MockResponse('http://localhost:9000').head('/bucket').reply(404)
-        client.bucketExists('bucket', checkError('NotFound', 'Not Found', null, null, null, (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.bucketExists('bucket', checkError('NotFound', 'Not Found', null, null, null, done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -477,10 +459,7 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.removeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.removeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -594,10 +573,7 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').put('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.setBucketACL('bucket', 'public-read', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.setBucketACL('bucket', 'public-read', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -658,10 +634,7 @@ describe('Client', () => {
       })
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').get('/bucket/object').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket/object'))
-        client.getObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.getObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', '/bucket/object', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -1168,10 +1141,7 @@ describe('Client', () => {
         }, function(end) {
           end()
         }))
-        stream.on('error', (e) => {
-          checkError('code', 'message', 'requestid', 'hostid', '/bucket')(e)
-          done()
-        })
+        stream.on('error', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should pass error in stream on subsequent error', (done) => {
         MockResponse('http://localhost:9000').filteringPath(() => {
@@ -1186,10 +1156,7 @@ describe('Client', () => {
         }, function(end) {
           end()
         }))
-        stream.on('error', (e) => {
-          checkError('code', 'message', 'requestid', 'hostid', '/bucket')(e)
-          done()
-        })
+        stream.on('error', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
     })
 
@@ -1216,10 +1183,7 @@ describe('Client', () => {
         MockResponse('http://localhost:9000').head('/bucket/object')
           .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
 
-        client.statObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.statObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -1276,10 +1240,7 @@ describe('Client', () => {
       it('should pass error to callback', (done) => {
         MockResponse('http://localhost:9000').delete('/bucket/object')
           .reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.removeObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', (r) => {
-          assert.equal(r, null)
-          done()
-        }))
+        client.removeObject('bucket', 'object', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -1392,7 +1353,8 @@ describe('Client', () => {
 })
 
 var checkError = (code, message, requestid, hostid, resource, callback) => {
-  return (e, ...rest) => {
+  if (!callback) throw new Error('callback can not be null')
+  return (e) => {
     if (e === null) {
       callback('expected error, received success')
     }
@@ -1401,17 +1363,7 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     assert.equal(e.requestid, requestid)
     assert.equal(e.hostid, hostid)
     assert.equal(e.resource, resource)
-    if (callback) {
-      if (rest.length === 0) {
-        callback()
-      } else {
-        callback(rest)
-      }
-    } else {
-      if (rest.length > 0) {
-        assert.fail('Data returned with no callback registered')
-      }
-    }
+    callback()
   }
 }
 
