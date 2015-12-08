@@ -258,27 +258,31 @@ export default class Client extends Multipart {
   //
   // __Arguments__
   // * `bucketName` _string_ - Name of the bucket
-  // * `region` _string_ - region of the bucket
   // * `acl` _string_ - cannedACL which can have the values _private_, _public-read_, _public-read-write_, _authenticated-read_.
+  // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, acl, cb) {
+  makeBucket(bucketName, acl, region, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
     }
-    if (!isString(region)) {
-      throw new TypeError('region should be of type "string"')
-    }
     if (!isString(acl)) {
       throw new TypeError('acl should be of type "string"')
+    }
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
+    // if acl is empty string, we default to 'private'.
     if (!acl) acl = 'private'
+
+    // Verify if acl is valid.
     if (!isValidACL(acl)) {
-      throw new errors.InvalidACLException(`invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
+      throw new errors.InvalidACLException(`Invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
     }
+
     var payload = ''
     if (region) {
       var createBucketConfiguration = []
