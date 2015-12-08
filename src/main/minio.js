@@ -615,19 +615,7 @@ export default class Client extends Multipart {
       expectedStatus = 206
     }
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, (e, response) => {
-      if (e) return cb(e)
-      if (expectedStatus !== response.statusCode) {
-        var concater = transformers.getConcater()
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
-      var dummyTransformer = transformers.getDummyTransformer()
-      pipesetup(response, dummyTransformer)
-      cb(null, dummyTransformer)
-    })
+    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, cb)
   }
 
   // Uploads the object.
