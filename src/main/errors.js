@@ -21,6 +21,13 @@ export class InvalidArgumentException extends Error {
   }
 }
 
+export class InvalidEndPointException extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'InvalidEndPointException'
+  }
+}
+
 export class InvalidBucketNameException extends Error {
   constructor(message) {
     super(message)
@@ -63,10 +70,10 @@ export class ExpiresParamException extends Error {
   }
 }
 
-export class InvalidEmptyACLException extends Error {
+export class InvalidACLException extends Error {
   constructor(message) {
     super(message)
-    this.name = 'InvalidEmptyACLException'
+    this.name = 'InvalidACLException'
   }
 }
 

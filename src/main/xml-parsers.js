@@ -222,6 +222,11 @@ export function parseAcl(xml) {
   return result
 }
 
+export function parseBucketRegion(xml) {
+  var parsedXml = ParseXml(xml)
+  return parsedXml.root.content
+}
+
 export function parseListParts(xml) {
   var parsedXml = ParseXml(xml)
   var result = {

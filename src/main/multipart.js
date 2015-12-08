@@ -26,49 +26,30 @@ import * as transformers from './transformers.js'
 import * as xmlParsers from './xml-parsers.js'
 
 export default class Multipart {
-  constructor(params, transport) {
+  constructor(params, transport, pathStyle) {
     this.params = params
     this.transport = transport
+    this.pathStyle = pathStyle
   }
 
-  initiateNewMultipartUpload(bucket, key, contentType, cb) {
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}?uploads`,
-      method: 'POST',
-      headers: {
-        'Content-Type': contentType
-      }
-    }
-
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var concater = transformers.getConcater()
-    var transformer = transformers.getInitiateMultipartTransformer()
-    var request = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
+  initiateNewMultipartUpload(bucketName, objectName, contentType, cb) {
+    var method = 'POST'
+    var headers = {'Content-Type': contentType}
+    var query = 'uploads'
+    this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, (e, response) => {
+      if (e) return cb(e)
+      var concater = transformers.getConcater()
+      var transformer = transformers.getInitiateMultipartTransformer()
       pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', uploadId => cb(null, uploadId))
     })
-    request.end()
   }
 
-  completeMultipartUpload(bucket, key, uploadId, etags, cb) {
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}?uploadId=${uploadId}`,
-      method: 'POST'
-    }
+  completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
+    var method = 'POST'
+    var query = `uploadId=${uploadId}`
+
     var parts = []
 
     etags.forEach(element => {
@@ -81,41 +62,24 @@ export default class Multipart {
       })
     })
 
-    var payloadObject = {
-        CompleteMultipartUpload: parts
-      },
-      payload = Xml(payloadObject),
-      hash = Crypto.createHash('sha256')
+    var payloadObject = {CompleteMultipartUpload: parts}
+    var payload = Xml(payloadObject)
 
-    hash.update(payload)
-
-    var sha256 = hash.digest('hex').toLowerCase()
-
-    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
-
-    var concater = transformers.getConcater()
-    var transformer = transformers.getCompleteMultipartTransformer()
-
-    var request = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
+    this.makeRequest({method, bucketName, objectName, query}, payload, 200, (e, response) => {
+      if (e) return cb(e)
+      var concater = transformers.getConcater()
+      var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', result => cb(null, result.etag))
     })
-    request.write(payload)
-    request.end()
   }
 
-  listAllParts(bucket, key, uploadId, cb) {
+  listAllParts(bucketName, objectName, uploadId, cb) {
     var parts = []
     var self = this
     function listNext(marker) {
-      self.listParts(bucket, key, uploadId, marker, (e, result) => {
+      self.listParts(bucketName, objectName, uploadId, marker, (e, result) => {
         if (e) {
           cb(e)
           return
@@ -131,39 +95,25 @@ export default class Multipart {
     listNext(0)
   }
 
-  listParts(bucket, key, uploadId, marker, cb) {
-    var query = '?'
+  listParts(bucketName, objectName, uploadId, marker, cb) {
+    var query = ''
     if (marker && marker !== 0) {
       query += `part-number-marker=${marker}&`
     }
     query += `uploadId=${uploadId}`
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      protocol: this.params.protocol,
-      path: `/${bucket}/${uriResourceEscape(key)}${query}`,
-      method: 'GET'
-    }
 
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-    var concater = transformers.getConcater()
-    var transformer = transformers.getListPartsTransformer()
-    var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
+    var method = 'GET'
+    this.makeRequest({method, bucketName, objectName, query}, '', 200, (e, response) => {
+      if (e) return cb(e)
+      var concater = transformers.getConcater()
+      var transformer = transformers.getListPartsTransformer()
       pipesetup(response, concater, transformer)
         .on('error', e => cb(e))
         .on('data', data => cb(null, data))
     })
-    req.on('error', e => cb(e))
-    req.end()
   }
 
-  listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter) {
+  listIncompleteUploadsOnce(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
     var queries = []
     if (prefix) {
       queries.push(`prefix=${uriEscape(prefix)}`)
@@ -184,42 +134,28 @@ export default class Multipart {
     queries.unshift('uploads')
     var query = ''
     if (queries.length > 0) {
-      query = `?${queries.join('&')}`
+      query = `${queries.join('&')}`
     }
-    var requestParams = {
-      host: this.params.host,
-      port: this.params.port,
-      path: `/${bucket}${query}`,
-      method: 'GET'
-    }
-    signV4(requestParams, '', this.params.accessKey, this.params.secretKey)
-
-    var transformer = transformers.getListMultipartTransformer()
+    var method = 'GET'
     var dummyTransformer = transformers.getDummyTransformer()
-    var concater = transformers.getConcater()
-
-    var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer, dummyTransformer)
-        return
-      }
+    this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
+      if (e) return dummyTransformer.emit('error', e)
+      var transformer = transformers.getListMultipartTransformer()
+      var concater = transformers.getConcater()
       pipesetup(response, concater, transformer, dummyTransformer)
     })
-    req.on('error', e => dummyTransformer.emit('error', e))
-    req.end()
     return dummyTransformer
   }
 
-  findUploadId(bucket, key, cb) {
+  findUploadId(bucketName, objectName, cb) {
     var self = this
     function listNext(keyMarker, uploadIdMarker) {
-      self.listIncompleteUploadsOnce(bucket, key, keyMarker, uploadIdMarker)
+      self.listIncompleteUploadsOnce(bucketName, objectName, keyMarker, uploadIdMarker)
         .on('error', e => cb(e))
         .on('data', result => {
           var keyFound = false
           result.uploads.forEach(upload => {
-            if (upload.key === key) {
+            if (upload.key === objectName) {
               cb(null, upload.uploadId)
               keyFound = true
             }
@@ -237,7 +173,7 @@ export default class Multipart {
     listNext()
   }
 
-  chunkUploader(bucket, key, contentType, uploadId, partsArray) {
+  chunkUploader(bucketName, objectName, contentType, uploadId, partsArray) {
     var partsDone = []
     var self = this
     var partNumber = 1
@@ -264,7 +200,7 @@ export default class Multipart {
         }
         // md5 doesn't match, upload again
       }
-      self.doPutObject(bucket, key, contentType, uploadId, partNumber, chunk, (e, etag) => {
+      self.doPutObject(bucketName, objectName, contentType, uploadId, partNumber, chunk, (e, etag) => {
         if (e) {
           partNumber++
           return cb(e)
@@ -284,53 +220,31 @@ export default class Multipart {
     })
   }
 
-  doPutObject(bucket, key, contentType, uploadId, part, data, cb) {
+  doPutObject(bucketName, objectName, contentType, uploadId, part, data, cb) {
     var query = ''
     if (part) {
-      query = `?partNumber=${part}&uploadId=${uploadId}`
+      query = `partNumber=${part}&uploadId=${uploadId}`
     }
     if (contentType === null || contentType === '') {
       contentType = 'application/octet-stream'
     }
-
-    var hash256 = Crypto.createHash('sha256')
+    var method = 'PUT'
     var hashMD5 = Crypto.createHash('md5')
 
-    hash256.update(data)
     hashMD5.update(data)
 
-    var sha256 = hash256.digest('hex').toLowerCase(),
-      md5 = hashMD5.digest('base64'),
-      requestParams = {
-        host: this.params.host,
-        port: this.params.port,
-        protocol: this.params.protocol,
-        path: `/${bucket}/${uriResourceEscape(key)}${query}`,
-        method: 'PUT',
-        headers: {
-          'Content-Length': data.length,
-          'Content-Type': contentType,
-          'Content-MD5': md5
-        }
-      }
-
-    signV4(requestParams, sha256, this.params.accessKey, this.params.secretKey)
-    var req = this.transport.request(requestParams, (response) => {
-      if (response.statusCode !== 200) {
-        var concater = transformers.getConcater()
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, concater, errorTransformer)
-          .on('error', e => cb(e))
-        return
-      }
+    var headers = {
+      'Content-Length': data.length,
+      'Content-Type': contentType,
+      'Content-MD5': hashMD5.digest('base64')
+    }
+    this.makeRequest({method, bucketName, objectName, query, headers}, data, 200, (e, response) => {
+      if (e) return cb(e)
       var etag = response.headers.etag
       if (etag) {
         etag = etag.replace(/^\"/, '').replace(/\"$/, '')
       }
       cb(null, etag)
     })
-    req.on('error', e => cb(e))
-    req.write(data)
-    req.end()
   }
 }

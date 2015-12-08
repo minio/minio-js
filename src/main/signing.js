@@ -18,7 +18,7 @@ import Moment from 'moment';
 import Crypto from 'crypto';
 import { uriEscape, getRegion, getScope } from './helpers.js';
 
-export function signV4(request, dataShaSum256, accessKey, secretKey) {
+export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   if (!accessKey || !secretKey) {
     return
   }
@@ -31,8 +31,7 @@ export function signV4(request, dataShaSum256, accessKey, secretKey) {
     request.headers = {}
   }
 
-  var region = getRegion(request.host),
-    host = request.host
+  var host = request.host
 
   if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
     host = `${host}:${request.port}`
@@ -169,7 +168,7 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
   return hmac.digest('hex').toLowerCase().trim()
 }
 
-export function presignSignatureV4(request, accessKey, secretKey) {
+export function presignSignatureV4(request, accessKey, secretKey, region) {
   function getCanonicalRequest(request) {
     var headerKeys = [],
       headers = [],
@@ -237,9 +236,8 @@ export function presignSignatureV4(request, accessKey, secretKey) {
     throw new Error('secretKey is required for presigning')
   }
 
-  var requestQuery = '',
-    region = getRegion(request.host),
-    host = request.host
+  var requestQuery = ''
+  var host = request.host
 
   if ((request.protocol === 'http' && request.port !== 80) || (request.protocol === 'https' && request.port !== 443)) {
     host = `${host}:${request.port}`
