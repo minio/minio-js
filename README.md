@@ -17,8 +17,8 @@ var Minio = require('minio')
 
 var s3client = new Minio({
   endPoint:  'https://s3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  accessKey: 'YOUR-ACCESS-KEYID',
+  secretKey: 'YOUR-SECRETACCESS-KEY'
 })
 
 s3client.listBuckets(function(e, bucketStream) {
