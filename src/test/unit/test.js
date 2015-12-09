@@ -340,14 +340,14 @@ describe('Client', () => {
   })
 
   describe('Bucket API calls', () => {
-    describe('#makeBucket(bucket, region, acl, callback)', () => {
+    describe('#makeBucket(bucket, acl, region, callback)', () => {
       it('should call the callback on success', (done) => {
         MockResponse('http://localhost:9000').put('/bucket').reply(200)
-        client.makeBucket('bucket', '', 'private', done)
+        client.makeBucket('bucket', '', '', done)
       })
       it('pass an error into the callback on failure', (done) => {
         MockResponse('http://localhost:9000').put('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
-        client.makeBucket('bucket', '', 'public-read', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
+        client.makeBucket('bucket', 'public-read', '', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should fail on null bucket', (done) => {
         try {

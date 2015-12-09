@@ -46,14 +46,16 @@ s3Client can be used to perform operations on S3 storage. APIs are described bel
 Create a new bucket.
 
 __Arguments__
-* `bucketName` _string_ - Name of the bucket
+* `bucketName` _string_ - Name of the bucket.
+* `acl` _string_ - cannedACL valid values are _private_, _public-read_, _public-read-write_, _authenticated-read_.
+* `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_
 * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
 
 __Example__
 ```js
-s3Client.makeBucket('mybucket', function(err) {
-  if (err) return console.log("Error creating bucket")
-  console.log("Bucket created successfully")
+s3Client.makeBucket('mybucket', 'public-read', 'us-west-1', function(err) {
+  if (err) return console.log('Error creating bucket.')
+  console.log('Bucket created successfully in "us-west-1".')
 })
 ```
 ---------------------------------------
@@ -79,10 +81,10 @@ s3Client.listBuckets(function(e, bucketStream) {
     console.log(obj)
   })
   bucketStream.on('end', function() {
-    console.log("End")
+    console.log('End')
   })
   bucketStream.on('error', function(e) {
-    console.log("Error", e)
+    console.log('Error', e)
   })
 })
 ```
@@ -98,7 +100,7 @@ __Arguments__
 __Example__
 ```js
 s3Client.bucketExists('mybucket', function(e) {
-  if (e) return console.log('bucket does not exist.')
+  if (e) return console.log('Bucket does not exist.')
   console.log('Bucket exists.')
 })
 ```
@@ -175,7 +177,7 @@ __Return Value__
 
 __Example__
 ```js
-var stream = s3Client.listObjects("mybucket", {recursive: false})
+var stream = s3Client.listObjects('mybucket', {recursive: false})
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(e) { console.log(e) } )
 ```
@@ -232,7 +234,7 @@ s3Client.getObject('mybucket', 'photo.jpg', function(e, dataStream) {
     size += chunk.length
   })
   dataStream.on('end', function() {
-    console.log("End. Total size = " + size)
+    console.log('End. Total size = ' + size)
   })
   dataStream.on('error', function(e) {
     console.log(e)
@@ -263,7 +265,7 @@ s3Client.getObject('mybucket', 'photo.jpg', 10, 30, function(e, dataStream) {
     size += chunk.length
   })
   dataStream.on('end', function() {
-    console.log("End. Total size = " + size)
+    console.log('End. Total size = ' + size)
   })
   dataStream.on('error', function(e) {
     console.log(e)
@@ -408,8 +410,8 @@ var policy = s3Client.newPostPolicy()
 ```
 Apply upload policy restrictions:
 ```js
-policy.setKey("photo.png") or policy.setKeyStartsWith("keyPrefix")
-policy.setBucket("bucketname")
+policy.setBucket('bucketname')
+policy.setKey('photo.png') or policy.setKeyStartsWith('keyPrefix')
 
 var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10)
@@ -417,7 +419,7 @@ expires.setSeconds(24 * 60 * 60 * 10)
 policy.setExpires(expires)
 
 // Only allow 'png' images.
-policy.setContentType("image/png")
+policy.setContentType('image/png')
 
 // Only allow content size in range 1KB to 1MB.
 policy.setContentLength(1024, 1024*1024)
