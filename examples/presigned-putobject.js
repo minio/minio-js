@@ -20,10 +20,12 @@ var Minio = require('minio')
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3Client = new Minio({
-  endPoint: 'https://<your-s3-endpoint>',
+  endPoint: 'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var presignedUrl = s3Client.presignedPutObject('bucket', 'object', 1000)
-console.log(presignedUrl)
+var presignedUrl = s3Client.presignedPutObject('bucket', 'object', 1000, function(e, presignedUrl) {
+  if (e) return console.log(e)
+  console.log(presignedUrl)
+})

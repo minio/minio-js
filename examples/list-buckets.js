@@ -20,15 +20,17 @@ var Minio = require('minio')
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3Client = new Minio({
-  endPoint: 'https://<your-s3-endpoint>',
+  endPoint: 'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-bucketsStream = s3Client.listBuckets()
-bucketsStream.on('data', function(bucket) {
-  console.log(bucket)
-})
-bucketsStream.on('error', function(e) {
-  console.log("Error", e)
+s3Client.listBuckets(function(e, bucketsStream) {
+  if (e) return console.log(e)
+  bucketsStream.on('data', function(bucket) {
+    console.log(bucket)
+  })
+  bucketsStream.on('error', function(e) {
+    console.log("Error", e)
+  })
 })
