@@ -199,9 +199,8 @@ export default class Client extends Multipart {
       signV4(reqOptions, sha256, self.params.accessKey, self.params.secretKey, region)
       var req = self.transport.request(reqOptions, response => {
         if (statusCode != response.statusCode) {
-          var concater = transformers.getConcater()
           var errorTransformer = transformers.getErrorTransformer(response)
-          pipesetup(response, concater, errorTransformer)
+          pipesetup(response, errorTransformer)
             .on('error', e => cb(e))
           return
         }
@@ -232,16 +231,15 @@ export default class Client extends Multipart {
     var req = this.transport.request(reqOptions)
     req.on('error', e => cb(e))
     req.on('response', response => {
-      var concater = transformers.getConcater()
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer)
+        pipesetup(response, errorTransformer)
           .on('error', e => cb(e))
         return
       }
       var transformer = transformers.getBucketRegionTransformer()
       var region = 'us-east-1'
-      pipesetup(response, concater, transformer)
+      pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', data => {
           region = data
@@ -310,10 +308,9 @@ export default class Client extends Multipart {
     var req = this.transport.request(reqOptions)
     req.on('error', e => cb(e))
     req.on('response', response => {
-      var concater = transformers.getConcater()
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
-        pipesetup(response, concater, errorTransformer)
+        pipesetup(response, errorTransformer)
           .on('error', e => cb(e))
         return
       }
@@ -344,10 +341,13 @@ export default class Client extends Multipart {
         }
         return cb(e)
       }
-      var concater = transformers.getConcater()
       var transformer = transformers.getListBucketTransformer()
-      pipesetup(response, concater, transformer)
-      cb(null, transformer)
+      var stream = Through2.obj(function(buckets, enc, cb) {
+        buckets.forEach(bucket => this.push(bucket))
+        cb()
+      })
+      pipesetup(response, transformer, stream)
+      cb(null, stream)
     })
   }
 
@@ -454,9 +454,8 @@ export default class Client extends Multipart {
     var query = 'acl'
     this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
       if (e) return cb(e)
-      var concater = transformers.getConcater()
       var transformer = transformers.getAclTransformer()
-      pipesetup(response, concater, transformer)
+      pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', data => {
           var perm = data.acl.reduce((acc, grant) => {
@@ -712,14 +711,12 @@ export default class Client extends Multipart {
       query = `${queries.join('&')}`
     }
     var method = 'GET'
-    var dummyTransformer = transformers.getDummyTransformer()
+    var transformer = transformers.getListObjectsTransformer()
     this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
-      if (e) return dummyTransformer.emit('error', e)
-      var concater = transformers.getConcater()
-      var transformer = transformers.getListObjectsTransformer()
-      pipesetup(response, concater, transformer, dummyTransformer)
+      if (e) return transformer.emit('error', e)
+      pipesetup(response, transformer)
     })
-    return dummyTransformer
+    return transformer
   }
 
   // List the objects in the bucket.

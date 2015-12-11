@@ -38,9 +38,8 @@ export default class Multipart {
     var query = 'uploads'
     this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, (e, response) => {
       if (e) return cb(e)
-      var concater = transformers.getConcater()
       var transformer = transformers.getInitiateMultipartTransformer()
-      pipesetup(response, concater, transformer)
+      pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', uploadId => cb(null, uploadId))
     })
@@ -67,9 +66,8 @@ export default class Multipart {
 
     this.makeRequest({method, bucketName, objectName, query}, payload, 200, (e, response) => {
       if (e) return cb(e)
-      var concater = transformers.getConcater()
       var transformer = transformers.getCompleteMultipartTransformer()
-      pipesetup(response, concater, transformer)
+      pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', result => cb(null, result.etag))
     })
@@ -105,9 +103,8 @@ export default class Multipart {
     var method = 'GET'
     this.makeRequest({method, bucketName, objectName, query}, '', 200, (e, response) => {
       if (e) return cb(e)
-      var concater = transformers.getConcater()
       var transformer = transformers.getListPartsTransformer()
-      pipesetup(response, concater, transformer)
+      pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', data => cb(null, data))
     })
@@ -137,14 +134,12 @@ export default class Multipart {
       query = `${queries.join('&')}`
     }
     var method = 'GET'
-    var dummyTransformer = transformers.getDummyTransformer()
+    var transformer = transformers.getListMultipartTransformer()
     this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
-      if (e) return dummyTransformer.emit('error', e)
-      var transformer = transformers.getListMultipartTransformer()
-      var concater = transformers.getConcater()
-      pipesetup(response, concater, transformer, dummyTransformer)
+      if (e) return transformer.emit('error', e)
+      pipesetup(response, transformer)
     })
-    return dummyTransformer
+    return transformer
   }
 
   findUploadId(bucketName, objectName, cb) {

@@ -2,14 +2,42 @@ import * as xmlParsers from './xml-parsers.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
 
-export function getConcater() {
+import { isFunction } from './helpers.js'
+
+// returns a stream that concatenates the input and emits the
+// concatenated output when 'End' is reached.
+// If an optional parser function is passed, on reaching the
+// 'End' of the stream, parser(concatenated_data) will be
+// emitted
+export function getConcater(parser, emitError) {
+  var objectMode = false
   var bufs = []
-  return Through2(function (chunk, enc, cb) {
+
+  if (parser && !isFunction(parser)) {
+    throw new TypeError('parser should be of type "function"')
+  }
+
+  if (parser) {
+    objectMode = true
+  }
+
+  return Through2({objectMode},
+  function (chunk, enc, cb) {
     bufs.push(chunk)
     cb()
   }, function (cb) {
+    if (emitError) {
+      cb(parser(Buffer.concat(bufs).toString()))
+      // cb(e) would mean we have to emit 'End' by explicitly calling this.push(null)
+      this.push(null)
+      return
+    }
     if (bufs.length) {
-      this.push(Buffer.concat(bufs))
+      if (parser) {
+        this.push(parser(Buffer.concat(bufs).toString()))
+      } else {
+        this.push(Buffer.concat(bufs))
+      }
     }
     cb()
   })
@@ -47,42 +75,34 @@ export function getErrorTransformer(response) {
     e.message = `${statusCode}`
   }
 
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    e = _.merge(e, xmlParsers.parseError(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    cb(e)
-    // cb(e) would mean we have to emit 'End' by explicitly calling this.push(null)
-    this.push(null)
-  })
+  return getConcater(xmlString => {
+    if (!xmlString) return e
+    return _.merge(e, xmlParsers.parseError(xmlString))
+  }, true)
 }
 
 export function getListBucketTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    var buckets = xmlParsers.parseListBucket(xmlbytes.toString())
-    buckets.forEach((bucket) => this.push(bucket))
-    cb()
-  })
+  return getConcater(xmlParsers.parseListBucket)
 }
 
 export function getListMultipartTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListMultipart(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseListMultipart)
 }
 
 export function getListPartsTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListParts(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseListParts)
 }
 
 export function getAclTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseAcl(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseAcl)
 }
 
 export function getInitiateMultipartTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseInitiateMultipart(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseInitiateMultipart)
 }
 
 export function getListObjectsTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListObjects(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseListObjects)
 }
 
 export function getSizeVerifierTransformer(size) {
@@ -106,9 +126,9 @@ export function getSizeVerifierTransformer(size) {
 }
 
 export function getCompleteMultipartTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseCompleteMultipart(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseCompleteMultipart)
 }
 
 export function getBucketRegionTransformer() {
-  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseBucketRegion(xmlbytes.toString())))
+  return getConcater(xmlParsers.parseBucketRegion)
 }
