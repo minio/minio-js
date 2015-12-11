@@ -14,72 +14,83 @@
  * limitations under the License.
  */
 
-export class InvalidArgumentException extends Error {
+class ExtendableError extends Error {
   constructor(message) {
-    super(message)
-    this.name = 'InvalidArgumentException'
+    super(message);
+    this.name = this.constructor.name;
+    this.message = message;
+    Error.captureStackTrace(this, this.constructor.name)
   }
 }
 
-export class InvalidEndPointException extends Error {
+export class InvalidArgumentError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InvalidEndPointException'
   }
 }
 
-export class InvalidBucketNameException extends Error {
+export class InvalidEndPointError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InvalidBucketNameException'
   }
 }
 
-export class InvalidObjectNameException extends Error {
+export class InvalidBucketNameError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InvalidObjectNameException'
   }
 }
 
-export class AccessKeyRequiredException extends Error {
+export class InvalidObjectNameError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'AccessKeyRequiredException'
   }
 }
 
-export class SecretKeyRequiredException extends Error {
+export class AccessKeyRequiredError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'SecretKeyRequiredException'
   }
 }
 
-export class InvalidProtocolException extends Error {
+export class SecretKeyRequiredError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InvalidProtocolException'
   }
 }
 
-export class ExpiresParamException extends Error {
+export class InvalidProtocolError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'ExpiresParamException'
   }
 }
 
-export class InvalidACLException extends Error {
+export class ExpiresParamError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InvalidACLException'
   }
 }
 
-export class InternalClientException extends Error {
+export class InvalidACLError extends ExtendableError {
   constructor(message) {
     super(message)
-    this.name = 'InternalClientException'
+  }
+}
+
+export class InternalClientError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
+export class InvalidDateError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
+export class InvalidPrefixError extends ExtendableError {
+  constructor(message) {
+    super(message)
   }
 }

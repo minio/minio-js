@@ -27,7 +27,7 @@ import Xml from 'xml';
 import Moment from 'moment';
 import async from 'async';
 
-import { isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
+import { isValidPrefix, isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
 import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
@@ -48,7 +48,7 @@ export default class Client extends Multipart {
     var pathStyle = true
     if (host.match('.amazonaws.com$')) {
       if (host !== 's3.amazonaws.com') {
-        throw new errors.InvalidEndPointException(`endPoint ${params.endPoint} invalid, AWS S3 endPoint should to be "https://s3.amazonaws.com" for AWS S3`)
+        throw new errors.InvalidEndPointError(`endPoint ${params.endPoint} invalid, AWS S3 endPoint should to be "https://s3.amazonaws.com" for AWS S3`)
       }
       pathStyle = false
     }
@@ -75,7 +75,7 @@ export default class Client extends Multipart {
           }
         default:
           {
-            throw new errors.InvalidProtocolException('Unknown protocol: ' + parsedUrl.protocol)
+            throw new errors.InvalidProtocolError('Unknown protocol: ' + parsedUrl.protocol)
           }
       }
     }
@@ -157,13 +157,13 @@ export default class Client extends Multipart {
       throw new TypeError(`Invalid appName: ${appName}`)
     }
     if (appName.trim() === '') {
-      throw new errors.InvalidArgumentException('Input appName cannot be empty.')
+      throw new errors.InvalidArgumentError('Input appName cannot be empty.')
     }
     if (!isString(appVersion)) {
       throw new TypeError(`Invalid appName: ${appVersion}`)
     }
     if (appVersion.trim() === '') {
-      throw new errors.InvalidArgumentException('Input appVersion cannot be empty.')
+      throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
     this.params.userAgent = `${this.params.userAgent} ${appName}/${appVersion}`
   }
@@ -217,7 +217,7 @@ export default class Client extends Multipart {
 
   getBucketRegion(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException(`Invalid bucket name : ${bucketName}`)
+      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
     }
     // bucket region is 'us-east-1' for all non AWS-S3 endpoints
     if (this.params.host !== 's3.amazonaws.com') return cb(null, 'us-east-1')
@@ -263,7 +263,7 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
   makeBucket(bucketName, acl, region, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isString(acl)) {
       throw new TypeError('acl should be of type "string"')
@@ -280,7 +280,7 @@ export default class Client extends Multipart {
 
     // Verify if acl is valid.
     if (!isValidACL(acl)) {
-      throw new errors.InvalidACLException(`Invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
+      throw new errors.InvalidACLError(`Invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
     }
 
     var payload = ''
@@ -365,15 +365,15 @@ export default class Client extends Multipart {
   //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
     if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucket)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
     }
-    if (prefix && !isString(prefix)) {
-      throw new TypeError('prefix should be of type "string"')
+    if (prefix && !isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
     }
     if (recursive && !isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
-    var delimiter = recursive ? null : "/"
+    var delimiter = recursive ? null : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var self = this
     function listNext(keyMarker, uploadIdMarker) {
@@ -413,7 +413,7 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_ : `err` is `null` if the bucket exists
   bucketExists(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -429,7 +429,7 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_ : `err` is `null` if the bucket is removed successfully.
   removeBucket(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -445,7 +445,7 @@ export default class Client extends Multipart {
   // * `callback(err, acl)` _function_ : `err` is not `null` in case of error. `acl` _string_ is the cannedACL which can have the values _private_, _public-read_, _public-read-write_, _authenticated-read_.
   getBucketACL(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -498,7 +498,7 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_: callback is called with error or `null`
   setBucketACL(bucketName, acl, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isString(acl)) {
       throw new TypeError('acl should be of type "string"')
@@ -507,7 +507,7 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
     if (!isValidACL(acl)) {
-      throw new errors.InvalidACLException(`invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
+      throw new errors.InvalidACLError(`invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
     }
 
     var query = 'acl'
@@ -524,13 +524,10 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeIncompleteUpload(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.isValidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.isValidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -554,13 +551,10 @@ export default class Client extends Multipart {
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getObject(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -578,13 +572,10 @@ export default class Client extends Multipart {
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getPartialObject(bucketName, objectName, offset, length, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isNumber(offset)) {
       throw new TypeError('offset should be of type "number"')
@@ -633,13 +624,10 @@ export default class Client extends Multipart {
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   putObject(bucketName, objectName, stream, size, contentType, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isObject(stream)) {
       throw new TypeError('stream should be a "Stream"')
@@ -749,7 +737,10 @@ export default class Client extends Multipart {
   //   * `stat.lastModified` _string_: modified time stamp
   listObjects(bucketName, prefix, recursive) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (prefix && !isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
     }
     if (prefix && !isString(prefix)) {
       throw new TypeError('prefix should be of type "string"')
@@ -758,7 +749,7 @@ export default class Client extends Multipart {
       throw new TypeError('recursive should be of type "boolean"')
     }
     // recursive is null set delimiter to '/'.
-    var delimiter = recursive ? null : "/"
+    var delimiter = recursive ? null : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var self = this
     function listNext(marker) {
@@ -791,13 +782,10 @@ export default class Client extends Multipart {
   //   * `stat.lastModified` _string_: modified time stamp
   statObject(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -824,13 +812,10 @@ export default class Client extends Multipart {
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -847,13 +832,10 @@ export default class Client extends Multipart {
   // * `expiry` _number_: expiry in seconds
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
@@ -875,13 +857,10 @@ export default class Client extends Multipart {
   // * `expiry` _number_: expiry in seconds
   presignedGetObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameException('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameException(`Invalid object name: ${objectName}`)
-    }
-    if (objectName.trim() === '') {
-      throw new errors.InvalidObjectNameException('Object name cannot be empty')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
@@ -941,10 +920,10 @@ class PostPolicy {
 
   // set expiration date
   setExpires(nativedate) {
-    var date = Moment(nativedate)
-    if (!date) {
-      throw new errors("date can not be null")
+    if (!nativedate) {
+      throw new errrors.InvalidDateError('Invalid date : can not be null')
     }
+    var date = Moment(nativedate)
 
     function getExpirationString(date) {
       return date.format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
@@ -953,52 +932,52 @@ class PostPolicy {
   }
 
   // set object name
-  setKey(key) {
-    if (!key) {
-      throw new errors("key can not be null")
+  setKey(objectName) {
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name : ${objectName}`)
     }
-    this.policy.conditions.push(["eq", "$key", key])
-    this.formData.key = key
+    this.policy.conditions.push(['eq', '$key', objectName])
+    this.formData.key = objectName
   }
 
   // set object name prefix, i.e policy allows any keys with this prefix
   setKeyStartsWith(prefix) {
-    if (!prefix) {
-      throw new errors("key prefix can not be null")
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`invalid prefix : ${prefix}`)
     }
-    this.policy.conditions.push(["starts-with", "$key", keyStartsWith])
-    this.formData.key = key
+    this.policy.conditions.push(['starts-with', '$key', prefix])
+    this.formData.key = prefix
   }
 
   // set bucket name
-  setBucket(bucket) {
-    if (!bucket) {
-      throw new errors("bucket can not be null")
+  setBucket(bucketName) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
     }
-    this.policy.conditions.push(["eq", "$bucket", bucket])
-    this.formData.bucket = bucket
+    this.policy.conditions.push(['eq', '$bucket', bucketName])
+    this.formData.bucket = bucketName
   }
 
   // set Content-Type
   setContentType(type) {
     if (!type) {
-      throw new errors("content-type can not be null")
+      throw new Error('content-type can not be null')
     }
-    this.policy.conditions.push(["eq", "$Content-Type", type])
-    this.formData["Content-Type"] = type
+    this.policy.conditions.push(['eq', '$Content-Type', type])
+    this.formData['Content-Type'] = type
   }
 
   // set minimum/maximum length of what Content-Length can be
   setContentLength(min, max) {
     if (min > max) {
-      throw new errrors("min can not be more than max")
+      throw new Error('min can not be more than max')
     }
     if (min < 0) {
-      throw new errors("min has to be > 0")
+      throw new Error('min has to be > 0')
     }
     if (max < 0) {
-      throw new errors("max has to be > 0")
+      throw new Error('max has to be > 0')
     }
-    this.policy.conditions.push(["content-length-range", min, max])
+    this.policy.conditions.push(['content-length-range', min, max])
   }
 }

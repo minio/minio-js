@@ -56,8 +56,15 @@ export function isValidBucketName(bucket) {
 
 // check if objectName is a valid object name
 export function isValidObjectName(objectName) {
-  if (!isString(objectName)) return false
-  if (objectName.length > 1024) return false
+  if (!isValidPrefix(objectName)) return false
+  if (objectName.length === 0) return false
+  return true
+}
+
+// check if prefix is valid
+export function isValidPrefix(prefix) {
+  if (!isString(prefix)) return false
+  if (prefix.length > 1024) return false
   return true
 }
 
