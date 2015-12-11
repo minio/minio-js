@@ -27,7 +27,7 @@ import Xml from 'xml';
 import Moment from 'moment';
 import async from 'async';
 
-import { isValidACL, isValidBucketName, isValidObjectName, getRegion, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
+import { isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
 import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
