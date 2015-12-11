@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Moment from 'moment';
-import Crypto from 'crypto';
-import { uriEscape, getRegion, getScope } from './helpers.js';
+import Moment from 'moment'
+import Crypto from 'crypto'
+import { uriEscape, getScope } from './helpers.js'
 
 export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   if (!accessKey || !secretKey) {

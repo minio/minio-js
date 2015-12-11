@@ -40,29 +40,6 @@ export function getScope(region, date) {
   return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
 }
 
-export function getRegion(host) {
-  var region = {
-    's3.amazonaws.com': 'us-east-1',
-    's3-ap-northeast-1.amazonaws.com': 'ap-northeast-1',
-    's3-ap-southeast-1.amazonaws.com': 'ap-southeast-1',
-    's3-ap-southeast-2.amazonaws.com': 'ap-southeast-2',
-    's3-eu-central-1.amazonaws.com': 'eu-central-1',
-    's3-eu-west-1.amazonaws.com': 'eu-west-1',
-    's3-eu-east-1.amazonaws.com': 'eu-east-1',
-    's3-external-1.amazonaws.com': 'us-east-1',
-    's3-us-west-1.amazonaws.com': 'us-west-1',
-    's3-us-west-2.amazonaws.com': 'us-west-2',
-    's3.cn-north-1.amazonaws.com.cn': 'cn-north-1',
-    's3-fips-us-gov-west-1.amazonaws.com': 'us-gov-west-1'
-  }
-
-  if (region[host] !== undefined) {
-    return region[host]
-  } else {
-    return 'us-east-1'
-  }
-}
-
 export function isValidBucketName(bucket) {
   if (!isString(bucket)) return false
 

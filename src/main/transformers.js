@@ -11,18 +11,12 @@ export function getConcater() {
     if (bufs.length) {
       this.push(Buffer.concat(bufs))
     }
-    this.push(null)
     cb()
   })
 }
 
 export function getDummyTransformer() {
-  return Through2.obj(function(chunk, enc, cb) {
-    cb(null, chunk)
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((chunk, enc, cb) => cb(null, chunk))
 }
 
 export function getErrorTransformer(response) {
@@ -58,6 +52,7 @@ export function getErrorTransformer(response) {
     cb()
   }, function(cb) {
     cb(e)
+    // cb(e) would mean we have to emit 'End' by explicitly calling this.push(null)
     this.push(null)
   })
 }
@@ -67,60 +62,27 @@ export function getListBucketTransformer() {
     var buckets = xmlParsers.parseListBucket(xmlbytes.toString())
     buckets.forEach((bucket) => this.push(bucket))
     cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
   })
 }
 
 export function getListMultipartTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseListMultipart(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListMultipart(xmlbytes.toString())))
 }
 
 export function getListPartsTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseListParts(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListParts(xmlbytes.toString())))
 }
 
 export function getAclTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseAcl(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseAcl(xmlbytes.toString())))
 }
 
 export function getInitiateMultipartTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseInitiateMultipart(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseInitiateMultipart(xmlbytes.toString())))
 }
 
 export function getListObjectsTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseListObjects(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseListObjects(xmlbytes.toString())))
 }
 
 export function getSizeVerifierTransformer(size) {
@@ -144,13 +106,7 @@ export function getSizeVerifierTransformer(size) {
 }
 
 export function getCompleteMultipartTransformer() {
-  return Through2.obj(function(xmlbytes, enc, cb) {
-    this.push(xmlParsers.parseCompleteMultipart(xmlbytes.toString()))
-    cb()
-  }, function(cb) {
-    this.push(null)
-    cb()
-  })
+  return Through2.obj((xmlbytes, enc, cb) => cb(null, xmlParsers.parseCompleteMultipart(xmlbytes.toString())))
 }
 
 export function getBucketRegionTransformer() {
