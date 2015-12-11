@@ -20,12 +20,12 @@ var Minio = require('minio')
 // http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
 
 var s3Client = new Minio({
-  endPoint: 'https://<your-s3-endpoint>',
+  endPoint: 'https://s3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.makeBucket('bucket', function(e) {
+s3Client.makeBucket('bucket', 'public-read', 'us-west-1', function(e) {
   if (e) {
     return console.log(e)
   }
