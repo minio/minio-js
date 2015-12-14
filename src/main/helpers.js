@@ -47,8 +47,8 @@ export function isValidBucketName(bucket) {
   if (bucket.length < 3 || bucket.length > 63) {
     return false
   }
-  // should begin with alphabet and end with alphabet/number, with alphabet/number/- in the middle
-  if (bucket.match(/^[a-zA-Z][a-zA-Z0-9-]+[a-zA-Z0-9]$/)) {
+  // should begin with alphabet/number and end with alphabet/number, with alphabet/number/- in the middle
+  if (bucket.match(/^[a-z0-9][a-z0-9-]+[a-z0-9]$/)) {
     return true
   }
   return false
