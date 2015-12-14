@@ -27,8 +27,9 @@ import MockTransport from './transport.js';
 
 var Package = require('../../../package.json')
 
-describe('Client', () => {
+describe('Client', function() {
   var nockRequests = []
+  this.timeout(5000)
   beforeEach(() => {
     Nock.cleanAll()
     nockRequests = []
