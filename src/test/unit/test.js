@@ -907,7 +907,7 @@ describe('Client', function() {
           }
           s.push(null)
           client.putObject('bucket', 'object', s, 12 * 1024 * 1024, '', (e) => {
-            assert.equal(e, 'actual size does not match specified size')
+            assert.equal(e.name, 'IncorrectSizeError')
             done()
           })
         })
@@ -932,7 +932,7 @@ describe('Client', function() {
           }
           s.push(null)
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', (e) => {
-            assert.equal(e, 'actual size does not match specified size')
+            assert.equal(e.name, 'IncorrectSizeError')
             done()
           })
         })

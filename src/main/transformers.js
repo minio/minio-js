@@ -3,6 +3,7 @@ import * as _ from 'lodash'
 import Through2 from 'through2'
 
 import { isFunction } from './helpers.js'
+import * as errors from './errors.js'
 
 // returns a stream that concatenates the input and emits the
 // concatenated output when 'End' is reached.
@@ -50,7 +51,7 @@ export function getDummyTransformer() {
 export function getErrorTransformer(response) {
   var requestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
   var statusCode = response.statusCode
-  var e = {}
+  var e = new Error()
   e.requestid = requestid
   if (statusCode === 301) {
     e.code = 'MovedPermanently'
@@ -107,18 +108,16 @@ export function getListObjectsTransformer() {
 
 export function getSizeVerifierTransformer(size) {
   var totalSize = 0
-  // FIXME: cb should provide proper error object instead of string
-  // string is being passed here to satisfy test cases for now
   return Through2.obj(function(chunk, enc, cb) {
     totalSize += chunk.length
     if (totalSize > size) {
-      return cb('actual size does not match specified size')
+      return cb(new errors.IncorrectSizeError('Received excess data on the input stream. Size of the input stream : ${totalSize}), expected size : size(${size})'))
     }
     this.push(chunk)
     cb()
   }, function(cb) {
     if (totalSize != size) {
-      return cb('actual size does not match specified size')
+      return cb(new errors.IncorrectSizeError('size of the input stream (${totalSize}) is not equal to the expected size(${size})'))
     }
     this.push(null)
     cb()
