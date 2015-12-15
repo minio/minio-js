@@ -94,3 +94,9 @@ export class InvalidPrefixError extends ExtendableError {
     super(message)
   }
 }
+
+export class IncorrectSizeError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
