@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.makeBucket('bucket', 'public-read', 'us-west-1', function(e) {
+s3Client.makeBucket('bucket-name', 'public-read', 'us-west-1', function(e) {
   if (e) {
     return console.log(e)
   }

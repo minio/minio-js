@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.removeObject('bucket', 'object', function(e) {
+s3Client.removeObject('bucket-name', 'objectName', function(e) {
   if (e) {
     return console.log(e)
   }

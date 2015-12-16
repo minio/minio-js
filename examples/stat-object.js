@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.statObject('bucket', 'object', function(e, stat) {
+s3Client.statObject('bucket-name', 'objectName', function(e, stat) {
   if (e) {
     return console.log(e)
   }

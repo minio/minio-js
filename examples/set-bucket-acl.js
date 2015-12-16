@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.setBucketACL('bucket', 'public-read-write', function(e) {
+s3Client.setBucketACL('bucket-name', 'public-read-write', function(e) {
   if (e) {
     return console.log(e)
   }

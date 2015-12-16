@@ -25,10 +25,10 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var objectsStream = s3Client.listObjects('bucket', '', true)
-objectsStream.on('data', function(obj) {
+var objectNamesStream = s3Client.listObjects('bucket-name', '', true)
+objectNamesStream.on('data', function(obj) {
   console.log(obj)
 })
-objectsStream.on('error', function(e) {
+objectNamesStream.on('error', function(e) {
   console.log(e)
 })
