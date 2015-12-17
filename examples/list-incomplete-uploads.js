@@ -25,7 +25,7 @@ var s3Client = new Minio({
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var incompleteObjectsStream = s3Client.listIncompleteUploads('bucket', 'prefix', true)
+var incompleteObjectsStream = s3Client.listIncompleteUploads('bucket-name', 'prefix', true)
 incompleteObjectsStream.on('data', function(obj) {
   console.log(obj)
 })

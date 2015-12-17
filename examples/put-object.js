@@ -26,14 +26,14 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-// large object from file
+// large objectName from file
 var file = 'testfile'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('bucket', 'object', fileStream, stat.size, 'application/octet-stream', function(e) {
+  s3Client.putObject('bucket-name', 'objectName', fileStream, stat.size, 'application/octet-stream', function(e) {
     if (e) {
       return console.log(e)
     }

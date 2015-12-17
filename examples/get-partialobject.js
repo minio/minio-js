@@ -26,7 +26,7 @@ var s3Client = new Minio({
 })
 
 var size = 0
-s3Client.getPartialObject('bucket', 'object', 1024, 4096, function(e, dataStream) {
+s3Client.getPartialObject('bucket-name', 'objectName', 1024, 4096, function(e, dataStream) {
   if (e) {
     return console.log(e)
   }

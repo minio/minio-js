@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.bucketExists('bucket', function(e) {
+s3Client.bucket-nameExists('bucket-name', function(e) {
   if (e) {
     return console.log(e)
   }

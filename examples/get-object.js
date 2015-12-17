@@ -26,7 +26,7 @@ var s3Client = new Minio({
 })
 
 var size = 0
-s3Client.getObject('bucket', 'object', function(e, dataStream) {
+s3Client.getObject('bucket-name', 'objectName', function(e, dataStream) {
   if (e) {
     return console.log(e)
   }

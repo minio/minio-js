@@ -25,7 +25,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var presignedUrl = s3Client.presignedGetObject('bucket', 'object', 1000, function(e, presignedUrl) {
+var presignedUrl = s3Client.presignedGetObject('bucket-name', 'objectName', 1000, function(e, presignedUrl) {
   if (e) return console.log(e)
   console.log(presignedUrl)
 })
