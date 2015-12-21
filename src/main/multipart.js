@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
+import fs from 'fs'
 import Crypto from 'crypto';
 import Concat from 'concat-stream';
 import Stream from 'stream';
 import Xml from 'xml';
 import Through2 from 'through2';
+import _ from 'lodash'
 
-import { uriEscape, uriResourceEscape, pipesetup } from './helpers.js';
+import { uriEscape, uriResourceEscape, pipesetup, readableStream, isValidBucketName, isValidObjectName, isString, isNumber, isReadableStream, isFunction, isBoolean } from './helpers.js';
 import { signV4 } from './signing.js';
 import * as transformers from './transformers.js'
 import * as xmlParsers from './xml-parsers.js'
@@ -30,6 +32,10 @@ export default class Multipart {
     this.params = params
     this.transport = transport
     this.pathStyle = pathStyle
+    this.minimumPartSize = 5*1024*1024
+    this.maximumPartSize = 5*1024*1024*1024
+    this.maximumStreamObjectSize = 50*1024*1024*1024
+    this.maxObjectSize = 5*1024*1024*1024*1024
   }
 
   initiateNewMultipartUpload(bucketName, objectName, contentType, cb) {
@@ -75,9 +81,8 @@ export default class Multipart {
 
   listAllParts(bucketName, objectName, uploadId, cb) {
     var parts = []
-    var self = this
-    function listNext(marker) {
-      self.listParts(bucketName, objectName, uploadId, marker, (e, result) => {
+    var listNext = (marker) => {
+      this.listParts(bucketName, objectName, uploadId, marker, (e, result) => {
         if (e) {
           cb(e)
           return
@@ -143,9 +148,8 @@ export default class Multipart {
   }
 
   findUploadId(bucketName, objectName, cb) {
-    var self = this
-    function listNext(keyMarker, uploadIdMarker) {
-      self.listIncompleteUploadsOnce(bucketName, objectName, keyMarker, uploadIdMarker)
+    var listNext = (keyMarker, uploadIdMarker) => {
+      this.listIncompleteUploadsOnce(bucketName, objectName, keyMarker, uploadIdMarker)
         .on('error', e => cb(e))
         .on('data', result => {
           var keyFound = false
@@ -170,7 +174,6 @@ export default class Multipart {
 
   chunkUploader(bucketName, objectName, contentType, uploadId, partsArray) {
     var partsDone = []
-    var self = this
     var partNumber = 1
 
     // convert array to object to make things easy
@@ -181,13 +184,11 @@ export default class Multipart {
       return acc
     }, {})
 
-    return Through2.obj(function(chunk, enc, cb) {
+    return Through2.obj((chunk, enc, cb) => {
       var part = parts[partNumber]
+      var md5sumhex = Crypto.createHash('md5').update(chunk).digest('hex').toLowerCase()
       if (part) {
-        var hash = Crypto.createHash('md5')
-        hash.update(chunk)
-        var md5 = hash.digest('hex').toLowerCase()
-        if (md5 === part.etag) {
+        if (md5sumhex === part.etag) {
           //md5 matches, chunk already uploaded
           partsDone.push({part: part.part, etag: part.etag})
           partNumber++
@@ -195,7 +196,12 @@ export default class Multipart {
         }
         // md5 doesn't match, upload again
       }
-      self.doPutObject(bucketName, objectName, contentType, uploadId, partNumber, chunk, (e, etag) => {
+      var sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex').toLowerCase()
+      var md5sumbase64 = (new Buffer(md5sumhex, 'hex')).toString('base64')
+      var stream = readableStream(chunk)
+      var multipart = true
+      var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+      uploader(uploadId, partNumber, stream, chunk.length, sha256sum, md5sumbase64, (e, etag) => {
         if (e) {
           partNumber++
           return cb(e)
@@ -215,31 +221,82 @@ export default class Multipart {
     })
   }
 
-  doPutObject(bucketName, objectName, contentType, uploadId, part, data, cb) {
-    var query = ''
-    if (part) {
-      query = `partNumber=${part}&uploadId=${uploadId}`
+  getUploader(bucketName, objectName, contentType, multipart) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (contentType === null || contentType === '') {
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    if (!isBoolean(multipart)) {
+      throw new TypeError('multipart should be of type "boolean"')
+    }
+    if (contentType === '') {
       contentType = 'application/octet-stream'
     }
-    var method = 'PUT'
-    var hashMD5 = Crypto.createHash('md5')
 
-    hashMD5.update(data)
-
-    var headers = {
-      'Content-Length': data.length,
-      'Content-Type': contentType,
-      'Content-MD5': hashMD5.digest('base64')
-    }
-    this.makeRequest({method, bucketName, objectName, query, headers}, data, 200, (e, response) => {
-      if (e) return cb(e)
-      var etag = response.headers.etag
-      if (etag) {
-        etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+    var validate = (stream, length, sha256sum, md5sum, cb) => {
+      if (!isReadableStream(stream)) {
+        throw new TypeError('stream should be of type "Stream"')
       }
-      cb(null, etag)
-    })
+      if (!isNumber(length)) {
+        throw new TypeError('length should be of type "number"')
+      }
+      if (!isString(sha256sum)) {
+        throw new TypeError('sha256sum should be of type "string"')
+      }
+      if (!isString(md5sum)) {
+        throw new TypeError('md5sum should be of type "string"')
+      }
+      if (!isFunction(cb)) {
+        throw new TypeError('callback should be of type "function"')
+      }
+    }
+    var simpleUploader = (...args) => {
+      validate(...args)
+      var query = ''
+      upload(query, ...args)
+    }
+    var multipartUploader = (uploadId, partNumber, ...rest) => {
+      if (!isString(uploadId)) {
+        throw new TypeError('uploadId should be of type "string"')
+      }
+      if (!isNumber(partNumber)) {
+        throw new TypeError('partNumber should be of type "number"')
+      }
+      if (!uploadId) {
+        throw new errors.InvalidArgumentError('Empty uploadId')
+      }
+      if (!partNumber) {
+        throw new errors.InvalidArgumentError('partNumber cannot be 0')
+      }
+      validate(...rest)
+      var query = `partNumber=${partNumber}&uploadId=${uploadId}`
+      upload(query, ...rest)
+    }
+    var upload = (query, stream, length, sha256sum, md5sum, cb) => {
+      var method = 'PUT'
+      var headers = {
+        'Content-Length': length,
+        'Content-Type': contentType,
+        'Content-MD5': md5sum
+      }
+      this.makeRequestStream({method, bucketName, objectName, query, headers},
+                            stream, sha256sum, 200, (e, response) => {
+        if (e) return cb(e)
+        var etag = response.headers.etag
+        if (etag) {
+          etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+        }
+        cb(null, etag)
+      })
+    }
+    if (multipart) {
+      return multipartUploader
+    }
+    return simpleUploader
   }
 }

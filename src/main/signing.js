@@ -163,7 +163,6 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   var signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
 
   var authorization = `Credential=${credential}, SignedHeaders=${signedHeaders}, Signature=${signature}`
-
   request.headers.authorization = 'AWS4-HMAC-SHA256 ' + authorization
 }
 

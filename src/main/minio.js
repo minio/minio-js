@@ -16,6 +16,7 @@
 
 require('source-map-support').install()
 
+import fs from 'fs'
 import Crypto from 'crypto';
 import Http from 'http';
 import Https from 'https';
@@ -26,8 +27,11 @@ import Url from 'url';
 import Xml from 'xml';
 import Moment from 'moment';
 import async from 'async';
+import mkdirp from 'mkdirp'
+import path from 'path'
+import _ from 'lodash'
 
-import { isValidPrefix, isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup } from './helpers.js';
+import { isValidPrefix, isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup, readableStream, isReadableStream } from './helpers.js';
 import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
@@ -188,16 +192,37 @@ export default class Client extends Multipart {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var reqOptions = this.getRequestOptions(options)
-    var hash = Crypto.createHash('sha256')
-    hash.update(payload)
-    var sha256 = hash.digest('hex').toLowerCase()
-    var self = this
+    var sha256sum = Crypto.createHash('sha256').update(payload).digest('hex').toLowerCase()
+    var stream = readableStream(payload)
+    this.makeRequestStream(options, stream, sha256sum, statusCode, cb)
+  }
 
-    function _makeRequest(e, region) {
+  makeRequestStream(options, stream, sha256sum, statusCode, cb) {
+    if (!isObject(options)) {
+      throw new TypeError('options should be of type "object"')
+    }
+    if (!isReadableStream(stream)) {
+      throw new errors.InvalidArgumentError('stream should be a readable Stream')
+    }
+    if (!isString(sha256sum)) {
+      throw new TypeError('sha256sum should be of type "string"')
+    }
+    if (!isNumber(statusCode)) {
+      throw new TypeError('statusCode should be of type "number"')
+    }
+    if(!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    if (sha256sum.length != 64) {
+      throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
+    }
+
+    var reqOptions = this.getRequestOptions(options)
+    var _makeRequest = (e, region) => {
       if (e) return cb(e)
-      signV4(reqOptions, sha256, self.params.accessKey, self.params.secretKey, region)
-      var req = self.transport.request(reqOptions, response => {
+      signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region)
+      var req = this.transport.request(reqOptions, response => {
         if (statusCode != response.statusCode) {
           var errorTransformer = transformers.getErrorTransformer(response)
           pipesetup(response, errorTransformer)
@@ -206,8 +231,8 @@ export default class Client extends Multipart {
         }
         cb(null, response)
       })
-      req.on('error', e => cb(e))
-      req.end(payload)
+      pipesetup(stream, req)
+        .on('error', e => cb(e))
     }
     // for operations where bucketName is not relevant like listBuckets()
     if (!options.bucketName) return _makeRequest(null, 'us-east-1')
@@ -375,14 +400,13 @@ export default class Client extends Multipart {
     }
     var delimiter = recursive ? null : '/'
     var dummyTransformer = transformers.getDummyTransformer()
-    var self = this
-    function listNext(keyMarker, uploadIdMarker) {
-      self.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
+    var listNext = (keyMarker, uploadIdMarker) => {
+      this.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
           result.prefixes.forEach(prefix => dummyTransformer.write(prefix))
           async.eachSeries(result.uploads, (upload, cb) => {
-            self.listAllParts(bucket, upload.key, upload.uploadId, (err, parts) => {
+            this.listAllParts(bucket, upload.key, upload.uploadId, (err, parts) => {
               if (err) return cb(err)
               upload.size = parts.reduce((acc, item) => acc + item.size, 0)
               dummyTransformer.write(upload)
@@ -542,6 +566,70 @@ export default class Client extends Multipart {
     ], cb)
   }
 
+  // Callback is called with `error` in case of error or `null` in case of success
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `filePath` _string_: path to which the object data will be written to
+  // * `callback(err)` _function_: callback is called with `err` in case of error.
+  fGetObject(bucketName, objectName, filePath, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(filePath)) {
+      throw new TypeError('filePath should be of type "string"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    var tmpFile
+    var tmpFileStream
+    var objStat
+
+    var rename = () => {
+      fs.rename(tmpFile, filePath, cb)
+    }
+
+    async.waterfall([
+      cb => this.statObject(bucketName, objectName, cb),
+      (result, cb) => {
+        objStat = result
+        var dir = path.dirname(filePath)
+        if (dir === '.') return cb()
+        mkdirp(dir, cb)
+      },
+      (ignore, cb) => {
+        tmpFile = `${filePath}.${objStat.etag}.part.minio-js`
+        fs.stat(tmpFile, (e, stats) => {
+          var offset = 0
+          if (e) {
+            tmpFileStream = fs.createWriteStream(tmpFile, {flags: 'w'})
+          } else {
+            if (objStat.size === stats.size) return rename()
+            offset = stats.size
+            tmpFileStream = fs.createWriteStream(tmpFile, {flags: 'a'})
+          }
+          this.getPartialObject(bucketName, objectName, offset, 0, cb)
+        })
+      },
+      (downloadStream, cb) => {
+        pipesetup(downloadStream, tmpFileStream)
+          .on('error', e => cb(e))
+          .on('finish', cb)
+      },
+      cb => fs.stat(tmpFile, cb),
+      (stats, cb) => {
+        if (stats.size === objStat.size) return cb()
+        cb(new Error('Size mismatch between downloaded file and the object'))
+      }
+    ], rename)
+  }
+
   // Callback is called with readable stream of the object content.
   //
   // __Arguments__
@@ -601,7 +689,7 @@ export default class Client extends Multipart {
 
     var headers = {}
     if (range !== '') {
-      headers.Range = range
+      headers.range = range
     }
 
     var expectedStatus = 200
@@ -610,6 +698,132 @@ export default class Client extends Multipart {
     }
     var method = 'GET'
     this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, cb)
+  }
+
+  fPutObject(bucketName, objectName, filePath, contentType, callback) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    if (!isString(filePath)) {
+      throw new TypeError('filePath should be of type "string"')
+    }
+
+    if (contentType.trim() === '') {
+      contentType = 'application/octet-stream'
+    }
+
+    var calculatePartSize = (size) => {
+      // using 10000 may cause part size to become too small, and not fit the entire object in
+      partSize = Math.floor(size / 9999)
+      if (partSize > this.maximumPartSize) {
+        return this.maximumPartSize
+      }
+      return Math.max(this.minimumPartSize, partSize)
+    }
+    var size
+    var partSize
+
+    async.waterfall([
+      cb => fs.stat(filePath, cb),
+      (stats, cb) => {
+        size = stats.size
+        if (size > this.maxObjectSize) {
+          return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
+        }
+        partSize = calculatePartSize(size)
+        if (size < this.minimumPartSize) {
+          var multipart = false
+          var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+          var hash = transformers.getHashSummer()
+          var start = 0
+          var end = size - 1
+          var autoClose = true
+          if (size === 0) end = 0
+          var options = {start, end, autoClose}
+          pipesetup(fs.createReadStream(filePath, options), hash)
+            .on('data', data => {
+              var md5sum = data.md5sum
+              var sha256sum = data.sha256sum
+              var stream = fs.createReadStream(filePath, options)
+              var uploadId = ''
+              var partNumber = 0
+              uploader(stream, size, sha256sum, md5sum, callback)
+            })
+            .on('error', e => cb(e))
+          return
+        }
+        this.findUploadId(bucketName, objectName, cb)
+      },
+      (uploadId, cb) => {
+        if (uploadId) return this.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        this.initiateNewMultipartUpload(bucketName, objectName, '', (e, uploadId) => cb(e, uploadId, []))
+      },
+      (uploadId, etags, cb) => {
+        partSize = calculatePartSize(size)
+        var multipart = true
+        var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+
+        // convert array to object to make things easy
+        var parts = etags.reduce(function(acc, item) {
+          if (!acc[item.part]) {
+            acc[item.part] = item
+          }
+          return acc
+        }, {})
+        var partsDone = []
+        var partNumber = 1
+        var uploadedSize = 0
+        async.whilst(
+          () => uploadedSize < size,
+          cb => {
+            var part = parts[partNumber]
+            var hash = transformers.getHashSummer()
+            var length = partSize
+            if (length > (size - uploadedSize)) {
+              length = size - uploadedSize
+            }
+            var start = uploadedSize
+            var end = uploadedSize + length - 1
+            var autoClose = true
+            var options = {autoClose, start, end}
+
+            pipesetup(fs.createReadStream(filePath, options), hash)
+              .on('data', data => {
+                var md5sumhex = (new Buffer(data.md5sum, 'base64')).toString('hex')
+                if (part && (md5sumhex === part.etag)) {
+                  //md5 matches, chunk already uploaded
+                  partsDone.push({part: partNumber, etag: part.etag})
+                  partNumber++
+                  uploadedSize += length
+                  return cb()
+                }
+                // part is not uploaded yet, or md5 mismatch
+                var stream = fs.createReadStream(filePath, options)
+                uploader(uploadId, partNumber, stream, length,
+                  data.sha256sum, data.md5sum, (e, etag) => {
+                    if (e) return cb(e)
+                    partsDone.push({part: partNumber, etag})
+                    partNumber++
+                    uploadedSize += length
+                    return cb()
+                  })
+              })
+              .on('error', e => cb(e))
+          },
+          e => {
+            if (e) return cb(e)
+            cb(null, partsDone, uploadId)
+          }
+        )
+      },
+      (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
+    ], callback)
   }
 
   // Uploads the object.
@@ -640,46 +854,46 @@ export default class Client extends Multipart {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
+    if (size < 0) {
+      throw new errors.InvalidArgumentError(`size cannot be negative, given size : ${size}`)
+    }
+    if (size > this.maximumStreamObjectSize) {
+      throw new errors.InvalidArgumentError(`size should be less than ${this.maximumStreamObjectSize}, given size : ${size}`)
+    }
+
     if (contentType.trim() === '') {
       contentType = 'application/octet-stream'
     }
 
-    function calculatePartSize(size) {
-      var minimumPartSize = 5 * 1024 * 1024, // 5MB
-        maximumPartSize = 5 * 1025 * 1024 * 1024,
-        // using 10000 may cause part size to become too small, and not fit the entire object in
-        partSize = Math.floor(size / 9999)
-
-      if (partSize > maximumPartSize) {
-        return maximumPartSize
-      }
-      return Math.max(minimumPartSize, partSize)
-    }
-
-    var self = this
-    if (size <= 5*1024*1024) {
+    if (size <= this.minimumPartSize) {
       var concater = transformers.getConcater()
       pipesetup(stream, concater)
         .on('error', e => cb(e))
-        .on('data', chunk => self.doPutObject(bucketName, objectName, contentType, null, null, chunk, cb))
+        .on('data', chunk => {
+          var multipart = false
+          var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+          var readStream = readableStream(chunk)
+          var sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex').toLowerCase()
+          var md5sum = Crypto.createHash('md5').update(chunk).digest('base64')
+          uploader(readStream, chunk.length, sha256sum, md5sum, cb)
+        })
       return
     }
     async.waterfall([
-      cb => self.findUploadId(bucketName, objectName, cb),
+      cb => this.findUploadId(bucketName, objectName, cb),
       (uploadId, cb) => {
-        if (uploadId) return self.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
-        self.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
+        if (uploadId) return this.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        this.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
-        var partSize = calculatePartSize(size)
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
-        var chunker = BlockStream2({size: partSize, zeroPadding: false})
-        var chunkUploader = self.chunkUploader(bucketName, objectName, contentType, uploadId, etags)
+        var chunker = BlockStream2({size: this.minimumPartSize, zeroPadding: false})
+        var chunkUploader = this.chunkUploader(bucketName, objectName, contentType, uploadId, etags)
         pipesetup(stream, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
       },
-      (etags, uploadId, cb) => self.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
+      (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
     ], cb)
   }
 
@@ -748,9 +962,8 @@ export default class Client extends Multipart {
     // recursive is null set delimiter to '/'.
     var delimiter = recursive ? null : '/'
     var dummyTransformer = transformers.getDummyTransformer()
-    var self = this
-    function listNext(marker) {
-      self.listObjectsOnce(bucketName, prefix, marker, delimiter, 1000)
+    var listNext = (marker) => {
+      this.listObjectsOnce(bucketName, prefix, marker, delimiter, 1000)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
           result.objects.forEach(object => {
@@ -918,7 +1131,7 @@ class PostPolicy {
   // set expiration date
   setExpires(nativedate) {
     if (!nativedate) {
-      throw new errrors.InvalidDateError('Invalid date : can not be null')
+      throw new errrors.InvalidDateError('Invalid date : cannot be null')
     }
     var date = Moment(nativedate)
 
@@ -958,7 +1171,7 @@ class PostPolicy {
   // set Content-Type
   setContentType(type) {
     if (!type) {
-      throw new Error('content-type can not be null')
+      throw new Error('content-type cannot be null')
     }
     this.policy.conditions.push(['eq', '$Content-Type', type])
     this.formData['Content-Type'] = type
@@ -967,13 +1180,13 @@ class PostPolicy {
   // set minimum/maximum length of what Content-Length can be
   setContentLength(min, max) {
     if (min > max) {
-      throw new Error('min can not be more than max')
+      throw new Error('min cannot be more than max')
     }
     if (min < 0) {
-      throw new Error('min has to be > 0')
+      throw new Error('min should be > 0')
     }
     if (max < 0) {
-      throw new Error('max has to be > 0')
+      throw new Error('max should be > 0')
     }
     this.policy.conditions.push(['content-length-range', min, max])
   }

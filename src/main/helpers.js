@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import stream from 'stream'
+
 export function uriEscape(string) {
   var output = string
     // this was originally escape instead of encodeURIComponent but escape is deprecated.
@@ -98,6 +100,16 @@ export function isObject(arg) {
   return typeof(arg) === 'object' && arg !== null;
 }
 
+// check if object is readable stream
+export function isReadableStream(arg) {
+  return isObject(arg) && isFunction(arg._read)
+}
+
+// check if arg is boolean
+export function isBoolean(arg) {
+  return typeof(arg) === 'boolean'
+}
+
 // pipesetup sets up pipe() from left to right os streams array
 // pipesetup will also make sure that error emitted at any of the upstream Stream
 // will be emited at the last stream. This makes error handling simple
@@ -106,4 +118,13 @@ export function pipesetup(...streams) {
     src.on('error', err => dst.emit('error', err))
     return src.pipe(dst)
   })
+}
+
+// return a Readable stream that emits data
+export function readableStream(data) {
+  var s = new stream.Readable()
+  s._read = () => {}
+  s.push(data)
+  s.push(null)
+  return s
 }
