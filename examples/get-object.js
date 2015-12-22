@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+// are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -26,7 +29,8 @@ var s3Client = new Minio({
 })
 
 var size = 0
-s3Client.getObject('bucket', 'object', function(e, dataStream) {
+// Get a full object.
+s3Client.getObject('my-bucketname', 'my-objectname', function(e, dataStream) {
   if (e) {
     return console.log(e)
   }

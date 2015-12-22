@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
+// replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:

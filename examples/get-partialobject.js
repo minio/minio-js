@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+ // are dummy values, please replace them with original values.
+
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -25,8 +29,9 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
+// Download the object my-objectname at an offset 1024, for a total of 4096 bytes.
 var size = 0
-s3Client.getPartialObject('bucket', 'object', 1024, 4096, function(e, dataStream) {
+s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096, function(e, dataStream) {
   if (e) {
     return console.log(e)
   }

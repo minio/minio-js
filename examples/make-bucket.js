@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,8 +27,8 @@ var s3Client = new Minio({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-s3Client.makeBucket('bucket', 'public-read', 'us-west-1', function(e) {
+// Create a bucket name my-bucketname.
+s3Client.makeBucket('my-bucketname', 'public-read', 'us-west-1', function(e) {
   if (e) {
     return console.log(e)
   }

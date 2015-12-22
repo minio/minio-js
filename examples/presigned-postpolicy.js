@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-objectname and my-bucketname
+ // are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,10 +27,12 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-// construct a new postPolicy.
+// Construct a new postPolicy.
 var policy = s3Client.newPostPolicy()
-policy.setKey("keyName")
-policy.setBucket("bucketName")
+// Set the object name my-objectname.
+policy.setKey("my-objectname")
+// Set the bucket to my-bucketname.
+policy.setBucket("my-bucketname")
 
 var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
@@ -38,13 +43,14 @@ policy.setContentLength(1024, 1024*1024) // Min upload length is 1KB Max upload 
 s3Client.presignedPostPolicy(policy, function(e, formData) {
   if (e) return console.log(e)
   var curl = []
-  curl.push('curl https://s3.amazonaws.com/bucketName')
+  curl.push('curl https://s3.amazonaws.com/my-bucketname')
   for (var key in formData) {
     if (formData.hasOwnProperty(key)) {
       var value = formData[key]
       curl.push(`-F ${key}=${value}`)
     }
   }
+  // Print curl command to upload files.
   curl.push('-F file=@<FILE>')
   console.log(curl.join(' '))
 })

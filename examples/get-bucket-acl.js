@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -25,7 +29,8 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.getBucketACL('bucket', function(e, acl) {
+// Print current bucket acl for my-bucketname.
+s3Client.getBucketACL('my-bucketname', function(e, acl) {
   if (e) {
     return console.log(e)
   }

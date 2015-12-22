@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -25,7 +29,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.bucketExists('bucket', function(e) {
+s3Client.bucketExists('my-bucketname', function(e) {
   if (e) {
     return console.log(e)
   }

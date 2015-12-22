@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+
+  // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
+  // my-objectname are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,8 +28,8 @@ var s3Client = new Minio({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-s3Client.removeIncompleteUpload('bucket', 'object', function(e) {
+// Remove a partially uploaded object name my-objectname.
+s3Client.removeIncompleteUpload('my-bucketname', 'my-objectname', function(e) {
   if (e) {
     return console.log(e)
   }
