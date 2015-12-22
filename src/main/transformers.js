@@ -1,6 +1,7 @@
 import * as xmlParsers from './xml-parsers.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
+import Crypto from 'crypto';
 
 import { isFunction } from './helpers.js'
 import * as errors from './errors.js'
@@ -130,4 +131,22 @@ export function getCompleteMultipartTransformer() {
 
 export function getBucketRegionTransformer() {
   return getConcater(xmlParsers.parseBucketRegion)
+}
+
+// a through stream that calculates md5sum and sha256sum
+export function getHashSummer() {
+  var md5 = Crypto.createHash('md5')
+  var sha256 = Crypto.createHash('sha256')
+
+  return Through2.obj(function(chunk, enc, cb) {
+    md5.update(chunk)
+    sha256.update(chunk)
+    cb()
+  }, function(cb) {
+    this.push({
+      md5sum: md5.digest('base64'),
+      sha256sum: sha256.digest('hex').toLowerCase()
+    })
+    this.push(null)
+  })
 }
