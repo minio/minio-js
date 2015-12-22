@@ -347,11 +347,11 @@ export default class Client extends Multipart {
   // List of buckets created.
   //
   // __Arguments__
-  // * `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
+  // * `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
   //
-  // `bucketStream` emits Object with the format:
-  // * `obj.name` _string_ : bucket name
-  // * `obj.creationDate` _string_: date when bucket was created
+  // `buckets` array element:
+  // * `bucket.name` _string_ : bucket name
+  // * `bucket.creationDate` _string_: date when bucket was created
   listBuckets(cb) {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -367,12 +367,11 @@ export default class Client extends Multipart {
         return cb(e)
       }
       var transformer = transformers.getListBucketTransformer()
-      var stream = Through2.obj(function(buckets, enc, cb) {
-        buckets.forEach(bucket => this.push(bucket))
-        cb()
-      })
-      pipesetup(response, transformer, stream)
-      cb(null, stream)
+      var buckets
+      pipesetup(response, transformer)
+        .on('data', result => buckets = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, buckets))
     })
   }
 
