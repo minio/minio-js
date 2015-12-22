@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+
+  // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname
+  // are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,8 +28,8 @@ var s3Client = new Minio({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-s3Client.setBucketACL('bucket', 'public-read-write', function(e) {
+// Set bucket my-bucketname ACL to public-read-write.
+s3Client.setBucketACL('my-bucketname', 'public-read-write', function(e) {
   if (e) {
     return console.log(e)
   }

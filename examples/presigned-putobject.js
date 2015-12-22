@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+ // are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -25,7 +28,7 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var presignedUrl = s3Client.presignedPutObject('bucket', 'object', 1000, function(e, presignedUrl) {
+var presignedUrl = s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function(e, presignedUrl) {
   if (e) return console.log(e)
   console.log(presignedUrl)
 })

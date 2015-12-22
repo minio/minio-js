@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,8 +27,8 @@ var s3Client = new Minio({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-var objectsStream = s3Client.listObjects('bucket', '', true)
+// List all object paths in bucket my-bucketname.
+var objectsStream = s3Client.listObjects('my-bucketname', '', true)
 objectsStream.on('data', function(obj) {
   console.log(obj)
 })

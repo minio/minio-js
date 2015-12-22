@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+ // are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -24,8 +27,8 @@ var s3Client = new Minio({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-var presignedUrl = s3Client.presignedGetObject('bucket', 'object', 1000, function(e, presignedUrl) {
+// Presigned get object URL for object name my-bucketname, it expires in 7 days by default.
+var presignedUrl = s3Client.presignedGetObject('my-bucketname', 'my-objectname', 1000, function(e, presignedUrl) {
   if (e) return console.log(e)
   console.log(presignedUrl)
 })

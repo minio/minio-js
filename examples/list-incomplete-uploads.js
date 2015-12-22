@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-prefixname
+ // are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 
 // find out your s3 end point here:
@@ -25,7 +28,8 @@ var s3Client = new Minio({
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var incompleteObjectsStream = s3Client.listIncompleteUploads('bucket', 'prefix', true)
+// List all object paths in bucket my-bucketname that begins with my-prefixname.
+var incompleteObjectsStream = s3Client.listIncompleteUploads('my-bucketname', 'my-prefixname', true)
 incompleteObjectsStream.on('data', function(obj) {
   console.log(obj)
 })

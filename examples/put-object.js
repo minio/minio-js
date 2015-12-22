@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
+ // and my-objectname are dummy values, please replace them with original values.
+
 var Minio = require('minio')
 var Fs = require('fs')
 
@@ -26,14 +29,14 @@ var s3Client = new Minio({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-// large object from file
-var file = 'testfile'
+// Put a file in bucket my-bucketname.
+var file = 'my-testfile'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('bucket', 'object', fileStream, stat.size, 'application/octet-stream', function(e) {
+  s3Client.putObject('my-bucketname', 'my-objectname', fileStream, stat.size, 'application/octet-stream', function(e) {
     if (e) {
       return console.log(e)
     }
