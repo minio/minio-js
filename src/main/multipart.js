@@ -22,7 +22,7 @@ import Xml from 'xml';
 import Through2 from 'through2';
 import _ from 'lodash'
 
-import { uriEscape, uriResourceEscape, pipesetup, readableStream, isValidBucketName, isValidObjectName, isString, isNumber, isReadableStream, isFunction, isBoolean } from './helpers.js';
+import { uriEscape, uriResourceEscape, pipesetup, readableStream, isValidBucketName, isValidObjectName, isString, isNumber, isReadableStream, isFunction, isBoolean, isObject } from './helpers.js';
 import { signV4 } from './signing.js';
 import * as transformers from './transformers.js'
 import * as xmlParsers from './xml-parsers.js'
@@ -39,6 +39,15 @@ export default class Multipart {
   }
 
   initiateNewMultipartUpload(bucketName, objectName, contentType, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
     var method = 'POST'
     var headers = {'Content-Type': contentType}
     var query = 'uploads'
@@ -52,6 +61,26 @@ export default class Multipart {
   }
 
   completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(etags)) {
+      throw new TypeError('etags should be of type "Array"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
+
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
     var method = 'POST'
     var query = `uploadId=${uploadId}`
 
@@ -80,6 +109,18 @@ export default class Multipart {
   }
 
   listAllParts(bucketName, objectName, uploadId, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
     var parts = []
     var listNext = (marker) => {
       this.listParts(bucketName, objectName, uploadId, marker, (e, result) => {
@@ -99,6 +140,24 @@ export default class Multipart {
   }
 
   listParts(bucketName, objectName, uploadId, marker, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isNumber(marker)) {
+      throw new TypeError('marker should be of type "number"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
     var query = ''
     if (marker && marker !== 0) {
       query += `part-number-marker=${marker}&`
@@ -116,6 +175,21 @@ export default class Multipart {
   }
 
   listIncompleteUploadsOnce(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(keyMarker)) {
+      throw new TypeError('keyMarker should be of type "string"')
+    }
+    if (!isString(uploadIdMarker)) {
+      throw new TypeError('uploadIdMarker should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
     var queries = []
     if (prefix) {
       queries.push(`prefix=${uriEscape(prefix)}`)
@@ -148,8 +222,18 @@ export default class Multipart {
   }
 
   findUploadId(bucketName, objectName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
+
     var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsOnce(bucketName, objectName, keyMarker, uploadIdMarker)
+      this.listIncompleteUploadsOnce(bucketName, objectName, keyMarker, uploadIdMarker, '')
         .on('error', e => cb(e))
         .on('data', result => {
           var keyFound = false
@@ -169,10 +253,25 @@ export default class Multipart {
           cb(null, undefined)
         })
     }
-    listNext()
+    listNext('', '')
   }
 
   chunkUploader(bucketName, objectName, contentType, uploadId, partsArray) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(partsArray)) {
+      throw new TypeError('partsArray should be of type "Array"')
+    }
     var partsDone = []
     var partNumber = 1
 
