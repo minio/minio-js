@@ -94,7 +94,7 @@ function getSignedHeaders(request) {
   //
   //      Is skipped for obvious reasons
 
-  var ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent']
+  var ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
   return _.map(request.headers, (v, header) => header)
                   .filter(header => ignoredHeaders.indexOf(header) === -1)
                   .sort()
@@ -148,7 +148,6 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
-
   request.headers.host = host
   request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   request.headers['x-amz-content-sha256'] = dataShaSum256

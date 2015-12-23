@@ -120,7 +120,9 @@ export default class Client extends Multipart {
     reqOptions.protocol = this.params.protocol
 
     if (headers) {
-      reqOptions.headers = headers
+      // have all header keys in lower case - to make signing easy
+      reqOptions.headers = {}
+      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
 
     if (objectName) {
