@@ -369,9 +369,9 @@ export default class Client extends Multipart {
     var method = 'GET'
     this.makeRequest({method}, '', 200, (e, response) => {
       if (e) {
-        if (e.code === 'TemporaryRedirect') {
+        if (e.name === 'TemporaryRedirect') {
           // ListBucket operaton returns 'TemporaryRedirect' for 'AccessDenied'
-          e.code = 'AccessDenied'
+          e.name = 'AccessDenied'
           e.message = 'Valid and authorized credentials required'
         }
         return cb(e)

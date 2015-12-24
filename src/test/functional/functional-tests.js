@@ -63,7 +63,7 @@ describe('functional tests', function() {
     it('should check if bucket exists', done => client.bucketExists(bucketName, done))
     it('should check if bucket does not exist', done => {
       client.bucketExists(bucketName+'random', (e) => {
-        if (e.code === 'NoSuchBucket') return done()
+        if (e.name === 'NoSuchBucket') return done()
         done(new Error())
       })
     })

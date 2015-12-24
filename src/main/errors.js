@@ -100,3 +100,9 @@ export class IncorrectSizeError extends ExtendableError {
     super(message)
   }
 }
+
+export class S3Error extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}

@@ -1354,7 +1354,7 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     if (e === null) {
       callback('expected error, received success')
     }
-    assert.equal(e.code, code)
+    assert.equal(e.name, code)
     assert.equal(e.message, message)
     assert.equal(e.requestid, requestid)
     assert.equal(e.hostid, hostid)

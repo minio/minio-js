@@ -54,30 +54,30 @@ export function getDummyTransformer() {
 export function getErrorTransformer(response) {
   var requestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
   var statusCode = response.statusCode
-  var e = new Error()
+  var e = new errors.S3Error()
   e.requestid = requestid
   e.id2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
   e.bucketregion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
   if (statusCode === 301) {
-    e.code = 'MovedPermanently'
+    e.name = 'MovedPermanently'
     e.message = 'Moved Permanently'
   } else if (statusCode === 307) {
-    e.code = 'TemporaryRedirect'
+    e.name = 'TemporaryRedirect'
     e.message = 'Are you using the correct endpoint URL?'
   } else if (statusCode === 403) {
-    e.code = 'AccessDenied'
+    e.name = 'AccessDenied'
     e.message = 'Valid and authorized credentials required'
   } else if (statusCode === 404) {
-    e.code = 'NotFound'
+    e.name = 'NotFound'
     e.message = 'Not Found'
   } else if (statusCode === 405) {
-    e.code = 'MethodNotAllowed'
+    e.name = 'MethodNotAllowed'
     e.message = 'Method Not Allowed'
   } else if (statusCode === 501) {
-    e.code = 'MethodNotAllowed'
+    e.name = 'MethodNotAllowed'
     e.message = 'Method Not Allowed'
   } else {
-    e.code = 'UnknownError'
+    e.name = 'UnknownError'
     e.message = `${statusCode}`
   }
 
