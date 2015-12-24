@@ -110,6 +110,8 @@ export default class Client extends Multipart {
     this.regionMap = {}
   }
 
+  // returns *options* object that can be used with http.request()
+  // Takes care of constructing virtual-host-style or path-style hostname
   getRequestOptions(opts) {
     var method = opts.method
     var bucketName = opts.bucketName
@@ -149,8 +151,6 @@ export default class Client extends Multipart {
     return reqOptions
   }
 
-  // CLIENT LEVEL CALLS
-
   // Set application specific information.
   //
   // Generates User-Agent in the following style.
@@ -176,12 +176,15 @@ export default class Client extends Multipart {
     this.params.userAgent = `${this.params.userAgent} ${appName}/${appVersion}`
   }
 
-  // SERVICE LEVEL CALLS
-
   // makeRequest is the primitive used by all the apis for making S3 requests.
   // payload can be empty string in case of no playload.
   // statusCode is the expected statusCode. If response.statusCode does not match
   // we parse the XML error and call the callback with the error message.
+
+  // makeRequest/makeRequestStream is used by all the calls except listBuckets,
+  // makeBucket and getBucketRegion which use path-style requests and standard
+  // region 'us-east-1'
+
   makeRequest(options, payload, statusCode, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
@@ -201,6 +204,8 @@ export default class Client extends Multipart {
     this.makeRequestStream(options, stream, sha256sum, statusCode, cb)
   }
 
+  // makeRequestStream will be used directly instead of makeRequest in case the payload
+  // is available as a stream. for ex. putObject
   makeRequestStream(options, stream, sha256sum, statusCode, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
@@ -243,6 +248,7 @@ export default class Client extends Multipart {
     this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
+  // gets the region of the bucket
   getBucketRegion(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
@@ -709,6 +715,14 @@ export default class Client extends Multipart {
     this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, cb)
   }
 
+  // Uploads the object using contents from a file
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `filePath` _string_: file path of the file to be uploaded
+  // * `contentType` _string_: content type of the object
+  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   fPutObject(bucketName, objectName, filePath, contentType, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -747,6 +761,7 @@ export default class Client extends Multipart {
         }
         partSize = calculatePartSize(size)
         if (size < this.minimumPartSize) {
+          // simple PUT request, no multipart
           var multipart = false
           var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
           var hash = transformers.getHashSummer()
@@ -770,7 +785,9 @@ export default class Client extends Multipart {
         this.findUploadId(bucketName, objectName, cb)
       },
       (uploadId, cb) => {
+        // if there was a previous incomplete upload, fetch all its uploaded parts info
         if (uploadId) return this.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        // there was no previous upload, initiate a new one
         this.initiateNewMultipartUpload(bucketName, objectName, '', (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
@@ -801,7 +818,7 @@ export default class Client extends Multipart {
             var end = uploadedSize + length - 1
             var autoClose = true
             var options = {autoClose, start, end}
-
+            // verify md5sum of each part
             pipesetup(fs.createReadStream(filePath, options), hash)
               .on('data', data => {
                 var md5sumhex = (new Buffer(data.md5sum, 'base64')).toString('hex')
@@ -831,6 +848,7 @@ export default class Client extends Multipart {
           }
         )
       },
+      // all parts uploaded, complete the multipart upload
       (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
     ], callback)
   }
@@ -875,6 +893,7 @@ export default class Client extends Multipart {
     }
 
     if (size <= this.minimumPartSize) {
+      // simple PUT request, no multipart
       var concater = transformers.getConcater()
       pipesetup(stream, concater)
         .on('error', e => cb(e))
@@ -906,6 +925,7 @@ export default class Client extends Multipart {
     ], cb)
   }
 
+  // list a batch of objects
   listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -985,7 +1005,7 @@ export default class Client extends Multipart {
     }
     if (!prefix) prefix = ''
     if (!recursive) recursive = false
-    // if recursive is false set delimiter to '/' 
+    // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var listNext = (marker) => {

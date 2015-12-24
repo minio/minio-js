@@ -59,6 +59,7 @@ export class SecretKeyRequiredError extends ExtendableError {
   }
 }
 
+// if neither http not https
 export class InvalidProtocolError extends ExtendableError {
   constructor(message) {
     super(message)
@@ -72,12 +73,6 @@ export class ExpiresParamError extends ExtendableError {
 }
 
 export class InvalidACLError extends ExtendableError {
-  constructor(message) {
-    super(message)
-  }
-}
-
-export class InternalClientError extends ExtendableError {
   constructor(message) {
     super(message)
   }
@@ -101,6 +96,8 @@ export class IncorrectSizeError extends ExtendableError {
   }
 }
 
+// we throw S3Error instance for errors returned from S3 server
+// see getErrorTransformer for details
 export class S3Error extends ExtendableError {
   constructor(message) {
     super(message)

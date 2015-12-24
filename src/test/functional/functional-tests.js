@@ -221,7 +221,7 @@ describe('functional tests', function() {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path'])
+        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
         options.method = 'PUT'
         options.headers = {
           'content-length' : _1byte.length
@@ -243,7 +243,7 @@ describe('functional tests', function() {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path'])
+        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
         options.method = 'GET'
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
@@ -310,7 +310,7 @@ describe('functional tests', function() {
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
-          return done(new Error(`listObjects lists ${listArray} objects, expected ${listObjectsNum}`))
+          return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
         })
         .on('data', data => {
           listArray.push(data.name)
