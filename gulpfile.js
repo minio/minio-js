@@ -23,6 +23,7 @@ var jshint = require('gulp-jshint');
 
 var fs = require("fs");
 var browserify = require("browserify");
+var mocha = require('gulp-mocha')
 
 gulp.task('browserify', ['compile'], function() {
   browserify("./dist/main/minio.js", {
@@ -44,7 +45,6 @@ gulp.task('test:compile', ['compile'], function(cb) {
 })
 
 gulp.task('test', ['compile', 'test:compile'], function() {
-  var mocha = require('gulp-mocha')
   gulp.src('dist/test/unit/*.js', {
     read: false
   })
@@ -73,6 +73,21 @@ gulp.task('lint', function() {
       message: 'JSHint Passed. Let it fly!',
     }))
 });
+
+gulp.task('functional-test', function() {
+  gulp.src('src/test/functional/functional-tests.js')
+  .pipe(sourcemaps.init())
+  .pipe(babel())
+  .pipe(sourcemaps.write('.'))
+  .pipe(gulp.dest('dist/test'))
+  .on('end', function() {
+    gulp.src('dist/test/functional-tests.js')
+    .pipe(mocha({
+      reporter: 'spec',
+      ui: 'bdd',
+    }))
+  })
+})
 
 function compile(src, name, dest, cb) {
   gulp.src(src)

@@ -17,6 +17,8 @@
 import Concat from 'concat-stream';
 import ParseXml from 'xml-parser';
 
+// Parse XML and return information as Javascript types
+
 export function parseError(xml) {
   var e = {}
   var parsedXml = ParseXml(xml)
@@ -32,6 +34,10 @@ export function parseError(xml) {
         e.resource = element.content
       } else if (element.name === 'HostId') {
         e.hostid = element.content
+      } else if (element.name === 'Key') {
+        e.key = element.content
+      } else if (element.name === 'BucketName') {
+        e.bucketname = element.content
       }
     })
   }

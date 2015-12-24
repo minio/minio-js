@@ -17,7 +17,7 @@
 import Moment from 'moment'
 import Crypto from 'crypto'
 import _ from 'lodash'
-import { uriEscape, getScope } from './helpers.js'
+import { uriEscape, getScope, isString } from './helpers.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -94,7 +94,7 @@ function getSignedHeaders(request) {
   //
   //      Is skipped for obvious reasons
 
-  var ignoredHeaders = ['Authorization', 'Content-Length', 'Content-Type', 'User-Agent']
+  var ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
   return _.map(request.headers, (v, header) => header)
                   .filter(header => ignoredHeaders.indexOf(header) === -1)
                   .sort()
@@ -134,6 +134,9 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
     // no signing in case of anonymous requests
     return
   }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
   var requestDate = Moment().utc()
   if (!dataShaSum256) {
     dataShaSum256 = Crypto.createHash('sha256').update('').digest('hex').toLowerCase()
@@ -148,7 +151,6 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
-
   request.headers.host = host
   request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   request.headers['x-amz-content-sha256'] = dataShaSum256
@@ -171,7 +173,6 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
   if (!accessKey) {
     throw new Error('accessKey is required for presigning')
   }
-
   if (!secretKey) {
     throw new Error('secretKey is required for presigning')
   }
@@ -179,13 +180,14 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
   if (!request.expires) {
     throw new Error('expires value required')
   }
-
   if (request.expires < 1) {
     throw new Error('expires param cannot be less than 1 seconds')
   }
-
   if (request.expires > 604800) {
     throw new Error('expires param cannot be larger than 7 days')
+  }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
   }
 
   var expires = request.expires

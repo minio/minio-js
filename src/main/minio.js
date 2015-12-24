@@ -120,7 +120,9 @@ export default class Client extends Multipart {
     reqOptions.protocol = this.params.protocol
 
     if (headers) {
-      reqOptions.headers = headers
+      // have all header keys in lower case - to make signing easy
+      reqOptions.headers = {}
+      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
 
     if (objectName) {
@@ -243,6 +245,9 @@ export default class Client extends Multipart {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
     }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
     // bucket region is 'us-east-1' for all non AWS-S3 endpoints
     if (this.params.host !== 's3.amazonaws.com') return cb(null, 'us-east-1')
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
@@ -347,11 +352,11 @@ export default class Client extends Multipart {
   // List of buckets created.
   //
   // __Arguments__
-  // * `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
+  // * `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
   //
-  // `bucketStream` emits Object with the format:
-  // * `obj.name` _string_ : bucket name
-  // * `obj.creationDate` _string_: date when bucket was created
+  // `buckets` array element:
+  // * `bucket.name` _string_ : bucket name
+  // * `bucket.creationDate` _string_: date when bucket was created
   listBuckets(cb) {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -367,12 +372,11 @@ export default class Client extends Multipart {
         return cb(e)
       }
       var transformer = transformers.getListBucketTransformer()
-      var stream = Through2.obj(function(buckets, enc, cb) {
-        buckets.forEach(bucket => this.push(bucket))
-        cb()
-      })
-      pipesetup(response, transformer, stream)
-      cb(null, stream)
+      var buckets
+      pipesetup(response, transformer)
+        .on('data', result => buckets = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, buckets))
     })
   }
 
@@ -426,7 +430,7 @@ export default class Client extends Multipart {
           })
         })
     }
-    listNext()
+    listNext('', '')
     return dummyTransformer
   }
 
@@ -898,6 +902,21 @@ export default class Client extends Multipart {
   }
 
   listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(marker)) {
+      throw new TypeError('marker should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    if (!isNumber(maxKeys)) {
+      throw new TypeError('maxKeys should be of type "number"')
+    }
     var queries = []
       // escape every value in query string, except maxKeys
     if (prefix) {
@@ -959,8 +978,10 @@ export default class Client extends Multipart {
     if (recursive && !isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
-    // recursive is null set delimiter to '/'.
-    var delimiter = recursive ? null : '/'
+    if (!prefix) prefix = ''
+    if (!recursive) recursive = false
+    // if recursive is false set delimiter to '/' 
+    var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var listNext = (marker) => {
       this.listObjectsOnce(bucketName, prefix, marker, delimiter, 1000)
@@ -976,7 +997,7 @@ export default class Client extends Multipart {
           dummyTransformer.push(null) // signal 'end'
         })
     }
-    listNext()
+    listNext('')
     return dummyTransformer
   }
 
@@ -1093,6 +1114,12 @@ export default class Client extends Multipart {
   // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
   // on the object's `name` `bucket` `expiry` `Content-Type`
   presignedPostPolicy(postPolicy, cb) {
+    if (!isObject(postPolicy)) {
+      throw new TypeError('postPolicy should be of type "object"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
     this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
       if (e) return cb(e)
       var date = Moment.utc()

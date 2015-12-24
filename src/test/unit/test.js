@@ -384,14 +384,9 @@ describe('Client', function() {
           name: 'foo',
           creationDate: '2015-05-05T20:35:47.170Z'
         }]
-        client.listBuckets(function(e, stream) {
-          stream.on('data', function(obj) {
-            results.push(obj)
-          })
-          stream.on('end', function() {
-            assert.deepEqual(results, expectedResults)
-            done()
-          })
+        client.listBuckets(function(e, buckets) {
+          assert.deepEqual(buckets, expectedResults)
+          done()
         })
       })
       it('should pass error to callback', (done) => {

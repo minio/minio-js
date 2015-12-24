@@ -45,15 +45,19 @@ export function getConcater(parser, emitError) {
   })
 }
 
+// dummy through stream
 export function getDummyTransformer() {
   return Through2.obj((chunk, enc, cb) => cb(null, chunk))
 }
 
+// generates an Error object depending on statusCode and XML body
 export function getErrorTransformer(response) {
   var requestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
   var statusCode = response.statusCode
   var e = new Error()
   e.requestid = requestid
+  e.id2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
+  e.bucketregion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
   if (statusCode === 301) {
     e.code = 'MovedPermanently'
     e.message = 'Moved Permanently'
@@ -83,6 +87,46 @@ export function getErrorTransformer(response) {
   }, true)
 }
 
+// makes sure that only size number of bytes go through this stream
+export function getSizeVerifierTransformer(size) {
+  var totalSize = 0
+  return Through2.obj(function(chunk, enc, cb) {
+    totalSize += chunk.length
+    if (totalSize > size) {
+      return cb(new errors.IncorrectSizeError('Received excess data on the input stream. Size of the input stream : ${totalSize}), expected size : size(${size})'))
+    }
+    this.push(chunk)
+    cb()
+  }, function(cb) {
+    if (totalSize != size) {
+      return cb(new errors.IncorrectSizeError('size of the input stream (${totalSize}) is not equal to the expected size(${size})'))
+    }
+    this.push(null)
+    cb()
+  })
+}
+
+// a through stream that calculates md5sum and sha256sum
+export function getHashSummer() {
+  var md5 = Crypto.createHash('md5')
+  var sha256 = Crypto.createHash('sha256')
+
+  return Through2.obj(function(chunk, enc, cb) {
+    md5.update(chunk)
+    sha256.update(chunk)
+    cb()
+  }, function(cb) {
+    this.push({
+      md5sum: md5.digest('base64'),
+      sha256sum: sha256.digest('hex').toLowerCase()
+    })
+    this.push(null)
+  })
+}
+
+// following functions return a stream object that parses XML
+// and emits suitable Javascript objects
+
 export function getListBucketTransformer() {
   return getConcater(xmlParsers.parseListBucket)
 }
@@ -107,46 +151,10 @@ export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
 }
 
-export function getSizeVerifierTransformer(size) {
-  var totalSize = 0
-  return Through2.obj(function(chunk, enc, cb) {
-    totalSize += chunk.length
-    if (totalSize > size) {
-      return cb(new errors.IncorrectSizeError('Received excess data on the input stream. Size of the input stream : ${totalSize}), expected size : size(${size})'))
-    }
-    this.push(chunk)
-    cb()
-  }, function(cb) {
-    if (totalSize != size) {
-      return cb(new errors.IncorrectSizeError('size of the input stream (${totalSize}) is not equal to the expected size(${size})'))
-    }
-    this.push(null)
-    cb()
-  })
-}
-
 export function getCompleteMultipartTransformer() {
   return getConcater(xmlParsers.parseCompleteMultipart)
 }
 
 export function getBucketRegionTransformer() {
   return getConcater(xmlParsers.parseBucketRegion)
-}
-
-// a through stream that calculates md5sum and sha256sum
-export function getHashSummer() {
-  var md5 = Crypto.createHash('md5')
-  var sha256 = Crypto.createHash('sha256')
-
-  return Through2.obj(function(chunk, enc, cb) {
-    md5.update(chunk)
-    sha256.update(chunk)
-    cb()
-  }, function(cb) {
-    this.push({
-      md5sum: md5.digest('base64'),
-      sha256sum: sha256.digest('hex').toLowerCase()
-    })
-    this.push(null)
-  })
 }
