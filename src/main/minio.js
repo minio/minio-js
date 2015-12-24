@@ -101,6 +101,8 @@ export default class Client extends Multipart {
       secretKey: params.secretKey,
       userAgent: `${libraryAgent}`,
     }
+    if (!newParams.accessKey) newParams.accessKey = ''
+    if (!newParams.secretKey) newParams.secretKey = ''
     super(newParams, transport, pathStyle)
     this.params = newParams
     this.transport = transport
@@ -334,7 +336,8 @@ export default class Client extends Multipart {
     var headers = {'x-amz-acl': acl}
     var reqOptions = {method, host, protocol, path, headers}
     if (this.params.port) reqOptions.port = this.params.port
-    signV4(reqOptions, payload, this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
+    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
     var req = this.transport.request(reqOptions)
     req.on('error', e => cb(e))
     req.on('response', response => {
@@ -346,6 +349,8 @@ export default class Client extends Multipart {
       }
       cb()
     })
+    req.write(payload)
+    req.on('error', e => cb(e))
     req.end()
   }
 
@@ -402,7 +407,7 @@ export default class Client extends Multipart {
     if (recursive && !isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
-    var delimiter = recursive ? null : '/'
+    var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var listNext = (keyMarker, uploadIdMarker) => {
       this.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)

@@ -28,7 +28,7 @@ import superagent from 'superagent'
 require('source-map-support').install()
 
 describe('functional tests', function() {
-  this.timeout(10000)
+  this.timeout(30*60*1000)
   var client = new minio({
     endPoint: 'https://s3.amazonaws.com',
     accessKey: 'ACCESS-KEY',
@@ -99,8 +99,6 @@ describe('functional tests', function() {
   })
 
   describe('tests for putObject getObject getPartialObject statObject removeObject', function() {
-    this.timeout(5*60*1000)
-
     it('should upload 100KB', done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
@@ -190,7 +188,6 @@ describe('functional tests', function() {
   })
 
   describe('fPutObject fGetObject', function() {
-    this.timeout(5*60*1000)
     var tmpFileUpload = `/tmp/${_11mbObjectName}`
     var tmpFileDownload = `/tmp/${_11mbObjectName}.download`
 
@@ -292,8 +289,6 @@ describe('functional tests', function() {
   })
 
   describe('listObjects', function() {
-    this.timeout(25*60*1000)
-
     var listObjectPrefix = 'peppaPrefix'
     var listObjectsNum = 10
     var objArray = []
