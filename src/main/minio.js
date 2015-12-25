@@ -104,6 +104,7 @@ export default class Client extends Multipart {
     if (!newParams.accessKey) newParams.accessKey = ''
     if (!newParams.secretKey) newParams.secretKey = ''
     super(newParams, transport, pathStyle)
+    this.anonymous = !newParams.accessKey || !newParams.secretKey
     this.params = newParams
     this.transport = transport
     this.pathStyle = pathStyle
@@ -181,7 +182,7 @@ export default class Client extends Multipart {
   // statusCode is the expected statusCode. If response.statusCode does not match
   // we parse the XML error and call the callback with the error message.
 
-  // makeRequest/makeRequestStream is used by all the calls except listBuckets,
+  // makeRequest/makeRequestStream is used by all the calls except
   // makeBucket and getBucketRegion which use path-style requests and standard
   // region 'us-east-1'
 
@@ -199,7 +200,8 @@ export default class Client extends Multipart {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var sha256sum = Crypto.createHash('sha256').update(payload).digest('hex').toLowerCase()
+    var sha256sum = ''
+    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCode, cb)
   }
@@ -222,8 +224,8 @@ export default class Client extends Multipart {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-
-    if (sha256sum.length != 64) {
+    // sha256sum will be '' for anonymous requests
+    if (sha256sum.length != 0 && sha256sum.length != 64) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
@@ -265,7 +267,11 @@ export default class Client extends Multipart {
     reqOptions.port = this.params.port
     reqOptions.protocol = this.params.protocol
     reqOptions.path = `/${bucketName}?location`
-    signV4(reqOptions, '', this.params.accessKey, this.params.secretKey, 'us-east-1')
+
+    var sha256sum = ''
+    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
+
+    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
     var req = this.transport.request(reqOptions)
     req.on('error', e => cb(e))
     req.on('response', response => {
@@ -342,7 +348,8 @@ export default class Client extends Multipart {
     var headers = {'x-amz-acl': acl}
     var reqOptions = {method, host, protocol, path, headers}
     if (this.params.port) reqOptions.port = this.params.port
-    var sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
+    var sha256sum = ''
+    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
     var req = this.transport.request(reqOptions)
     req.on('error', e => cb(e))
@@ -764,7 +771,7 @@ export default class Client extends Multipart {
           // simple PUT request, no multipart
           var multipart = false
           var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
-          var hash = transformers.getHashSummer()
+          var hash = transformers.getHashSummer(this.anonymous)
           var start = 0
           var end = size - 1
           var autoClose = true
@@ -901,7 +908,8 @@ export default class Client extends Multipart {
           var multipart = false
           var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
           var readStream = readableStream(chunk)
-          var sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex').toLowerCase()
+          var sha256sum = ''
+          if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex')
           var md5sum = Crypto.createHash('md5').update(chunk).digest('base64')
           uploader(readStream, chunk.length, sha256sum, md5sum, cb)
         })

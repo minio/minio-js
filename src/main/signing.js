@@ -199,12 +199,10 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
     // no signing in case of anonymous requests
     return
   }
-  if (dataShaSum256.length !== 0 && dataShaSum256.length !== 64) {
+  // sha256sum is always needed for non-anonymous requests
+  if (dataShaSum256.length !== 64) {
     throw new errors.InvalidArgumentError(`invalid dataShaSum256 : ${dataShaSum256}`)
   }
-
-  if (!dataShaSum256)
-    dataShaSum256 = Crypto.createHash('sha256').digest('hex')
 
   var requestDate = Moment().utc()
 

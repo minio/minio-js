@@ -30,6 +30,7 @@ import * as xmlParsers from './xml-parsers.js'
 export default class Multipart {
   constructor(params, transport, pathStyle) {
     this.params = params
+    this.anonymous = !params.accessKey || !params.secretKey
     this.transport = transport
     this.pathStyle = pathStyle
     this.minimumPartSize = 5*1024*1024

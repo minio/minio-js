@@ -107,19 +107,19 @@ export function getSizeVerifierTransformer(size) {
 }
 
 // a through stream that calculates md5sum and sha256sum
-export function getHashSummer() {
+export function getHashSummer(anonymous) {
   var md5 = Crypto.createHash('md5')
   var sha256 = Crypto.createHash('sha256')
 
   return Through2.obj(function(chunk, enc, cb) {
     md5.update(chunk)
-    sha256.update(chunk)
+    if (!anonymous) sha256.update(chunk)
     cb()
   }, function(cb) {
-    this.push({
-      md5sum: md5.digest('base64'),
-      sha256sum: sha256.digest('hex').toLowerCase()
-    })
+    var md5sum = md5.digest('base64')
+    var hashData = {md5sum}
+    if (!anonymous) hashData.sha256sum = sha256.digest('hex')
+    this.push(hashData)
     this.push(null)
   })
 }
