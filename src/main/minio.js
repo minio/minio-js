@@ -225,7 +225,7 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
     // sha256sum will be '' for anonymous requests
-    if (sha256sum.length != 0 && sha256sum.length != 64) {
+    if (sha256sum.length !== 0 && sha256sum.length !== 64) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
