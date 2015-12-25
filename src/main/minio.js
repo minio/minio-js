@@ -381,14 +381,7 @@ export default class Client extends Multipart {
     }
     var method = 'GET'
     this.makeRequest({method}, '', 200, (e, response) => {
-      if (e) {
-        if (e.name === 'TemporaryRedirect') {
-          // ListBucket operaton returns 'TemporaryRedirect' for 'AccessDenied'
-          e.name = 'AccessDenied'
-          e.message = 'Valid and authorized credentials required'
-        }
-        return cb(e)
-      }
+      if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
       pipesetup(response, transformer)
