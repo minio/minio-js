@@ -28,22 +28,38 @@ import superagent from 'superagent'
 require('source-map-support').install()
 
 describe('functional tests', function() {
-  this.timeout(10000)
+  this.timeout(30*60*1000)
   var client = new minio({
     endPoint: 'https://s3.amazonaws.com',
-    accessKey: 'ACCESS-KEY',
-    secretKey: 'SECRET-KEY'
+    accessKey: process.env['KEY'],
+    secretKey: process.env['SECRET']
   })
   var bucketName = 'peppatest'
   var objectName = 'peppaobject'
-  var _1byte = new Buffer(1).fill('a')
+
+  var _1byte = new Buffer(1)
+  _1byte.fill('a')
   var _1byteObjectName = 'peppaobject_1byte'
-  var _100kb = new Buffer(100*1024).fill('a')
+
+  var _100kb = new Buffer(100*1024)
+  _100kb.fill('a')
   var _100kbObjectName = 'peppaobject_100kb'
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
-  var _11mb = new Buffer(11*1024*1024).fill('a')
+
+  var _11mb = new Buffer(11*1024*1024)
+  _11mb.fill('a')
   var _11mbObjectName = 'peppaobject_11mb'
   var _11mbmd5 = crypto.createHash('md5').update(_11mb).digest('hex')
+
+  var _10mb = new Buffer(10*1024*1024)
+  _10mb.fill('a')
+  var _10mbObjectName = 'peppaobject_10mb'
+  var _10mbmd5 = crypto.createHash('md5').update(_10mb).digest('hex')
+
+  var _5mb = new Buffer(5*1024*1024)
+  _5mb.fill('a')
+  var _5mbObjectName = 'peppaobject_5mb'
+  var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   describe('makeBucket', () => {
     it('should create bucket', done => client.makeBucket(bucketName, '', '', done))
@@ -63,7 +79,7 @@ describe('functional tests', function() {
     it('should check if bucket exists', done => client.bucketExists(bucketName, done))
     it('should check if bucket does not exist', done => {
       client.bucketExists(bucketName+'random', (e) => {
-        if (e.code === 'NoSuchBucket') return done()
+        if (e.name === 'NoSuchBucket') return done()
         done(new Error())
       })
     })
@@ -99,8 +115,6 @@ describe('functional tests', function() {
   })
 
   describe('tests for putObject getObject getPartialObject statObject removeObject', function() {
-    this.timeout(5*60*1000)
-
     it('should upload 100KB', done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
@@ -190,7 +204,6 @@ describe('functional tests', function() {
   })
 
   describe('fPutObject fGetObject', function() {
-    this.timeout(5*60*1000)
     var tmpFileUpload = `/tmp/${_11mbObjectName}`
     var tmpFileDownload = `/tmp/${_11mbObjectName}.download`
 
@@ -219,12 +232,110 @@ describe('functional tests', function() {
     })
   })
 
+  describe('putObject (resume)', () => {
+    it('should create an incomplete upload', done => {
+      var stream = readableStream(_10mb)
+      // write just 10mb, so that it errors out and incomplete upload is created
+      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
+        if (!e) done(new Error('Expecting Error'))
+        done()
+      })
+    })
+    it('should get list of parts and verify', done => {
+      var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
+      var result
+      stream.on('error', done)
+      stream.on('data', data => {
+        if (data.key === _11mbObjectName)
+          result = data
+      })
+      stream.on('end', () => {
+        if (result) {
+          return done()
+        }
+        done(new Error('Uploaded part not found'))
+      })
+    })
+    it('should resume upload', done => {
+      var stream = readableStream(_11mb)
+      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
+        if (e) return done(e)
+        done()
+      })
+    })
+    it('should remove the uploaded object', done => {
+      client.removeObject(bucketName, _11mbObjectName, done)
+    })
+  })
+
+  describe('fPutObject-resume', () => {
+    var _11mbTmpFile = `/tmp/${_11mbObjectName}`
+    it('should create tmp file', () => {
+      fs.writeFileSync(_11mbTmpFile, _11mb)
+    })
+    it('should create an incomplete upload', done => {
+      var stream = readableStream(_10mb)
+      // write just 10mb, so that it errors out and incomplete upload is created
+      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
+        if (!e) done(new Error('Expecting Error'))
+        done()
+      })
+    })
+    it('should get list of parts and verify', done => {
+      var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
+      var result
+      stream.on('error', done)
+      stream.on('data', data => {
+        if (data.key === _11mbObjectName)
+          result = data
+      })
+      stream.on('end', () => {
+        if (result) {
+          return done()
+        }
+        done(new Error('Uploaded part not found'))
+      })
+    })
+    it('should resume upload', done => {
+      client.fPutObject(bucketName, _11mbObjectName, _11mbTmpFile, '', done)
+    })
+    it('should remove the uploaded object', done => {
+      client.removeObject(bucketName, _11mbObjectName, done)
+    })
+  })
+
+  describe('fGetObject-resume', () => {
+    var localFile = `/tmp/${_5mbObjectName}`
+    it('should upload object', done => {
+      var stream = readableStream(_5mb)
+      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '' , done)
+    })
+    it('should simulate a partially downloaded file', () => {
+      var tmpFile = `/tmp/${_5mbObjectName}.${_5mbmd5}.part.minio-js`
+      // create a partial file
+      fs.writeFileSync(_5mbObjectName, _100kb)
+    })
+    it('should resume the download', done => {
+      client.fGetObject(bucketName, _5mbObjectName, localFile, done)
+    })
+    it('should verify md5sum of the downloaded file', done => {
+      var data = fs.readFileSync(localFile)
+      var hash = crypto.createHash('md5').update(data).digest('hex')
+      if (hash === _5mbmd5) return done()
+      done(new Error('md5 of downloaded file does not match'))
+    })
+    it('should remove tmp files', done => {
+      fs.unlinkSync(localFile)
+      client.removeObject(bucketName, _5mbObjectName, done)
+    })
+  })
+
   describe('presigned operatons', () => {
     it('should upload using presignedUrl', done => {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path'])
+        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
         options.method = 'PUT'
         options.headers = {
           'content-length' : _1byte.length
@@ -246,7 +357,7 @@ describe('functional tests', function() {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path'])
+        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
         options.method = 'GET'
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
@@ -292,8 +403,6 @@ describe('functional tests', function() {
   })
 
   describe('listObjects', function() {
-    this.timeout(25*60*1000)
-
     var listObjectPrefix = 'peppaPrefix'
     var listObjectsNum = 10
     var objArray = []
@@ -315,7 +424,7 @@ describe('functional tests', function() {
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
-          return done(new Error(`listObjects lists ${listArray} objects, expected ${listObjectsNum}`))
+          return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
         })
         .on('data', data => {
           listArray.push(data.name)

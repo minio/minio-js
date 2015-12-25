@@ -25,7 +25,7 @@ export function parseError(xml) {
   if (typeof parsedXml.root !== 'undefined') {
     parsedXml.root.children.forEach(element => {
       if (element.name === 'Code') {
-        e.code = element.content
+        e.name = element.content
       } else if (element.name === 'Message') {
         e.message = element.content
       } else if (element.name === 'RequestId') {

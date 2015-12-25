@@ -17,7 +17,8 @@
 import Moment from 'moment'
 import Crypto from 'crypto'
 import _ from 'lodash'
-import { uriEscape, getScope, isString } from './helpers.js'
+import { uriEscape, getScope, isString, isObject } from './helpers.js'
+import * as errors from './errors.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -32,6 +33,12 @@ const signV4Algorithm = 'AWS4-HMAC-SHA256'
 //  <HashedPayload>
 //
 function getCanonicalRequest(request, hashedPayload) {
+  if (!isObject(request)) {
+    throw new TypeError('request should be of type "object"')
+  }
+  if (!isString(hashedPayload)) {
+    throw new TypeError('hashedPayload should be of type "string"')
+  }
   var signedHeaders = getSignedHeaders(request)
   var headers = signedHeaders.reduce((acc, i) => {
       acc.push(`${i.toLowerCase()}:${request.headers[i]}`)
@@ -62,11 +69,23 @@ function getCanonicalRequest(request, hashedPayload) {
 
 // generate a credential string
 function getCredential(accessKey, region, requestDate) {
+  if (!isString(accessKey)) {
+    throw new TypeError('accessKey should be of type "string"')
+  }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
+  if (!isObject(requestDate)) {
+    throw new TypeError('requestDate should be of type "object"')
+  }
   return `${accessKey}/${getScope(region, requestDate)}`
 }
 
 // signed headers list - alphabetically sorted
 function getSignedHeaders(request) {
+  if (!isObject(request)) {
+    throw new TypeError('request should be of type "object"')
+  }
   // Excerpts from @lsegal - https://github.com/aws/aws-sdk-js/issues/659#issuecomment-120477258
   //
   //  User-Agent:
@@ -102,6 +121,15 @@ function getSignedHeaders(request) {
 
 // returns the key used for calculating signature
 function getSigningKey(date, region, secretKey) {
+  if (!isObject(date)) {
+    throw new TypeError('date should be of type "object"')
+  }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
+  if (!isString(secretKey)) {
+    throw new TypeError('secretKey should be of type "string"')
+  }
   var dateLine = date.format('YYYYMMDD'),
     hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest('binary'),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
@@ -111,6 +139,15 @@ function getSigningKey(date, region, secretKey) {
 
 // returns the string that needs to be signed
 function getStringToSign(canonicalRequest, requestDate, region) {
+  if (!isString(canonicalRequest)) {
+    throw new TypeError('canonicalRequest should be of type "string"')
+  }
+  if (!isObject(requestDate)) {
+    throw new TypeError('requestDate should be of type "object"')
+  }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
   var hash = Crypto.createHash('sha256').update(canonicalRequest).digest('hex')
   var scope = getScope(region, requestDate)
   var stringToSign = []
@@ -123,6 +160,18 @@ function getStringToSign(canonicalRequest, requestDate, region) {
 
 // calculate the signature of the POST policy
 export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
+  if (!isObject(date)) {
+    throw new TypeError('date should be of type "object"')
+  }
+  if (!isString(secretKey)) {
+    throw new TypeError('secretKey should be of type "string"')
+  }
+  if (!isString(policyBase64)) {
+    throw new TypeError('policyBase64 should be of type "string"')
+  }
   var signingKey = getSigningKey(date, region, secretKey)
   return Crypto.createHmac('sha256', signingKey).update(policyBase64).digest('hex').toLowerCase()
 }
@@ -130,17 +179,32 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
 // sings the request and adds the following headers to request.header
 // 'x-amz-date', 'x-amz-content-sha256', 'authorization'
 export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
-  if (!accessKey || !secretKey) {
-    // no signing in case of anonymous requests
-    return
+  if (!isObject(request)) {
+    throw new TypeError('request should be of type "object"')
+  }
+  if (!isString(dataShaSum256)) {
+    throw new TypeError('dataShaSum256 should be of type "string"')
+  }
+  if (!isString(accessKey)) {
+    throw new TypeError('accessKey should be of type "string"')
+  }
+  if (!isString(secretKey)) {
+    throw new TypeError('secretKey should be of type "string"')
   }
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
-  var requestDate = Moment().utc()
-  if (!dataShaSum256) {
-    dataShaSum256 = Crypto.createHash('sha256').update('').digest('hex').toLowerCase()
+
+  if (!accessKey || !secretKey) {
+    // no signing in case of anonymous requests
+    return
   }
+  // sha256sum is always needed for non-anonymous requests
+  if (dataShaSum256.length !== 64) {
+    throw new errors.InvalidArgumentError(`invalid dataShaSum256 : ${dataShaSum256}`)
+  }
+
+  var requestDate = Moment().utc()
 
   if (!request.headers) {
     request.headers = {}
@@ -170,6 +234,19 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
 
 // returns a presigned URL string
 export function presignSignatureV4(request, accessKey, secretKey, region) {
+  if (!isObject(request)) {
+    throw new TypeError('request should be of type "object"')
+  }
+  if (!isString(accessKey)) {
+    throw new TypeError('accessKey should be of type "string"')
+  }
+  if (!isString(secretKey)) {
+    throw new TypeError('secretKey should be of type "string"')
+  }
+  if (!isString(region)) {
+    throw new TypeError('region should be of type "string"')
+  }
+
   if (!accessKey) {
     throw new Error('accessKey is required for presigning')
   }
@@ -185,9 +262,6 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
   }
   if (request.expires > 604800) {
     throw new Error('expires param cannot be larger than 7 days')
-  }
-  if (!isString(region)) {
-    throw new TypeError('region should be of type "string"')
   }
 
   var expires = request.expires

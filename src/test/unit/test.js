@@ -393,10 +393,6 @@ describe('Client', function() {
         MockResponse('http://localhost:9000').get('/').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/'))
         client.listBuckets(checkError('code', 'message', 'requestid', 'hostid', '/', done))
       })
-      it('should convert 307 to 403', (done) => {
-        MockResponse('http://localhost:9000').get('/').reply(307)
-        client.listBuckets(checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, done))
-      })
     })
 
     describe('#bucketExists(bucket, cb)', () => {
@@ -1354,7 +1350,7 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     if (e === null) {
       callback('expected error, received success')
     }
-    assert.equal(e.code, code)
+    assert.equal(e.name, code)
     assert.equal(e.message, message)
     assert.equal(e.requestid, requestid)
     assert.equal(e.hostid, hostid)
