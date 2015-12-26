@@ -235,9 +235,14 @@ export default class Client extends Multipart {
       signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region)
       var req = this.transport.request(reqOptions, response => {
         if (statusCode != response.statusCode) {
+          // For an incorrect region, S3 server always sends back 400.
+          // But we will do cache invalidation for all errors so that,
+          // in future, if AWS S3 decides to send a different status code or
+          // XML error code we will still work fine.
+          delete(this.regionMap[options.bucketName])
           var errorTransformer = transformers.getErrorTransformer(response)
           pipesetup(response, errorTransformer)
-            .on('error', e => cb(e))
+            .on('error', cb)
           return
         }
         cb(null, response)
@@ -474,7 +479,11 @@ export default class Client extends Multipart {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName}, '', 204, cb)
+    this.makeRequest({method, bucketName}, '', 204, (e) => {
+      // If the bucket was successfully removed, remove the region map entry.
+      if (!e) delete(this.regionMap[bucketName])
+      cb(e)
+    })
   }
 
   // get a bucket's ACL.
