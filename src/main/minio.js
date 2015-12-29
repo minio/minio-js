@@ -206,6 +206,46 @@ export default class Client extends Multipart {
     this.makeRequestStream(options, stream, sha256sum, statusCode, cb)
   }
 
+  // log the request, response, error
+  logHTTP(reqOptions, response, err) {
+    if (!isObject(reqOptions)) {
+      throw new TypeError('reqOptions should be of type "object"')
+    }
+    if (response && !isReadableStream(response)) {
+      throw new TypeError('response should be of type "Stream"')
+    }
+    if (err && !(err instanceof Error)) {
+      throw new TypeError('err should be of type "Error"')
+    }
+    if (!this.logStream) return
+    var logHeaders = (headers) => {
+      _.forEach(headers, (v, k) => {
+        this.logStream.write(`${k}: ${v}\n`)
+      })
+      this.logStream.write('\n')
+    }.bind(this)
+    this.logStream.write(`REQUEST: ${reqOptions.method} ${reqOptions.path}\n`)
+    logHeaders(reqOptions.headers)
+    if (response) {
+      this.logStream.write(`RESPONSE: ${response.statusCode}\n`)
+      logHeaders(response.headers)
+    }
+    if (err) {
+      this.logStream.write(err.toString())
+    }
+  }
+
+  // Enable tracing
+  traceOn(stream) {
+    if (!stream) stream = process.stdout
+    this.logStream = stream
+  }
+
+  // Disable tracing
+  traceOff() {
+    this.logStream = null
+  }
+
   // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
   makeRequestStream(options, stream, sha256sum, statusCode, cb) {
@@ -234,6 +274,7 @@ export default class Client extends Multipart {
       if (e) return cb(e)
       signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region)
       var req = this.transport.request(reqOptions, response => {
+        this.logHTTP(reqOptions, response)
         if (statusCode != response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
@@ -248,7 +289,10 @@ export default class Client extends Multipart {
         cb(null, response)
       })
       pipesetup(stream, req)
-        .on('error', e => cb(e))
+        .on('error', e => {
+          this.logHTTP(reqOptions, null, e)
+          cb(e)
+        })
     }
     // for operations where bucketName is not relevant like listBuckets()
     if (!options.bucketName) return _makeRequest(null, 'us-east-1')
@@ -275,11 +319,14 @@ export default class Client extends Multipart {
 
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
-
     signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
     var req = this.transport.request(reqOptions)
-    req.on('error', e => cb(e))
+    req.on('error', e => {
+      this.logHTTP(reqOptions, null, e)
+      cb(e)
+    })
     req.on('response', response => {
+      this.logHTTP(reqOptions, response)
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
@@ -357,8 +404,12 @@ export default class Client extends Multipart {
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
     var req = this.transport.request(reqOptions)
-    req.on('error', e => cb(e))
+    req.on('error', e => {
+      this.logHTTP(reqOptions, null, e)
+      cb(e)
+    })
     req.on('response', response => {
+      this.logHTTP(reqOptions, response)
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
@@ -368,7 +419,6 @@ export default class Client extends Multipart {
       cb()
     })
     req.write(payload)
-    req.on('error', e => cb(e))
     req.end()
   }
 
