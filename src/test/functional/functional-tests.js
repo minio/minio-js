@@ -15,6 +15,7 @@
  */
 
 import minio from '../main/minio.js'
+import os from 'os'
 import stream from 'stream'
 import crypto from 'crypto'
 import async from 'async'
@@ -34,42 +35,49 @@ describe('functional tests', function() {
     accessKey: process.env['KEY'],
     secretKey: process.env['SECRET']
   })
-  var bucketName = 'peppatest'
-  var objectName = 'peppaobject'
+  var bucketName = 'miniojsbucket'
+  var objectName = 'miniojsobject'
 
   var _1byte = new Buffer(1)
   _1byte.fill('a')
-  var _1byteObjectName = 'peppaobject_1byte'
+  var _1byteObjectName = 'miniojsobject_1byte'
 
   var _100kb = new Buffer(100*1024)
   _100kb.fill('a')
-  var _100kbObjectName = 'peppaobject_100kb'
+  var _100kbObjectName = 'miniojsobject_100kb'
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
 
   var _11mb = new Buffer(11*1024*1024)
   _11mb.fill('a')
-  var _11mbObjectName = 'peppaobject_11mb'
+  var _11mbObjectName = 'miniojsobject_11mb'
   var _11mbmd5 = crypto.createHash('md5').update(_11mb).digest('hex')
 
   var _10mb = new Buffer(10*1024*1024)
   _10mb.fill('a')
-  var _10mbObjectName = 'peppaobject_10mb'
+  var _10mbObjectName = 'miniojsobject_10mb'
   var _10mbmd5 = crypto.createHash('md5').update(_10mb).digest('hex')
 
   var _5mb = new Buffer(5*1024*1024)
   _5mb.fill('a')
-  var _5mbObjectName = 'peppaobject_5mb'
+  var _5mbObjectName = 'miniojsobject_5mb'
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
+  var tmpDir = os.tmpdir()
+
+  before(done => client.makeBucket(bucketName, '', '', done))
+  after(done => client.removeBucket(bucketName, done))
+
   describe('makeBucket', () => {
-    it('should create bucket', done => client.makeBucket(bucketName, '', '', done))
+    // Not testing for non-standard region as DNS propogation takes time.
+    it('should create bucket with acl', done => client.makeBucket(`${bucketName}-acl`, 'public-read', '', done))
+    it('should delete bucket', done => client.removeBucket(`${bucketName}-acl`, done))
   })
 
   describe('listBuckets', () => {
     it('should list bucket', done => {
       client.listBuckets((e, buckets) => {
         if (e) return done(e)
-        if (buckets.filter(bucket => bucket.name === bucketName).length === 1) return done()
+        if(_.find(buckets, {name : bucketName})) return done()
         done(new Error('bucket not found'))
       })
     })
@@ -204,20 +212,14 @@ describe('functional tests', function() {
   })
 
   describe('fPutObject fGetObject', function() {
-    var tmpFileUpload = `/tmp/${_11mbObjectName}`
-    var tmpFileDownload = `/tmp/${_11mbObjectName}.download`
+    var tmpFileUpload = `${tmpDir}/${_11mbObjectName}`
+    var tmpFileDownload = `${tmpDir}/${_11mbObjectName}.download`
 
-    it(`should create ${tmpFileUpload}`, () => {
-      fs.writeFileSync(tmpFileUpload, _11mb)
-    })
+    it(`should create ${tmpFileUpload}`, () => fs.writeFileSync(tmpFileUpload, _11mb))
 
-    it('should upload object using fPutObject', done => {
-      client.fPutObject(bucketName, _11mbObjectName, tmpFileUpload, '', done)
-    })
+    it('should upload object using fPutObject', done => client.fPutObject(bucketName, _11mbObjectName, tmpFileUpload, '', done))
 
-    it('should download object using fGetObject', done => {
-      client.fGetObject(bucketName, _11mbObjectName, tmpFileDownload, done)
-    })
+    it('should download object using fGetObject', done => client.fGetObject(bucketName, _11mbObjectName, tmpFileDownload, done))
 
     it('should verify checksum', done => {
       var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
@@ -241,7 +243,7 @@ describe('functional tests', function() {
         done()
       })
     })
-    it('should get list of parts and verify', done => {
+    it('should confirm the presence of incomplete upload', done => {
       var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
       var result
       stream.on('error', done)
@@ -263,16 +265,12 @@ describe('functional tests', function() {
         done()
       })
     })
-    it('should remove the uploaded object', done => {
-      client.removeObject(bucketName, _11mbObjectName, done)
-    })
+    it('should remove the uploaded object', done => client.removeObject(bucketName, _11mbObjectName, done))
   })
 
   describe('fPutObject-resume', () => {
-    var _11mbTmpFile = `/tmp/${_11mbObjectName}`
-    it('should create tmp file', () => {
-      fs.writeFileSync(_11mbTmpFile, _11mb)
-    })
+    var _11mbTmpFile = `${tmpDir}/${_11mbObjectName}`
+    it('should create tmp file', () => fs.writeFileSync(_11mbTmpFile, _11mb))
     it('should create an incomplete upload', done => {
       var stream = readableStream(_10mb)
       // write just 10mb, so that it errors out and incomplete upload is created
@@ -281,7 +279,7 @@ describe('functional tests', function() {
         done()
       })
     })
-    it('should get list of parts and verify', done => {
+    it('should confirm the presence of incomplete upload', done => {
       var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
       var result
       stream.on('error', done)
@@ -296,28 +294,22 @@ describe('functional tests', function() {
         done(new Error('Uploaded part not found'))
       })
     })
-    it('should resume upload', done => {
-      client.fPutObject(bucketName, _11mbObjectName, _11mbTmpFile, '', done)
-    })
-    it('should remove the uploaded object', done => {
-      client.removeObject(bucketName, _11mbObjectName, done)
-    })
+    it('should resume upload', done => client.fPutObject(bucketName, _11mbObjectName, _11mbTmpFile, '', done))
+    it('should remove the uploaded object', done => client.removeObject(bucketName, _11mbObjectName, done))
   })
 
   describe('fGetObject-resume', () => {
-    var localFile = `/tmp/${_5mbObjectName}`
+    var localFile = `${tmpDir}/${_5mbObjectName}`
     it('should upload object', done => {
       var stream = readableStream(_5mb)
       client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '' , done)
     })
     it('should simulate a partially downloaded file', () => {
-      var tmpFile = `/tmp/${_5mbObjectName}.${_5mbmd5}.part.minio-js`
+      var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio-js`
       // create a partial file
-      fs.writeFileSync(_5mbObjectName, _100kb)
+      fs.writeFileSync(tmpFile, _100kb)
     })
-    it('should resume the download', done => {
-      client.fGetObject(bucketName, _5mbObjectName, localFile, done)
-    })
+    it('should resume the download', done => client.fGetObject(bucketName, _5mbObjectName, localFile, done))
     it('should verify md5sum of the downloaded file', done => {
       var data = fs.readFileSync(localFile)
       var hash = crypto.createHash('md5').update(data).digest('hex')
@@ -403,7 +395,7 @@ describe('functional tests', function() {
   })
 
   describe('listObjects', function() {
-    var listObjectPrefix = 'peppaPrefix'
+    var listObjectPrefix = 'miniojsPrefix'
     var listObjectsNum = 10
     var objArray = []
     var listArray = []
