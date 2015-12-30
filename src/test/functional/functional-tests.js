@@ -64,8 +64,26 @@ describe('functional tests', function() {
 
   var tmpDir = os.tmpdir()
 
+  var traceStream
+
+  // FUNCTIONAL_TEST_TRACE env varialble contains the path to which trace
+  // will be logged. Set it to /dev/stdout log to the stdou.
+  if (process.env['FUNCTIONAL_TEST_TRACE']) {
+    var filePath = process.env['FUNCTIONAL_TEST_TRACE']
+    traceStream = fs.createWriteStream(filePath, {flags: 'a'})
+    traceStream.write('====================================\n')
+    client.traceOn(traceStream)
+  }
+
   before(done => client.makeBucket(bucketName, '', '', done))
   after(done => client.removeBucket(bucketName, done))
+
+  if (traceStream) {
+    after(() => {
+      client.traceOff()
+      traceStream.end()
+    })
+  }
 
   describe('makeBucket', () => {
     // Not testing for non-standard region as DNS propogation takes time.
