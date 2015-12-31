@@ -17,7 +17,7 @@
 import Moment from 'moment'
 import Crypto from 'crypto'
 import _ from 'lodash'
-import { uriEscape, getScope, isString, isObject } from './helpers.js'
+import { uriEscape, getScope, isString, isObject, isArray, isDate } from './helpers.js'
 import * as errors from './errors.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
@@ -32,21 +32,29 @@ const signV4Algorithm = 'AWS4-HMAC-SHA256'
 //  <SignedHeaders>\n
 //  <HashedPayload>
 //
-function getCanonicalRequest(request, hashedPayload) {
-  if (!isObject(request)) {
-    throw new TypeError('request should be of type "object"')
+function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload) {
+  if (!isString(method)) {
+    throw new TypeError('method should be of type "string"')
+  }
+  if (!isString(path)) {
+    throw new TypeError('path should be of type "string"')
+  }
+  if (!isObject(headers)) {
+    throw new TypeError('headers should be of type "object"')
+  }
+  if (!isArray(signedHeaders)) {
+    throw new TypeError('signedHeaders should be of type "array"')
   }
   if (!isString(hashedPayload)) {
     throw new TypeError('hashedPayload should be of type "string"')
   }
-  var signedHeaders = getSignedHeaders(request)
-  var headers = signedHeaders.reduce((acc, i) => {
-      acc.push(`${i.toLowerCase()}:${request.headers[i]}`)
+  var headersArray = signedHeaders.reduce((acc, i) => {
+      acc.push(`${i.toLowerCase()}:${headers[i]}`)
       return acc
     }, [])
 
-  var requestResource = request.path.split('?')[0]
-  var requestQuery = request.path.split('?')[1]
+  var requestResource = path.split('?')[0]
+  var requestQuery = path.split('?')[1]
   if (!requestQuery) requestQuery = ''
 
   if (requestQuery) {
@@ -58,10 +66,10 @@ function getCanonicalRequest(request, hashedPayload) {
   }
 
   var canonical = []
-  canonical.push(request.method.toUpperCase())
+  canonical.push(method.toUpperCase())
   canonical.push(requestResource)
   canonical.push(requestQuery)
-  canonical.push(headers.join('\n') + '\n')
+  canonical.push(headersArray.join('\n') + '\n')
   canonical.push(signedHeaders.join(';').toLowerCase())
   canonical.push(hashedPayload)
   return canonical.join('\n')
@@ -81,9 +89,9 @@ function getCredential(accessKey, region, requestDate) {
   return `${accessKey}/${getScope(region, requestDate)}`
 }
 
-// signed headers list - alphabetically sorted
-function getSignedHeaders(request) {
-  if (!isObject(request)) {
+// Returns signed headers array - alphabetically sorted
+function getSignedHeaders(headers) {
+  if (!isObject(headers)) {
     throw new TypeError('request should be of type "object"')
   }
   // Excerpts from @lsegal - https://github.com/aws/aws-sdk-js/issues/659#issuecomment-120477258
@@ -114,9 +122,9 @@ function getSignedHeaders(request) {
   //      Is skipped for obvious reasons
 
   var ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
-  return _.map(request.headers, (v, header) => header)
-                  .filter(header => ignoredHeaders.indexOf(header) === -1)
-                  .sort()
+  return _.map(headers, (v, header) => header)
+                .filter(header => ignoredHeaders.indexOf(header) === -1)
+                .sort()
 }
 
 // returns the key used for calculating signature
@@ -176,9 +184,9 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
   return Crypto.createHmac('sha256', signingKey).update(policyBase64).digest('hex').toLowerCase()
 }
 
-// sings the request and adds the following headers to request.header
-// 'x-amz-date', 'x-amz-content-sha256', 'authorization'
-export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
+// Returns the *headers* object with the following headers:
+// 'host', 'x-amz-date', 'x-amz-content-sha256', 'authorization'
+export function signV4(request, dataShaSum256, accessKey, secretKey, region, requestDate) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -194,6 +202,9 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
+  if (!isDate(requestDate)) {
+    throw new TypeError('requestDate should be of type "Date"')
+  }
 
   if (!accessKey || !secretKey) {
     // no signing in case of anonymous requests
@@ -204,36 +215,31 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region) {
     throw new errors.InvalidArgumentError(`invalid dataShaSum256 : ${dataShaSum256}`)
   }
 
-  var requestDate = Moment().utc()
-
-  if (!request.headers) {
-    request.headers = {}
-  }
+  var headers = _.assign({}, request.headers)
 
   var host = request.host
 
   if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
     host = `${host}:${request.port}`
   }
-  request.headers.host = host
-  request.headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
-  request.headers['x-amz-content-sha256'] = dataShaSum256
+  headers.host = host
+  headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
+  headers['x-amz-content-sha256'] = dataShaSum256
 
-  var canonicalRequest = getCanonicalRequest(request, dataShaSum256)
-
+  var signedHeaders = getSignedHeaders(headers)
+  var canonicalRequest = getCanonicalRequest(request.method, request.path, headers,
+                                              signedHeaders, dataShaSum256)
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
-
   var credential = getCredential(accessKey, region, requestDate)
-  var signedHeaders = getSignedHeaders(request).join(';').toLowerCase()
   var signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
 
-  var authorization = `Credential=${credential}, SignedHeaders=${signedHeaders}, Signature=${signature}`
-  request.headers.authorization = 'AWS4-HMAC-SHA256 ' + authorization
+  headers.authorization = `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=${signature}`
+  return headers
 }
 
 // returns a presigned URL string
-export function presignSignatureV4(request, accessKey, secretKey, region) {
+export function presignSignatureV4(request, accessKey, secretKey, region, requestDate) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -245,6 +251,9 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
   }
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
+  }
+  if (!isDate(requestDate)) {
+    throw new TypeError('requestDate should be of type "Date"')
   }
 
   if (!accessKey) {
@@ -271,15 +280,11 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
     host = `${host}:${request.port}`
   }
 
-  if (!request.headers) {
-    request.headers = {}
-  }
+  var headers = _.assign({}, request.headers)
+  headers.host = host
 
-  request.headers.host = host
-
-  var requestDate = Moment().utc()
   var iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
-  var signedHeaders = getSignedHeaders(request).join(';').toLowerCase()
+  var signedHeaders = getSignedHeaders(headers)
   var credential = getCredential(accessKey, region, requestDate)
   var hashedPayload = 'UNSIGNED-PAYLOAD'
 
@@ -288,15 +293,16 @@ export function presignSignatureV4(request, accessKey, secretKey, region) {
   requestQuery.push(`X-Amz-Credential=${uriEscape(credential)}`)
   requestQuery.push(`X-Amz-Date=${iso8601Date}`)
   requestQuery.push(`X-Amz-Expires=${expires}`)
-  requestQuery.push(`X-Amz-SignedHeaders=${uriEscape(signedHeaders)}`)
+  requestQuery.push(`X-Amz-SignedHeaders=${uriEscape(signedHeaders.join(';').toLowerCase())}`)
 
-  request.path += '?' + requestQuery.join('&')
+  var path = request.path + '?' + requestQuery.join('&')
 
-  var canonicalRequest = getCanonicalRequest(request, hashedPayload)
+  var canonicalRequest = getCanonicalRequest(request.method, path,
+                                              headers, signedHeaders, hashedPayload)
 
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
   var signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
-  var presignedUrl = request.protocol + '//' + host + request.path + `&X-Amz-Signature=${signature}`
+  var presignedUrl = request.protocol + '//' + host + path + `&X-Amz-Signature=${signature}`
   return presignedUrl
 }

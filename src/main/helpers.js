@@ -110,6 +110,16 @@ export function isBoolean(arg) {
   return typeof(arg) === 'boolean'
 }
 
+// check if arg is array
+export function isArray(arg) {
+  return Array.isArray(arg)
+}
+
+// check if arg is Date
+export function isDate(arg) {
+  return arg._isAMomentObject
+}
+
 // pipesetup sets up pipe() from left to right os streams array
 // pipesetup will also make sure that error emitted at any of the upstream Stream
 // will be emited at the last stream. This makes error handling simple

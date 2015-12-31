@@ -274,7 +274,9 @@ export default class Client {
     var reqOptions = this.getRequestOptions(options)
     var _makeRequest = (e, region) => {
       if (e) return cb(e)
-      signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region)
+      var requestDate = Moment().utc()
+      var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
+      if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
       var req = this.transport.request(reqOptions, response => {
         this.logHTTP(reqOptions, response)
         if (statusCode != response.statusCode) {
@@ -321,7 +323,9 @@ export default class Client {
 
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
-    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var requestDate = Moment().utc()
+    var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
+    if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -404,7 +408,9 @@ export default class Client {
     if (this.params.port) reqOptions.port = this.params.port
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
-    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var requestDate = Moment().utc()
+    var headersv4 = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
+    if (headersv4) reqOptions.headers = _.assign({}, reqOptions.headers, headersv4)
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -1161,9 +1167,10 @@ export default class Client {
     var method = 'PUT'
     var options = this.getRequestOptions({method, bucketName, objectName})
     options.expires = expires.toString()
+    var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
     })
   }
 
@@ -1186,9 +1193,10 @@ export default class Client {
     var method = 'GET'
     var options = this.getRequestOptions({method, bucketName, objectName})
     options.expires = expires.toString()
+    var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
     })
   }
 
