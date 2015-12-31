@@ -32,7 +32,6 @@ import path from 'path'
 import _ from 'lodash'
 
 import { isValidPrefix, isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup, readableStream, isReadableStream } from './helpers.js';
-import Multipart from './multipart.js';
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
 import * as transformers from './transformers'
@@ -41,7 +40,7 @@ import * as errors from './errors.js';
 
 var Package = require('../../package.json');
 
-export default class Client extends Multipart {
+export default class Client {
   constructor(params, transport) {
     var parsedUrl = Url.parse(params.endPoint),
       port = +parsedUrl.port
@@ -103,12 +102,15 @@ export default class Client extends Multipart {
     }
     if (!newParams.accessKey) newParams.accessKey = ''
     if (!newParams.secretKey) newParams.secretKey = ''
-    super(newParams, transport, pathStyle)
     this.anonymous = !newParams.accessKey || !newParams.secretKey
     this.params = newParams
     this.transport = transport
     this.pathStyle = pathStyle
     this.regionMap = {}
+    this.minimumPartSize = 5*1024*1024
+    this.maximumPartSize = 5*1024*1024*1024
+    this.maximumStreamObjectSize = 50*1024*1024*1024
+    this.maxObjectSize = 5*1024*1024*1024*1024
   }
 
   // returns *options* object that can be used with http.request()
@@ -272,7 +274,9 @@ export default class Client extends Multipart {
     var reqOptions = this.getRequestOptions(options)
     var _makeRequest = (e, region) => {
       if (e) return cb(e)
-      signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region)
+      var requestDate = Moment().utc()
+      var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
+      if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
       var req = this.transport.request(reqOptions, response => {
         this.logHTTP(reqOptions, response)
         if (statusCode != response.statusCode) {
@@ -319,7 +323,9 @@ export default class Client extends Multipart {
 
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
-    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var requestDate = Moment().utc()
+    var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
+    if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -402,7 +408,9 @@ export default class Client extends Multipart {
     if (this.params.port) reqOptions.port = this.params.port
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
-    signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1')
+    var requestDate = Moment().utc()
+    var headersv4 = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
+    if (headersv4) reqOptions.headers = _.assign({}, reqOptions.headers, headersv4)
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -471,12 +479,12 @@ export default class Client extends Multipart {
     var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsOnce(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
+      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
           result.prefixes.forEach(prefix => dummyTransformer.write(prefix))
           async.eachSeries(result.uploads, (upload, cb) => {
-            this.listAllParts(bucket, upload.key, upload.uploadId, (err, parts) => {
+            this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
               if (err) return cb(err)
               upload.size = parts.reduce((acc, item) => acc + item.size, 0)
               dummyTransformer.write(upload)
@@ -845,7 +853,7 @@ export default class Client extends Multipart {
       },
       (uploadId, cb) => {
         // if there was a previous incomplete upload, fetch all its uploaded parts info
-        if (uploadId) return this.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        if (uploadId) return this.listParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
         // there was no previous upload, initiate a new one
         this.initiateNewMultipartUpload(bucketName, objectName, '', (e, uploadId) => cb(e, uploadId, []))
       },
@@ -970,7 +978,7 @@ export default class Client extends Multipart {
     async.waterfall([
       cb => this.findUploadId(bucketName, objectName, cb),
       (uploadId, cb) => {
-        if (uploadId) return this.listAllParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
+        if (uploadId) return this.listParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
         this.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
@@ -986,7 +994,7 @@ export default class Client extends Multipart {
   }
 
   // list a batch of objects
-  listObjectsOnce(bucketName, prefix, marker, delimiter, maxKeys) {
+  listObjectsQuery(bucketName, prefix, marker, delimiter, maxKeys) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1069,7 +1077,7 @@ export default class Client extends Multipart {
     var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
     var listNext = (marker) => {
-      this.listObjectsOnce(bucketName, prefix, marker, delimiter, 1000)
+      this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
           result.objects.forEach(object => {
@@ -1159,9 +1167,10 @@ export default class Client extends Multipart {
     var method = 'PUT'
     var options = this.getRequestOptions({method, bucketName, objectName})
     options.expires = expires.toString()
+    var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
     })
   }
 
@@ -1184,9 +1193,10 @@ export default class Client extends Multipart {
     var method = 'GET'
     var options = this.getRequestOptions({method, bucketName, objectName})
     options.expires = expires.toString()
+    var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region))
+      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
     })
   }
 
@@ -1228,6 +1238,380 @@ export default class Client extends Multipart {
       postPolicy.formData['x-amz-signature'] = signature
       cb(null, postPolicy.formData)
     })
+  }
+
+  // Calls implemented below are related to multipart.
+
+  // Initiate a new multipart upload.
+  initiateNewMultipartUpload(bucketName, objectName, contentType, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    var method = 'POST'
+    var headers = {'Content-Type': contentType}
+    var query = 'uploads'
+    this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getInitiateMultipartTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', uploadId => cb(null, uploadId))
+    })
+  }
+
+  // Complete the multipart upload. After all the parts are uploaded issuing
+  // this call will aggregate the parts on the server into a single object.
+  completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(etags)) {
+      throw new TypeError('etags should be of type "Array"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
+
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    var method = 'POST'
+    var query = `uploadId=${uploadId}`
+
+    var parts = []
+
+    etags.forEach(element => {
+      parts.push({
+        Part: [{
+          PartNumber: element.part
+        }, {
+          ETag: element.etag
+        }]
+      })
+    })
+
+    var payloadObject = {CompleteMultipartUpload: parts}
+    var payload = Xml(payloadObject)
+
+    this.makeRequest({method, bucketName, objectName, query}, payload, 200, (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getCompleteMultipartTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', result => cb(null, result.etag))
+    })
+  }
+
+  // Get part-info of all parts of an incomplete upload specified by uploadId.
+  listParts(bucketName, objectName, uploadId, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+    var parts = []
+    var listNext = (marker) => {
+      this.listPartsQuery(bucketName, objectName, uploadId, marker, (e, result) => {
+        if (e) {
+          cb(e)
+          return
+        }
+        parts = parts.concat(result.parts)
+        if (result.isTruncated) {
+          listNext(result.marker)
+          return
+        }
+        cb(null, parts)
+      })
+    }
+    listNext(0)
+  }
+
+  // Called by listParts to fetch a batch of part-info
+  listPartsQuery(bucketName, objectName, uploadId, marker, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isNumber(marker)) {
+      throw new TypeError('marker should be of type "number"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+    var query = ''
+    if (marker && marker !== 0) {
+      query += `part-number-marker=${marker}&`
+    }
+    query += `uploadId=${uploadId}`
+
+    var method = 'GET'
+    this.makeRequest({method, bucketName, objectName, query}, '', 200, (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getListPartsTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', data => cb(null, data))
+    })
+  }
+
+  // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
+  listIncompleteUploadsQuery(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(keyMarker)) {
+      throw new TypeError('keyMarker should be of type "string"')
+    }
+    if (!isString(uploadIdMarker)) {
+      throw new TypeError('uploadIdMarker should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    var queries = []
+    if (prefix) {
+      queries.push(`prefix=${uriEscape(prefix)}`)
+    }
+    if (keyMarker) {
+      keyMarker = uriEscape(keyMarker)
+      queries.push(`key-marker=${keyMarker}`)
+    }
+    if (uploadIdMarker) {
+      queries.push(`upload-id-marker=${uploadIdMarker}`)
+    }
+    if (delimiter) {
+      queries.push(`delimiter=${uriEscape(delimiter)}`)
+    }
+    var maxUploads = 1000
+    queries.push(`max-uploads=${maxUploads}`)
+    queries.sort()
+    queries.unshift('uploads')
+    var query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+    var method = 'GET'
+    var transformer = transformers.getListMultipartTransformer()
+    this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
+      if (e) return transformer.emit('error', e)
+      pipesetup(response, transformer)
+    })
+    return transformer
+  }
+
+  // Find uploadId of an incomplete upload.
+  findUploadId(bucketName, objectName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
+
+    var listNext = (keyMarker, uploadIdMarker) => {
+      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
+        .on('error', e => cb(e))
+        .on('data', result => {
+          var keyFound = false
+          result.uploads.forEach(upload => {
+            if (upload.key === objectName) {
+              cb(null, upload.uploadId)
+              keyFound = true
+            }
+          })
+          if (keyFound) {
+            return
+          }
+          if (result.isTruncated) {
+            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
+            return
+          }
+          cb(null, undefined)
+        })
+    }
+    listNext('', '')
+  }
+
+  // Returns a stream that does multipart upload of the chunks it receives.
+  chunkUploader(bucketName, objectName, contentType, uploadId, partsArray) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(partsArray)) {
+      throw new TypeError('partsArray should be of type "Array"')
+    }
+    var partsDone = []
+    var partNumber = 1
+
+    // convert array to object to make things easy
+    var parts = partsArray.reduce(function(acc, item) {
+      if (!acc[item.part]) {
+        acc[item.part] = item
+      }
+      return acc
+    }, {})
+
+    return Through2.obj((chunk, enc, cb) => {
+      var part = parts[partNumber]
+      var md5sumhex = Crypto.createHash('md5').update(chunk).digest('hex').toLowerCase()
+      if (part) {
+        if (md5sumhex === part.etag) {
+          //md5 matches, chunk already uploaded
+          partsDone.push({part: part.part, etag: part.etag})
+          partNumber++
+          return cb()
+        }
+        // md5 doesn't match, upload again
+      }
+      var sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex').toLowerCase()
+      var md5sumbase64 = (new Buffer(md5sumhex, 'hex')).toString('base64')
+      var stream = readableStream(chunk)
+      var multipart = true
+      var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+      uploader(uploadId, partNumber, stream, chunk.length, sha256sum, md5sumbase64, (e, etag) => {
+        if (e) {
+          partNumber++
+          return cb(e)
+        }
+        var part = {
+          part: partNumber,
+          etag: etag
+        }
+        partsDone.push(part)
+        partNumber++
+        cb()
+      })
+    }, function(cb) {
+      this.push(partsDone)
+      this.push(null)
+      cb()
+    })
+  }
+
+  // Returns a function that can be used for uploading objects.
+  // If multipart === true, it returns function that is used to upload
+  // a part of the multipart.
+  getUploader(bucketName, objectName, contentType, multipart) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+    if (!isBoolean(multipart)) {
+      throw new TypeError('multipart should be of type "boolean"')
+    }
+    if (contentType === '') {
+      contentType = 'application/octet-stream'
+    }
+
+    var validate = (stream, length, sha256sum, md5sum, cb) => {
+      if (!isReadableStream(stream)) {
+        throw new TypeError('stream should be of type "Stream"')
+      }
+      if (!isNumber(length)) {
+        throw new TypeError('length should be of type "number"')
+      }
+      if (!isString(sha256sum)) {
+        throw new TypeError('sha256sum should be of type "string"')
+      }
+      if (!isString(md5sum)) {
+        throw new TypeError('md5sum should be of type "string"')
+      }
+      if (!isFunction(cb)) {
+        throw new TypeError('callback should be of type "function"')
+      }
+    }
+    var simpleUploader = (...args) => {
+      validate(...args)
+      var query = ''
+      upload(query, ...args)
+    }
+    var multipartUploader = (uploadId, partNumber, ...rest) => {
+      if (!isString(uploadId)) {
+        throw new TypeError('uploadId should be of type "string"')
+      }
+      if (!isNumber(partNumber)) {
+        throw new TypeError('partNumber should be of type "number"')
+      }
+      if (!uploadId) {
+        throw new errors.InvalidArgumentError('Empty uploadId')
+      }
+      if (!partNumber) {
+        throw new errors.InvalidArgumentError('partNumber cannot be 0')
+      }
+      validate(...rest)
+      var query = `partNumber=${partNumber}&uploadId=${uploadId}`
+      upload(query, ...rest)
+    }
+    var upload = (query, stream, length, sha256sum, md5sum, cb) => {
+      var method = 'PUT'
+      var headers = {
+        'Content-Length': length,
+        'Content-Type': contentType,
+        'Content-MD5': md5sum
+      }
+      this.makeRequestStream({method, bucketName, objectName, query, headers},
+                            stream, sha256sum, 200, (e, response) => {
+        if (e) return cb(e)
+        var etag = response.headers.etag
+        if (etag) {
+          etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+        }
+        cb(null, etag)
+      })
+    }
+    if (multipart) {
+      return multipartUploader
+    }
+    return simpleUploader
   }
 }
 
