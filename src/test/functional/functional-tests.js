@@ -70,7 +70,12 @@ describe('functional tests', function() {
   // will be logged. Set it to /dev/stdout log to the stdou.
   if (process.env['FUNCTIONAL_TEST_TRACE']) {
     var filePath = process.env['FUNCTIONAL_TEST_TRACE']
-    traceStream = fs.createWriteStream(filePath, {flags: 'a'})
+    // This is necessary for windows.
+    if (filePath === 'process.stdout') {
+      traceStream = process.stdout
+    } else {
+      traceStream = fs.createWriteStream(filePath, {flags: 'a'})
+    }
     traceStream.write('====================================\n')
     client.traceOn(traceStream)
   }
