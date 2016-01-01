@@ -29,6 +29,12 @@ export class InvalidArgumentError extends ExtendableError {
   }
 }
 
+export class InvalidPortError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
 export class InvalidEndPointError extends ExtendableError {
   constructor(message) {
     super(message)
