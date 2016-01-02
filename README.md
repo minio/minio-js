@@ -16,7 +16,7 @@ $ npm install --save minio
 var Minio = require('minio')
 
 var s3client = new Minio({
-  endPoint:  'https://s3.amazonaws.com',
+  endPoint:  's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
@@ -48,7 +48,7 @@ s3client.listBuckets(function(e, bucketStream) {
     <script type="text/javascript" src="<your-cdn>/minio-browser.js"></script>
     <script>
      var s3Client = new Minio({
-      endPoint:  'https://s3.amazonaws.com',
+      endPoint:  's3.amazonaws.com',
       accessKey: 'YOUR-ACCESSKEYID',
       secretKey: 'YOUR-SECRETACCESSKEY'
      });

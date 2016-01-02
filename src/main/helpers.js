@@ -15,6 +15,7 @@
  */
 
 import stream from 'stream'
+import _ from 'lodash'
 
 export function uriEscape(string) {
   var output = string
@@ -40,6 +41,71 @@ export function uriResourceEscape(string) {
 
 export function getScope(region, date) {
   return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
+}
+
+// isAmazonEndpoint - true if endpoint is 's3.amazonaws.com'.
+export function isAmazonEndpoint(endpoint) {
+  return endpoint === 's3.amazonaws.com'
+}
+
+// isValidEndpoint - true if endpoint is valid domain.
+export function isValidEndpoint(endpoint) {
+  if (!isValidDomain(endpoint)) {
+    return false
+  }
+  // Endpoint matches amazon, make sure its 's3.amazonaws.com'
+  if (endpoint.match('.amazonaws.com$')) {
+    if (!isAmazonEndpoint(endpoint)) {
+      return false
+    }
+  }
+  // Returning true for all other cases.
+  return true
+}
+
+// isValidDomain - true if input host is a valid domain.
+export function isValidDomain(host) {
+  if (!isString(host)) return false
+  // See RFC 1035, RFC 3696.
+  if (host.length === 0 || host.length > 255) {
+    return false
+  }
+  // Host cannot start or end with a '-'
+  if (host[0] === '-' || host.substr(-1) === '-') {
+    return false
+  }
+  // Host cannot start or end with a '_'
+  if (host[0] === '_' || host.substr(-1) === '_') {
+    return false
+  }
+  // Host cannot start or end with a '.'
+  if (host[0] === '.' || host.substr(-1) === '.') {
+    return false
+  }
+  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\\"\';:><?/'.split('')
+  // All non alphanumeric characters are invalid.
+  for (var i in alphaNumerics) {
+    if (host.indexOf(alphaNumerics[i]) > -1) {
+      return false
+    }
+  }
+  // No need to regexp match, since the list is non-exhaustive.
+  // We let it be valid and fail later.
+  return true
+}
+
+// isValidPort - is input port valid.
+export function isValidPort(port) {
+  // verify if port is a number.
+  if (!isNumber(port)) return false
+  // port cannot be negative.
+  if (port < 0) return false
+  // port '0' is valid and special case return true.
+  if (port === 0) return true
+  var min_port = 1;
+  var max_port = 65535;
+  // Verify if port is in range.
+  return port >= min_port && port <= max_port
 }
 
 export function isValidBucketName(bucket) {
@@ -73,11 +139,6 @@ export function isValidPrefix(prefix) {
 // check for allowed ACLs
 export function isValidACL(acl) {
   return acl === 'private' || acl === 'public-read' || acl === 'public-read-write' || acl === 'authenticated-read'
-}
-
-// check if typeof arg boolean
-export function isBoolean(arg) {
-  return typeof(arg) === 'boolean'
 }
 
 // check if typeof arg number

@@ -31,7 +31,7 @@ require('source-map-support').install()
 describe('functional tests', function() {
   this.timeout(30*60*1000)
   var client = new minio({
-    endPoint: 'https://s3.amazonaws.com',
+    endPoint: 's3.amazonaws.com',
     accessKey: process.env['KEY'],
     secretKey: process.env['SECRET']
   })
@@ -66,8 +66,8 @@ describe('functional tests', function() {
 
   var traceStream
 
-  // FUNCTIONAL_TEST_TRACE env varialble contains the path to which trace
-  // will be logged. Set it to /dev/stdout log to the stdou.
+  // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
+  // will be logged. Set it to /dev/stdout log to the stdout.
   if (process.env['FUNCTIONAL_TEST_TRACE']) {
     var filePath = process.env['FUNCTIONAL_TEST_TRACE']
     // This is necessary for windows.

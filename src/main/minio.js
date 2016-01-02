@@ -31,7 +31,12 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 
-import { isValidPrefix, isValidACL, isValidBucketName, isValidObjectName, getScope, uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber, isString, isObject, isNullOrUndefined, pipesetup, readableStream, isReadableStream } from './helpers.js';
+import { isValidPrefix, isValidACL, isValidEndpoint, isValidBucketName,
+         isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
+         uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
+         isString, isObject, isNullOrUndefined, pipesetup,
+         readableStream, isReadableStream } from './helpers.js';
+
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
 import * as transformers from './transformers'
@@ -41,46 +46,51 @@ import * as errors from './errors.js';
 var Package = require('../../package.json');
 
 export default class Client {
-  constructor(params, transport) {
-    var parsedUrl = Url.parse(params.endPoint),
-      port = +parsedUrl.port
-
-    var host = parsedUrl.hostname
-    var protocol = ''
-
-    var pathStyle = true
-    if (host.match('.amazonaws.com$')) {
-      if (host !== 's3.amazonaws.com') {
-        throw new errors.InvalidEndPointError(`endPoint ${params.endPoint} invalid, AWS S3 endPoint should to be "https://s3.amazonaws.com" for AWS S3`)
-      }
-      pathStyle = false
+  constructor(params) {
+    // Default values if not specified.
+    if (!params.insecure) params.insecure = false
+    if (!params.port) params.port = 0
+    // Validate input params.
+    if (!isValidEndpoint(params.endPoint)) {
+      throw new errors.InvalidEndPointError(`endPoint ${params.endPoint} is invalid`)
+    }
+    if (!isValidPort(params.port)) {
+      throw new errors.InvalidArgumentError(`port ${params.port} is invalid`)
+    }
+    if (!isBoolean(params.insecure)) {
+      throw new errors.InvalidArgumentError(`insecure option is of invalid type should be of type boolean true/false`)
     }
 
-    if (!transport) {
-      switch (parsedUrl.protocol) {
-        case 'http:':
-          {
-            transport = Http
-            protocol = 'http:'
-            if (port === 0) {
-              port = 80
-            }
-            break
-          }
-        case 'https:':
-          {
-            transport = Https
-            protocol = 'https:'
-            if (port === 0) {
-              port = 443
-            }
-            break
-          }
-        default:
-          {
-            throw new errors.InvalidProtocolError('Unknown protocol: ' + parsedUrl.protocol)
-          }
+    var host = params.endPoint
+    // Virtual host style is enabled by default.
+    var virtualHostStyle = true
+    if (!isAmazonEndpoint(host)) {
+      virtualHostStyle = false
+    }
+
+    var port = params.port;
+    var protocol = ''
+    var transport;
+    if (params.insecure === false) {
+      transport = Https
+      protocol = 'https:'
+      if (port === 0) {
+        port = 443
       }
+    } else {
+      transport = Http
+      protocol = 'http:'
+      if (port === 0) {
+        port = 80
+      }
+    }
+
+    // if custom transport is set, use it.
+    if (params.transport) {
+      if (!isObject(params.transport)) {
+        throw new errors.InvalidArgumentError('transport should be of type "object"')
+      }
+      transport = params.transport
     }
 
     // User Agent should always following the below style.
@@ -105,7 +115,7 @@ export default class Client {
     this.anonymous = !newParams.accessKey || !newParams.secretKey
     this.params = newParams
     this.transport = transport
-    this.pathStyle = pathStyle
+    this.virtualHostStyle = virtualHostStyle
     this.regionMap = {}
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
@@ -137,7 +147,7 @@ export default class Client {
     }
 
     reqOptions.path = '/'
-    if (this.pathStyle || !opts.bucketName) {
+    if (!this.virtualHostStyle || !opts.bucketName) {
       // we will do path-style requests for
       // 1. minio server
       // 2. listBuckets() where opts.bucketName is not defined
@@ -272,7 +282,7 @@ export default class Client {
     }
 
     var reqOptions = this.getRequestOptions(options)
-    var _makeRequest = (e, region) => {
+    var makeRequest = (e, region) => {
       if (e) return cb(e)
       var requestDate = Moment().utc()
       var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
@@ -299,8 +309,8 @@ export default class Client {
         })
     }
     // for operations where bucketName is not relevant like listBuckets()
-    if (!options.bucketName) return _makeRequest(null, 'us-east-1')
-    this.getBucketRegion(options.bucketName, _makeRequest)
+    if (!options.bucketName) return makeRequest(null, 'us-east-1')
+    this.getBucketRegion(options.bucketName, makeRequest)
   }
 
   // gets the region of the bucket

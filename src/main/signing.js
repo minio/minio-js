@@ -217,12 +217,10 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region, req
 
   var headers = _.assign({}, request.headers)
 
-  var host = request.host
-
+  headers.host = request.host
   if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
-    host = `${host}:${request.port}`
+    headers.host = `${request.host}:${request.port}`
   }
-  headers.host = host
   headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
   headers['x-amz-content-sha256'] = dataShaSum256
 
