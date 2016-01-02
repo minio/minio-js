@@ -1,12 +1,23 @@
+sudo: false
 language: node_js
+
+os:
+- linux
+
+env:
+- ARCH=x86_64
+- ARCH=i686
+
 node_js:
 - '0.10'
 - '0.11'
 - '0.12'
 - '4.2.4'
+
 script:
 - gulp browserify
 - gulp lint
+
 notifications:
   slack:
     secure: cnwaQJv7JtcnBU+FOzXuX5LI2SW9zzQVBkxvKUXqGzMJwiKnrpRP9JZtWdDFcafE+QDhUMfzjM7SsAdyZuq+wRm1I/TNylxDvJibVRxbKDlJQgoHvJ9+OdfXwwAfv4uS13ko/jSiLGdOvByWljA85ASoDRBzlhpb/bfVfx2chFA6sZHMmvKBD/Kk2x7WqkHvbHdh6qvsuwnYZAQNHQkHRr/ZljIzuer1OQHrzqPg1sTSiqRXv0/CqZ2g0ILXlaWTu07EbPmGmr5Ua0ViPK3C6Rlgve4LVS3T+QJZp5FQHlZX/9dN1LK0OZRfyQ2rfV3HiRDtF0BPxuPhMLDYgy9UIX0wXo+45+i1dzNJoyN7VrOaBmgPdZyy4thmc6sR/aU5l7jQjEG2SYQDUwYJYIQmdZ7f2YXQNqQvWSW+e+/TYmiXg/q/wOWYtMpDDwtXB3xedAs1GZCKRKpSUQHiTbUKbD5vNLWEfpcHzmU4gJBMp5kcWmhzPLOx3JogfUioCKWMWe0dgt4koX8RN7oLUlHqROOQfCDAIb6Pbo+tvoYsIlihzGO0zPewDnwU3dxwjWnP7mT8+8uDHvn5WFS9rFtPp/UThyASZuKEj1llA2UPJJ0OVa2tC8qz5qfDnty7B5yY9bFQhjfnR+DHiIjyj4o3VkkzmRuDk4qWqiABTayuOqk=
