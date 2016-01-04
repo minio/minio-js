@@ -32,8 +32,8 @@ describe('functional tests', function() {
   this.timeout(30*60*1000)
   var client = new minio({
     endPoint: 's3.amazonaws.com',
-    accessKey: process.env['KEY'],
-    secretKey: process.env['SECRET']
+    accessKey: process.env['ACCESS_KEY'],
+    secretKey: process.env['SECRET_KEY']
   })
   var bucketName = 'miniojsbucket'
   var objectName = 'miniojsobject'
@@ -86,7 +86,9 @@ describe('functional tests', function() {
   if (traceStream) {
     after(() => {
       client.traceOff()
-      traceStream.end()
+      if (filePath !== 'process.stdout') {
+        traceStream.end()
+      }
     })
   }
 

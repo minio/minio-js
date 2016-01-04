@@ -52,12 +52,16 @@ export function getDummyTransformer() {
 
 // generates an Error object depending on statusCode and XML body
 export function getErrorTransformer(response) {
-  var requestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
-  var statusCode = response.statusCode
   var e = new errors.S3Error()
-  e.requestid = requestid
-  e.id2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
-  e.bucketregion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
+  var statusCode = response.statusCode
+  // A value created by S3 compatible server that uniquely identifies
+  // the request.
+  e.amzRequestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
+  // A special token that helps troubleshoot API replies and issues.
+  e.amzId2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
+  // Region where the bucket is located. This header is returned only
+  // in HEAD bucket and ListObjects response.
+  e.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
   if (statusCode === 301) {
     e.name = 'MovedPermanently'
     e.message = 'Moved Permanently'
