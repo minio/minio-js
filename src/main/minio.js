@@ -211,7 +211,7 @@ export default class Client {
   }
 
   // makeRequest is the primitive used by all the apis for making S3 requests.
-  // payload can be empty string in case of no playload.
+  // payload can be empty string in case of no payload.
   // statusCode is the expected statusCode. If response.statusCode does not match
   // we parse the XML error and call the callback with the error message.
 
@@ -313,7 +313,7 @@ export default class Client {
     }
 
     var reqOptions = this.getRequestOptions(options)
-    var makeRequest = (e, region) => {
+    var _makeRequest = (e, region) => {
       if (e) return cb(e)
       if (!this.anonymous) {
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
@@ -346,8 +346,8 @@ export default class Client {
         })
     }
     // for operations where bucketName is not relevant like listBuckets()
-    if (!options.bucketName) return makeRequest(null, 'us-east-1')
-    this.getBucketRegion(options.bucketName, makeRequest)
+    if (!options.bucketName) return _makeRequest(null, 'us-east-1')
+    this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
   // gets the region of the bucket
@@ -399,7 +399,7 @@ export default class Client {
       pipesetup(response, transformer)
         .on('error', cb)
         .on('data', data => {
-          region = data
+          if (data) region = data
         })
         .on('end', () => {
           this.regionMap[bucketName] = region

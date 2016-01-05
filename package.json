@@ -36,7 +36,7 @@
     "source-map-support": "^0.2.10",
     "through2": "^0.6.5",
     "xml": "^1.0.0",
-    "xml-parser": "^1.2.0"
+    "xml2js": "^0.4.15"
   },
   "devDependencies": {
     "browserify": "^12.0.1",

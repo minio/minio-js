@@ -68,7 +68,7 @@ __Arguments__
 
 `bucketStream` emits Object with the format:
 * `obj.name` _string_ : bucket name
-* `obj.creationDate` _string_: date when bucket was created
+* `obj.creationDate` _Date_: date when bucket was created
 
 __Example__
 ```js
@@ -173,7 +173,7 @@ __Return Value__
   * `stat.key` _string_: name of the object
   * `stat.size` _number_: size of the object
   * `stat.etag` _string_: etag of the object
-  * `stat.lastModified` _string_: modified time stamp
+  * `stat.lastModified` _Date_: modified time stamp
 
 __Example__
 ```js

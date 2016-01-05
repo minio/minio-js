@@ -102,6 +102,12 @@ export class IncorrectSizeError extends ExtendableError {
   }
 }
 
+export class InvalidXMLError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
 // we throw S3Error instance for errors returned from S3 server
 // see getErrorTransformer for details
 export class S3Error extends ExtendableError {

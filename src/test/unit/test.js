@@ -422,10 +422,10 @@ describe('Client', function() {
         var results = []
         var expectedResults = [{
           name: 'bucket',
-          creationDate: '2015-05-05T20:35:51.410Z'
+          creationDate: new Date('2015-05-05T20:35:51.410Z')
         }, {
           name: 'foo',
-          creationDate: '2015-05-05T20:35:47.170Z'
+          creationDate: new Date('2015-05-05T20:35:47.170Z')
         }]
         client.listBuckets(function(e, buckets) {
           assert.deepEqual(buckets, expectedResults)
@@ -923,7 +923,7 @@ describe('Client', function() {
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', done)
         })
         it('should fail if actual size is smaller than expected', (done) => {
-          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncataed><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
             return body.length === 5 * 1024 * 1024
@@ -948,7 +948,7 @@ describe('Client', function() {
           })
         })
         it('should fail if actual size is larger than expected', (done) => {
-          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncataed><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
+          MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
             return body.length === 5 * 1024 * 1024
@@ -1038,32 +1038,32 @@ describe('Client', function() {
           results = [],
           expectedResults = [{
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key1',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key2',
             'size': 1661
           }, {
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key3',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key4',
             'size': 1661
           }, {
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key5',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key6',
             'size': 1661
           }]
@@ -1084,32 +1084,32 @@ describe('Client', function() {
           results = [],
           expectedResults = [{
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key1',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key2',
             'size': 1661
           }, {
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key3',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key4',
             'size': 1661
           }, {
             'etag': '5eb63bbbe01eeed093cb22bb8f5acdc3',
-            'lastModified': '2015-05-05T02:21:15.716Z',
+            'lastModified': new Date('2015-05-05T02:21:15.716Z'),
             'name': 'key5',
             'size': 11
           }, {
             'etag': '2a60eaffa7a82804bdc682ce1df6c2d4',
-            'lastModified': '2015-05-05T20:36:17.498Z',
+            'lastModified': new Date('2015-05-05T20:36:17.498Z'),
             'name': 'key6',
             'size': 1661
           }]
@@ -1397,9 +1397,9 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     }
     assert.equal(e.name, code)
     assert.equal(e.message, message)
-    assert.equal(e.requestid, requestid)
-    assert.equal(e.hostid, hostid)
-    assert.equal(e.resource, resource)
+    assert.equal(e.RequestId, requestid)
+    assert.equal(e.HostId, hostid)
+    assert.equal(e.Resource, resource)
     callback()
   }
 }
