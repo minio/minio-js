@@ -259,7 +259,8 @@ export function parseListParts(xml) {
               object.lastModified = xmlObject.content
               break
             case 'ETag':
-              object.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
+              // Trim only beginning and end of the etag.
+              object.etag = xmlObject.content.replace(/^\"/g, '').replace(/\"$/g, '')
               break
             case 'Size':
               object.size = +xmlObject.content
@@ -309,7 +310,8 @@ export function parseCompleteMultipart(xml) {
         }
       case 'ETag':
         {
-          result.etag = element.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
+          // Trim only beginning and end of the etag.
+          result.etag = element.content.replace(/^\"/g, '').replace(/\"$/g, '')
           break
         }
       default:
@@ -361,7 +363,8 @@ export function parseListObjects(xml) {
                 }
               case 'ETag':
                 {
-                  content.etag = xmlObject.content.replace(/"/g, '').replace(/&quot;/g, '').replace(/&#34;/g, '')
+                  // Trim only beginning and end of the etag.
+                  content.etag = xmlObject.content.replace(/^\"/g, '').replace(/\"$/g, '')
                   break
                 }
               default:
