@@ -246,15 +246,11 @@ export default class Client {
     if (response) {
       this.logStream.write(`RESPONSE: ${response.statusCode}\n`)
       logHeaders(response.headers)
-      // For error responses log the whole response body.
-      if (response.statusCode !== 200 &&
-          response.statusCode !== 204 &&
-          response.statusCode !== 206) {
-        if (err) {
-          var errJSON = JSON.stringify(err, null, '\t')
-          this.logStream.write(`${errJSON}\n`)
-        }
-      }
+    }
+    if (err) {
+      this.logStream.write('ERROR BODY:\n')
+      var errJSON = JSON.stringify(err, null, '\t')
+      this.logStream.write(`${errJSON}\n`)
     }
   }
 
@@ -318,6 +314,7 @@ export default class Client {
       })
       pipesetup(stream, req)
         .on('error', e => {
+          this.logHTTP(reqOptions, null, e)
           cb(e)
         })
     }
@@ -367,10 +364,7 @@ export default class Client {
       var transformer = transformers.getBucketRegionTransformer()
       var region = 'us-east-1'
       pipesetup(response, transformer)
-        .on('error', e => {
-          this.logHTTP(reqOptions, null, e)
-          cb(e)
-        })
+        .on('error', cb)
         .on('data', data => {
           region = data
         })
@@ -446,13 +440,16 @@ export default class Client {
       cb(e)
     })
     req.on('response', response => {
-      this.logHTTP(reqOptions, response)
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
-          .on('error', e => cb(e))
+        .on('error', e => {
+          this.logHTTP(reqOptions, response, e)
+          cb(e)
+        })
         return
       }
+      this.logHTTP(reqOptions, response)
       cb()
     })
     req.write(payload)
