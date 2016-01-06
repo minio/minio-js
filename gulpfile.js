@@ -74,7 +74,7 @@ gulp.task('lint', function() {
     }))
 });
 
-gulp.task('functional-test', function() {
+gulp.task('functional-test', ['compile'], function() {
   gulp.src('src/test/functional/functional-tests.js')
   .pipe(sourcemaps.init())
   .pipe(babel())

@@ -220,6 +220,8 @@ export default class Client {
 
   // log the request, response, error
   logHTTP(reqOptions, response, err) {
+    // if no logstreamer available return.
+    if (!this.logStream) return
     if (!isObject(reqOptions)) {
       throw new TypeError('reqOptions should be of type "object"')
     }
@@ -229,9 +231,12 @@ export default class Client {
     if (err && !(err instanceof Error)) {
       throw new TypeError('err should be of type "Error"')
     }
-    if (!this.logStream) return
     var logHeaders = (headers) => {
       _.forEach(headers, (v, k) => {
+        if (k == 'authorization') {
+          var redacter = new RegExp('Signature=([0-9a-f]+)')
+          v = v.replace(redacter, 'Signature=**REDACTED**')
+        }
         this.logStream.write(`${k}: ${v}\n`)
       })
       this.logStream.write('\n')
@@ -241,9 +246,15 @@ export default class Client {
     if (response) {
       this.logStream.write(`RESPONSE: ${response.statusCode}\n`)
       logHeaders(response.headers)
-    }
-    if (err) {
-      this.logStream.write(err.toString())
+      // For error responses log the whole response body.
+      if (response.statusCode !== 200 &&
+          response.statusCode !== 204 &&
+          response.statusCode !== 206) {
+        if (err) {
+          var errJSON = JSON.stringify(err, null, '\t')
+          this.logStream.write(`${errJSON}\n`)
+        }
+      }
     }
   }
 
@@ -276,7 +287,7 @@ export default class Client {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    // sha256sum will be '' for anonymous requests
+    // sha256sum will be empty for anonymous requests
     if (sha256sum.length !== 0 && sha256sum.length !== 64) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
@@ -288,7 +299,6 @@ export default class Client {
       var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
       if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
       var req = this.transport.request(reqOptions, response => {
-        this.logHTTP(reqOptions, response)
         if (statusCode != response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
@@ -297,14 +307,17 @@ export default class Client {
           delete(this.regionMap[options.bucketName])
           var errorTransformer = transformers.getErrorTransformer(response)
           pipesetup(response, errorTransformer)
-            .on('error', cb)
+            .on('error', e => {
+              this.logHTTP(reqOptions, response, e)
+              cb(e)
+            })
           return
         }
+        this.logHTTP(reqOptions, response)
         cb(null, response)
       })
       pipesetup(stream, req)
         .on('error', e => {
-          this.logHTTP(reqOptions, null, e)
           cb(e)
         })
     }
@@ -342,17 +355,22 @@ export default class Client {
       cb(e)
     })
     req.on('response', response => {
-      this.logHTTP(reqOptions, response)
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
-          .on('error', e => cb(e))
+          .on('error', e => {
+            this.logHTTP(reqOptions, response, e)
+            cb(e)
+          })
         return
       }
       var transformer = transformers.getBucketRegionTransformer()
       var region = 'us-east-1'
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
+        .on('error', e => {
+          this.logHTTP(reqOptions, null, e)
+          cb(e)
+        })
         .on('data', data => {
           region = data
         })
@@ -360,6 +378,7 @@ export default class Client {
           this.regionMap[bucketName] = region
           cb(null, region)
         })
+      this.logHTTP(reqOptions, response)
     })
     req.end()
   }
