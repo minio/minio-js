@@ -1130,7 +1130,7 @@ export default class Client {
       if (e) return cb(e)
       var result = {
         size: +response.headers['content-length'],
-        etag: response.headers.etag.replace(/"/g, ''),
+        etag: response.headers.etag.replace(/^\"/g, '').replace(/\"$/g, ''),
         contentType: response.headers['content-type'],
         lastModified: response.headers['last-modified']
       }
