@@ -682,6 +682,7 @@ export default class Client {
   // * `filePath` _string_: path to which the object data will be written to
   // * `callback(err)` _function_: callback is called with `err` in case of error.
   fGetObject(bucketName, objectName, filePath, cb) {
+    // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -695,12 +696,14 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
 
-    var tmpFile
-    var tmpFileStream
+    // Internal data.
+    var partFile
+    var partFileStream
     var objStat
 
+    // Rename wrapper.
     var rename = () => {
-      fs.rename(tmpFile, filePath, cb)
+      fs.rename(partFile, filePath, cb)
     }
 
     async.waterfall([
@@ -708,29 +711,31 @@ export default class Client {
       (result, cb) => {
         objStat = result
         var dir = path.dirname(filePath)
+        // If file is in current directory skip.
         if (dir === '.') return cb()
+        // Create any missing top level directories.
         mkdirp(dir, cb)
       },
       (ignore, cb) => {
-        tmpFile = `${filePath}.${objStat.etag}.part.minio-js`
+        partFile = `${filePath}.${objStat.etag}.part.minio`
         fs.stat(tmpFile, (e, stats) => {
           var offset = 0
           if (e) {
-            tmpFileStream = fs.createWriteStream(tmpFile, {flags: 'w'})
+            partFileStream = fs.createWriteStream(partFile, {flags: 'w'})
           } else {
             if (objStat.size === stats.size) return rename()
             offset = stats.size
-            tmpFileStream = fs.createWriteStream(tmpFile, {flags: 'a'})
+            partFileStream = fs.createWriteStream(partFile, {flags: 'a'})
           }
           this.getPartialObject(bucketName, objectName, offset, 0, cb)
         })
       },
       (downloadStream, cb) => {
-        pipesetup(downloadStream, tmpFileStream)
+        pipesetup(downloadStream, partFileStream)
           .on('error', e => cb(e))
           .on('finish', cb)
       },
-      cb => fs.stat(tmpFile, cb),
+      cb => fs.stat(partFile, cb),
       (stats, cb) => {
         if (stats.size === objStat.size) return cb()
         cb(new Error('Size mismatch between downloaded file and the object'))
