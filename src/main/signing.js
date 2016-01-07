@@ -17,7 +17,7 @@
 import Moment from 'moment'
 import Crypto from 'crypto'
 import _ from 'lodash'
-import { uriEscape, getScope, isString, isObject, isArray, isDate } from './helpers.js'
+import { uriEscape, getScope, isString, isObject, isArray, isDate, isNumber } from './helpers.js'
 import * as errors from './errors.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
@@ -214,7 +214,7 @@ export function signV4(request, accessKey, secretKey, region) {
 }
 
 // returns a presigned URL string
-export function presignSignatureV4(request, accessKey, secretKey, region, requestDate) {
+export function presignSignatureV4(request, accessKey, secretKey, region, requestDate, expires) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -238,28 +238,18 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
     throw new Error('secretKey is required for presigning')
   }
 
-  if (!request.expires) {
-    throw new Error('expires value required')
+  if (!isNumber(expires)) {
+    throw new TypeError('expires should be of type "number"')
   }
-  if (request.expires < 1) {
+  if (expires < 1) {
     throw new Error('expires param cannot be less than 1 seconds')
   }
-  if (request.expires > 604800) {
+  if (expires > 604800) {
     throw new Error('expires param cannot be larger than 7 days')
   }
 
-  var expires = request.expires
-  var host = request.host
-
-  if ((request.protocol === 'http' && request.port !== 80) || (request.protocol === 'https' && request.port !== 443)) {
-    host = `${host}:${request.port}`
-  }
-
-  var headers = _.assign({}, request.headers)
-  headers.host = host
-
   var iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
-  var signedHeaders = getSignedHeaders(headers)
+  var signedHeaders = getSignedHeaders(request.headers)
   var credential = getCredential(accessKey, region, requestDate)
   var hashedPayload = 'UNSIGNED-PAYLOAD'
 
@@ -273,11 +263,11 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   var path = request.path + '?' + requestQuery.join('&')
 
   var canonicalRequest = getCanonicalRequest(request.method, path,
-                                              headers, signedHeaders, hashedPayload)
+                                              request.headers, signedHeaders, hashedPayload)
 
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
   var signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
-  var presignedUrl = request.protocol + '//' + host + path + `&X-Amz-Signature=${signature}`
+  var presignedUrl = request.protocol + '//' + request.headers.host + path + `&X-Amz-Signature=${signature}`
   return presignedUrl
 }

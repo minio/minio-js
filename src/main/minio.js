@@ -1215,12 +1215,11 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'PUT'
-    var options = this.getRequestOptions({method, bucketName, objectName})
-    options.expires = expires.toString()
+    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
+      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
     })
   }
 
@@ -1241,12 +1240,11 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'GET'
-    var options = this.getRequestOptions({method, bucketName, objectName})
-    options.expires = expires.toString()
+    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
+      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
     })
   }
 
