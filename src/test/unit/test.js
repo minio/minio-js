@@ -315,7 +315,10 @@ describe('Client', function() {
             protocol: 'https:',
             path: '/bucket/object',
             method: 'HEAD',
-            headers: {host: 'localhost:9000'}
+            headers: {
+              host: 'localhost:9000',
+              'content-length': 0
+            }
           })
         }, 200, {
           'etag': 'etag',
@@ -358,7 +361,8 @@ describe('Client', function() {
             method: 'HEAD',
             headers: {
               host: 'localhost:9000',
-              'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+              'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+              'content-length': 0
             }
           })
         }, 200, {

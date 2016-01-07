@@ -233,6 +233,8 @@ export default class Client {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
+    if (!options.headers) options.headers = {}
+    options.headers['content-length'] = payload.length
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
