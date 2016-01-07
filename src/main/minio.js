@@ -456,29 +456,16 @@ export default class Client {
       payload = Xml(payloadObject)
     }
     var method = 'PUT'
-    var host = this.params.host
-    var protocol = this.params.protocol
-    var path = `/${bucketName}`
     var headers = {'x-amz-acl': acl}
-    var reqOptions = {method, host, protocol, path, headers}
-    if (this.params.port) reqOptions.port = this.params.port
+
+    var reqOptions = this.getRequestOptions({method, bucketName, headers})
     if (!this.anonymous) {
-      reqOptions.headers.host = reqOptions.host
-      if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
-          (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
-        reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
-      }
       reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
       reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').update(payload).digest('hex')
       var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
       reqOptions.headers.authorization = authorization
     }
-    var req = this.transport.request(reqOptions)
-    req.on('error', e => {
-      this.logHTTP(reqOptions, null, e)
-      cb(e)
-    })
-    req.on('response', response => {
+    var req = this.transport.request(reqOptions, response => {
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
@@ -490,6 +477,10 @@ export default class Client {
       }
       this.logHTTP(reqOptions, response)
       cb()
+    })
+    req.on('error', e => {
+      this.logHTTP(reqOptions, null, e)
+      cb(e)
     })
     req.write(payload)
     req.end()
