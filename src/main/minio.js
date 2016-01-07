@@ -132,14 +132,10 @@ export default class Client {
     var query = opts.query
 
     var reqOptions = {method}
+    reqOptions.headers = {}
+
     if (this.params.port) reqOptions.port = this.params.port
     reqOptions.protocol = this.params.protocol
-
-    if (headers) {
-      // have all header keys in lower case - to make signing easy
-      reqOptions.headers = {}
-      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
-    }
 
     if (objectName) {
       objectName = `${uriResourceEscape(objectName)}`
@@ -160,6 +156,16 @@ export default class Client {
       if (objectName) reqOptions.path = `/${objectName}`
     }
     if (query) reqOptions.path += `?${query}`
+    reqOptions.headers.host = reqOptions.host
+    if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+        (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+      reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
+    }
+    if (headers) {
+      // have all header keys in lower case - to make signing easy
+      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
+    }
+
     return reqOptions
   }
 
@@ -299,16 +305,22 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     // sha256sum will be empty for anonymous requests
-    if (sha256sum.length !== 0 && sha256sum.length !== 64) {
+    if (sha256sum.length === 0 && !this.anonymous) {
+      throw new errors.InvalidArgumentError(`sha256sum cannot be empty for non-anonymous requests`)
+    }
+    if (sha256sum.length !== 64 && !this.anonymous) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
     var reqOptions = this.getRequestOptions(options)
     var makeRequest = (e, region) => {
       if (e) return cb(e)
-      var requestDate = Moment().utc()
-      var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
-      if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
+      if (!this.anonymous) {
+        reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+        reqOptions.headers['x-amz-content-sha256'] = sha256sum
+        var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, region)
+        reqOptions.headers.authorization = authorization
+      }
       var req = this.transport.request(reqOptions, response => {
         if (statusCode != response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
@@ -355,12 +367,18 @@ export default class Client {
     reqOptions.port = this.params.port
     reqOptions.protocol = this.params.protocol
     reqOptions.path = `/${bucketName}?location`
-
-    var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
-    var requestDate = Moment().utc()
-    var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
-    if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
+    if (!this.anonymous) {
+      reqOptions.headers = {}
+      reqOptions.headers.host = reqOptions.host
+      if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+          (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+        reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
+      }
+      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').digest('hex')
+      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
+      reqOptions.headers.authorization = authorization
+    }
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -444,11 +462,17 @@ export default class Client {
     var headers = {'x-amz-acl': acl}
     var reqOptions = {method, host, protocol, path, headers}
     if (this.params.port) reqOptions.port = this.params.port
-    var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
-    var requestDate = Moment().utc()
-    var headersv4 = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
-    if (headersv4) reqOptions.headers = _.assign({}, reqOptions.headers, headersv4)
+    if (!this.anonymous) {
+      reqOptions.headers.host = reqOptions.host
+      if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+          (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+        reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
+      }
+      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').update(payload).digest('hex')
+      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
+      reqOptions.headers.authorization = authorization
+    }
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)

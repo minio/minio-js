@@ -184,14 +184,10 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
   return Crypto.createHmac('sha256', signingKey).update(policyBase64).digest('hex').toLowerCase()
 }
 
-// Returns the *headers* object with the following headers:
-// 'host', 'x-amz-date', 'x-amz-content-sha256', 'authorization'
-export function signV4(request, dataShaSum256, accessKey, secretKey, region, requestDate) {
+// Returns the authorization header
+export function signV4(request, accessKey, secretKey, region) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
-  }
-  if (!isString(dataShaSum256)) {
-    throw new TypeError('dataShaSum256 should be of type "string"')
   }
   if (!isString(accessKey)) {
     throw new TypeError('accessKey should be of type "string"')
@@ -202,38 +198,19 @@ export function signV4(request, dataShaSum256, accessKey, secretKey, region, req
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
-  if (!isDate(requestDate)) {
-    throw new TypeError('requestDate should be of type "Date"')
-  }
 
-  if (!accessKey || !secretKey) {
-    // no signing in case of anonymous requests
-    return
-  }
-  // sha256sum is always needed for non-anonymous requests
-  if (dataShaSum256.length !== 64) {
-    throw new errors.InvalidArgumentError(`invalid dataShaSum256 : ${dataShaSum256}`)
-  }
+  var requestDate = Moment(request.headers['x-amz-date'], 'YYYYMMDDTHHmmss')
+  var sha256sum = request.headers['x-amz-content-sha256']
 
-  var headers = _.assign({}, request.headers)
-
-  headers.host = request.host
-  if ((request.protocol === 'http:' && request.port !== 80) || (request.protocol === 'https:' && request.port !== 443)) {
-    headers.host = `${request.host}:${request.port}`
-  }
-  headers['x-amz-date'] = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
-  headers['x-amz-content-sha256'] = dataShaSum256
-
-  var signedHeaders = getSignedHeaders(headers)
-  var canonicalRequest = getCanonicalRequest(request.method, request.path, headers,
-                                              signedHeaders, dataShaSum256)
+  var signedHeaders = getSignedHeaders(request.headers)
+  var canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers,
+                                              signedHeaders, sha256sum)
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
   var credential = getCredential(accessKey, region, requestDate)
   var signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
 
-  headers.authorization = `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=${signature}`
-  return headers
+  return `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=${signature}`
 }
 
 // returns a presigned URL string

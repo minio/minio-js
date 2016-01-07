@@ -314,7 +314,8 @@ describe('Client', function() {
             port: 9000,
             protocol: 'https:',
             path: '/bucket/object',
-            method: 'HEAD'
+            method: 'HEAD',
+            headers: {host: 'localhost:9000'}
           })
         }, 200, {
           'etag': 'etag',
