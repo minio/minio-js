@@ -119,7 +119,6 @@ export default class Client {
     this.regionMap = {}
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
-    this.maximumStreamObjectSize = 50*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
   }
 
@@ -187,6 +186,22 @@ export default class Client {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
     this.params.userAgent = `${this.params.userAgent} ${appName}/${appVersion}`
+  }
+
+  // partSize will be atleast minimumPartSize or a multiple of minimumPartSize
+  // for size <= 50000 MB partSize is always 5MB (10000*5 = 50000)
+  // for size > 50000MB partSize will be a multiple of 5MB
+  // for size = 5TB partSize will be 525MB
+  calculatePartSize(size) {
+    if (!isNumber(size)) {
+      throw new TypeError('size should be of type "number"')
+    }
+    if (size > this.maxObjectSize) {
+      throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
+    }
+    var partSize = Math.ceil(size/10000)
+    partSize = Math.ceil(partSize/this.minimumPartSize) * this.minimumPartSize
+    return partSize
   }
 
   // makeRequest is the primitive used by all the apis for making S3 requests.
@@ -718,7 +733,7 @@ export default class Client {
       },
       (ignore, cb) => {
         partFile = `${filePath}.${objStat.etag}.part.minio`
-        fs.stat(tmpFile, (e, stats) => {
+        fs.stat(partFile, (e, stats) => {
           var offset = 0
           if (e) {
             partFileStream = fs.createWriteStream(partFile, {flags: 'w'})
@@ -839,14 +854,6 @@ export default class Client {
       contentType = 'application/octet-stream'
     }
 
-    var calculatePartSize = (size) => {
-      // using 10000 may cause part size to become too small, and not fit the entire object in
-      partSize = Math.floor(size / 9999)
-      if (partSize > this.maximumPartSize) {
-        return this.maximumPartSize
-      }
-      return Math.max(this.minimumPartSize, partSize)
-    }
     var size
     var partSize
 
@@ -857,7 +864,6 @@ export default class Client {
         if (size > this.maxObjectSize) {
           return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
         }
-        partSize = calculatePartSize(size)
         if (size < this.minimumPartSize) {
           // simple PUT request, no multipart
           var multipart = false
@@ -889,7 +895,7 @@ export default class Client {
         this.initiateNewMultipartUpload(bucketName, objectName, '', (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
-        partSize = calculatePartSize(size)
+        partSize = this.calculatePartSize(size)
         var multipart = true
         var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
 
@@ -982,9 +988,6 @@ export default class Client {
     if (size < 0) {
       throw new errors.InvalidArgumentError(`size cannot be negative, given size : ${size}`)
     }
-    if (size > this.maximumStreamObjectSize) {
-      throw new errors.InvalidArgumentError(`size should be less than ${this.maximumStreamObjectSize}, given size : ${size}`)
-    }
 
     if (contentType.trim() === '') {
       contentType = 'application/octet-stream'
@@ -1013,9 +1016,10 @@ export default class Client {
         this.initiateNewMultipartUpload(bucketName, objectName, contentType, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
+        var multipartSize = this.calculatePartSize(size)
         var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: this.minimumPartSize, zeroPadding: false})
-        var chunkUploader = this.chunkUploader(bucketName, objectName, contentType, uploadId, etags)
+        var chunkUploader = this.chunkUploader(bucketName, objectName, contentType, uploadId, etags, multipartSize)
         pipesetup(stream, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
           .on('data', etags => cb(null, etags, uploadId))
@@ -1499,7 +1503,7 @@ export default class Client {
   }
 
   // Returns a stream that does multipart upload of the chunks it receives.
-  chunkUploader(bucketName, objectName, contentType, uploadId, partsArray) {
+  chunkUploader(bucketName, objectName, contentType, uploadId, partsArray, multipartSize) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1515,6 +1519,12 @@ export default class Client {
     if (!isObject(partsArray)) {
       throw new TypeError('partsArray should be of type "Array"')
     }
+    if (!isNumber(multipartSize)) {
+      throw new TypeError('multipartSize should be of type "number"')
+    }
+    if (multipartSize > this.maximumPartSize) {
+      throw new errors.InvalidArgumentError(`multipartSize cannot be more than ${this.maximumPartSize}`)
+    }
     var partsDone = []
     var partNumber = 1
 
@@ -1526,28 +1536,66 @@ export default class Client {
       return acc
     }, {})
 
+    var aggregatedSize = 0
+
+    var aggregator = null   // aggregator is a simple through stream that aggregates
+                            // chunks of minimumPartSize adding up to multipartSize
+
+    var md5 = null
+    var sha256 = null
+
     return Through2.obj((chunk, enc, cb) => {
+      if (chunk.length > this.minimumPartSize) {
+        return cb(new Error(`chunk length cannot be more than ${this.minimumPartSize}`))
+      }
+
+      // get new objects for a new part upload
+      if (!aggregator) aggregator = Through2()
+      if (!md5) md5 = Crypto.createHash('md5')
+      if (!sha256) sha256 = Crypto.createHash('sha256')
+
+      aggregatedSize += chunk.length
+      if (aggregatedSize > multipartSize) return cb(new Error('aggregated size cannot be greater than multipartSize'))
+
+      aggregator.write(chunk)
+      md5.update(chunk)
+      sha256.update(chunk)
+
+      var done = false
+      if (aggregatedSize === multipartSize) done = true
+      // This is the last chunk of the stream.
+      if (aggregatedSize < multipartSize && chunk.length < this.minimumPartSize) done = true
+
+      // more chunks are expected
+      if (!done) return cb()
+
+      aggregator.end() // when aggregator is piped to another stream it emits all the chunks followed by 'end'
+
       var part = parts[partNumber]
-      var md5sumhex = Crypto.createHash('md5').update(chunk).digest('hex').toLowerCase()
+      var md5sumhex = md5.digest('hex')
       if (part) {
         if (md5sumhex === part.etag) {
-          //md5 matches, chunk already uploaded
+          // md5 matches, chunk already uploaded
+          // reset aggregator md5 sha256 and aggregatedSize variables for a fresh multipart upload
+          aggregator = md5 = sha256 = null
+          aggregatedSize = 0
           partsDone.push({part: part.part, etag: part.etag})
           partNumber++
           return cb()
         }
         // md5 doesn't match, upload again
       }
-      var sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex').toLowerCase()
+      var sha256sum = sha256.digest('hex')
       var md5sumbase64 = (new Buffer(md5sumhex, 'hex')).toString('base64')
-      var stream = readableStream(chunk)
       var multipart = true
       var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
-      uploader(uploadId, partNumber, stream, chunk.length, sha256sum, md5sumbase64, (e, etag) => {
+      uploader(uploadId, partNumber, aggregator, aggregatedSize, sha256sum, md5sumbase64, (e, etag) => {
         if (e) {
-          partNumber++
           return cb(e)
         }
+        // reset aggregator md5 sha256 and aggregatedSize variables for a fresh multipart upload
+        aggregator = md5 = sha256 = null
+        aggregatedSize = 0
         var part = {
           part: partNumber,
           etag: etag
