@@ -277,11 +277,20 @@ s3Client.getObject('mybucket', 'photo.jpg', 10, 30, function(e, dataStream) {
 #### putObject(bucketName, objectName, stream, size, contentType, callback)
 Upload an object.
 
+Uploading a stream
 __Arguments__
 * `bucketName` _string_: name of the bucket
 * `objectName` _string_: name of the object
 * `stream` _Stream_: Readable stream
 * `size` _number_: size of the object
+* `contentType` _string_: content type of the object
+* `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+
+Uploading "Buffer" or "string"
+__Arguments__
+* `bucketName` _string_: name of the bucket
+* `objectName` _string_: name of the object
+* `string or Buffer` _Stream_ or _Buffer_: Readable stream
 * `contentType` _string_: content type of the object
 * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
 

@@ -976,6 +976,7 @@ export default class Client {
 
   // Uploads the object.
   //
+  // Uploading a stream
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
@@ -983,15 +984,39 @@ export default class Client {
   // * `size` _number_: size of the object
   // * `contentType` _string_: content type of the object
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  putObject(bucketName, objectName, stream, size, contentType, cb) {
+  //
+  // Uploading "Buffer" or "string"
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
+  // * `contentType` _string_: content type of the object
+  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  putObject(arg1, arg2, arg3, arg4, arg5, arg6) {
+    var bucketName = arg1
+    var objectName = arg2
+    var stream
+    var size
+    var contentType
+    var cb
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isObject(stream)) {
-      throw new TypeError('stream should be a "Stream"')
+    if (isReadableStream(arg3)) {
+      stream = arg3
+      size = arg4
+      contentType = arg5
+      cb = arg6
+    } else if (typeof(arg3) === 'string' || arg3 instanceof Buffer) {
+      stream = readableStream(arg3)
+      size = arg3.length
+      contentType = arg4
+      cb = arg5
+    } else {
+      throw new errors.TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
     }
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
