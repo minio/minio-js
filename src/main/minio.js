@@ -132,14 +132,10 @@ export default class Client {
     var query = opts.query
 
     var reqOptions = {method}
+    reqOptions.headers = {}
+
     if (this.params.port) reqOptions.port = this.params.port
     reqOptions.protocol = this.params.protocol
-
-    if (headers) {
-      // have all header keys in lower case - to make signing easy
-      reqOptions.headers = {}
-      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
-    }
 
     if (objectName) {
       objectName = `${uriResourceEscape(objectName)}`
@@ -160,6 +156,16 @@ export default class Client {
       if (objectName) reqOptions.path = `/${objectName}`
     }
     if (query) reqOptions.path += `?${query}`
+    reqOptions.headers.host = reqOptions.host
+    if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+        (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+      reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
+    }
+    if (headers) {
+      // have all header keys in lower case - to make signing easy
+      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
+    }
+
     return reqOptions
   }
 
@@ -205,7 +211,7 @@ export default class Client {
   }
 
   // makeRequest is the primitive used by all the apis for making S3 requests.
-  // payload can be empty string in case of no playload.
+  // payload can be empty string in case of no payload.
   // statusCode is the expected statusCode. If response.statusCode does not match
   // we parse the XML error and call the callback with the error message.
 
@@ -227,6 +233,8 @@ export default class Client {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
+    if (!options.headers) options.headers = {}
+    options.headers['content-length'] = payload.length
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
@@ -299,16 +307,22 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     // sha256sum will be empty for anonymous requests
-    if (sha256sum.length !== 0 && sha256sum.length !== 64) {
+    if (sha256sum.length === 0 && !this.anonymous) {
+      throw new errors.InvalidArgumentError(`sha256sum cannot be empty for non-anonymous requests`)
+    }
+    if (sha256sum.length !== 64 && !this.anonymous) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
     var reqOptions = this.getRequestOptions(options)
-    var makeRequest = (e, region) => {
+    var _makeRequest = (e, region) => {
       if (e) return cb(e)
-      var requestDate = Moment().utc()
-      var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, region, requestDate)
-      if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
+      if (!this.anonymous) {
+        reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+        reqOptions.headers['x-amz-content-sha256'] = sha256sum
+        var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, region)
+        reqOptions.headers.authorization = authorization
+      }
       var req = this.transport.request(reqOptions, response => {
         if (statusCode != response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
@@ -334,8 +348,8 @@ export default class Client {
         })
     }
     // for operations where bucketName is not relevant like listBuckets()
-    if (!options.bucketName) return makeRequest(null, 'us-east-1')
-    this.getBucketRegion(options.bucketName, makeRequest)
+    if (!options.bucketName) return _makeRequest(null, 'us-east-1')
+    this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
   // gets the region of the bucket
@@ -355,12 +369,18 @@ export default class Client {
     reqOptions.port = this.params.port
     reqOptions.protocol = this.params.protocol
     reqOptions.path = `/${bucketName}?location`
-
-    var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').digest('hex')
-    var requestDate = Moment().utc()
-    var headers = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
-    if (headers) reqOptions.headers = _.assign({}, reqOptions.headers, headers)
+    if (!this.anonymous) {
+      reqOptions.headers = {}
+      reqOptions.headers.host = reqOptions.host
+      if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+          (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+        reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
+      }
+      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').digest('hex')
+      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
+      reqOptions.headers.authorization = authorization
+    }
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
@@ -381,7 +401,7 @@ export default class Client {
       pipesetup(response, transformer)
         .on('error', cb)
         .on('data', data => {
-          region = data
+          if (data) region = data
         })
         .on('end', () => {
           this.regionMap[bucketName] = region
@@ -438,23 +458,16 @@ export default class Client {
       payload = Xml(payloadObject)
     }
     var method = 'PUT'
-    var host = this.params.host
-    var protocol = this.params.protocol
-    var path = `/${bucketName}`
     var headers = {'x-amz-acl': acl}
-    var reqOptions = {method, host, protocol, path, headers}
-    if (this.params.port) reqOptions.port = this.params.port
-    var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
-    var requestDate = Moment().utc()
-    var headersv4 = signV4(reqOptions, sha256sum, this.params.accessKey, this.params.secretKey, 'us-east-1', requestDate)
-    if (headersv4) reqOptions.headers = _.assign({}, reqOptions.headers, headersv4)
-    var req = this.transport.request(reqOptions)
-    req.on('error', e => {
-      this.logHTTP(reqOptions, null, e)
-      cb(e)
-    })
-    req.on('response', response => {
+
+    var reqOptions = this.getRequestOptions({method, bucketName, headers})
+    if (!this.anonymous) {
+      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').update(payload).digest('hex')
+      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
+      reqOptions.headers.authorization = authorization
+    }
+    var req = this.transport.request(reqOptions, response => {
       var errorTransformer = transformers.getErrorTransformer(response)
       if (response.statusCode !== 200) {
         pipesetup(response, errorTransformer)
@@ -466,6 +479,10 @@ export default class Client {
       }
       this.logHTTP(reqOptions, response)
       cb()
+    })
+    req.on('error', e => {
+      this.logHTTP(reqOptions, null, e)
+      cb(e)
     })
     req.write(payload)
     req.end()
@@ -959,6 +976,7 @@ export default class Client {
 
   // Uploads the object.
   //
+  // Uploading a stream
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
@@ -966,15 +984,39 @@ export default class Client {
   // * `size` _number_: size of the object
   // * `contentType` _string_: content type of the object
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  putObject(bucketName, objectName, stream, size, contentType, cb) {
+  //
+  // Uploading "Buffer" or "string"
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
+  // * `contentType` _string_: content type of the object
+  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  putObject(arg1, arg2, arg3, arg4, arg5, arg6) {
+    var bucketName = arg1
+    var objectName = arg2
+    var stream
+    var size
+    var contentType
+    var cb
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isObject(stream)) {
-      throw new TypeError('stream should be a "Stream"')
+    if (isReadableStream(arg3)) {
+      stream = arg3
+      size = arg4
+      contentType = arg5
+      cb = arg6
+    } else if (typeof(arg3) === 'string' || arg3 instanceof Buffer) {
+      stream = readableStream(arg3)
+      size = arg3.length
+      contentType = arg4
+      cb = arg5
+    } else {
+      throw new errors.TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
     }
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
@@ -1200,12 +1242,11 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'PUT'
-    var options = this.getRequestOptions({method, bucketName, objectName})
-    options.expires = expires.toString()
+    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
+      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
     })
   }
 
@@ -1226,12 +1267,11 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'GET'
-    var options = this.getRequestOptions({method, bucketName, objectName})
-    options.expires = expires.toString()
+    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(options, this.params.accessKey, this.params.secretKey, region, requestDate))
+      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
     })
   }
 

@@ -45,6 +45,8 @@ describe('functional tests', function() {
   var _100kb = new Buffer(100*1024)
   _100kb.fill('a')
   var _100kbObjectName = 'miniojsobject_100kb'
+  var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
+  var _100kbObjectStringName = `${_100kbObjectName}.string`
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
 
   var _11mb = new Buffer(11*1024*1024)
@@ -148,7 +150,7 @@ describe('functional tests', function() {
   })
 
   describe('tests for putObject getObject getPartialObject statObject removeObject', function() {
-    it('should upload 100KB', done => {
+    it('should upload 100KB stream', done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
     })
@@ -156,6 +158,40 @@ describe('functional tests', function() {
     it('should download 100KB and match content', done => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _100kbObjectName, (e, stream) => {
+        if (e) return done(e)
+        stream.on('data', data => hash.update(data))
+        stream.on('error', done)
+        stream.on('end', () => {
+          if (hash.digest('hex') === _100kbmd5) return done()
+          done(new Error('content mismatch'))
+        })
+      })
+    })
+
+    it('should upload 100KB Buffer', done => {
+      client.putObject(bucketName, _100kbObjectBufferName, _100kb, '', done)
+    })
+
+    it('should download 100KB Buffer upload and match content', done => {
+      var hash = crypto.createHash('md5')
+      client.getObject(bucketName, _100kbObjectBufferName, (e, stream) => {
+        if (e) return done(e)
+        stream.on('data', data => hash.update(data))
+        stream.on('error', done)
+        stream.on('end', () => {
+          if (hash.digest('hex') === _100kbmd5) return done()
+          done(new Error('content mismatch'))
+        })
+      })
+    })
+
+    it('should upload 100KB string', done => {
+      client.putObject(bucketName, _100kbObjectStringName, _100kb.toString(), '', done)
+    })
+
+    it('should download 100KB string upload and match content', done => {
+      var hash = crypto.createHash('md5')
+      client.getObject(bucketName, _100kbObjectStringName, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
@@ -206,7 +242,7 @@ describe('functional tests', function() {
     })
 
     it('should remove objects created for test', done => {
-      async.map([_100kbObjectName, _11mbObjectName], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+      async.map([_100kbObjectName, _100kbObjectBufferName, _100kbObjectStringName, _11mbObjectName], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
     })
 
   })

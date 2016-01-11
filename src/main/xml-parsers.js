@@ -14,393 +14,205 @@
  * limitations under the License.
  */
 
+import util from 'util'
 import Concat from 'concat-stream';
-import ParseXml from 'xml-parser';
+import xml2js from 'xml2js'
+import _ from 'lodash'
+import * as errors from './errors.js';
+
+var options = {  // options passed to xml2js parser
+  explicitRoot: false,    // return the root node in the resulting object?
+  ignoreAttrs: true,     // ignore attributes, only create text nodes
+}
+
+var parseXml = (xml) => {
+  var result = null;
+  var error = null;
+
+  var parser = new xml2js.Parser(options);
+  parser.parseString(xml, function (e, r) {
+    error = e;
+    result = r;
+  });
+
+  if (error) {
+    throw new Error('XML parse error');
+  }
+  return result;
+}
 
 // Parse XML and return information as Javascript types
 
+// parse error XML response
 export function parseError(xml) {
   var e = {}
-  var parsedXml = ParseXml(xml)
-  if (typeof parsedXml.root !== 'undefined') {
-    parsedXml.root.children.forEach(element => {
-      if (element.name === 'Code') {
-        e.name = element.content
-      } else if (element.name === 'Message') {
-        e.message = element.content
-      } else if (element.name === 'RequestId') {
-        e.requestid = element.content
-      } else if (element.name === 'Resource') {
-        e.resource = element.content
-      } else if (element.name === 'HostId') {
-        e.hostid = element.content
-      } else if (element.name === 'Key') {
-        e.key = element.content
-      } else if (element.name === 'BucketName') {
-        e.bucketname = element.content
-      }
-    })
-  }
+  var xmlobj = parseXml(xml)
+  _.each(xmlobj, (n, key) => {
+    if (key === 'Code') {
+      e.name = xmlobj[key][0]
+      return
+    }
+    if (key === 'Message') {
+      e.message = xmlobj[key][0]
+      return
+    }
+    e[key] = xmlobj[key][0]
+  })
   return e
 }
 
+// parse XML response for listing in-progress multipart uploads
 export function parseListMultipart(xml) {
-  var parsedXml = ParseXml(xml.toString()),
-    result = {
-      uploads: [],
-      prefixes: [],
-      isTruncated: false
-    }
-  parsedXml.root.children.forEach(element => {
-    switch (element.name) {
-      case 'IsTruncated':
-        {
-          result.isTruncated = element.content === 'true'
-          break
-        }
-      case 'NextKeyMarker':
-        {
-          result.nextKeyMarker = element.content
-          break
-        }
-      case 'NextUploadIdMarker':
-        {
-          result.nextUploadIdMarker = element.content
-          break
-        }
-
-      case 'CommonPrefixes':
-        { // todo, this is the only known way for now to propagate delimited entries
-          var prefix = {}
-          element.children.forEach(xmlPrefix => {
-            switch (xmlPrefix.name) {
-              case 'Prefix':
-                {
-                  prefix.prefix = xmlPrefix.content
-                  break
-                }
-            }
-          })
-          result.prefixes.push(prefix)
-          break
-        }
-      case 'Upload':
-        {
-          var upload = {}
-          element.children.forEach(xmlObject => {
-            switch (xmlObject.name) {
-              case 'Key':
-                {
-                  upload.key = xmlObject.content
-                  break
-                }
-              case 'UploadId':
-                {
-                  upload.uploadId = xmlObject.content
-                  break
-                }
-              default:
-            }
-          })
-          result.uploads.push(upload)
-          break
-        }
-      default:
-    }
+  var result = {
+    uploads: [],
+    prefixes: [],
+    isTruncated: false
+  }
+  var xmlobj =  parseXml(xml)
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker[0]
+  if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
+  if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
+    result.prefixes.push({prefix: prefix[0]})
+  })
+  if (xmlobj.Upload) xmlobj.Upload.forEach(upload => {
+    result.uploads.push({key: upload.Key[0], uploadId: upload.UploadId[0]})
   })
   return result
 }
 
+// parse XML response to list all the owned buckets
 export function parseListBucket(xml) {
   var result = []
-  var parsedXml = ParseXml(xml)
-  parsedXml.root.children.forEach((element) => {
-    if (element.name === 'Buckets') {
-      element.children.forEach(bucketListing => {
-        var bucket = {}
-        bucketListing.children.forEach(prop => {
-          switch (prop.name) {
-            case 'Name':
-              {
-                bucket.name = prop.content
-                break
-              }
-            case 'CreationDate':
-              {
-                bucket.creationDate = prop.content
-                break
-              }
-          }
-        })
-        result.push(bucket)
+  var xmlobj = parseXml(xml)
+  if (xmlobj.Buckets) {
+    if (xmlobj.Buckets[0].Bucket) {
+      xmlobj.Buckets[0].Bucket.forEach(bucket => {
+        var name = bucket.Name[0]
+        var creationDate = new Date(bucket.CreationDate[0])
+        result.push({name, creationDate})
       })
     }
-  })
+  }
   return result
 }
 
+// parse XML response for bucket ACL
 export function parseAcl(xml) {
-  var parsedXml = ParseXml(xml),
-    publicRead = false,
-    publicWrite = false,
-    authenticatedRead = false,
-    authenticatedWrite = false
-
   var result = {
     owner: undefined,
     acl: []
   }
-
-  parsedXml.root.children.forEach(element => {
-    switch (element.name) {
-      case 'Owner':
-        {
-          var ownerObj = {}
-          element.children.forEach(element => {
-            switch (element.name) {
-              case 'ID':
-                {
-                  ownerObj.id = element.content
-                  break
-                }
-              case 'DisplayName':
-                {
-                  ownerObj.displayName = element.content
-                  break
-                }
-              default:
-            }
-          })
-          result.owner = ownerObj
-          break
+  var xmlobj = parseXml(xml)
+  if (xmlobj.Owner) {
+    var ownerObj = {}
+    if (xmlobj.Owner[0].ID) ownerObj.id = xmlobj.Owner[0].ID[0]
+    if (xmlobj.Owner[0].DisplayName) ownerObj.displayName = xmlobj.Owner[0].DisplayName[0]
+    result.owner = ownerObj
+  }
+  if (xmlobj.AccessControlList) {
+    if (xmlobj.AccessControlList[0].Grant) {
+      xmlobj.AccessControlList[0].Grant.forEach(grant => {
+        var grantObj = {}
+        if (grant.Grantee) {
+          var granteeObj = {}
+          if (grant.Grantee[0].ID) granteeObj.id = grant.Grantee[0].ID[0]
+          if (grant.Grantee[0].DisplayName) granteeObj.displayName = grant.Grantee[0].DisplayName[0]
+          if (grant.Grantee[0].URI) granteeObj.uri = grant.Grantee[0].URI[0]
+          grantObj.grantee = granteeObj
+          if (grant.Permission) grantObj.permission = grant.Permission[0]
+          if (!granteeObj.uri && !granteeObj.id) {
+            throw new errors.InvalidXMLError('Grantee should have either ID or URI')
+          }
+          if (!grantObj.permission) {
+            throw new errors.InvalidXMLError('Grant permission not set')
+          }
         }
-      case 'AccessControlList':
-        {
-          element.children.forEach(grant => {
-            var granteeURL = null,
-              permission = null
-            var grantObj = {
-              grantee: undefined,
-              permission: undefined
-            }
-            grant.children.forEach(grantChild => {
-              switch (grantChild.name) {
-                case 'Grantee':
-                  {
-                    var granteeObj = {}
-                    grantChild.children.forEach(grantee => {
-                      switch (grantee.name) {
-                        case 'URI':
-                          {
-                            granteeURL = grantee.content
-                            granteeObj.uri = grantee.content
-                            break
-                          }
-                        case 'ID':
-                          {
-                            granteeObj.id = grantee.content
-                            break
-                          }
-                        case 'DisplayName':
-                          {
-                            granteeObj.displayName = grantee.content
-                            break
-                          }
-                      }
-                    })
-                    grantObj.grantee = granteeObj
-                    break
-                  }
-                case 'Permission':
-                  {
-                    permission = grantChild.content
-                    grantObj.permission = grantChild.content
-                    break
-                  }
-              }
-            })
-            result.acl.push(grantObj)
-          })
-          break
-        }
+        result.acl.push(grantObj)
+      })
     }
-  })
+  }
   return result
 }
 
+// parse XML response for bucket region
 export function parseBucketRegion(xml) {
-  var parsedXml = ParseXml(xml)
-  return parsedXml.root.content
+  return parseXml(xml)
 }
 
+// parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml) {
-  var parsedXml = ParseXml(xml)
+  var xmlobj = parseXml(xml)
   var result = {
     isTruncated: false,
     parts: [],
     marker: undefined
   }
-  parsedXml.root.children.forEach(element => {
-    switch (element.name) {
-      case 'IsTruncated':
-        result.isTruncated = element.content === 'true'
-        break
-      case 'NextPartNumberMarker':
-        result.marker = +element.content
-        break
-      case 'Part':
-        var object = {}
-        element.children.forEach(xmlObject => {
-          switch (xmlObject.name) {
-            case 'PartNumber':
-              object.part = +xmlObject.content
-              break
-            case 'LastModified':
-              object.lastModified = xmlObject.content
-              break
-            case 'ETag':
-              // Trim only beginning and end of the etag.
-              object.etag = xmlObject.content.replace(/^\"/g, '').replace(/\"$/g, '')
-                                             .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                                             .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-              break
-            case 'Size':
-              object.size = +xmlObject.content
-              break
-            default:
-          }
-        })
-        result.parts.push(object)
-        break
-      default:
-        break
-    }
-  })
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (xmlobj.NextPartNumberMarker) result.marker = +xmlobj.NextPartNumberMarker[0]
+  if (xmlobj.Part) {
+    xmlobj.Part.forEach(p => {
+      var part = +p.PartNumber[0]
+      var lastModified = new Date(p.LastModified[0])
+      var etag = p.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+                           .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+                           .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+      result.parts.push({part, lastModified, etag})
+    })
+  }
   return result
 }
 
+// parse XML response when a new multipart upload is initiated
 export function parseInitiateMultipart(xml) {
-  var parsedXml = ParseXml(xml)
-  var uploadId = null
-  parsedXml.root.children.forEach(element => {
-    if (element.name === 'UploadId') {
-      uploadId = element.content
-    }
-  })
-  return uploadId
+  var xmlobj = parseXml(xml)
+  if (xmlobj.UploadId) return xmlobj.UploadId[0]
+  throw new errors.InvalidXMLError('UploadId missing in XML')
 }
 
+// parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
-  var parsedXml = ParseXml(xml)
-  var result = {}
-  parsedXml.root.children.forEach(element => {
-    switch (element.name) {
-      case 'Location':
-        {
-          result.location = element.content
-          break
-        }
-      case 'Key':
-        {
-          result.key = element.content
-          break
-        }
-      case 'Bucket':
-        {
-          result.bucket = element.content
-          break
-        }
-      case 'ETag':
-        {
-          // Trim only beginning and end of the etag.
-          result.etag = element.content.replace(/^\"/g, '').replace(/\"$/g, '')
-                                       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                                       .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-          break
-        }
-      default:
-    }
-  })
-  return result
+  var xmlobj = parseXml(xml)
+  var location = xmlobj.Location[0]
+  var bucket = xmlobj.Bucket[0]
+  var key = xmlobj.Key[0]
+  var etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+                           .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+                           .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+
+  return {location, bucket, key, etag}
 }
 
+// parse XML response for list objects in a bucket
 export function parseListObjects(xml) {
-  var parsedXml = ParseXml(xml)
   var result = {
         objects: [],
-        nextMarker: null,
         isTruncated: false
       }
-  var marker
-  parsedXml.root.children.forEach(element => {
-    switch (element.name) {
-      case 'IsTruncated':
-        {
-          result.isTruncated = element.content === 'true'
-          break
-        }
-      case 'NextMarker':
-        {
-          result.nextMarker = element.content
-          break
-        }
-      case 'Contents':
-        {
-          var content = {}
-          element.children.forEach(xmlObject => {
-            switch (xmlObject.name) {
-              case 'Key':
-                {
-                  content.name = xmlObject.content
-                  marker = content.name
-                  break
-                }
-              case 'LastModified':
-                {
-                  content.lastModified = xmlObject.content
-                  break
-                }
-              case 'Size':
-                {
-                  content.size = +xmlObject.content
-                  break
-                }
-              case 'ETag':
-                {
-                  // Trim only beginning and end of the etag.
-                  content.etag = xmlObject.content.replace(/^\"/g, '').replace(/\"$/g, '')
-                                                  .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                                                  .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-                  break
-                }
-              default:
-            }
-          })
-          result.objects.push(content)
-          break
-        }
-      case 'CommonPrefixes':
-        { // todo, this is the only known way for now to propagate delimited entries
-          var commonPrefixes = {}
-          element.children.forEach(xmlPrefix => {
-            switch (xmlPrefix.name) {
-              case 'Prefix':
-                {
-                  commonPrefixes.name = xmlPrefix.content
-                  commonPrefixes.size = 0
-                  break
-                }
-              default:
-            }
-          })
-          result.objects.push(commonPrefixes)
-          break
-        }
-      default:
-    }
-  })
-  if (result.isTruncated && !result.nextMarker) {
-    result.nextMarker = marker
+  var nextMarker
+  var xmlobj = parseXml(xml)
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (xmlobj.Contents) {
+    xmlobj.Contents.forEach(content => {
+      var name = content.Key[0]
+      var lastModified = new Date(content.LastModified[0])
+      var etag = content.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+                                 .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+                                 .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+      var size = +content.Size[0]
+      result.objects.push({name, lastModified, etag, size})
+      nextMarker = name
+    })
+  }
+  if (xmlobj.CommonPrefixes) {
+    xmlobj.CommonPrefixes.forEach(commonPrefix => {
+      var prefix = commonPrefix.Prefix[0]
+      var size = 0
+      result.objects.push({prefix, size})
+    })
+  }
+  if (result.isTruncated) {
+    result.nextMarker = xmlobj.NextMarker ? res.ListBucketResult.NextMarker[0]: nextMarker
   }
   return result
 }
