@@ -19,9 +19,6 @@
 
 var Minio = require('minio')
 
-// find out your s3 end point here:
-// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-
 var s3Client = new Minio({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
@@ -30,7 +27,7 @@ var s3Client = new Minio({
 
 var size = 0
 // Get a full object.
-s3Client.getObject('my-bucketname', 'my-objectname', '/tmp/objfile', function(e) {
+s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', function(e) {
   if (e) {
     return console.log(e)
   }
