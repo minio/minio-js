@@ -490,8 +490,8 @@ export default class Client {
   //
   // __Arguments__
   // * `bucketname` _string_: name of the bucket
-  // * `prefix` _string_: prefix of the object names that are partially uploaded
-  // * `recursive` bool: directory style listing when false, recursive listing when true
+  // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
+  // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
   //
   // __Return Value__
   // * `stream` _Stream_ : emits objects of the format:
@@ -499,13 +499,15 @@ export default class Client {
   //   * `object.uploadId` _string_: upload ID of the object
   //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
+    if (prefix === undefined) prefix = ''
+    if (recursive === undefined) recursive = false
     if (!isValidBucketName(bucket)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
     }
-    if (prefix && !isValidPrefix(prefix)) {
+    if (!isValidPrefix(prefix)) {
       throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
     }
-    if (recursive && !isBoolean(recursive)) {
+    if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
     var delimiter = recursive ? '' : '/'
@@ -774,9 +776,13 @@ export default class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `offset` _number_: offset of the object from where the stream will start
-  // * `length` _number_: length of the object that will be read in the stream
+  // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getPartialObject(bucketName, objectName, offset, length, cb) {
+    if (typeof length === 'function') {
+      cb = length
+      length = 0
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -956,7 +962,7 @@ export default class Client {
   // * `objectName` _string_: name of the object
   // * `stream` _Stream_: Readable stream
   // * `size` _number_: size of the object
-  // * `contentType` _string_: content type of the object
+  // * `contentType` _string_: content type of the object (optional, default `application/octet-stream`)
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   //
   // Uploading "Buffer" or "string"
@@ -964,7 +970,7 @@ export default class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
-  // * `contentType` _string_: content type of the object
+  // * `contentType` _string_: content type of the object (optional, default `application/octet-stream`)
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   putObject(arg1, arg2, arg3, arg4, arg5, arg6) {
     var bucketName = arg1
@@ -982,13 +988,23 @@ export default class Client {
     if (isReadableStream(arg3)) {
       stream = arg3
       size = arg4
-      contentType = arg5
-      cb = arg6
+      if (typeof arg5 === 'function') {
+        contentType = 'application/octet-stream'
+        cb = arg5
+      } else {
+        contentType = arg5
+        cb = arg6
+      }
     } else if (typeof(arg3) === 'string' || arg3 instanceof Buffer) {
       stream = readableStream(arg3)
       size = arg3.length
-      contentType = arg4
-      cb = arg5
+      if (typeof arg4 === 'function') {
+        contentType = 'application/octet-stream'
+        cb = arg4
+      } else {
+        contentType = arg4
+        cb = arg5
+      }
     } else {
       throw new errors.TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
     }
@@ -1100,8 +1116,8 @@ export default class Client {
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: the prefix of the objects that should be listed
-  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
+  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
+  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -1110,20 +1126,20 @@ export default class Client {
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.lastModified` _string_: modified time stamp
   listObjects(bucketName, prefix, recursive) {
+    if (prefix === undefined) prefix = ''
+    if (recursive === undefined) recursive = false
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (prefix && !isValidPrefix(prefix)) {
+    if (!isValidPrefix(prefix)) {
       throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
     }
-    if (prefix && !isString(prefix)) {
+    if (!isString(prefix)) {
       throw new TypeError('prefix should be of type "string"')
     }
-    if (recursive && !isBoolean(recursive)) {
+    if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
-    if (!prefix) prefix = ''
-    if (!recursive) recursive = false
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
     var dummyTransformer = transformers.getDummyTransformer()
