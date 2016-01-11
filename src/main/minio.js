@@ -115,8 +115,8 @@ export default class Client {
     this.anonymous = !newParams.accessKey || !newParams.secretKey
     this.params = newParams
     this.transport = transport
-    this.virtualHostStyle = virtualHostStyle
     this.regionMap = {}
+    this.virtualHostStyle = virtualHostStyle
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
@@ -142,10 +142,11 @@ export default class Client {
     }
 
     reqOptions.path = '/'
-    if (!this.virtualHostStyle || !opts.bucketName) {
+    if (!this.virtualHostStyle || !opts.bucketName || opts.pathStyle) {
       // we will do path-style requests for
       // 1. minio server
       // 2. listBuckets() where opts.bucketName is not defined
+      // 3. opts.pathStyle is set
       reqOptions.host = this.params.host
       if (bucketName) reqOptions.path = `/${bucketName}`
       if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
@@ -210,15 +211,13 @@ export default class Client {
     return partSize
   }
 
-  // makeRequest is the primitive used by all the apis for making S3 requests.
+  // makeRequest is the primitive used by the apis for making S3 requests.
   // payload can be empty string in case of no payload.
   // statusCode is the expected statusCode. If response.statusCode does not match
   // we parse the XML error and call the callback with the error message.
-
-  // makeRequest/makeRequestStream is used by all the calls except
-  // makeBucket and getBucketRegion which use path-style requests and standard
-  // region 'us-east-1'
-  makeRequest(options, payload, statusCode, cb) {
+  // A valid region is passed by the calls - listBuckets, makeBucket and
+  // getBucketRegion.
+  makeRequest(options, payload, statusCode, region, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
@@ -229,6 +228,9 @@ export default class Client {
     if (!isNumber(statusCode)) {
       throw new TypeError('statusCode should be of type "number"')
     }
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
+    }
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
@@ -237,7 +239,7 @@ export default class Client {
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
-    this.makeRequestStream(options, stream, sha256sum, statusCode, cb)
+    this.makeRequestStream(options, stream, sha256sum, statusCode, region, cb)
   }
 
   // log the request, response, error
@@ -289,7 +291,7 @@ export default class Client {
 
   // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
-  makeRequestStream(options, stream, sha256sum, statusCode, cb) {
+  makeRequestStream(options, stream, sha256sum, statusCode, region, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
@@ -301,6 +303,9 @@ export default class Client {
     }
     if (!isNumber(statusCode)) {
       throw new TypeError('statusCode should be of type "number"')
+    }
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
     }
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -346,8 +351,7 @@ export default class Client {
           cb(e)
         })
     }
-    // for operations where bucketName is not relevant like listBuckets()
-    if (!options.bucketName) return _makeRequest(null, 'us-east-1')
+    if (region) return _makeRequest(null, region)
     this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
@@ -360,41 +364,7 @@ export default class Client {
       throw new TypeError('cb should be of type "function"')
     }
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
-    var reqOptions = {}
-    reqOptions.method = 'GET'
-    reqOptions.host = this.params.host
-    reqOptions.port = this.params.port
-    reqOptions.protocol = this.params.protocol
-    reqOptions.path = `/${bucketName}?location`
-    if (!this.anonymous) {
-      reqOptions.headers = {}
-      reqOptions.headers.host = reqOptions.host
-      if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
-          (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
-        reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
-      }
-      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
-      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').digest('hex')
-      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
-      reqOptions.headers.authorization = authorization
-    }
-    // Verify success response.
-    var statusCode = 200
-    var req = this.transport.request(reqOptions)
-    req.on('error', e => {
-      this.logHTTP(reqOptions, null, e)
-      cb(e)
-    })
-    req.on('response', response => {
-      if (statusCode !== response.statusCode) {
-        var errorTransformer = transformers.getErrorTransformer(response)
-        pipesetup(response, errorTransformer)
-          .on('error', e => {
-            this.logHTTP(reqOptions, response, e)
-            cb(e)
-          })
-        return
-      }
+    var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
       var region = 'us-east-1'
       pipesetup(response, transformer)
@@ -406,9 +376,39 @@ export default class Client {
           this.regionMap[bucketName] = region
           cb(null, region)
         })
-      this.logHTTP(reqOptions, response)
+    }
+
+    var method = 'GET'
+    var query = 'location'
+
+    // In nodejs environment we will do a path-style request with 'us-east-1' region.
+    //
+    // On browser doing a path stye request on buckets in non-standard regions
+    // yields CORS error even if CORS policy is set on the bucket.
+    // As a workaround (similar to aws-sdk-js) we make the request using
+    // virtual-host-style with signed with region 'us-east-1', if the region is
+    // not 'us-east-1' S3 returns error 'AuthorizationHeaderMalformed' with the
+    // Region field in the XML set to the correct region which we can use. Now
+    // we again make get-region API request with the correct region for signature
+    // and ensure that we get don't get any error (this is a redundant step as we
+    // already know the region, but we do this sencond check anyway just like aws-sdk-js).
+
+    var pathStyle = typeof window === 'undefined'
+    this.makeRequest({method, bucketName, query, pathStyle}, '', 200, 'us-east-1', (e, response) => {
+      if (e) {
+        if (e.name === 'AuthorizationHeaderMalformed') {
+          var region = e.Region
+          if (!region) return cb(e)
+          this.makeRequest({method, bucketName, query}, '', 200, region, (e, response) => {
+            if (e) return cb(e)
+            extractRegion(response)
+          })
+          return
+        }
+        return cb(e)
+      }
+      extractRegion(response)
     })
-    req.end()
   }
 
   // Creates the bucket `bucketName`.
@@ -458,35 +458,8 @@ export default class Client {
     }
     var method = 'PUT'
     var headers = {'x-amz-acl': acl}
-
-    var reqOptions = this.getRequestOptions({method, bucketName, headers})
-    if (!this.anonymous) {
-      reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
-      reqOptions.headers['x-amz-content-sha256'] = Crypto.createHash('sha256').update(payload).digest('hex')
-      var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
-      reqOptions.headers.authorization = authorization
-    }
-    // Verify success response.
-    var statusCode = 200
-    var req = this.transport.request(reqOptions, response => {
-      var errorTransformer = transformers.getErrorTransformer(response)
-      if (statusCode !== response.statusCode) {
-        pipesetup(response, errorTransformer)
-        .on('error', e => {
-          this.logHTTP(reqOptions, response, e)
-          cb(e)
-        })
-        return
-      }
-      this.logHTTP(reqOptions, response)
-      cb()
-    })
-    req.on('error', e => {
-      this.logHTTP(reqOptions, null, e)
-      cb(e)
-    })
-    req.write(payload)
-    req.end()
+    // virtual-host-style request but signed  with region 'us-east-1'
+    this.makeRequest({method, bucketName, headers}, payload, 200, 'us-east-1', cb)
   }
 
   // List of buckets created.
@@ -502,7 +475,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', 200, (e, response) => {
+    this.makeRequest({method}, '', 200, 'us-east-1', (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
@@ -580,7 +553,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'HEAD'
-    this.makeRequest({method, bucketName}, '', 200, cb)
+    this.makeRequest({method, bucketName}, '', 200, '', cb)
   }
 
   // Remove a bucket.
@@ -596,7 +569,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName}, '', 204, (e) => {
+    this.makeRequest({method, bucketName}, '', 204, '', (e) => {
       // If the bucket was successfully removed, remove the region map entry.
       if (!e) delete(this.regionMap[bucketName])
       cb(e)
@@ -617,7 +590,7 @@ export default class Client {
     }
     var method = 'GET'
     var query = 'acl'
-    this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getAclTransformer()
       pipesetup(response, transformer)
@@ -677,7 +650,7 @@ export default class Client {
     var query = 'acl'
     var method = 'PUT'
     var headers = {'x-amz-acl': acl}
-    this.makeRequest({method, bucketName, query, headers}, '', 200, cb)
+    this.makeRequest({method, bucketName, query, headers}, '', 200, '', cb)
   }
 
   // Remove the partially uploaded object.
@@ -702,7 +675,7 @@ export default class Client {
       (uploadId, callback) => {
         var method = 'DELETE'
         var query = `uploadId=${uploadId}`
-        this.makeRequest({method, bucketName, objectName, query}, '', 204, callback)
+        this.makeRequest({method, bucketName, objectName, query}, '', 204, '', callback)
       }
     ], cb)
   }
@@ -843,7 +816,7 @@ export default class Client {
       expectedStatus = 206
     }
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, cb)
+    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, '', cb)
   }
 
   // Uploads the object using contents from a file
@@ -1116,7 +1089,7 @@ export default class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListObjectsTransformer()
-    this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })
@@ -1194,7 +1167,7 @@ export default class Client {
     }
 
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, objectName}, '', 200, '', (e, response) => {
       if (e) return cb(e)
       var result = {
         size: +response.headers['content-length'],
@@ -1223,7 +1196,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName, objectName}, '', 204, cb)
+    this.makeRequest({method, bucketName, objectName}, '', 204, '', cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -1359,7 +1332,7 @@ export default class Client {
     var method = 'POST'
     var headers = {'Content-Type': contentType}
     var query = 'uploads'
-    this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, '', (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getInitiateMultipartTransformer()
       pipesetup(response, transformer)
@@ -1409,7 +1382,7 @@ export default class Client {
     var payloadObject = {CompleteMultipartUpload: parts}
     var payload = Xml(payloadObject)
 
-    this.makeRequest({method, bucketName, objectName, query}, payload, 200, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, payload, 200, '', (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, transformer)
@@ -1477,7 +1450,7 @@ export default class Client {
     query += `uploadId=${uploadId}`
 
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, query}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, '', 200, '', (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListPartsTransformer()
       pipesetup(response, transformer)
@@ -1527,7 +1500,7 @@ export default class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListMultipartTransformer()
-    this.makeRequest({method, bucketName, query}, '', 200, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })
@@ -1745,7 +1718,7 @@ export default class Client {
         'Content-MD5': md5sum
       }
       this.makeRequestStream({method, bucketName, objectName, query, headers},
-                            stream, sha256sum, 200, (e, response) => {
+                            stream, sha256sum, 200, '', (e, response) => {
         if (e) return cb(e)
         var etag = response.headers.etag
         if (etag) {
