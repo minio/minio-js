@@ -142,37 +142,26 @@ describe('Client', function() {
   describe('Presigned URL', () => {
     describe('presigned-get', () => {
       it('should not generate presigned url with no access key', (done) => {
-        try {
-          var client = new Minio({
-            endPoint: 'localhost',
-            port: 9000
-          })
-          client.presignedGetObject('bucket', 'object', '1000')
-        } catch (e) {
+        var client = new Minio({
+          endPoint: 'localhost',
+          port: 9000
+        })
+        client.presignedGetObject('bucket', 'object', 1000, (e, url) => {
+          assert.notEqual(e, null)
           done()
-        }
+        })
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          var client = new Minio({
-            endPoint: 'localhost',
-            port: 9000,
-            accessKey: 'accesskey',
-            secretKey: 'secretkey',
-          })
           client.presignedGetObject('bucket', 'object', '0')
         } catch (e) {
           done()
         }
       })
       it('should generate presigned url', (done) => {
-        var client = new Minio({
-          endPoint: 'localhost',
-          port: 9000,
-          accessKey: 'accesskey',
-          secretKey: 'secretkey'
-        })
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         client.presignedGetObject('bucket', 'object', 86400, (e, url) => {
+          assert.equal(e, null)
           assert.equal(url.length > 0, true)
           done()
         })
@@ -180,40 +169,25 @@ describe('Client', function() {
     })
     describe('presigned-put', () => {
       it('should not generate presigned url with no access key', (done) => {
-        try {
-          var client = new Minio({
-            endPoint: 'localhost',
-            port: 9000,
-          })
-          client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
-            assert.equal(url.length > 0, true)
-            done()
-          })
-        } catch (e) {
+        var client = new Minio({
+          endPoint: 'localhost',
+          port: 9000
+        })
+        client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
+          assert.notEqual(e, null)
           done()
-        }
+        })
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          var client = new Minio({
-            endPoint: 'localhost',
-            port: 9000,
-            accessKey: 'accesskey',
-            secretKey: 'secretkey',
-          })
           client.presignedPutObject('bucket', 'object', '0')
         } catch (e) {
           done()
         }
       })
       it('should generate presigned url', (done) => {
-        var client = new Minio({
-          endPoint: 'localhost',
-          port: 9000,
-          accessKey: 'accesskey',
-          secretKey: 'secretkey'
-        })
         client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
+          assert.equal(e, null)
           assert.equal(url.length > 0, true)
           done()
         })
@@ -301,37 +275,26 @@ describe('Client', function() {
   })
   describe('Authentication', () => {
     describe('not set', () => {
-      var transport = new MockTransport(),
+      it('should not send auth info without keys', (done) => {
         client = new Minio({
           endPoint: 'localhost',
-          port: 9000,
-          transport: transport
+          port: 9000
         })
-      it('should not send auth info without keys', (done) => {
-        client.transport.addRequest((params) => {
-          assert.deepEqual(params, {
-            host: 'localhost',
-            port: 9000,
-            protocol: 'https:',
-            path: '/bucket/object',
-            method: 'HEAD',
-            headers: {
-              host: 'localhost:9000',
-              'content-length': 0
-            }
-          })
-        }, 200, {
-          'etag': 'etag',
-          'content-length': 11,
-          'last-modified': 'lastmodified',
-          'content-type': 'application/octet-stream'
-        }, null)
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+        MockResponse('http://localhost:9000', {
+          badHeaders: ['Authorization']
+        }).head('/bucket/object').reply(200, '', {
+          'ETag': 'etag',
+          'Content-Length': 11,
+          'Last-Modified': 'lastmodified',
+          'Content-Type': 'text/plain'
+        })
         client.statObject('bucket', 'object', (e, r) => {
           assert.deepEqual(r, {
             size: 11,
             'lastModified': 'lastmodified',
             etag: 'etag',
-            contentType: 'application/octet-stream'
+            contentType: 'text/plain'
           })
           done()
         })
@@ -339,38 +302,24 @@ describe('Client', function() {
     })
     describe('set with access and secret keys', () => {
       it('should not send auth info without keys', (done) => {
-        var transport = new MockTransport(),
-          client = new Minio({
-            endPoint: 'localhost',
-            port: 9000,
-            accessKey: 'accessKey',
-            secretKey: 'secretKey',
-            transport: transport,
-          })
-        client.transport.addRequest((params) => {
-          assert.equal(true, params.headers.authorization !== null)
-          assert.equal(true, params.headers.authorization.indexOf('accessKey') > -1)
-          assert.equal(true, params.headers['x-amz-date'] !== null)
-          delete params.headers['authorization']
-          delete params.headers['x-amz-date']
-          assert.deepEqual(params, {
-            host: 'localhost',
-            port: 9000,
-            protocol: 'https:',
-            path: '/bucket/object',
-            method: 'HEAD',
-            headers: {
-              host: 'localhost:9000',
-              'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-              'content-length': 0
-            }
-          })
-        }, 200, {
-          'etag': 'etag',
-          'content-length': 11,
-          'last-modified': 'lastmodified',
-          'content-type': 'text/plain'
-        }, null)
+        client = new Minio({
+          endPoint: 'localhost',
+          port: 9000,
+          accessKey: 'accessKey',
+          secretKey: 'secretKey'
+        })
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+        MockResponse('http://localhost:9000', {
+          reqHeaders: {
+            'x-amz-content-sha256': 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            'Authorization': '/AWS4-HMAC-SHA256/i',
+          }
+        }).head('/bucket/object').reply(200, '', {
+          'ETag': 'etag',
+          'Content-Length': 11,
+          'Last-Modified': 'lastmodified',
+          'Content-Type': 'text/plain'
+        })
         client.statObject('bucket', 'object', (e, r) => {
           assert.deepEqual(r, {
             size: 11,
@@ -455,14 +404,17 @@ describe('Client', function() {
         client.bucketExists('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should return an error on moved permanently', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').head('/bucket').reply(301)
         client.bucketExists('bucket', checkError('MovedPermanently', 'Moved Permanently', null, null, null, done))
       })
       it('should return an error on 404', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').head('/bucket').reply(403)
         client.bucketExists('bucket', checkError('AccessDenied', 'Valid and authorized credentials required', null, null, null, done))
       })
       it('should return an error on 404', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').head('/bucket').reply(404)
         client.bucketExists('bucket', checkError('NotFound', 'Not Found', null, null, null, done))
       })
@@ -491,12 +443,14 @@ describe('Client', function() {
 
     describe('#removeBucket(bucket, cb)', () => {
       it('should remove a bucket', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').delete('/bucket').reply(204)
         client.removeBucket('bucket', () => {
           done()
         })
       })
       it('should pass error to callback', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').delete('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeBucket('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
@@ -525,6 +479,7 @@ describe('Client', function() {
 
     describe('#getBucketACL(bucket, cb)', () => {
       it('should return public-read-write acl', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
         client.getBucketACL('bucket', (e, r) => {
           assert.equal(e, null)
@@ -585,28 +540,12 @@ describe('Client', function() {
 
     describe('#setBucketACL(bucket, acl, cb)', () => {
       it('should set acl', (done) => {
-        var transport = new MockTransport(),
-          client = new Minio({
-            endPoint: 'localhost',
-            port: 9000,
-            transport: transport,
-          })
-        client.transport.addRequest((params) => {
-          assert.deepEqual(params, {
-            host: 'localhost',
-            port: 9000,
-            path: '/bucket?acl',
-            method: 'PUT',
-            protocol: '',
-            headers: {
-              'x-amz-acl': 'public-read'
-            }
-          })
-        }, 200, {
-          'etag': 'etag',
-          'content-length': 11,
-          'last-modified': 'lastmodified'
-        }, null)
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+        MockResponse('http://localhost:9000', {
+          reqHeaders: {
+            'x-amz-acl': 'public-read'
+          }
+        }).put('/bucket?acl').reply(200)
         client.setBucketACL('bucket', 'public-read', (e) => {
           assert.equal(e, null)
         })
@@ -664,6 +603,7 @@ describe('Client', function() {
   describe('object level', () => {
     describe('#getObject(bucket, object, callback)', () => {
       it('should return a stream object', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/bucket/object').reply(200, 'hello world')
         client.getObject('bucket', 'object', (e, r) => {
           assert.equal(e, null)
@@ -722,6 +662,7 @@ describe('Client', function() {
     })
     describe('#getPartialObject(bucket, object, offset, length, callback)', () => {
       it('should work with offset and length', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000', {
           reqHeaders: {
             'range': '10-21'
@@ -854,6 +795,7 @@ describe('Client', function() {
           uploadData += 'a'
         }
         it('should put an object with no resume needed', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
@@ -987,6 +929,7 @@ describe('Client', function() {
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass part list error to callback', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
           var s = new Stream.Readable()
@@ -998,6 +941,7 @@ describe('Client', function() {
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass put error to callback', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>"79b281060d337b9b2b84ccf390adcf74"</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>"79b281060d337b9b2b84ccf390adcf74"</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
@@ -1013,6 +957,7 @@ describe('Client', function() {
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
         })
         it('should pass complete upload error to callback', (done) => {
+          MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Upload><Key>object</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Prefix>object</Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').get('/bucket/object?uploadId=uploadid').reply(200, '<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>bucket</Bucket><Key>go1.4.2</Key><UploadId>ntWSjzBytPT2xKLaMRonzXncsO10EH4Fc-Iq2-4hG-ulRYB</UploadId><Initiator><ID>minio</ID><DisplayName>minio</DisplayName></Initiator><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><StorageClass>STANDARD</StorageClass><PartNumberMarker>0</PartNumberMarker><NextPartNumberMarker>0</NextPartNumberMarker><MaxParts>1000</MaxParts><IsTruncated>false</IsTruncated><Part><PartNumber>1</PartNumber><ETag>"79b281060d337b9b2b84ccf390adcf74"</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part><Part><PartNumber>2</PartNumber><ETag>"79b281060d337b9b2b84ccf390adcf74"</ETag><LastModified>2015-06-03T03:12:34.756Z</LastModified><Size>5242880</Size></Part></ListPartsResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
@@ -1035,6 +980,7 @@ describe('Client', function() {
 
     describe('#listObjects()', () => {
       it('should iterate without a prefix', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
@@ -1185,6 +1131,7 @@ describe('Client', function() {
         stream.on('error', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should pass error in stream on subsequent error', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').filteringPath(() => {
           return '/bucket'
         }).get('/bucket').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
@@ -1203,13 +1150,13 @@ describe('Client', function() {
 
     describe('#statObject(bucket, object, callback)', () => {
       it('should retrieve object metadata', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').head('/bucket/object').reply(200, '', {
           'ETag': 'etag',
           'Content-Length': 11,
           'Last-Modified': 'lastmodified',
           'Content-Type': 'text/plain'
         })
-
         client.statObject('bucket', 'object', (e, r) => {
           assert.deepEqual(r, {
             size: 11,
@@ -1272,6 +1219,7 @@ describe('Client', function() {
 
     describe('#removeObject(bucket, object, callback)', () => {
       it('should delete an object', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').delete('/bucket/object').reply(204)
         client.removeObject('bucket', 'object', (e) => {
           assert.equal(e, null)
@@ -1329,6 +1277,7 @@ describe('Client', function() {
 
     describe('#removeIncompleteUpload(bucket, object, callback)', () => {
       it('should remove an incomplete upload', (done) => {
+        MockResponse('http://localhost:9000').get('/golang?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')        
         MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2.1</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(204)
         client.removeIncompleteUpload('golang', 'go1.4.2', done)
@@ -1338,11 +1287,13 @@ describe('Client', function() {
         client.removeIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should pass error to callback on second list failure', (done) => {
+        MockResponse('http://localhost:9000').get('/golang?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2.1</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').get('/golang?uploads&key-marker=keymarker&max-uploads=1000&prefix=go1.4.2&upload-id-marker=uploadmarker').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
       })
       it('should return error on delete failure', (done) => {
+        MockResponse('http://localhost:9000').get('/golang?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2.1</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
         client.removeIncompleteUpload('golang', 'go1.4.2', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
