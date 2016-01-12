@@ -671,15 +671,22 @@ export default class Client {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-
-    async.waterfall([
-      callback => this.findUploadId(bucketName, objectName, callback),
-      (uploadId, callback) => {
+    var removeUploadId
+    async.during(
+      cb => {
+        this.findUploadId(bucketName, objectName, (e, uploadId) => {
+          if (e) return cb(e)
+          removeUploadId = uploadId
+          cb(null, uploadId)
+        })
+      },
+      cb => {
         var method = 'DELETE'
-        var query = `uploadId=${uploadId}`
-        this.makeRequest({method, bucketName, objectName, query}, '', 204, '', callback)
-      }
-    ], cb)
+        var query = `uploadId=${removeUploadId}`
+        this.makeRequest({method, bucketName, objectName, query}, '', 204, '', e => cb(e))
+      },
+      cb
+    )
   }
 
   // Callback is called with `error` in case of error or `null` in case of success
@@ -1534,25 +1541,25 @@ export default class Client {
     if (!isFunction(cb)) {
       throw new TypeError('cb should be of type "function"')
     }
-
+    var latestUpload
     var listNext = (keyMarker, uploadIdMarker) => {
       this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
         .on('error', e => cb(e))
         .on('data', result => {
-          var keyFound = false
           result.uploads.forEach(upload => {
             if (upload.key === objectName) {
-              cb(null, upload.uploadId)
-              keyFound = true
+              if (!latestUpload ||
+                (upload.initiated.getTime() > latestUpload.initiated.getTime())) {
+                latestUpload = upload
+                return
+              }
             }
           })
-          if (keyFound) {
-            return
-          }
           if (result.isTruncated) {
             listNext(result.nextKeyMarker, result.nextUploadIdMarker)
             return
           }
+          if (latestUpload) return cb(null, latestUpload.uploadId)
           cb(null, undefined)
         })
     }
