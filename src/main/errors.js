@@ -23,6 +23,12 @@ class ExtendableError extends Error {
   }
 }
 
+export class AnonymousRequestError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
 export class InvalidArgumentError extends ExtendableError {
   constructor(message) {
     super(message)
