@@ -17,16 +17,16 @@
 require('source-map-support').install()
 
 import fs from 'fs'
-import Crypto from 'crypto';
-import Http from 'http';
-import Https from 'https';
-import Stream from 'stream';
-import Through2 from 'through2';
-import BlockStream2 from 'block-stream2';
-import Url from 'url';
-import Xml from 'xml';
-import Moment from 'moment';
-import async from 'async';
+import Crypto from 'crypto'
+import Http from 'http'
+import Https from 'https'
+import Stream from 'stream'
+import Through2 from 'through2'
+import BlockStream2 from 'block-stream2'
+import Url from 'url'
+import Xml from 'xml'
+import Moment from 'moment'
+import async from 'async'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
@@ -218,7 +218,6 @@ export default class Client {
   // makeRequest/makeRequestStream is used by all the calls except
   // makeBucket and getBucketRegion which use path-style requests and standard
   // region 'us-east-1'
-
   makeRequest(options, payload, statusCode, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
@@ -1232,6 +1231,9 @@ export default class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
   presignedPutObject(bucketName, objectName, expires, cb) {
+    if (this.anonymous) {
+      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1257,6 +1259,9 @@ export default class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds
   presignedGetObject(bucketName, objectName, expires, cb) {
+    if (this.anonymous) {
+      throw new errors.AnonymousRequestError('Presigned GET cannot be generated for anonymous requests')
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1284,6 +1289,9 @@ export default class Client {
   // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
   // on the object's `name` `bucket` `expiry` `Content-Type`
   presignedPostPolicy(postPolicy, cb) {
+    if (this.anonymous) {
+      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
+    }
     if (!isObject(postPolicy)) {
       throw new TypeError('postPolicy should be of type "object"')
     }
