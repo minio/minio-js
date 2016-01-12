@@ -23,7 +23,6 @@ import Nock from 'nock';
 import Through2 from 'through2';
 import Stream from 'stream';
 import Minio from '../../../dist/main/minio.js';
-import MockTransport from './transport.js';
 
 var Package = require('../../../package.json')
 
@@ -58,7 +57,7 @@ describe('Client', function() {
       insecure: true
     })
   describe('new client', () => {
-    it('should work with http', () => {
+    it('should work with https', () => {
       var client = new Minio({
         endPoint: 'localhost',
         accessKey: 'accesskey',
@@ -76,7 +75,7 @@ describe('Client', function() {
       })
       assert.equal(client.params.port, 9000)
     })
-    it('should work with https', () => {
+    it('should work with http', () => {
       var client = new Minio({
         endPoint: 'localhost',
         accessKey: 'accesskey',
@@ -142,14 +141,16 @@ describe('Client', function() {
   describe('Presigned URL', () => {
     describe('presigned-get', () => {
       it('should not generate presigned url with no access key', (done) => {
-        var client = new Minio({
-          endPoint: 'localhost',
-          port: 9000
-        })
-        client.presignedGetObject('bucket', 'object', 1000, (e, url) => {
-          assert.notEqual(e, null)
+        try {
+          var client = new Minio({
+            endPoint: 'localhost',
+            port: 9000,
+            insecure: true
+          })
+          client.presignedGetObject('bucket', 'object', 1000)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
@@ -169,14 +170,16 @@ describe('Client', function() {
     })
     describe('presigned-put', () => {
       it('should not generate presigned url with no access key', (done) => {
-        var client = new Minio({
-          endPoint: 'localhost',
-          port: 9000
-        })
-        client.presignedPutObject('bucket', 'object', 1000, (e, url) => {
-          assert.notEqual(e, null)
+        try {
+          var client = new Minio({
+            endPoint: 'localhost',
+            port: 9000,
+            insecure: true
+          })
+          client.presignedPutObject('bucket', 'object', 1000)
+        } catch (e) {
           done()
-        })
+        }
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
@@ -278,7 +281,8 @@ describe('Client', function() {
       it('should not send auth info without keys', (done) => {
         client = new Minio({
           endPoint: 'localhost',
-          port: 9000
+          port: 9000,
+          insecure: true
         })
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000', {
@@ -306,7 +310,8 @@ describe('Client', function() {
           endPoint: 'localhost',
           port: 9000,
           accessKey: 'accessKey',
-          secretKey: 'secretKey'
+          secretKey: 'secretKey',
+          insecure: true
         })
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000', {
@@ -1277,7 +1282,7 @@ describe('Client', function() {
 
     describe('#removeIncompleteUpload(bucket, object, callback)', () => {
       it('should remove an incomplete upload', (done) => {
-        MockResponse('http://localhost:9000').get('/golang?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')        
+        MockResponse('http://localhost:9000').get('/golang?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/golang?uploads&max-uploads=1000&prefix=go1.4.2').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker>keymarker</NextKeyMarker><NextUploadIdMarker>uploadmarker</NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>true</IsTruncated><Upload><Key>go1.4.2.1</Key><UploadId>uploadid</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T14:43:35.349Z</Initiated></Upload><Upload><Key>go1.4.2</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Upload><Key>go1.5.0</Key><UploadId>uploadid2</UploadId><Initiator><ID></ID><DisplayName></DisplayName></Initiator><Owner><ID></ID><DisplayName></DisplayName></Owner><StorageClass></StorageClass><Initiated>2015-05-30T15:00:07.759Z</Initiated></Upload><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
         MockResponse('http://localhost:9000').delete('/golang/go1.4.2?uploadId=uploadid2').reply(204)
         client.removeIncompleteUpload('golang', 'go1.4.2', done)

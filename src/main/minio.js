@@ -378,6 +378,7 @@ export default class Client {
       var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
       reqOptions.headers.authorization = authorization
     }
+    // Verify success response.
     var statusCode = 200
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
@@ -465,6 +466,7 @@ export default class Client {
       var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
       reqOptions.headers.authorization = authorization
     }
+    // Verify success response.
     var statusCode = 200
     var req = this.transport.request(reqOptions, response => {
       var errorTransformer = transformers.getErrorTransformer(response)
@@ -1232,7 +1234,7 @@ export default class Client {
   // * `expiry` _number_: expiry in seconds
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
+      throw new errors.AnonymousRequestError('Presigned PUT url cannot be generated for anonymous requests')
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1248,11 +1250,14 @@ export default class Client {
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
+      // This statement is added to ensure that we send error through
+      // callback on presign failure.
+      var url
       try {
-        var url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
-                                     region, requestDate, expires)
-      } catch (e) {
-        return cb(e)
+        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+                                 region, requestDate, expires)
+      } catch (pe) {
+        return cb(pe)
       }
       cb(null, url)
     })
@@ -1266,7 +1271,7 @@ export default class Client {
   // * `expiry` _number_: expiry in seconds
   presignedGetObject(bucketName, objectName, expires, cb) {
     if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned GET cannot be generated for anonymous requests')
+      throw new errors.AnonymousRequestError('Presigned GET url cannot be generated for anonymous requests')
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1282,11 +1287,14 @@ export default class Client {
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
+      // This statement is added to ensure that we send error through
+      // callback on presign failure.
+      var url
       try {
-        var url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
-                                     region, requestDate, expires)
-      } catch (e) {
-        return cb(e)
+        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+                                 region, requestDate, expires)
+      } catch (pe) {
+        return cb(pe)
       }
       cb(null, url)
     })
@@ -1603,7 +1611,6 @@ export default class Client {
 
     var md5 = null
     var sha256 = null
-
     return Through2.obj((chunk, enc, cb) => {
       if (chunk.length > this.minimumPartSize) {
         return cb(new Error(`chunk length cannot be more than ${this.minimumPartSize}`))
