@@ -76,7 +76,11 @@ export function parseListMultipart(xml) {
     result.prefixes.push({prefix: prefix[0]})
   })
   if (xmlobj.Upload) xmlobj.Upload.forEach(upload => {
-    result.uploads.push({key: upload.Key[0], uploadId: upload.UploadId[0]})
+    result.uploads.push({
+      key: upload.Key[0],
+      uploadId: upload.UploadId[0],
+      initiated: new Date(upload.Initiated[0])
+    })
   })
   return result
 }

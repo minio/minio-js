@@ -28,7 +28,9 @@ s3Client can be used to perform operations on S3 storage. APIs are described bel
 
 * [`getObject`](#getObject)
 * [`getPartialObject`](#getPartialObject)
+* [`fGetObject`](#fGetObject)
 * [`putObject`](#putObject)
+* [`fPutObject`](#fPutObject)
 * [`statObject`](#statObject)
 * [`removeObject`](#removeObject)
 * [`removeIncompleteUpload`](#removeIncompleteUpload)
@@ -165,8 +167,8 @@ List objects in a bucket.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket
-* `prefix` _string_: the prefix of the objects that should be listed
-* `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'.
+* `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
+* `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
 
 __Return Value__
 * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -250,7 +252,7 @@ __Arguments__
 * `bucketName` _string_: name of the bucket
 * `objectName` _string_: name of the object
 * `offset` _number_: offset of the object from where the stream will start
-* `length` _number_: length of the object that will be read in the stream
+* `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
 * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
 
 __Example__
@@ -273,6 +275,27 @@ s3Client.getObject('mybucket', 'photo.jpg', 10, 30, function(e, dataStream) {
 })
 ```
 ---------------------------------------
+<a name="fGetObject">
+#### fGetObject(bucketName, objectName, callback)
+Callback is called with `error` in case of error or `null` in case of success
+
+__Arguments__
+* `bucketName` _string_: name of the bucket
+* `objectName` _string_: name of the object
+* `filePath` _string_: path to which the object data will be written to
+* `callback(err)` _function_: callback is called with `err` in case of error.
+
+__Example__
+```js
+var size = 0
+s3Client.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log('success')
+})
+```
+---------------------------------------
 <a name="putObject">
 #### putObject(bucketName, objectName, stream, size, contentType, callback)
 Upload an object.
@@ -283,15 +306,7 @@ __Arguments__
 * `objectName` _string_: name of the object
 * `stream` _Stream_: Readable stream
 * `size` _number_: size of the object
-* `contentType` _string_: content type of the object
-* `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-
-Uploading "Buffer" or "string"
-__Arguments__
-* `bucketName` _string_: name of the bucket
-* `objectName` _string_: name of the object
-* `string or Buffer` _Stream_ or _Buffer_: Readable stream
-* `contentType` _string_: content type of the object
+* `contentType` _string_: content type of the object (optional, default `application/octet-stream`)
 * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
 
 __Example__
@@ -302,12 +317,47 @@ var fileStat = Fs.stat(file, function(e, stats) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('mybucket', '40mbfile', 'application/octet-stream', stats.size, fileStream, function(e, etag) {
+  s3Client.putObject('mybucket', '40mbfile', fileStream, stats.size, 'application/octet-stream', function(e, etag) {
     return console.log(e, etag) // e should be null
   })
 })
 ```
 
+Uploading "Buffer" or "string"
+__Arguments__
+* `bucketName` _string_: name of the bucket
+* `objectName` _string_: name of the object
+* `string or Buffer` _Stream_ or _Buffer_: Readable stream
+* `contentType` _string_: content type of the object (optional, default `application/octet-stream`)
+* `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+
+__Example__
+```js
+var file = '/tmp/40mbfile'
+s3Client.putObject('mybucket', '40mbfile', file, 'application/octet-stream', function(e, etag) {
+  return console.log(e, etag) // e should be null
+})
+```
+
+---------------------------------------
+<a name="fPutObject">
+#### fPutObject(bucketName, objectName, filePath, contentType, callback)
+Uploads the object using contents from a file
+
+__Arguments__
+* `bucketName` _string_: name of the bucket
+* `objectName` _string_: name of the object
+* `filePath` _string_: file path of the file to be uploaded
+* `contentType` _string_: content type of the object
+* `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+
+__Example__
+```js
+var file = '/tmp/40mbfile'
+s3Client.putObject('mybucket', '40mbfile', 'application/octet-stream', function(e, etag) {
+  return console.log(e, etag) // e should be null
+})
+```
 ---------------------------------------
 <a name="statObject">
 #### statObject(bucketName, objectName, callback)

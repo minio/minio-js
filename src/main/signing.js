@@ -139,10 +139,10 @@ function getSigningKey(date, region, secretKey) {
     throw new TypeError('secretKey should be of type "string"')
   }
   var dateLine = date.format('YYYYMMDD'),
-    hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest('binary'),
-    hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest('binary'),
-    hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest('binary')
-  return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest('binary')
+    hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest(),
+    hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest(),
+    hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest()
+  return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest()
 }
 
 // returns the string that needs to be signed

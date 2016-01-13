@@ -52,20 +52,14 @@ s3client.listBuckets(function(e, bucketStream) {
       accessKey: 'YOUR-ACCESSKEYID',
       secretKey: 'YOUR-SECRETACCESSKEY'
      });
-     s3Client.listBuckets(function(e, bucketStream) {
+
+     s3Client.getObject('krisupload', '40mbfile', function(e, dataStream) {
        if (e) {
-         console.log(e);
-         return
+         return console.log(e)
        }
-       bucketStream.on('data', function(obj) {
-         console.log(obj)
-       });
-       bucketStream.on('end', function() {
-         console.log("End")
-       });
-       bucketStream.on('error', function(e) {
-         console.log("Error", e)
-       });
+       dataStream.on('data', function(chunk) {
+         console.log(chunk.toString())
+       })
      })
     </script>
   </body>
@@ -80,7 +74,7 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ### Bucket
 
-[makeBucket(bucket, cb)](examples/make-bucket.js)
+[makeBucket(bucket, acl, region, cb)](examples/make-bucket.js)
 
 [listBuckets() : Stream](examples/list-buckets.js)
 
@@ -92,17 +86,20 @@ s3client.listBuckets(function(e, bucketStream) {
 
 [setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
-[listObjects(bucket, {prefix: prefix, recursive: true}) : Stream](examples/list-objects.js)
+[listObjects(bucket, prefix, recursive) : Stream](examples/list-objects.js)
 
-[listIncompleteUploads(bucket, prefix, recursive: true) : Stream](examples/list-incomplete-uploads.js)
+[listIncompleteUploads(bucket, prefix, recursive) : Stream](examples/list-incomplete-uploads.js)
 
 ### Object
+[fGetObject(bucket, object, filePath)](examples/fget-object.js)
 
 [getObject(bucket, object) Stream](examples/get-object.js)
 
 [getPartialObject(bucket, object, offset, length) Stream](examples/get-partialobject.js)
 
-[putObject(bucket, object, Stream, cb)](examples/put-object.js)
+[fPutObject(bucket, object, filePath, contentType, cb)](examples/put-object.js)
+
+[putObject(bucket, object, Stream, contentType, cb)](examples/put-object.js)
 
 [statObject(bucket, object, cb)](examples/stat-object.js)
 

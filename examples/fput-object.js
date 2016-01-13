@@ -20,9 +20,6 @@
 var Minio = require('minio')
 var Fs = require('fs')
 
-// find out your s3 end point here:
-// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-
 var s3Client = new Minio({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',

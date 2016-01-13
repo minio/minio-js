@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <body>
+    <script type="text/javascript" src="minio-browser.js"></script>
+    <script>
+      var s3Client = new Minio({
+        endPoint: 's3.amazonaws.com',
+        accessKey: 'YOUR-ACCESSKEYID',
+        secretKey: 'YOUR-SECRETACCESSKEY'
+      })
+
+      var size = 0
+      // Get a full object.
+      s3Client.getObject('my-bucketname', 'my-objectname', function(e, dataStream) {
+        if (e) {
+          return console.log(e)
+        }
+        dataStream.on('data', function(chunk) {
+          size += chunk.length
+        })
+        dataStream.on('end', function() {
+          console.log("End. Total size = " + size)
+        })
+        dataStream.on('error', function(e) {
+          console.log(e)
+        })
+      })
+    </script>
+  </body>
+</html>

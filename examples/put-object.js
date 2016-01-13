@@ -20,26 +20,50 @@
 var Minio = require('minio')
 var Fs = require('fs')
 
-// find out your s3 end point here:
-// http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
-
 var s3Client = new Minio({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-// Put a file in bucket my-bucketname.
-var file = 'my-testfile'
+// Upload a stream
+var file = 'my-testfile.ogg'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function(e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('my-bucketname', 'my-objectname', fileStream, stat.size, 'application/octet-stream', function(e) {
+  s3Client.putObject('my-bucketname', 'my-objectname.ogg', fileStream, stat.size, 'audio/ogg', function(e) {
     if (e) {
       return console.log(e)
     }
-    console.log("Success")
+    console.log("Successfully uploaded the stream")
   })
+})
+
+// Upload a buffer
+var buf = new Buffer(10)
+buf.fill('a')
+s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Successfully uploaded the buffer")
+})
+
+// Upload a string
+var str = "random string to be uploaded"
+s3Client.putObject('my-bucketname', 'my-objectname3', str, 'text/plain', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Successfully uploaded the string")
+})
+
+// Upload a Buffer without content-type (default: 'application/octet-stream')
+s3Client.putObject('my-bucketname', 'my-objectname4', buf, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Successfully uploaded the Buffer")
 })
