@@ -307,7 +307,7 @@ export default class Client {
     }
     // sha256sum will be empty for anonymous requests
     if (sha256sum.length === 0 && !this.anonymous) {
-      throw new errors.InvalidArgumentError(`sha256sum cannot be empty for non-anonymous requests`)
+      throw new errors.InvalidArgumentError(`sha256sum cannot be empty for authenticated requests`)
     }
     if (sha256sum.length !== 64 && !this.anonymous) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
@@ -323,7 +323,7 @@ export default class Client {
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, response => {
-        if (statusCode != response.statusCode) {
+        if (statusCode !== response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
           // in future, if AWS S3 decides to send a different status code or
@@ -359,8 +359,6 @@ export default class Client {
     if (!isFunction(cb)) {
       throw new TypeError('cb should be of type "function"')
     }
-    // bucket region is 'us-east-1' for all non AWS-S3 endpoints
-    if (this.params.host !== 's3.amazonaws.com') return cb(null, 'us-east-1')
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
     var reqOptions = {}
     reqOptions.method = 'GET'
@@ -380,14 +378,16 @@ export default class Client {
       var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
       reqOptions.headers.authorization = authorization
     }
+    // Verify success response.
+    var statusCode = 200
     var req = this.transport.request(reqOptions)
     req.on('error', e => {
       this.logHTTP(reqOptions, null, e)
       cb(e)
     })
     req.on('response', response => {
-      var errorTransformer = transformers.getErrorTransformer(response)
-      if (response.statusCode !== 200) {
+      if (statusCode !== response.statusCode) {
+        var errorTransformer = transformers.getErrorTransformer(response)
         pipesetup(response, errorTransformer)
           .on('error', e => {
             this.logHTTP(reqOptions, response, e)
@@ -466,9 +466,11 @@ export default class Client {
       var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, 'us-east-1')
       reqOptions.headers.authorization = authorization
     }
+    // Verify success response.
+    var statusCode = 200
     var req = this.transport.request(reqOptions, response => {
       var errorTransformer = transformers.getErrorTransformer(response)
-      if (response.statusCode !== 200) {
+      if (statusCode !== response.statusCode) {
         pipesetup(response, errorTransformer)
         .on('error', e => {
           this.logHTTP(reqOptions, response, e)
@@ -1232,7 +1234,7 @@ export default class Client {
   // * `expiry` _number_: expiry in seconds
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
+      throw new errors.AnonymousRequestError('Presigned PUT url cannot be generated for anonymous requests')
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1248,7 +1250,16 @@ export default class Client {
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
+      // This statement is added to ensure that we send error through
+      // callback on presign failure.
+      var url
+      try {
+        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+                                 region, requestDate, expires)
+      } catch (pe) {
+        return cb(pe)
+      }
+      cb(null, url)
     })
   }
 
@@ -1260,7 +1271,7 @@ export default class Client {
   // * `expiry` _number_: expiry in seconds
   presignedGetObject(bucketName, objectName, expires, cb) {
     if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned GET cannot be generated for anonymous requests')
+      throw new errors.AnonymousRequestError('Presigned GET url cannot be generated for anonymous requests')
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1276,7 +1287,16 @@ export default class Client {
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
-      cb(null, presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey, region, requestDate, expires))
+      // This statement is added to ensure that we send error through
+      // callback on presign failure.
+      var url
+      try {
+        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+                                 region, requestDate, expires)
+      } catch (pe) {
+        return cb(pe)
+      }
+      cb(null, url)
     })
   }
 
@@ -1591,7 +1611,6 @@ export default class Client {
 
     var md5 = null
     var sha256 = null
-
     return Through2.obj((chunk, enc, cb) => {
       if (chunk.length > this.minimumPartSize) {
         return cb(new Error(`chunk length cannot be more than ${this.minimumPartSize}`))
