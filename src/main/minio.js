@@ -102,18 +102,15 @@ export default class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    var newParams = {
-      host: host,
-      port: port,
-      protocol: protocol,
-      accessKey: params.accessKey,
-      secretKey: params.secretKey,
-      userAgent: `${libraryAgent}`,
-    }
-    if (!newParams.accessKey) newParams.accessKey = ''
-    if (!newParams.secretKey) newParams.secretKey = ''
-    this.anonymous = !newParams.accessKey || !newParams.secretKey
-    this.params = newParams
+    this.host = host
+    this.port = port
+    this.protocol = protocol
+    this.accessKey = params.accessKey
+    this.secretKey = params.secretKey
+    this.userAgent = `${libraryAgent}`
+    if (!this.accessKey) this.accessKey = ''
+    if (!this.secretKey) this.secretKey = ''
+    this.anonymous = !this.accessKey || !this.secretKey
     this.transport = transport
     this.regionMap = {}
     this.virtualHostStyle = virtualHostStyle
@@ -134,8 +131,8 @@ export default class Client {
     var reqOptions = {method}
     reqOptions.headers = {}
 
-    if (this.params.port) reqOptions.port = this.params.port
-    reqOptions.protocol = this.params.protocol
+    if (this.port) reqOptions.port = this.port
+    reqOptions.protocol = this.protocol
 
     if (objectName) {
       objectName = `${uriResourceEscape(objectName)}`
@@ -147,13 +144,13 @@ export default class Client {
       // 1. minio server
       // 2. listBuckets() where opts.bucketName is not defined
       // 3. opts.pathStyle is set
-      reqOptions.host = this.params.host
+      reqOptions.host = this.host
       if (bucketName) reqOptions.path = `/${bucketName}`
       if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
     } else {
       // for AWS we will always do virtual-host-style
-      reqOptions.host = `${this.params.host}`
-      if (bucketName) reqOptions.host = `${bucketName}.${this.params.host}`
+      reqOptions.host = `${this.host}`
+      if (bucketName) reqOptions.host = `${bucketName}.${this.host}`
       if (objectName) reqOptions.path = `/${objectName}`
     }
     if (query) reqOptions.path += `?${query}`
@@ -192,7 +189,7 @@ export default class Client {
     if (appVersion.trim() === '') {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
-    this.params.userAgent = `${this.params.userAgent} ${appName}/${appVersion}`
+    this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
 
   // partSize will be atleast minimumPartSize or a multiple of minimumPartSize
@@ -209,37 +206,6 @@ export default class Client {
     var partSize = Math.ceil(size/10000)
     partSize = Math.ceil(partSize/this.minimumPartSize) * this.minimumPartSize
     return partSize
-  }
-
-  // makeRequest is the primitive used by the apis for making S3 requests.
-  // payload can be empty string in case of no payload.
-  // statusCode is the expected statusCode. If response.statusCode does not match
-  // we parse the XML error and call the callback with the error message.
-  // A valid region is passed by the calls - listBuckets, makeBucket and
-  // getBucketRegion.
-  makeRequest(options, payload, statusCode, region, cb) {
-    if (!isObject(options)) {
-      throw new TypeError('options should be of type "object"')
-    }
-    if (!isString(payload) && !isObject(payload)) {
-      // Buffer is of type 'object'
-      throw new TypeError('payload should be of type "string" or "Buffer"')
-    }
-    if (!isNumber(statusCode)) {
-      throw new TypeError('statusCode should be of type "number"')
-    }
-    if (!isString(region)) {
-      throw new TypeError('region should be of type "string"')
-    }
-    if(!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    if (!options.headers) options.headers = {}
-    options.headers['content-length'] = payload.length
-    var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
-    var stream = readableStream(payload)
-    this.makeRequestStream(options, stream, sha256sum, statusCode, region, cb)
   }
 
   // log the request, response, error
@@ -289,6 +255,37 @@ export default class Client {
     this.logStream = null
   }
 
+  // makeRequest is the primitive used by the apis for making S3 requests.
+  // payload can be empty string in case of no payload.
+  // statusCode is the expected statusCode. If response.statusCode does not match
+  // we parse the XML error and call the callback with the error message.
+  // A valid region is passed by the calls - listBuckets, makeBucket and
+  // getBucketRegion.
+  makeRequest(options, payload, statusCode, region, cb) {
+    if (!isObject(options)) {
+      throw new TypeError('options should be of type "object"')
+    }
+    if (!isString(payload) && !isObject(payload)) {
+      // Buffer is of type 'object'
+      throw new TypeError('payload should be of type "string" or "Buffer"')
+    }
+    if (!isNumber(statusCode)) {
+      throw new TypeError('statusCode should be of type "number"')
+    }
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
+    }
+    if(!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    if (!options.headers) options.headers = {}
+    options.headers['content-length'] = payload.length
+    var sha256sum = ''
+    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
+    var stream = readableStream(payload)
+    this.makeRequestStream(options, stream, sha256sum, statusCode, region, cb)
+  }
+
   // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
   makeRequestStream(options, stream, sha256sum, statusCode, region, cb) {
@@ -324,7 +321,7 @@ export default class Client {
       if (!this.anonymous) {
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
-        var authorization = signV4(reqOptions, this.params.accessKey, this.params.secretKey, region)
+        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, response => {
@@ -1250,7 +1247,7 @@ export default class Client {
       // callback on presign failure.
       var url
       try {
-        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+        url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  region, requestDate, expires)
       } catch (pe) {
         return cb(pe)
@@ -1287,7 +1284,7 @@ export default class Client {
       // callback on presign failure.
       var url
       try {
-        url = presignSignatureV4(reqOptions, this.params.accessKey, this.params.secretKey,
+        url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  region, requestDate, expires)
       } catch (pe) {
         return cb(pe)
@@ -1325,14 +1322,14 @@ export default class Client {
       postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
       postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
 
-      postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.params.accessKey + "/" + getScope(region, date)])
-      postPolicy.formData['x-amz-credential'] = this.params.accessKey + "/" + getScope(region, date)
+      postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.accessKey + "/" + getScope(region, date)])
+      postPolicy.formData['x-amz-credential'] = this.accessKey + "/" + getScope(region, date)
 
       var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
 
       postPolicy.formData.policy = policyBase64
 
-      var signature = postPresignSignatureV4(region, date, this.params.secretKey, policyBase64)
+      var signature = postPresignSignatureV4(region, date, this.secretKey, policyBase64)
 
       postPolicy.formData['x-amz-signature'] = signature
       cb(null, postPolicy.formData)

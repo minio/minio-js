@@ -63,7 +63,7 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      assert.equal(client.params.port, 443)
+      assert.equal(client.port, 443)
     })
     it('should override port with http', () => {
       var client = new Minio({
@@ -73,7 +73,7 @@ describe('Client', function() {
         secretKey: 'secretkey',
         insecure: true
       })
-      assert.equal(client.params.port, 9000)
+      assert.equal(client.port, 9000)
     })
     it('should work with http', () => {
       var client = new Minio({
@@ -82,7 +82,7 @@ describe('Client', function() {
         secretKey: 'secretkey',
         insecure: true
       })
-      assert.equal(client.params.port, 80)
+      assert.equal(client.port, 80)
     })
     it('should override port with https', () => {
       var client = new Minio({
@@ -91,7 +91,7 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      assert.equal(client.params.port, 9000)
+      assert.equal(client.port, 9000)
     })
     it('should fail with url', (done) => {
       try {
@@ -205,7 +205,7 @@ describe('Client', function() {
         secretKey: 'secretkey'
       })
       assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
-                   client.params.userAgent)
+                   client.userAgent)
     })
     it('should set user agent', () => {
       var client = new Minio({
@@ -215,7 +215,7 @@ describe('Client', function() {
       })
       client.setAppInfo('test', '1.0.0')
       assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/1.0.0`,
-                   client.params.userAgent)
+                   client.userAgent)
     })
     it('should set user agent without comments', () => {
       var client = new Minio({
@@ -225,7 +225,7 @@ describe('Client', function() {
       })
       client.setAppInfo('test', '1.0.0')
       assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/1.0.0`,
-                   client.params.userAgent)
+                   client.userAgent)
     })
     it('should not set user agent without name', (done) => {
       try {
