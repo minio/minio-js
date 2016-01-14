@@ -199,6 +199,13 @@ export function signV4(request, accessKey, secretKey, region) {
     throw new TypeError('region should be of type "string"')
   }
 
+  if (!accessKey) {
+    throw new errors.AccessKeyRequiredError('accessKey is required for signing')
+  }
+  if (!secretKey) {
+    throw new errors.SecretKeyRequiredError('secretKey is required for signing')
+  }
+
   var requestDate = Moment(request.headers['x-amz-date'], 'YYYYMMDDTHHmmss')
   var sha256sum = request.headers['x-amz-content-sha256']
 
@@ -232,20 +239,20 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   }
 
   if (!accessKey) {
-    throw new Error('accessKey is required for presigning')
+    throw new errors.AccessKeyRequiredError('accessKey is required for presigning')
   }
   if (!secretKey) {
-    throw new Error('secretKey is required for presigning')
+    throw new errors.SecretKeyRequiredError('secretKey is required for presigning')
   }
 
   if (!isNumber(expires)) {
     throw new TypeError('expires should be of type "number"')
   }
   if (expires < 1) {
-    throw new Error('expires param cannot be less than 1 seconds')
+    throw new errors.ExpiresParamError('expires param cannot be less than 1 seconds')
   }
   if (expires > 604800) {
-    throw new Error('expires param cannot be larger than 7 days')
+    throw new errors.ExpiresParamError('expires param cannot be alrger than 7 days')
   }
 
   var iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'

@@ -142,20 +142,23 @@ export default class Client {
     }
 
     reqOptions.path = '/'
-    if (!this.virtualHostStyle || !opts.bucketName || opts.pathStyle) {
-      // we will do path-style requests for
-      // 1. minio server
-      // 2. listBuckets() where opts.bucketName is not defined
-      // 3. opts.pathStyle is set
-      reqOptions.host = this.host
-      if (bucketName) reqOptions.path = `/${bucketName}`
-      if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
-    } else {
-      // for AWS we will always do virtual-host-style
-      reqOptions.host = `${this.host}`
+    reqOptions.host = `${this.host}`
+    if (this.virtualHostStyle && !opts.pathStyle) {
+      // For all hosts which support virtual host style, `bucketName`
+      // is part of the hostname in the following format:
+      //
+      //  var host = 'bucketName.example.com'
+      //
       if (bucketName) reqOptions.host = `${bucketName}.${this.host}`
       if (objectName) reqOptions.path = `/${objectName}`
+    } else {
+      // For all S3 compatible storage services we will fallback to
+      // path style requests, where `bucketName` is part of the URI
+      // path.
+      if (bucketName) reqOptions.path = `/${bucketName}`
+      if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
     }
+
     if (query) reqOptions.path += `?${query}`
     reqOptions.headers.host = reqOptions.host
     if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
@@ -384,18 +387,17 @@ export default class Client {
     var method = 'GET'
     var query = 'location'
 
-    // In nodejs environment we will do a path-style request with 'us-east-1' region.
+    // `getBucketLocation` behaves differently in following ways for
+    // different environments.
     //
-    // On browser doing a path stye request on buckets in non-standard regions
-    // yields CORS error even if CORS policy is set on the bucket.
-    // As a workaround (similar to aws-sdk-js) we make the request using
-    // virtual-host-style with signed with region 'us-east-1', if the region is
-    // not 'us-east-1' S3 returns error 'AuthorizationHeaderMalformed' with the
-    // Region field in the XML set to the correct region which we can use. Now
-    // we again make get-region API request with the correct region for signature
-    // and ensure that we get don't get any error (this is a redundant step as we
-    // already know the region, but we do this sencond check anyway just like aws-sdk-js).
-
+    // - For nodejs env we default to path style requests.
+    // - For browser env path style requests on buckets yields CORS
+    //   error. To circumvent this problem we make a virtual host
+    //   style request signed with 'us-east-1'. This request fails
+    //   with an error 'AuthorizationHeaderMalformed', additionally
+    //   the error XML also provides Region of the bucket. To validate
+    //   this region is proper we retry the same request with the newly
+    //   obtained region.
     var pathStyle = typeof window === 'undefined'
     this.makeRequest({method, bucketName, query, pathStyle}, '', 200, 'us-east-1', (e, response) => {
       if (e) {
