@@ -102,6 +102,9 @@ export default class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
+    // enable connection reuse and pooling
+    transport.globalAgent.keepAlive = true
+
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -159,6 +162,7 @@ export default class Client {
         (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
       reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
     }
+    reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
       // have all header keys in lower case - to make signing easy
       _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
@@ -279,7 +283,9 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     if (!options.headers) options.headers = {}
-    options.headers['content-length'] = payload.length
+    if (options.method === 'POST' || options.method === 'PUT') {
+      options.headers['content-length'] = payload.length
+    }
     var sha256sum = ''
     if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
@@ -438,7 +444,10 @@ export default class Client {
     }
 
     var payload = ''
-    if (region) {
+
+    // sending makeBucket request with XML containing 'us-east-1' fails. For
+    // default region server expects the request without body
+    if (region && region !== 'us-east-1') {
       var createBucketConfiguration = []
       createBucketConfiguration.push({
         _attr: {
