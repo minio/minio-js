@@ -92,18 +92,24 @@ export function getErrorTransformer(response) {
 }
 
 // makes sure that only size number of bytes go through this stream
-export function getSizeVerifierTransformer(size) {
-  var totalSize = 0
+export function getSizeVerifierTransformer(size, stream, chunker) {
+  var sizeRemaining = size
   return Through2.obj(function(chunk, enc, cb) {
-    totalSize += chunk.length
-    if (totalSize > size) {
-      return cb(new errors.IncorrectSizeError('Received excess data on the input stream. Size of the input stream : ${totalSize}), expected size : size(${size})'))
-    }
+    var length = Math.min(chunk.length, sizeRemaining)
+    // we should read only till 'size'
+    if (length < chunk.length) chunk = chunk.slice(0, length)
     this.push(chunk)
+    sizeRemaining -= length
+    if (sizeRemaining === 0) {
+      // unpipe so that the streams do not send us more data
+      stream.unpipe()
+      chunker.unpipe()
+      this.push(null)
+    }
     cb()
   }, function(cb) {
-    if (totalSize != size) {
-      return cb(new errors.IncorrectSizeError('size of the input stream (${totalSize}) is not equal to the expected size(${size})'))
+    if (sizeRemaining !== 0) {
+      return cb(new errors.IncorrectSizeError('size of the input stream is not equal to the expected size(${size})'))
     }
     this.push(null)
     cb()

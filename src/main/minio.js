@@ -1074,8 +1074,8 @@ export default class Client {
       },
       (uploadId, etags, cb) => {
         var multipartSize = this.calculatePartSize(size)
-        var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: this.minimumPartSize, zeroPadding: false})
+        var sizeVerifier = transformers.getSizeVerifierTransformer(size, stream, chunker)
         var chunkUploader = this.chunkUploader(bucketName, objectName, contentType, uploadId, etags, multipartSize)
         pipesetup(stream, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
