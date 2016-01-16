@@ -286,7 +286,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     if (!options.headers) options.headers = {}
-    if (options.method === 'POST' || options.method === 'PUT') {
+    if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
