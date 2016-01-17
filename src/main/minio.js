@@ -286,7 +286,7 @@ export default class Client {
       throw new TypeError('callback should be of type "function"')
     }
     if (!options.headers) options.headers = {}
-    if (options.method === 'POST' || options.method === 'PUT') {
+    if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
@@ -529,35 +529,45 @@ export default class Client {
       throw new TypeError('recursive should be of type "boolean"')
     }
     var delimiter = recursive ? '' : '/'
-    var dummyTransformer = transformers.getDummyTransformer()
-    var listNext = (keyMarker, uploadIdMarker) => {
+    var keyMarker = ''
+    var uploadIdMarker = ''
+    var uploads = []
+    var ended = false
+    var readStream = Stream.Readable({objectMode: true})
+    readStream._read = () => {
+      // push one upload info per _read()
+      if (uploads.length) {
+        return readStream.push(uploads.shift())
+      }
+      if (ended) return readStream.push(null)
       this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
         .on('error', e => dummyTransformer.emit('error', e))
         .on('data', result => {
-          result.prefixes.forEach(prefix => dummyTransformer.write(prefix))
+          result.prefixes.forEach(prefix => uploads.push(prefix))
           async.eachSeries(result.uploads, (upload, cb) => {
+            // for each incomplete upload add the sizes of its uploaded parts
             this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
               if (err) return cb(err)
               upload.size = parts.reduce((acc, item) => acc + item.size, 0)
-              dummyTransformer.write(upload)
+              uploads.push(upload)
               cb()
             })
           }, err => {
             if (err) {
-              dummyTransformer.emit('error', e)
-              dummyTransformer.end()
+              readStream.emit('error', err)
               return
             }
             if (result.isTruncated) {
-              listNext(result.nextKeyMarker, result.nextUploadIdMarker)
-              return
+              keyMarker = result.nextKeyMarker
+              uploadIdMarker = result.nextUploadIdMarker
+            } else {
+              ended = true
             }
-            dummyTransformer.end() // signal 'end'
+            readStream._read()
           })
         })
     }
-    listNext('', '')
-    return dummyTransformer
+    return readStream
   }
 
   // To check if a bucket already exists.
@@ -1074,8 +1084,8 @@ export default class Client {
       },
       (uploadId, etags, cb) => {
         var multipartSize = this.calculatePartSize(size)
-        var sizeVerifier = transformers.getSizeVerifierTransformer(size)
         var chunker = BlockStream2({size: this.minimumPartSize, zeroPadding: false})
+        var sizeVerifier = transformers.getSizeVerifierTransformer(size, stream, chunker)
         var chunkUploader = this.chunkUploader(bucketName, objectName, contentType, uploadId, etags, multipartSize)
         pipesetup(stream, chunker, sizeVerifier, chunkUploader)
           .on('error', e => cb(e))
@@ -1167,23 +1177,31 @@ export default class Client {
     }
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
-    var dummyTransformer = transformers.getDummyTransformer()
-    var listNext = (marker) => {
+    var marker = ''
+    var objects = []
+    var ended = false
+    var readStream = Stream.Readable({objectMode: true})
+    readStream._read = () => {
+      // push one object per _read()
+      if (objects.length) {
+        readStream.push(objects.shift())
+        return
+      }
+      if (ended) return readStream.push(null)
+      // if there are no objects to push do query for the next batch of objects
       this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000)
-        .on('error', e => dummyTransformer.emit('error', e))
-        .on('data', result => {
-          result.objects.forEach(object => {
-            dummyTransformer.push(object)
+          .on('error', e => readStream.emit('error', e))
+          .on('data', result => {
+            if (result.isTruncated) {
+              marker = result.nextMarker
+            } else {
+              ended = true
+            }
+            objects = result.objects
+            readStream._read()
           })
-          if (result.isTruncated) {
-            listNext(result.nextMarker)
-            return
-          }
-          dummyTransformer.push(null) // signal 'end'
-        })
     }
-    listNext('')
-    return dummyTransformer
+    return readStream
   }
 
   // Stat information of the object.
