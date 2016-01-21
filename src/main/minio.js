@@ -35,13 +35,15 @@ import { isValidPrefix, isValidACL, isValidEndpoint, isValidBucketName,
          isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
          isString, isObject, isNullOrUndefined, pipesetup,
-         readableStream, isReadableStream } from './helpers.js';
+         readableStream, isReadableStream, isVirtualHostStyle } from './helpers.js';
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
 import * as transformers from './transformers'
 
 import * as errors from './errors.js';
+
+import { getS3Endpoint } from './s3-endpoints.js';
 
 var Package = require('../../package.json');
 
@@ -62,12 +64,6 @@ export default class Client {
     }
 
     var host = params.endPoint
-    // Virtual host style is enabled by default.
-    var virtualHostStyle = true
-    if (!isAmazonEndpoint(host)) {
-      virtualHostStyle = false
-    }
-
     var port = params.port;
     var protocol = ''
     var transport;
@@ -116,7 +112,6 @@ export default class Client {
     this.anonymous = !this.accessKey || !this.secretKey
     this.transport = transport
     this.regionMap = {}
-    this.virtualHostStyle = virtualHostStyle
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
@@ -126,6 +121,7 @@ export default class Client {
   // Takes care of constructing virtual-host-style or path-style hostname
   getRequestOptions(opts) {
     var method = opts.method
+    var region = opts.region
     var bucketName = opts.bucketName
     var objectName = opts.objectName
     var headers = opts.headers
@@ -133,6 +129,14 @@ export default class Client {
 
     var reqOptions = {method}
     reqOptions.headers = {}
+
+    // Verify if virtual host supported.
+    var virtualHostStyle
+    if (bucketName) {
+      virtualHostStyle = isVirtualHostStyle(this.host,
+                                            this.protocol,
+                                            bucketName)
+    }
 
     if (this.port) reqOptions.port = this.port
     reqOptions.protocol = this.protocol
@@ -142,14 +146,21 @@ export default class Client {
     }
 
     reqOptions.path = '/'
-    reqOptions.host = `${this.host}`
-    if (this.virtualHostStyle && !opts.pathStyle) {
+
+    // Save host.
+    reqOptions.host = this.host
+    // For Amazon S3 endpoint, get endpoint based on region.
+    if (isAmazonEndpoint(reqOptions.host)) {
+      reqOptions.host = getS3Endpoint(region)
+    }
+
+    if (virtualHostStyle && !opts.pathStyle) {
       // For all hosts which support virtual host style, `bucketName`
       // is part of the hostname in the following format:
       //
       //  var host = 'bucketName.example.com'
       //
-      if (bucketName) reqOptions.host = `${bucketName}.${this.host}`
+      if (bucketName) reqOptions.host = `${bucketName}.${reqOptions.host}`
       if (objectName) reqOptions.path = `/${objectName}`
     } else {
       // For all S3 compatible storage services we will fallback to
@@ -324,8 +335,9 @@ export default class Client {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
-    var reqOptions = this.getRequestOptions(options)
     var _makeRequest = (e, region) => {
+      options.region = region
+      var reqOptions = this.getRequestOptions(options)
       if (e) return cb(e)
       if (!this.anonymous) {
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
@@ -1278,13 +1290,16 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'PUT'
-    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
       // callback on presign failure.
       var url
+      var reqOptions = this.getRequestOptions({method,
+                                               region,
+                                               bucketName,
+                                               objectName})
       try {
         url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  region, requestDate, expires)
@@ -1315,13 +1330,16 @@ export default class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'GET'
-    var reqOptions = this.getRequestOptions({method, bucketName, objectName})
     var requestDate = Moment().utc()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
       // callback on presign failure.
       var url
+      var reqOptions = this.getRequestOptions({method,
+                                               region,
+                                               bucketName,
+                                               objectName})
       try {
         url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  region, requestDate, expires)

@@ -35,7 +35,7 @@ describe('functional tests', function() {
     accessKey: process.env['ACCESS_KEY'],
     secretKey: process.env['SECRET_KEY']
   })
-  var bucketName = 'miniojsbucket'
+  var bucketName = 'miniojs-bucket'
   var objectName = 'miniojsobject'
 
   var _1byte = new Buffer(1)
@@ -95,9 +95,17 @@ describe('functional tests', function() {
   }
 
   describe('makeBucket', () => {
-    // Not testing for non-standard region as DNS propogation takes time.
-    it('should create bucket with acl', done => client.makeBucket(`${bucketName}-acl`, 'public-read', '', done))
+    it('should create bucket with acl', done => client.makeBucket(`${bucketName}-acl`,
+                                                                  'public-read',
+                                                                  'us-west-2', done))
     it('should delete bucket', done => client.removeBucket(`${bucketName}-acl`, done))
+  })
+
+  describe('makeBucket with period', () => {
+    it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.acl.period`,
+                                                                                     'public-read-write',
+                                                                                     'eu-central-1', done))
+    it('should delete bucket', done => client.removeBucket(`${bucketName}.acl.period`, done))
   })
 
   describe('listBuckets', () => {
