@@ -48,6 +48,18 @@ export function isAmazonEndpoint(endpoint) {
   return endpoint === 's3.amazonaws.com'
 }
 
+// isVirtualHostStyle - verify if bucket name is support with virtual
+// hosts. bucketNames with periods should be always treated as path
+// style if the protocol is 'https:', this is due to SSL wildcard
+// limitation. For all other buckets and Amazon S3 endpoint we will
+// default to virtual host style.
+export function isVirtualHostStyle(endpoint, protocol, bucket) {
+  if (protocol === 'https:' && bucket.indexOf('.') > -1) {
+    return false
+  }
+  return isAmazonEndpoint(endpoint)
+}
+
 // isValidEndpoint - true if endpoint is valid domain.
 export function isValidEndpoint(endpoint) {
   if (!isValidDomain(endpoint)) {
@@ -111,12 +123,22 @@ export function isValidPort(port) {
 export function isValidBucketName(bucket) {
   if (!isString(bucket)) return false
 
-  // bucket length between 3 and 63
+  // bucket length should be less than and no more than 63
+  // characters long.
   if (bucket.length < 3 || bucket.length > 63) {
     return false
   }
-  // should begin with alphabet/number and end with alphabet/number, with alphabet/number/- in the middle
-  if (bucket.match(/^[a-z0-9][a-z0-9-]+[a-z0-9]$/)) {
+  // bucket with successive periods is invalid.
+  if (bucket.indexOf('..') > -1) {
+    return false
+  }
+  // bucket cannot have ip address style.
+  if (bucket.match(/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) {
+    return false
+  }
+  // bucket should begin with alphabet/number and end with alphabet/number,
+  // with alphabet/number/.- in the middle.
+  if (bucket.match(/^[a-z0-9][a-z0-9.-]+[a-z0-9]$/)) {
     return true
   }
   return false
