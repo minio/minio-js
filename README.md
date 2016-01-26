@@ -8,6 +8,15 @@
 $ npm install --save minio
 ```
 
+### Install from source
+
+```sh
+$ git clone https://github.com/minio/minio-js
+$ cd minio-js
+$ npm install
+$ npm install -g
+```
+
 ## Example in node
 
 ```js
