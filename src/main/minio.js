@@ -969,8 +969,8 @@ export default class Client {
             // verify md5sum of each part
             pipesetup(fs.createReadStream(filePath, options), hash)
               .on('data', data => {
-                var md5sumhex = (new Buffer(data.md5sum, 'base64')).toString('hex')
-                if (part && (md5sumhex === part.etag)) {
+                var md5sumHex = (new Buffer(data.md5sum, 'base64')).toString('hex')
+                if (part && (md5sumHex === part.etag)) {
                   //md5 matches, chunk already uploaded
                   partsDone.push({part: partNumber, etag: part.etag})
                   partNumber++
@@ -1689,9 +1689,9 @@ export default class Client {
       aggregator.end() // when aggregator is piped to another stream it emits all the chunks followed by 'end'
 
       var part = parts[partNumber]
-      var md5sumhex = md5.digest('hex')
+      var md5sumHex = md5.digest('hex')
       if (part) {
-        if (md5sumhex === part.etag) {
+        if (md5sumHex === part.etag) {
           // md5 matches, chunk already uploaded
           // reset aggregator md5 sha256 and aggregatedSize variables for a fresh multipart upload
           aggregator = md5 = sha256 = null
@@ -1703,10 +1703,10 @@ export default class Client {
         // md5 doesn't match, upload again
       }
       var sha256sum = sha256.digest('hex')
-      var md5sumbase64 = (new Buffer(md5sumhex, 'hex')).toString('base64')
+      var md5sumBase64 = (new Buffer(md5sumHex, 'hex')).toString('base64')
       var multipart = true
       var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
-      uploader(uploadId, partNumber, aggregator, aggregatedSize, sha256sum, md5sumbase64, (e, etag) => {
+      uploader(uploadId, partNumber, aggregator, aggregatedSize, sha256sum, md5sumBase64, (e, etag) => {
         if (e) {
           return cb(e)
         }
