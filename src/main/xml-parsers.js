@@ -44,19 +44,23 @@ var parseXml = (xml) => {
 // Parse XML and return information as Javascript types
 
 // parse error XML response
-export function parseError(xml) {
-  var e = {}
+export function parseError(xml, headerInfo) {
+  var xmlError = {}
   var xmlobj = parseXml(xml)
+  var message
   _.each(xmlobj, (n, key) => {
-    if (key === 'Code') {
-      e.name = xmlobj[key][0]
-      return
-    }
     if (key === 'Message') {
-      e.message = xmlobj[key][0]
+      message = xmlobj[key][0]
       return
     }
-    e[key] = xmlobj[key][0]
+    xmlError[key.toLowerCase()] = xmlobj[key][0]
+  })
+  var e = new errors.S3Error(message)
+  _.each(xmlError, (value, key) => {
+    e[key] = value
+  })
+  _.each(headerInfo, (value, key) => {
+    e[key] = value
   })
   return e
 }

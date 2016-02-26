@@ -60,54 +60,60 @@ export function getConcater(parser, emitError) {
   })
 }
 
-// Dummy through stream.
-export function getDummyTransformer() {
-  return Through2.obj((chunk, enc, cb) => cb(null, chunk))
-}
-
 // Generates an Error object depending on http statusCode and XML body
 export function getErrorTransformer(response) {
-  var e = new errors.S3Error()
   var statusCode = response.statusCode
-  // A value created by S3 compatible server that uniquely identifies
-  // the request.
-  e.amzRequestId = response.headersSent ? response.getHeader('x-amz-request-id') : null
-  // A special token that helps troubleshoot API replies and issues.
-  e.amzId2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
-  // Region where the bucket is located. This header is returned only
-  // in HEAD bucket and ListObjects response.
-  e.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
+  var code, message
   if (statusCode === 301) {
-    e.name = 'MovedPermanently'
-    e.message = 'Moved Permanently'
+    code = 'MovedPermanently'
+    message = 'Moved Permanently'
   } else if (statusCode === 307) {
-    e.name = 'TemporaryRedirect'
-    e.message = 'Are you using the correct endpoint URL?'
+    code = 'TemporaryRedirect'
+    message = 'Are you using the correct endpoint URL?'
   } else if (statusCode === 403) {
-    e.name = 'AccessDenied'
-    e.message = 'Valid and authorized credentials required'
+    code = 'AccessDenied'
+    message = 'Valid and authorized credentials required'
   } else if (statusCode === 404) {
-    e.name = 'NotFound'
-    e.message = 'Not Found'
+    code = 'NotFound'
+    message = 'Not Found'
   } else if (statusCode === 405) {
-    e.name = 'MethodNotAllowed'
-    e.message = 'Method Not Allowed'
+    code = 'MethodNotAllowed'
+    message = 'Method Not Allowed'
   } else if (statusCode === 501) {
-    e.name = 'MethodNotAllowed'
-    e.message = 'Method Not Allowed'
+    code = 'MethodNotAllowed'
+    message = 'Method Not Allowed'
   } else {
-    e.name = 'UnknownError'
-    e.message = `${statusCode}`
+    code = 'UnknownError'
+    message = `${statusCode}`
   }
 
+  var headerInfo = {}
+  // A value created by S3 compatible server that uniquely identifies
+  // the request.
+  headerInfo.amzRequestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
+  // A special token that helps troubleshoot API replies and issues.
+  headerInfo.amzId2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
+  // Region where the bucket is located. This header is returned only
+  // in HEAD bucket and ListObjects response.
+  headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
+
   return getConcater(xmlString => {
-    if (!xmlString) return e
-    return _.merge(e, xmlParsers.parseError(xmlString))
+    if (!xmlString) {
+      // Message should be instantiated for each S3Errors.
+      var e = new errors.S3Error(message)
+      // S3 Error code.
+      e.code = code
+      _.each(headerInfo, (value, key) => {
+        e[key] = value
+      })
+      return e
+    }
+    return xmlParsers.parseError(xmlString, headerInfo)
   }, true)
 }
 
 // Makes sure that only size number of bytes go through this stream
-export function getSizeVerifierTransformer(size, stream, chunker) {
+export function getSizeLimiter(size, stream, chunker) {
   var sizeRemaining = size
   return Through2.obj(function(chunk, enc, cb) {
     var length = Math.min(chunk.length, sizeRemaining)
