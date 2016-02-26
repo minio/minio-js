@@ -1,5 +1,5 @@
 /*
- * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 Minio, Inc.
+ * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015, 2016 Minio, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { isString } from './helpers.js'
+
+// List of currently supported endpoints.
 let awsS3Endpoint = {
   'us-east-1': 's3.amazonaws.com',
   'us-west-1': 's3-us-west-1.amazonaws.com',
@@ -23,10 +26,15 @@ let awsS3Endpoint = {
   'eu-central-1': 's3-eu-central-1.amazonaws.com',
   'ap-southeast-1': 's3-ap-southeast-1.amazonaws.com',
   'ap-southeast-2': 's3-ap-southeast-2.amazonaws.com',
-  'ap-northeast-1': 's3-ap-northeast-1.amazonaws.com',
+  'ap-northeast-1': 's3-ap-northeast-1.amazonaws.com'
+  // Add new endpoints here.
 }
 
+// getS3Endpoint get relevant endpoint for the region.
 export function getS3Endpoint(region) {
+  if (!isString(region)) {
+    throw new TypeError(`Invalid region: ${region}`)
+  }
   var endpoint = awsS3Endpoint[region]
   if (endpoint) {
     return endpoint

@@ -1,3 +1,19 @@
+/*
+ * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015, 2016 Minio, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as xmlParsers from './xml-parsers.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
@@ -6,11 +22,10 @@ import Crypto from 'crypto';
 import { isFunction } from './helpers.js'
 import * as errors from './errors.js'
 
-// returns a stream that concatenates the input and emits the
-// concatenated output when 'End' is reached.
-// If an optional parser function is passed, on reaching the
-// 'End' of the stream, parser(concatenated_data) will be
-// emitted
+// getConcater returns a stream that concatenates the input and emits
+// the concatenated output when 'end' has reached. If an optional
+// parser function is passed upon reaching the 'end' of the stream,
+// `parser(concatenated_data)` will be emitted.
 export function getConcater(parser, emitError) {
   var objectMode = false
   var bufs = []
@@ -30,7 +45,7 @@ export function getConcater(parser, emitError) {
   }, function (cb) {
     if (emitError) {
       cb(parser(Buffer.concat(bufs).toString()))
-      // cb(e) would mean we have to emit 'End' by explicitly calling this.push(null)
+      // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
       this.push(null)
       return
     }
@@ -45,12 +60,12 @@ export function getConcater(parser, emitError) {
   })
 }
 
-// dummy through stream
+// Dummy through stream.
 export function getDummyTransformer() {
   return Through2.obj((chunk, enc, cb) => cb(null, chunk))
 }
 
-// generates an Error object depending on statusCode and XML body
+// Generates an Error object depending on http statusCode and XML body
 export function getErrorTransformer(response) {
   var e = new errors.S3Error()
   var statusCode = response.statusCode
@@ -91,17 +106,17 @@ export function getErrorTransformer(response) {
   }, true)
 }
 
-// makes sure that only size number of bytes go through this stream
+// Makes sure that only size number of bytes go through this stream
 export function getSizeVerifierTransformer(size, stream, chunker) {
   var sizeRemaining = size
   return Through2.obj(function(chunk, enc, cb) {
     var length = Math.min(chunk.length, sizeRemaining)
-    // we should read only till 'size'
+    // We should read only till 'size'
     if (length < chunk.length) chunk = chunk.slice(0, length)
     this.push(chunk)
     sizeRemaining -= length
     if (sizeRemaining === 0) {
-      // unpipe so that the streams do not send us more data
+      // Unpipe so that the streams do not send us more data
       stream.unpipe()
       chunker.unpipe()
       this.push(null)
@@ -116,7 +131,7 @@ export function getSizeVerifierTransformer(size, stream, chunker) {
   })
 }
 
-// a through stream that calculates md5sum and sha256sum
+// A through stream that calculates md5sum and sha256sum
 export function getHashSummer(anonymous) {
   var md5 = Crypto.createHash('md5')
   var sha256 = Crypto.createHash('sha256')
@@ -134,37 +149,45 @@ export function getHashSummer(anonymous) {
   })
 }
 
-// following functions return a stream object that parses XML
-// and emits suitable Javascript objects
+// Following functions return a stream object that parses XML
+// and emits suitable Javascript objects.
 
+// Parses listBuckets response.
 export function getListBucketTransformer() {
   return getConcater(xmlParsers.parseListBucket)
 }
 
+// Parses listMultipartUploads response.
 export function getListMultipartTransformer() {
   return getConcater(xmlParsers.parseListMultipart)
 }
 
+// Parses listParts response.
 export function getListPartsTransformer() {
   return getConcater(xmlParsers.parseListParts)
 }
 
+// Parses getBucketACL response.
 export function getAclTransformer() {
   return getConcater(xmlParsers.parseAcl)
 }
 
+// Parses initMultipartUpload response.
 export function getInitiateMultipartTransformer() {
   return getConcater(xmlParsers.parseInitiateMultipart)
 }
 
+// Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
 }
 
+// Parses completeMultipartUpload response.
 export function getCompleteMultipartTransformer() {
   return getConcater(xmlParsers.parseCompleteMultipart)
 }
 
+// Parses getBucketLocation response.
 export function getBucketRegionTransformer() {
   return getConcater(xmlParsers.parseBucketRegion)
 }
