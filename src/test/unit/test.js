@@ -1364,11 +1364,12 @@ var checkError = (code, message, requestid, hostid, resource, callback) => {
     if (e === null) {
       callback('expected error, received success')
     }
-    assert.equal(e.name, code)
+    assert.equal(e.name, 'S3Error')
+    assert.equal(e.code, code)
     assert.equal(e.message, message)
-    assert.equal(e.RequestId, requestid)
-    assert.equal(e.HostId, hostid)
-    assert.equal(e.Resource, resource)
+    assert.equal(e.requestid, requestid)
+    assert.equal(e.hostid, hostid)
+    assert.equal(e.resource, resource)
     callback()
   }
 }

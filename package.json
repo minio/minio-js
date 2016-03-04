@@ -30,6 +30,7 @@
     "async": "^1.5.0",
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
+    "es6-error": "^2.0.2",
     "lodash": "^3.10.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
