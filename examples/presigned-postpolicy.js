@@ -37,7 +37,7 @@ var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
 policy.setExpires(expires)
 
-policy.setContentLength(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
+policy.setContentLengthRange(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
 
 s3Client.presignedPostPolicy(policy, function(e, formData) {
   if (e) return console.log(e)

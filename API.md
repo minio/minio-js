@@ -69,8 +69,8 @@ __Arguments__
 * `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
 
 `bucketStream` emits Object with the format:
-* `obj.name` _string_ : bucket name
-* `obj.creationDate` _Date_: date when bucket was created
+* `bucket.name` _string_ : bucket name
+* `bucket.creationDate` _Date_: date when bucket was created
 
 __Example__
 ```js
@@ -172,10 +172,10 @@ __Arguments__
 
 __Return Value__
 * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  * `stat.key` _string_: name of the object
-  * `stat.size` _number_: size of the object
-  * `stat.etag` _string_: etag of the object
-  * `stat.lastModified` _Date_: modified time stamp
+  * `obj.key` _string_: name of the object
+  * `obj.size` _number_: size of the object
+  * `obj.etag` _string_: etag of the object
+  * `obj.lastModified` _Date_: modified time stamp
 
 __Example__
 ```js
@@ -196,9 +196,9 @@ __Arguments__
 
 __Return Value__
 * `stream` _Stream_ : emits objects of the format:
-  * `object.key` _string_: name of the object
-  * `object.uploadId` _string_: upload ID of the object
-  * `object.size` _Integer_: size of the partially uploaded object
+  * `part.key` _string_: name of the object
+  * `part.uploadId` _string_: upload ID of the object
+  * `part.size` _Integer_: size of the partially uploaded object
 
 __Example__
 ```js
@@ -276,7 +276,7 @@ s3Client.getObject('mybucket', 'photo.jpg', 10, 30, function(e, dataStream) {
 ```
 ---------------------------------------
 <a name="fGetObject">
-#### fGetObject(bucketName, objectName, callback)
+#### fGetObject(bucketName, objectName, filePath, callback)
 Callback is called with `error` in case of error or `null` in case of success
 
 __Arguments__
@@ -333,8 +333,8 @@ __Arguments__
 
 __Example__
 ```js
-var file = '/tmp/40mbfile'
-s3Client.putObject('mybucket', '40mbfile', file, 'application/octet-stream', function(e, etag) {
+var buffer = 'Hello World'
+s3Client.putObject('mybucket', 'hello-file', buffer, 'application/octet-stream', function(e, etag) {
   return console.log(e, etag) // e should be null
 })
 ```
@@ -459,8 +459,8 @@ var presignedUrl = s3Client.presignedPutObject('mybucket', 'photo.jpg', 24*60*60
 ---------------------------------------
 <a name="presignedPostPolicy">
 #### presignedPostPolicy
-presignedPostPolicy we can provide security policy specifying conditions restricting
-what you want to allow in the request, such as bucket name where objects can be
+presignedPostPolicy we can provide policies specifying conditions restricting
+what you want to allow in a POST request, such as bucket name where objects can be
 uploaded, key name prefixes that you want to allow for the object being created and more.
 
 We need to create our policy first:
@@ -469,8 +469,16 @@ var policy = s3Client.newPostPolicy()
 ```
 Apply upload policy restrictions:
 ```js
-policy.setBucket('bucketname')
-policy.setKey('photo.png') or policy.setKeyStartsWith('keyPrefix')
+// Policy restricted only for bucket 'bucketName'.
+policy.setBucket('bucketName')
+
+// Policy restricted only for photo.png object.
+policy.setKey('photo.png')
+
+ or
+
+// Policy restricted for incoming objects with keyPrefix.
+policy.setKeyStartsWith('keyPrefix')
 
 var expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10)
@@ -481,7 +489,7 @@ policy.setExpires(expires)
 policy.setContentType('image/png')
 
 // Only allow content size in range 1KB to 1MB.
-policy.setContentLength(1024, 1024*1024)
+policy.setContentLengthRange(1024, 1024*1024)
 ```
 Get the POST form key/value object:
 ```js
