@@ -77,7 +77,7 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ## Documentation
 
-[API](API.md)
+[API documentation](API.md)
 
 ## Examples
 
