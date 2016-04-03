@@ -1053,7 +1053,7 @@ export default class Client {
         cb = arg5
       }
     } else {
-      throw new errors.TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
+      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
     }
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
