@@ -130,7 +130,7 @@ export function getSizeLimiter(size, stream, chunker) {
     cb()
   }, function(cb) {
     if (sizeRemaining !== 0) {
-      return cb(new errors.IncorrectSizeError('size of the input stream is not equal to the expected size(${size})'))
+      return cb(new errors.IncorrectSizeError(`size of the input stream is not equal to the expected size(${size})`))
     }
     this.push(null)
     cb()
