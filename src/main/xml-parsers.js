@@ -220,7 +220,7 @@ export function parseListObjects(xml) {
     })
   }
   if (result.isTruncated) {
-    result.nextMarker = xmlobj.NextMarker ? res.ListBucketResult.NextMarker[0]: nextMarker
+    result.nextMarker = xmlobj.NextMarker ? xmlobj.NextMarker[0]: nextMarker
   }
   return result
 }
