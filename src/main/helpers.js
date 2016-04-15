@@ -34,7 +34,7 @@ export function uriResourceEscape(string) {
   var output = string
     // this was originally escape instead of encodeURIComponent but escape is deprecated.
   output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
-  output = output.replace('%2F', '/')
+  output = output.replace(/%2F/g, '/')
 
   return output
 }
