@@ -423,23 +423,28 @@ s3Client.removeIncompleteUpload('mybucket', 'photo.jpg', function(err, stat) {
 ### Presigned operations
 ---------------------------------------
 <a name="presignedGetObject">
-#### presignedGetObject(bucketName, objectName, expiry)
+#### presignedGetObject(bucketName, objectName, expiry, cb)
 Generate a presigned URL for GET.
 
 __Arguments__
 * `bucketName` _string_: name of the bucket.
 * `objectName` _string_: name of the object.
 * `expiry` _number_: expiry in seconds.
+* `callback(err, presignedUrl)` _function_: callback function is called with non `null` value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request.
 
 __Example__
 ```js
 // expires in a day
-var presignedUrl = s3Client.presignedGetObject('mybucket', 'photo.jpg', 24*60*60)
+var presignedUrl = s3Client.presignedGetObject('mybucket', 'photo.jpg', 24*60*60, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
+
 ```
 
 ---------------------------------------
 <a name="presignedPutObject">
-#### presignedPutObject(bucketName, objectName, expiry)
+#### presignedPutObject(bucketName, objectName, expiry, cb)
 Generate a presigned URL for PUT.
 <blockquote>
 NOTE: you can upload to S3 only with specified object name.
@@ -449,19 +454,26 @@ __Arguments__
 * `bucketName` _string_: name of the bucket
 * `objectName` _string_: name of the object
 * `expiry` _number_: expiry in seconds
+* `callback(err, presignedUrl)` _function_: callback function is called with non `null` value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request.
 
 __Example__
 ```js
 // expires in a day
-var presignedUrl = s3Client.presignedPutObject('mybucket', 'photo.jpg', 24*60*60)
+var presignedUrl = s3Client.presignedPutObject('mybucket', 'photo.jpg', 24*60*60, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
 ```
 
 ---------------------------------------
 <a name="presignedPostPolicy">
 #### presignedPostPolicy
-presignedPostPolicy we can provide policies specifying conditions restricting
-what you want to allow in a POST request, such as bucket name where objects can be
-uploaded, key name prefixes that you want to allow for the object being created and more.
+
+presignedPostPolicy is used for uploading objects using POST request but it gives more control than presigned-PUT on
+what can be uploaded by the clients in the POST request.
+We can provide policies specifying conditions restricting what you want to allow in a POST request
+such as bucket name where objects can be uploaded, key name prefixes that you want to allow for the
+object being created and more, etc.
 
 We need to create our policy first:
 ```js
@@ -491,25 +503,24 @@ policy.setContentType('image/png')
 // Only allow content size in range 1KB to 1MB.
 policy.setContentLengthRange(1024, 1024*1024)
 ```
-Get the POST form key/value object:
+Upload using POST.
 ```js
-formData = s3Client.presignedPostPolicy(policy)
-```
+s3Client.presignedPostPolicy(policy, function(err, postURL, formData) {
+  if (err) return console.log(err)
 
-POST your content from the browser using `superagent`:
-```js
-var req = superagent.post('https://<your-s3-endpoint>/bucketname')
-_.each(formData, function(value, key) {
-  req.field(key, value)
-})
+  var req = superagent.post(postURL)
+  _.each(formData, function(value, key) {
+    req.field(key, value)
+  })
 
-// file contents
-req.attach('file', '/path/to/photo.jpg', 'photo.jpg')
+  // file contents
+  req.attach('file', '/path/to/photo.jpg', 'photo.jpg')
 
-req.end(function(err, res) {
-  if (err) {
-    return console.log(err.toString())
-  }
-  console.log('Upload successful.')
+  req.end(function(err, res) {
+    if (err) {
+      return console.log(err.toString())
+    }
+    console.log('Upload successful.')
+  })
 })
 ```
