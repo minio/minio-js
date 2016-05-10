@@ -336,9 +336,9 @@ export default class Client {
     }
 
     var _makeRequest = (e, region) => {
+      if (e) return cb(e)
       options.region = region
       var reqOptions = this.getRequestOptions(options)
-      if (e) return cb(e)
       if (!this.anonymous) {
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
@@ -1389,7 +1389,12 @@ export default class Client {
       var signature = postPresignSignatureV4(region, date, this.secretKey, policyBase64)
 
       postPolicy.formData['x-amz-signature'] = signature
-      cb(null, postPolicy.formData)
+      var opts = {}
+      opts.region = region
+      opts.bucketName = postPolicy.formData.bucket
+      var reqOptions = this.getRequestOptions(opts)
+      var urlStr = reqOptions.protocol + '//' + reqOptions.host + reqOptions.path
+      cb(null, urlStr, postPolicy.formData)
     })
   }
 
