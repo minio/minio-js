@@ -122,7 +122,7 @@ describe('functional tests', function() {
     it('should check if bucket exists', done => client.bucketExists(bucketName, done))
     it('should check if bucket does not exist', done => {
       client.bucketExists(bucketName+'random', (e) => {
-        if (e.name === 'NoSuchBucket') return done()
+        if (e.code === 'NoSuchBucket') return done()
         done(new Error())
       })
     })
@@ -445,9 +445,9 @@ describe('functional tests', function() {
       expires.setSeconds(24 * 60 * 60 * 10)
       policy.setExpires(expires)
 
-      client.presignedPostPolicy(policy, (e, formData) => {
+      client.presignedPostPolicy(policy, (e, urlStr, formData) => {
         if (e) return done(e)
-        var req = superagent.post(`https://${bucketName}.s3.amazonaws.com`)
+        var req = superagent.post(`${urlStr}`)
         _.each(formData, (value, key) => req.field(key, value))
         req.field('file', _1byte)
         req.end(function(e, response) {
