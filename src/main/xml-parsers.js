@@ -105,44 +105,6 @@ export function parseListBucket(xml) {
   return result
 }
 
-// parse XML response for bucket ACL
-export function parseAcl(xml) {
-  var result = {
-    owner: undefined,
-    acl: []
-  }
-  var xmlobj = parseXml(xml)
-  if (xmlobj.Owner) {
-    var ownerObj = {}
-    if (xmlobj.Owner[0].ID) ownerObj.id = xmlobj.Owner[0].ID[0]
-    if (xmlobj.Owner[0].DisplayName) ownerObj.displayName = xmlobj.Owner[0].DisplayName[0]
-    result.owner = ownerObj
-  }
-  if (xmlobj.AccessControlList) {
-    if (xmlobj.AccessControlList[0].Grant) {
-      xmlobj.AccessControlList[0].Grant.forEach(grant => {
-        var grantObj = {}
-        if (grant.Grantee) {
-          var granteeObj = {}
-          if (grant.Grantee[0].ID) granteeObj.id = grant.Grantee[0].ID[0]
-          if (grant.Grantee[0].DisplayName) granteeObj.displayName = grant.Grantee[0].DisplayName[0]
-          if (grant.Grantee[0].URI) granteeObj.uri = grant.Grantee[0].URI[0]
-          grantObj.grantee = granteeObj
-          if (grant.Permission) grantObj.permission = grant.Permission[0]
-          if (!granteeObj.uri && !granteeObj.id) {
-            throw new errors.InvalidXMLError('Grantee should have either ID or URI')
-          }
-          if (!grantObj.permission) {
-            throw new errors.InvalidXMLError('Grant permission not set')
-          }
-        }
-        result.acl.push(grantObj)
-      })
-    }
-  }
-  return result
-}
-
 // parse XML response for bucket region
 export function parseBucketRegion(xml) {
   return parseXml(xml)

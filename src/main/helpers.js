@@ -158,11 +158,6 @@ export function isValidPrefix(prefix) {
   return true
 }
 
-// check for allowed ACLs
-export function isValidACL(acl) {
-  return acl === 'private' || acl === 'public-read' || acl === 'public-read-write' || acl === 'authenticated-read'
-}
-
 // check if typeof arg number
 export function isNumber(arg) {
   return typeof(arg) === 'number'

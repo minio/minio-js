@@ -89,13 +89,6 @@ export class ExpiresParamError extends ExtendableError {
   }
 }
 
-// InvalidACLError generated when invalid acl is found.
-export class InvalidACLError extends ExtendableError {
-  constructor(message) {
-    super(message)
-  }
-}
-
 // InvalidDateError generated when invalid date is found.
 export class InvalidDateError extends ExtendableError {
   constructor(message) {

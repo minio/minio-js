@@ -94,18 +94,11 @@ describe('functional tests', function() {
     })
   }
 
-  describe('makeBucket', () => {
-    it('should create bucket with acl', done => client.makeBucket(`${bucketName}-acl`,
-                                                                  'public-read',
-                                                                  'us-west-2', done))
-    it('should delete bucket', done => client.removeBucket(`${bucketName}-acl`, done))
-  })
-
   describe('makeBucket with period', () => {
-    it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.acl.period`,
+    it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
                                                                                      'public-read-write',
                                                                                      'eu-central-1', done))
-    it('should delete bucket', done => client.removeBucket(`${bucketName}.acl.period`, done))
+    it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
   })
 
   describe('listBuckets', () => {
@@ -124,35 +117,6 @@ describe('functional tests', function() {
       client.bucketExists(bucketName+'random', (e) => {
         if (e.code === 'NoSuchBucket') return done()
         done(new Error())
-      })
-    })
-  })
-
-  describe('tests for setBucketACL getBucketACL', () => {
-    it('should set acl to "private"', done => client.setBucketACL(bucketName, 'private', done))
-    it('should verify acl as "private"', done => {
-      client.getBucketACL(bucketName, (e, acl) => {
-        if (e) return done(e)
-        if (acl !== 'private') return done(new Error('acl not "private"'))
-        done()
-      })
-    })
-
-    it('should set acl to "public-read"', done => client.setBucketACL(bucketName, 'public-read', done))
-    it('should verify acl as "public-read"', done => {
-      client.getBucketACL(bucketName, (e, acl) => {
-        if (e) return done(e)
-        if (acl !== 'public-read') return done(new Error('acl not "public-read"'))
-        done()
-      })
-    })
-
-    it('should set acl to "public-read-write"', done => client.setBucketACL(bucketName, 'public-read-write', done))
-    it('should verify acl as "public-read-write"', done => {
-      client.getBucketACL(bucketName, (e, acl) => {
-        if (e) return done(e)
-        if (acl !== 'public-read-write') return done(new Error('acl not "public-read-write"'))
-        done()
       })
     })
   })
