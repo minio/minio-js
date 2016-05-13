@@ -54,7 +54,7 @@ describe('Client', function() {
       port: 9000,
       accessKey: 'accesskey',
       secretKey: 'secretkey',
-      insecure: true
+      secure: false
     })
   describe('new client', () => {
     it('should work with https', () => {
@@ -71,7 +71,7 @@ describe('Client', function() {
         port: 9000,
         accessKey: 'accesskey',
         secretKey: 'secretkey',
-        insecure: true
+        secure: false
       })
       assert.equal(client.port, 9000)
     })
@@ -80,7 +80,7 @@ describe('Client', function() {
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
-        insecure: true
+        secure: false
       })
       assert.equal(client.port, 80)
     })
@@ -145,7 +145,7 @@ describe('Client', function() {
           var client = new Minio({
             endPoint: 'localhost',
             port: 9000,
-            insecure: true
+            secure: false
           })
           client.presignedGetObject('bucket', 'object', 1000)
         } catch (e) {
@@ -174,7 +174,7 @@ describe('Client', function() {
           var client = new Minio({
             endPoint: 'localhost',
             port: 9000,
-            insecure: true
+            secure: false
           })
           client.presignedPutObject('bucket', 'object', 1000)
         } catch (e) {
@@ -282,7 +282,7 @@ describe('Client', function() {
         client = new Minio({
           endPoint: 'localhost',
           port: 9000,
-          insecure: true
+          secure: false
         })
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000', {
@@ -311,7 +311,7 @@ describe('Client', function() {
           port: 9000,
           accessKey: 'accessKey',
           secretKey: 'secretKey',
-          insecure: true
+          secure: false
         })
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000', {

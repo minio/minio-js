@@ -50,7 +50,7 @@ var Package = require('../../package.json');
 export default class Client {
   constructor(params) {
     // Default values if not specified.
-    if (!params.insecure) params.insecure = false
+    if (typeof params.secure === 'undefined') params.secure = true
     if (!params.port) params.port = 0
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
@@ -59,25 +59,28 @@ export default class Client {
     if (!isValidPort(params.port)) {
       throw new errors.InvalidArgumentError(`port ${params.port} is invalid`)
     }
-    if (!isBoolean(params.insecure)) {
-      throw new errors.InvalidArgumentError(`insecure option is of invalid type should be of type boolean true/false`)
+    if (!isBoolean(params.secure)) {
+      throw new errors.InvalidArgumentError(`secure option is of invalid type should be of type boolean true/false`)
     }
 
     var host = params.endPoint
     var port = params.port;
     var protocol = ''
     var transport;
-    if (params.insecure === false) {
-      transport = Https
-      protocol = 'https:'
-      if (port === 0) {
-        port = 443
-      }
-    } else {
+    // Validate if configuration is not using SSL
+    // for constructing relevant endpoints.
+    if (params.secure === false) {
       transport = Http
       protocol = 'http:'
       if (port === 0) {
         port = 80
+      }
+    } else {
+      // Defaults to secure.
+      transport = Https
+      protocol = 'https:'
+      if (port === 0) {
+        port = 443
       }
     }
 

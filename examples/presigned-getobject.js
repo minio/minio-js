@@ -23,9 +23,10 @@ var s3Client = new Minio({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
-  insecure: false // Default is false.
+  secure: true // Default is true.
 })
-// Presigned get object URL for object name my-bucketname, it expires in 7 days by default.
+
+// Presigned get object URL for my-objectname at my-bucketname, it expires in 7 days by default.
 var presignedUrl = s3Client.presignedGetObject('my-bucketname', 'my-objectname', 1000, function(e, presignedUrl) {
   if (e) return console.log(e)
   console.log(presignedUrl)
