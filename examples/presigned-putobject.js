@@ -23,7 +23,7 @@ var s3Client = new Minio({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
-  insecure: false // Default is false.
+  secure: true // Default is true.
 })
 
 var presignedUrl = s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function(e, presignedUrl) {
