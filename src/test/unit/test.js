@@ -339,17 +339,17 @@ describe('Client', function() {
   })
 
   describe('Bucket API calls', () => {
-    describe('#makeBucket(bucket, acl, region, callback)', () => {
+    describe('#makeBucket(bucket, region, callback)', () => {
       it('should call the callback on success', (done) => {
         MockResponse('http://localhost:9000').put('/bucket').reply(200)
-        client.makeBucket('bucket', '', '', (e) => {
+        client.makeBucket('bucket', '', (e) => {
           assert.equal(e, null)
           done()
         })
       })
       it('pass an error into the callback on failure', (done) => {
         MockResponse('http://localhost:9000').put('/bucket').reply(400, generateError('code', 'message', 'requestid', 'hostid', '/bucket'))
-        client.makeBucket('bucket', 'public-read', '', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
+        client.makeBucket('bucket', '', checkError('code', 'message', 'requestid', 'hostid', '/bucket', done))
       })
       it('should fail on null bucket', (done) => {
         try {
@@ -477,128 +477,6 @@ describe('Client', function() {
       it('should fail on empty bucket', (done) => {
         try {
           client.removeBucket('  \n  \t  ')
-        } catch (e) {
-          done()
-        }
-      })
-    })
-
-    describe('#getBucketACL(bucket, cb)', () => {
-      it('should return public-read-write acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>WRITE</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
-        client.getBucketACL('bucket', (e, r) => {
-          assert.equal(e, null)
-          assert.equal(r, 'public-read-write')
-          done()
-        })
-      })
-      it('should return public-read acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
-        client.getBucketACL('bucket', (e, r) => {
-          assert.equal(e, null)
-          assert.equal(r, 'public-read')
-          done()
-        })
-      })
-      it('should return authenticated-read acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName><URI>http://acs.amazonaws.com/groups/global/AuthenticatedUsers</URI></Grantee><Permission>READ</Permission></Grant><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
-        client.getBucketACL('bucket', (e, r) => {
-          assert.equal(e, null)
-          assert.equal(r, 'authenticated-read')
-          done()
-        })
-      })
-      it('should return private acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(200, '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Owner><AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser"><ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID><DisplayName>CustomersName@amazon.com</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>')
-        client.getBucketACL('bucket', (e, r) => {
-          assert.equal(e, null)
-          assert.equal(r, 'private')
-          done()
-        })
-      })
-      it('should pass error to callback', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.getBucketACL('bucket', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
-      })
-      it('should fail on null bucket', (done) => {
-        try {
-          client.getBucketACL(null)
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.getBucketACL('')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.getBucketACL('  \n  \t  ')
-        } catch (e) {
-          done()
-        }
-      })
-    })
-
-    describe('#setBucketACL(bucket, acl, cb)', () => {
-      it('should set acl', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
-        MockResponse('http://localhost:9000', {
-          reqHeaders: {
-            'x-amz-acl': 'public-read'
-          }
-        }).put('/bucket?acl').reply(200)
-        client.setBucketACL('bucket', 'public-read', (e) => {
-          assert.equal(e, null)
-        })
-        done()
-      })
-      it('should pass error to callback', (done) => {
-        MockResponse('http://localhost:9000').put('/bucket?acl').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))
-        client.setBucketACL('bucket', 'public-read', checkError('code', 'message', 'requestid', 'hostid', 'resource', done))
-      })
-      it('should fail on null bucket', (done) => {
-        try {
-          client.setBucketACL(null, 'public')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.setBucketACL('', 'public')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.setBucketACL('  \n  \t  ', 'public')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on null acl', (done) => {
-        try {
-          client.setBucketACL('hello', null)
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty acl', (done) => {
-        try {
-          client.setBucketACL('hello', '')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty acl', (done) => {
-        try {
-          client.setBucketACL('hello', '  \n  \t  ')
         } catch (e) {
           done()
         }

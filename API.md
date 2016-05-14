@@ -19,8 +19,6 @@ s3Client can be used to perform operations on S3 storage. APIs are described bel
 * [`listBuckets`](#listBuckets)
 * [`bucketExists`](#bucketExists)
 * [`removeBucket`](#removeBucket)
-* [`getBucketACL`](#getBucketACL)
-* [`setBucketACL`](#setBucketACL)
 * [`listObjects`](#listObjects)
 * [`listIncompleteUploads`](#listIncompleteUploads)
 
@@ -44,18 +42,17 @@ s3Client can be used to perform operations on S3 storage. APIs are described bel
 ### Bucket operations
 ---------------------------------------
 <a name="makeBucket">
-#### makeBucket(bucketName, callback)
+#### makeBucket(bucketName, 'us-east-1', callback)
 Create a new bucket.
 
 __Arguments__
 * `bucketName` _string_ - Name of the bucket.
-* `acl` _string_ - cannedACL valid values are _private_, _public-read_, _public-read-write_, _authenticated-read_.
 * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_
 * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
 
 __Example__
 ```js
-s3Client.makeBucket('mybucket', 'public-read', 'us-west-1', function(err) {
+s3Client.makeBucket('mybucket', 'us-west-1', function(err) {
   if (err) return console.log('Error creating bucket.')
   console.log('Bucket created successfully in "us-west-1".')
 })
@@ -122,44 +119,6 @@ s3Client.removeBucket('mybucket', function(e) {
   console.log('Bucket removed successfully.')
 })
 ```
----------------------------------------
-<a name="getBucketACL">
-#### getBucketACL(bucketName, callback)
-Get ACL of a bucket.
-
-__Arguments__
-* `bucketName` _string_ : name of the bucket
-* `callback(err, acl)` _function_ : `err` is not `null` in case of error. `acl` _string_ is the cannedACL which can have the values _private_, _public-read_, _public-read-write_.
-
-__Example__
-```js
-s3Client.getBucketACL('mybucket', function(e, acl) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('acl is', acl)
-})
-```
----------------------------------------
-<a name="setBucketACL">
-#### setBucketACL(bucketname, acl, callback)
-Set ACL on an existing bucket.
-
-__Arguments__
-* `bucketName` _string_: name of the bucket
-* `acl` _string_: acl can be _private_, _public-read_, _public-read-write_
-* `callback(err)` _function_: callback is called with error or `null`
-
-__Example__
-```js
-s3Client.setBucketACL('mybucket', 'public-read-write', function(e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Successfully updated acl.')
-})
-```
-
 ---------------------------------------
 <a name="listObjects">
 #### listObjects(bucketName, prefix, recursive)

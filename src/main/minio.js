@@ -31,7 +31,7 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 
-import { isValidPrefix, isValidACL, isValidEndpoint, isValidBucketName,
+import { isValidPrefix, isValidEndpoint, isValidBucketName,
          isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
          isString, isObject, isNullOrUndefined, pipesetup,
@@ -435,29 +435,17 @@ export default class Client {
   //
   // __Arguments__
   // * `bucketName` _string_ - Name of the bucket
-  // * `acl` _string_ - cannedACL which can have the values _private_, _public-read_, _public-read-write_, _authenticated-read_.
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, acl, region, cb) {
+  makeBucket(bucketName, region, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isString(acl)) {
-      throw new TypeError('acl should be of type "string"')
     }
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
-    }
-
-    // if acl is empty string, we default to 'private'.
-    if (!acl) acl = 'private'
-
-    // Verify if acl is valid.
-    if (!isValidACL(acl)) {
-      throw new errors.InvalidACLError(`Invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
     }
 
     var payload = ''
@@ -480,7 +468,7 @@ export default class Client {
       payload = Xml(payloadObject)
     }
     var method = 'PUT'
-    var headers = {'x-amz-acl': acl}
+    var headers = {}
     // virtual-host-style request but signed  with region 'us-east-1'
     // makeBucket request has to be always signed bye 'us-east-1'
     this.makeRequest({method, bucketName, headers}, payload, 200, 'us-east-1', (e) => {
@@ -619,83 +607,6 @@ export default class Client {
       if (!e) delete(this.regionMap[bucketName])
       cb(e)
     })
-  }
-
-  // get a bucket's ACL.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ : name of the bucket
-  // * `callback(err, acl)` _function_ : `err` is not `null` in case of error. `acl` _string_ is the cannedACL which can have the values _private_, _public-read_, _public-read-write_, _authenticated-read_.
-  getBucketACL(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'GET'
-    var query = 'acl'
-    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
-      if (e) return cb(e)
-      var transformer = transformers.getAclTransformer()
-      pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', data => {
-          var perm = data.acl.reduce((acc, grant) => {
-            if (grant.grantee.uri === 'http://acs.amazonaws.com/groups/global/AllUsers') {
-              if (grant.permission === 'READ') {
-                acc.publicRead = true
-              } else if (grant.permission === 'WRITE') {
-                acc.publicWrite = true
-              }
-            } else if (grant.grantee.uri === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') {
-              if (grant.permission === 'READ') {
-                acc.authenticatedRead = true
-              } else if (grant.permission === 'WRITE') {
-                acc.authenticatedWrite = true
-              }
-            }
-            return acc
-          }, {})
-          var cannedACL = 'unsupported-acl'
-          if (perm.publicRead && perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
-            cannedACL = 'public-read-write'
-          } else if (perm.publicRead && !perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
-            cannedACL = 'public-read'
-          } else if (!perm.publicRead && !perm.publicWrite && perm.authenticatedRead && !perm.authenticatedWrite) {
-            cannedACL = 'authenticated-read'
-          } else if (!perm.publicRead && !perm.publicWrite && !perm.authenticatedRead && !perm.authenticatedWrite) {
-            cannedACL = 'private'
-          }
-          cb(null, cannedACL)
-        })
-    })
-  }
-
-  // set a bucket's ACL.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `acl` _string_: acl can be _private_, _public-read_, _public-read-write_, _authenticated-read_
-  // * `callback(err)` _function_: callback is called with error or `null`
-  setBucketACL(bucketName, acl, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isString(acl)) {
-      throw new TypeError('acl should be of type "string"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    if (!isValidACL(acl)) {
-      throw new errors.InvalidACLError(`invalid acl ${acl}, allowed values: 'private' 'public-read' 'public-read-write' 'authenticated-read'`)
-    }
-
-    var query = 'acl'
-    var method = 'PUT'
-    var headers = {'x-amz-acl': acl}
-    this.makeRequest({method, bucketName, query, headers}, '', 200, '', cb)
   }
 
   // Remove the partially uploaded object.

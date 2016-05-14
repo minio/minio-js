@@ -173,11 +173,6 @@ export function getListPartsTransformer() {
   return getConcater(xmlParsers.parseListParts)
 }
 
-// Parses getBucketACL response.
-export function getAclTransformer() {
-  return getConcater(xmlParsers.parseAcl)
-}
-
 // Parses initMultipartUpload response.
 export function getInitiateMultipartTransformer() {
   return getConcater(xmlParsers.parseInitiateMultipart)

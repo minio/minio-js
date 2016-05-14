@@ -24,13 +24,13 @@ $ npm install -g
 
 var Minio = require('minio')
 
-var s3client = new Minio({
+var s3Client = new Minio({
   endPoint:  's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3client.listBuckets(function(e, bucketStream) {
+s3Client.listBuckets(function(e, bucketStream) {
   if (e) {
     console.log(e)
     return
@@ -83,17 +83,13 @@ s3client.listBuckets(function(e, bucketStream) {
 
 ### Bucket
 
-[makeBucket(bucket, acl, region, cb)](examples/make-bucket.js)
+[makeBucket(bucket, region, cb)](examples/make-bucket.js)
 
 [listBuckets() : Stream](examples/list-buckets.js)
 
 [bucketExists(bucket, cb)](examples/bucket-exists.js)
 
 [removeBucket(bucket, cb)](examples/remove-bucket.js)
-
-[getBucketACL(bucket, cb)](examples/get-bucket-acl.js)
-
-[setBucketACL(bucket, acl, cb)](examples/set-bucket-acl.js)
 
 [listObjects(bucket, prefix, recursive) : Stream](examples/list-objects.js)
 
