@@ -35,7 +35,7 @@ describe('functional tests', function() {
     accessKey: process.env['ACCESS_KEY'],
     secretKey: process.env['SECRET_KEY']
   })
-  var bucketName = 'miniojs-bucket'
+  var bucketName = 'miniojs-bucket2'
   var objectName = 'miniojsobject'
 
   var _1byte = new Buffer(1)
@@ -82,7 +82,7 @@ describe('functional tests', function() {
     client.traceOn(traceStream)
   }
 
-  before(done => client.makeBucket(bucketName, '', '', done))
+  before(done => client.makeBucket(bucketName, '', done))
   after(done => client.removeBucket(bucketName, done))
 
   if (traceStream) {
@@ -96,7 +96,6 @@ describe('functional tests', function() {
 
   describe('makeBucket with period', () => {
     it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
-                                                                                     'public-read-write',
                                                                                      'eu-central-1', done))
     it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
   })
