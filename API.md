@@ -8,7 +8,9 @@ var Minio = require('minio')
 var s3Client = new Minio({
   endPoint:  's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
+  secure: true,
+  port: 443,
 })
 ```
 
