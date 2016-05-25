@@ -32,20 +32,12 @@ var s3Client = new Minio({
   port: 443
 })
 
-s3Client.listBuckets(function(e, bucketStream) {
+s3Client.listBuckets(function(e, buckets) {
   if (e) {
     console.log(e)
     return
   }
-  bucketStream.on('data', function(obj) {
-    console.log(obj)
-  })
-  bucketStream.on('end', function() {
-    console.log("End")
-  })
-  bucketStream.on('error', function(e) {
-    console.log("Error", e)
-  })
+  console.log('bucket: ', buckets)
 })
 
 ```
