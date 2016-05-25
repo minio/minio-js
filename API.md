@@ -65,28 +65,20 @@ s3Client.makeBucket('mybucket', 'us-west-1', function(err) {
 List all buckets.
 
 __Arguments__
-* `callback(err, bucketStream)` _function_ - callback function with error as the first argument. `bucketStream` is the stream emitting bucket information.
+* `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
 
-`bucketStream` emits Object with the format:
+`buckets` array element:
 * `bucket.name` _string_ : bucket name
-* `bucket.creationDate` _Date_: date when bucket was created
+* `bucket.creationDate` _string_: date when bucket was created
 
 __Example__
 ```js
-s3Client.listBuckets(function(e, bucketStream) {
+s3Client.listBuckets(function(e, buckets) {
   if (e) {
     console.log(e)
     return
   }
-  bucketStream.on('data', function(obj) {
-    console.log(obj)
-  })
-  bucketStream.on('end', function() {
-    console.log('End')
-  })
-  bucketStream.on('error', function(e) {
-    console.log('Error', e)
-  })
+  console.log('buckets: ' + buckets)
 })
 ```
 ---------------------------------------
