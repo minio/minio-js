@@ -1307,7 +1307,8 @@ export default class Client {
       opts.region = region
       opts.bucketName = postPolicy.formData.bucket
       var reqOptions = this.getRequestOptions(opts)
-      var urlStr = reqOptions.protocol + '//' + reqOptions.host + reqOptions.path
+      var portStr = (this.port == 80 || this.port === 443) ? '' : `:${this.port.toString()}`
+      var urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
       cb(null, urlStr, postPolicy.formData)
     })
   }
