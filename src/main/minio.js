@@ -1287,6 +1287,14 @@ export default class Client {
       var date = Moment.utc()
       var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
 
+      if (!postPolicy.policy.expiration) {
+        // 'expiration' is mandatory field for S3.
+        // Set default expiration date of 7 days.
+        var expires = new Date()
+        expires.setSeconds(24 * 60 * 60 * 7)
+        postPolicy.setExpires(expires)
+      }
+
       postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
       postPolicy.formData['x-amz-date'] = dateStr
 
