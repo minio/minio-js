@@ -152,6 +152,7 @@ export function getHashSummer(anonymous) {
     if (!anonymous) hashData.sha256sum = sha256.digest('hex')
     this.push(hashData)
     this.push(null)
+    cb()
   })
 }
 
