@@ -382,7 +382,8 @@ Generate a presigned URL for GET.
 __Arguments__
 * `bucketName` _string_: name of the bucket.
 * `objectName` _string_: name of the object.
-* `expiry` _number_: expiry in seconds.
+* `expiry` _number_: expiry in seconds (optional, default 7 days)
+* `respHeaders` _object_: response headers to override (optional)
 * `callback(err, presignedUrl)` _function_: callback function is called with non `null` value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request.
 
 __Example__
