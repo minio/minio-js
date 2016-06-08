@@ -839,7 +839,10 @@ export default class Client {
               var stream = fs.createReadStream(filePath, options)
               var uploadId = ''
               var partNumber = 0
-              uploader(stream, size, sha256sum, md5sum, callback)
+              uploader(stream, size, sha256sum, md5sum, (err, etag) => {
+                callback(err, etag)
+                cb(true)
+              })
             })
             .on('error', e => cb(e))
           return
@@ -912,7 +915,10 @@ export default class Client {
       },
       // all parts uploaded, complete the multipart upload
       (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
-    ], callback)
+    ], (err, ...rest) => {
+      if (err === true) return
+      callback(err, ...rest)
+    })
   }
 
   // Uploads the object.
@@ -1729,6 +1735,8 @@ export default class Client {
         if (etag) {
           etag = etag.replace(/^\"/, '').replace(/\"$/, '')
         }
+        // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+        response.on('data', () => {})
         cb(null, etag)
       })
     }
