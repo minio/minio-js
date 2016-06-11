@@ -1235,10 +1235,20 @@ export default class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds
-  presignedGetObject(bucketName, objectName, expires, cb) {
+  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
+  // * `respHeaders` _object_: response headers to override (optional)
+  presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned GET url cannot be generated for anonymous requests')
+    }
+    if (isFunction(respHeaders)) {
+      cb = respHeaders
+      respHeaders = {}
+    }
+    if (isFunction(expires)) {
+      cb = expires
+      respHeaders = {}
+      expires = 24 * 60 * 60 * 7
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1249,8 +1259,22 @@ export default class Client {
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
     }
+    if (!isObject(respHeaders)) {
+      throw new TypeError('respHeaders should be of type "object"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
+                            'response-content-disposition', 'response-content-encoding']
+    validRespHeaders.forEach(header => {
+      if (respHeaders[header] !== undefined && !isString(respHeaders[header])) {
+        throw new TypeError(`response header ${header} should be of type "string"`)
+      }
+    })
     var method = 'GET'
     var requestDate = Moment().utc()
+    var query = _.map(respHeaders, (value, key) => `${key}=${uriEscape(value)}`).join('&')
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
@@ -1259,7 +1283,8 @@ export default class Client {
       var reqOptions = this.getRequestOptions({method,
                                                region,
                                                bucketName,
-                                               objectName})
+                                               objectName,
+                                               query})
       try {
         url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  region, requestDate, expires)

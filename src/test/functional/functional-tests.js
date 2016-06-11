@@ -400,6 +400,49 @@ describe('functional tests', function() {
       })
     })
 
+    it('should response headers set to expected values during download for presignedUrl', done => {
+      var respHeaders = {
+        'response-content-type': 'text/html',
+        'response-content-language': 'en',
+        'response-expires': 'Sun, 07 Jun 2020 16:07:58 GMT',
+        'response-cache-control': 'No-cache',
+        'response-content-disposition': 'attachment; filename=testing.txt',
+        'response-content-encoding': 'gzip'
+      }
+      client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
+        options.method = 'GET'
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
+          if (respHeaders['response-content-type'] != response.headers['content-type']) {
+            return done(new Error(`content-type header mismatch`))
+          }
+          if (respHeaders['response-content-language'] != response.headers['content-language']) {
+            return done(new Error(`content-language header mismatch`))
+          }
+          if (respHeaders['response-expires'] != response.headers['expires']) {
+            return done(new Error(`expires header mismatch`))
+          }
+          if (respHeaders['response-cache-control'] != response.headers['cache-control']) {
+            return done(new Error(`cache-control header mismatch`))
+          }
+          if (respHeaders['response-content-disposition'] != response.headers['content-disposition']) {
+            return done(new Error(`content-disposition header mismatch`))
+          }
+          if (respHeaders['response-content-encoding'] != response.headers['content-encoding']) {
+            return done(new Error(`content-encoding header mismatch`))
+          }
+          response.on('data', (data) => {})
+          done()
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
+    })
+
     it('should upload using presinged POST', done => {
       var policy = client.newPostPolicy()
       policy.setKey(_1byteObjectName)

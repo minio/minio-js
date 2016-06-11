@@ -267,7 +267,15 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   requestQuery.push(`X-Amz-Expires=${expires}`)
   requestQuery.push(`X-Amz-SignedHeaders=${uriEscape(signedHeaders.join(';').toLowerCase())}`)
 
-  var path = request.path + '?' + requestQuery.join('&')
+  var resource = request.path.split('?')[0]
+  var query = request.path.split('?')[1]
+  if (query) {
+    query = query + '&' + requestQuery.join('&')
+  } else {
+    query = requestQuery.join('&')
+  }
+
+  var path = resource + '?' + query
 
   var canonicalRequest = getCanonicalRequest(request.method, path,
                                               request.headers, signedHeaders, hashedPayload)
