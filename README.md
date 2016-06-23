@@ -23,10 +23,16 @@ $ cd minio-js
 $ npm install
 $ npm install -g
 ```
-## Quick Start Example - File Uploader
-This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket.
+## Initialize Minio Client
+You need five items in order to connect to Minio object storage server.
 
-You need five items in order to connect to an object storage server.
+| Params     | Description |  
+| :------- | :------------ |  
+| endPoint	 | URL to object storage service. |  
+|port| TCP/IP port number. This input is optional. Default value set to ``80`` for HTTP and ``443`` for HTTPs.|
+| accessKey | Access key is like user ID that uniquely identifies your account.   |   
+| secretKey	| Secret key is the password to your account.    |
+|secure |Set this value to 'true' to enable secure (HTTPS) access |
 
 ```js
 var Minio = require('minio')
@@ -39,15 +45,8 @@ var minioClient = new Minio({
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
 ```
-
-| Params     | Description |  
-| :------- | :------------ |  
-| endPoint	 | URL to object storage service. |  
-|port| TCP/IP port number. This input is optional. Default value set to ``80`` for HTTP and ``443`` for HTTPs.|
-| accessKey | Access key is like user ID that uniquely identifies your account.   |   
-| secretKey	| Secret key is the password to your account.    |
-|secure |Set this value to 'true' to enable secure (HTTPS) access |
-
+## Quick Start Example - File Uploader
+This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket. 
 
 We will use the Minio server running at [https://play.minio.io:9000](https://play.minio.io:9000) in this example. Feel free to use this service for testing and development. Access credentials shown in this example are open to the public.
 
@@ -102,6 +101,10 @@ The full API Reference is available here.
 * [`listObjects`](https://docs.minio.io/docs/javascript-client-api-reference#listObjects)
 * [`listIncompleteUploads`](https://docs.minio.io/docs/javascript-client-api-reference#listIncompleteUploads)
 
+### API Reference : File Object Operations
+* [`fPutObject`](https://docs.minio.io/docs/javascript-client-api-reference#fPutObject)
+* [`fGetObject`](https://docs.minio.io/docs/javascript-client-api-reference#fGetObject)
+
 ### API Reference : Object Operations
 * [`getObject`](https://docs.minio.io/docs/javascript-client-api-reference#getObject)
 * [`putObject`](https://docs.minio.io/docs/javascript-client-api-reference#putObject)
@@ -126,6 +129,9 @@ The full API Reference is available here.
 * [remove-bucket.js](./examples/remove-bucket.js)
 * [list-incomplete-uploads.js](./examples/list-incomplete-uploads.js)
 
+#### Full Examples : File Object Operations
+* [fput-object.js](./examples/fput-object.js)
+* [fget-object.js](./examples/fget-object.js)
 #### Full Examples : Object Operations
 
 * [put-object.js](./examples/put-object.js)
@@ -151,4 +157,3 @@ The full API Reference is available here.
 
 [![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
 [![Build status](https://ci.appveyor.com/api/projects/status/1d05e6nvxcelmrak?svg=true)](https://ci.appveyor.com/project/harshavardhana/minio-js)
-
