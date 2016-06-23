@@ -121,7 +121,6 @@ The full API Reference is available here.
 ## Full Examples
 
 #### Full Examples : Bucket Operations
-
 * [list-buckets.js](./examples/list-buckets.js)
 * [list-objects.js](./examples/list-objects.js)
 * [bucket-exists.js](./examples/bucket-exists.js)
@@ -132,8 +131,8 @@ The full API Reference is available here.
 #### Full Examples : File Object Operations
 * [fput-object.js](./examples/fput-object.js)
 * [fget-object.js](./examples/fget-object.js)
-#### Full Examples : Object Operations
 
+#### Full Examples : Object Operations
 * [put-object.js](./examples/put-object.js)
 * [get-object.js](./examples/get-object.js)
 * [get-partialobject.js](./examples/get-partialobject.js)
