@@ -66,12 +66,18 @@ __Parameters__
             </td>
             <td>
             endPoint is an URL, domain name, IPv4 or IPv6 address.
-Valid endpoints:
+<br/>Valid endpoints:
                 <ul>
                     <li>https://s3.amazonaws.com</li>
                     <li>https://s3.amazonaws.com/</li>
                     <li>https://play.minio.io:9000</li>
                     <li>http://play.minio.io:9010/</li>
+                    <li>localhost</li>
+                    <li>localhost.localdomain</li>
+                    <li>play.minio.io</li>
+                    <li>127.0.0.1</li>
+                    <li>192.168.1.60</li>
+                    <li>::1</li>
                 </ul>
             </td>
         </tr>
@@ -216,7 +222,7 @@ __Parameters__
             <td>
             Callback function with error as the first argument.
   bucketStream is the stream emitting bucket information.
-  bucketStream emits Object with the format:-
+  <br/>bucketStream emits Object with the format:-
                 <ul>
                     <li>bucket.name string : bucket name</li>
                     <li>bucket.creationDate Date: date when bucket was created.</li>
@@ -497,6 +503,7 @@ __Parameters__
 | `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.|
 
 __Example__
+
 The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
@@ -548,7 +555,6 @@ __Parameters__
 __Example__
 
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
-
 ```js
 var file = '/tmp/40mbfile'
 minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
