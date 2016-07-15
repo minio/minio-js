@@ -8,7 +8,7 @@ var Minio = require('minio')
 
 var minioClient = new Minio({
     endPoint: 'play.minio.io',
-    port: '9000',
+    port: 9000,
   	secure: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
@@ -86,7 +86,7 @@ __Parameters__
            port
             </td>
             <td>
-            string
+            number
             </td>
             <td>
             TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.
@@ -120,7 +120,7 @@ var Minio = require('minio')
 
 var minioClient = new Minio({
     endPoint: 'play.minio.io',
-    port: '9000',
+    port: 9000,
     secure: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
