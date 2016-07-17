@@ -698,7 +698,7 @@ minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 ```
 -------------------------------------
 <a name="presignedPutObject">
-#### presignedPutObject(bucketName, objectName, expiry)
+#### presignedPutObject(bucketName, objectName, expiry, callback)
 Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
 
 
@@ -721,8 +721,15 @@ minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 ```
 ---------------------------------------
 <a name="presignedPostPolicy">
-#### presignedPostPolicy
+#### presignedPostPolicy(policy, callback)
 Allows setting policy conditions to a presigned URL for POST operations. Policies such as bucket name to receive object uploads, key name prefixes, expiry policy may be set.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `policy`  | _object_  | Policy object created by minioClient.newPostPolicy() |
+| `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. |
 
 Create policy:
 ```js
