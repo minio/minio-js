@@ -2,7 +2,7 @@
 
 ## Initialize Minio Client object.  
 
-### Minio
+### 1. Minio
 ```js
 var Minio = require('minio')
 
@@ -14,7 +14,7 @@ var minioClient = new Minio({
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
 ```
-## AWS S3
+### 2. AWS S3
 ```js
 var Minio = require('minio')
 
@@ -26,7 +26,7 @@ var s3Client = new Minio({
 ```
 
 | Bucket operations       | Object operations      | Presigned operations |
-| ------------- |-------------| -----|
+|:------------- |:-------------|:-----|
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) |
@@ -37,7 +37,6 @@ var s3Client = new Minio({
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 
 ## 1.  Constructor
----------------------------------------
 <a name="MinioClient_endpoint">
 ####  new Minio ({endPoint, port, secure, accessKey, secretKey})
 
@@ -114,7 +113,8 @@ __Parameters__
 
 __Example__
 
-``1. Minio``
+### 1. Minio
+
 ```js
 var Minio = require('minio')
 
@@ -126,7 +126,9 @@ var minioClient = new Minio({
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
 ```
-``2. AWS S3``
+
+### 2. AWS S3
+
 ```js
 var Minio = require('minio')
 
@@ -138,7 +140,6 @@ var s3Client = new Minio({
 ```
 
 ## 2. Bucket operations
----------------------------------------
 <a name="makeBucket">
 #### makeBucket(bucketName, region, callback)
 Creates a new bucket.
@@ -196,7 +197,6 @@ minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
   console.log('Bucket created successfully in "us-east-1".')
 })
 ```
----------------------------------------
 <a name="listBuckets">
 #### listBuckets(callback)
 Lists all buckets.
@@ -243,7 +243,6 @@ minioClient.listBuckets(function(err, buckets) {
   console.log('buckets :', buckets)
 })
 ```
----------------------------------------
 <a name="bucketExists">
 #### bucketExists(bucketName, callback)
 Checks if a bucket exists.
@@ -251,7 +250,7 @@ Checks if a bucket exists.
 __Parameters__
 
 | Param  | Type  | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
 | `callback(err)`  | _function_  | `err` is `null` if the bucket exists.  |
 
@@ -262,7 +261,6 @@ minioClient.bucketExists('mybucket', function(err) {
   console.log('Bucket exists.')
 })
 ```
----------------------------------------
 <a name="removeBucket">
 #### removeBucket(bucketName, callback)
 Removes a bucket.
@@ -270,7 +268,7 @@ Removes a bucket.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `callback(err)`  | _function_  |  `err` is `null` if the bucket is removed successfully. |
 __Example__
@@ -280,7 +278,6 @@ minioClient.removeBucket('mybucket', function(err) {
   console.log('Bucket removed successfully.')
 })
 ```
----------------------------------------
 <a name="listObjects">
 #### listObjects(bucketName, prefix, recursive)
 Lists all objects in a bucket.
@@ -288,7 +285,7 @@ Lists all objects in a bucket.
 __Parameters__
 
 | Param | Type | Description |
-| ---- | ---- | ---- |
+| :---- | :---- | :---- |
 | `bucketName` | _string_ | Name of the bucket. |
 | `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
@@ -335,7 +332,6 @@ var stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
----------------------------------------
 <a name="listIncompleteUploads">
 #### listIncompleteUploads(bucketName, prefix, recursive)
 Lists partially uploaded objects in a bucket.
@@ -343,7 +339,7 @@ Lists partially uploaded objects in a bucket.
 __Parameters__
 
 | Param  |  Type | Description  |
-| ---| ---|---|
+| :---| :---|:---|
 | `bucketname`  | _string_  |  Name of the bucket. |
 | `prefix`  | _string_  | Prefix of the object names that are partially uploaded. (optional, default `''`)  |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
@@ -393,7 +389,6 @@ Stream.on('error', function(err) {
   console.log(err)
 })
 ```
----------------------------------------
 ## 3.  Object operations
 <a name="getObject">
 #### getObject(bucketName, objectName, callback)
@@ -402,7 +397,7 @@ Downloads an object as a stream.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  |  Name of the object. |
 | `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream.|
@@ -425,7 +420,6 @@ minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
   })
 })
 ```
----------------------------------------
 <a name="getPartialObject">
 #### getPartialObject(bucketName, objectName, offset, length, callback)
 Downloads the specified range bytes of an object as a stream.
@@ -433,7 +427,7 @@ Downloads the specified range bytes of an object as a stream.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 |  `bucketName` | _string_  | Name of the bucket.  |
 | `objectName`   | _string_  | Name of the object.  |
 | `offset`   | _number_  | `offset` of the object from where the stream will start.  |
@@ -460,7 +454,6 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, data
 })
 ```
 
----------------------------------------
 <a name="fGetObject">
 #### fGetObject(bucketName, objectName, filePath, callback)
 Downloads and saves the object as a file in the local filesystem.
@@ -469,7 +462,7 @@ __Parameters__
 
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
@@ -485,7 +478,6 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
   console.log('success')
 })
 ```
----------------------------------------
 <a name="putObject">
 #### putObject(bucketName, objectName, stream, size, contentType, callback)
 Uploads an object from a stream/Buffer.
@@ -494,7 +486,7 @@ Uploads an object from a stream/Buffer.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `stream`  | _Stream_  |Readable stream.   |
@@ -523,7 +515,7 @@ var fileStat = Fs.stat(file, function(err, stats) {
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 |`string or Buffer`   | _Stream_ or _Buffer_  |Readable stream.   |
@@ -537,7 +529,6 @@ minioClient.putObject('mybucket', 'hello-file', buffer, 'application/octet-strea
   return console.log(err, etag) // err should be null
 })
 ```
----------------------------------------
 <a name="fPutObject">
 #### fPutObject(bucketName, objectName, filePath, contentType, callback)
 Uploads contents from a file to objectName.
@@ -545,7 +536,7 @@ Uploads contents from a file to objectName.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 |`objectName`   |_string_   | Name of the object.  |
 | `filePath`  | _string_  | Path of the file to be uploaded.  |
@@ -561,7 +552,6 @@ minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream',
   return console.log(err, etag) // err should be null
 })
 ```
----------------------------------------
 <a name="statObject">
 #### statObject(bucketName, objectName, callback)
 Gets metadata of an object.
@@ -625,7 +615,6 @@ minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
   console.log(stat)
 })
 ```
----------------------------------------
 <a name="removeObject">
 #### removeObject(bucketName, objectName, callback)
 Removes an object.
@@ -633,7 +622,7 @@ Removes an object.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error.  |
@@ -647,7 +636,6 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   console.log('Removed the object')
 })
 ```
--------------------------------------
 <a name="removeIncompleteUpload">
 #### removeIncompleteUpload(bucketName, objectName, callback)
 Removes a partially uploaded object.
@@ -655,7 +643,7 @@ Removes a partially uploaded object.
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
 | `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error.   |
@@ -672,7 +660,6 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 ## 4. Presigned operations
 Presigned URLs are generated for temporary download/upload access to private objects.
 
----------------------------------------
 <a name="presignedGetObject">
 #### presignedGetObject(bucketName, objectName, expiry, cb)
 Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
@@ -682,7 +669,7 @@ __Parameters__
 
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 |`objectName`   | _string_  | Name of the object.  |
 | `expiry`  |_number_   | Expiry in seconds. Default expiry is set to 7 days.  |
@@ -696,7 +683,6 @@ minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, 
   console.log(presignedUrl)
 })
 ```
--------------------------------------
 <a name="presignedPutObject">
 #### presignedPutObject(bucketName, objectName, expiry, callback)
 Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
@@ -705,7 +691,7 @@ Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may p
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
 | `expiry`  | _number_   | Expiry in seconds. Default expiry is set to 7 days.  |
@@ -719,7 +705,6 @@ minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, 
   console.log(presignedUrl)
 })
 ```
----------------------------------------
 <a name="presignedPostPolicy">
 #### presignedPostPolicy(policy, callback)
 Allows setting policy conditions to a presigned URL for POST operations. Policies such as bucket name to receive object uploads, key name prefixes, expiry policy may be set.
@@ -727,7 +712,7 @@ Allows setting policy conditions to a presigned URL for POST operations. Policie
 __Parameters__
 
 | Param  |  Type | Description  |
-|---|---|---|
+|:---|:---|:---|
 | `policy`  | _object_  | Policy object created by minioClient.newPostPolicy() |
 | `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. |
 
@@ -784,4 +769,4 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
 ```
 ## 5. Explore Further
 
-- [Build your own Shopping App Example](/docs/javascript-shopping-app)
+- [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)
