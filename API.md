@@ -3,6 +3,7 @@
 ## Initialize Minio Client object.  
 
 ### Minio
+
 ```js
 var Minio = require('minio')
 
@@ -15,6 +16,7 @@ var minioClient = new Minio({
 });
 ```
 ## AWS S3
+
 ```js
 var Minio = require('minio')
 
@@ -115,6 +117,7 @@ __Parameters__
 __Example__
 
 ``1. Minio``
+
 ```js
 var Minio = require('minio')
 
@@ -126,7 +129,9 @@ var minioClient = new Minio({
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
 ```
+
 ``2. AWS S3``
+
 ```js
 var Minio = require('minio')
 
@@ -256,6 +261,7 @@ __Parameters__
 | `callback(err)`  | _function_  | `err` is `null` if the bucket exists.  |
 
 __Example__
+
 ```js
 minioClient.bucketExists('mybucket', function(err) {
   if (err) return console.log('Bucket does not exist.')
@@ -274,6 +280,7 @@ __Parameters__
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `callback(err)`  | _function_  |  `err` is `null` if the bucket is removed successfully. |
 __Example__
+
 ```js
 minioClient.removeBucket('mybucket', function(err) {
   if (err) return console.log('unable to remove bucket.')
@@ -329,8 +336,8 @@ __Return Value__
 
 
 __Example__
-```js
 
+```js
 var stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
@@ -381,6 +388,7 @@ __Return Value__
 </table>
 
 __Example__
+
 ```js
 var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function(obj) {
@@ -408,6 +416,7 @@ __Parameters__
 | `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream.|
 
 __Example__
+
 ```js
 var size = 0
 minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
@@ -441,6 +450,7 @@ __Parameters__
 |`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream.|
 
 __Example__
+
 ```js
 var size = 0
 // reads 30 bytes from the offset 10.
@@ -476,6 +486,7 @@ __Parameters__
 | `callback(err)`  | _function_  | Callback is called with `err` in case of error.  |
 
 __Example__
+
 ```js
 var size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) {
@@ -531,6 +542,7 @@ __Parameters__
 | `callback(err, etag)`  | _function_  |Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.   |
 
 __Example__
+
 ```js
 var buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, 'application/octet-stream', function(err, etag) {
@@ -555,6 +567,7 @@ __Parameters__
 __Example__
 
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
+
 ```js
 var file = '/tmp/40mbfile'
 minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
@@ -617,6 +630,7 @@ __Parameters__
 </table>
 
 __Example__
+
 ```js
 minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
   if (err) {
@@ -639,6 +653,7 @@ __Parameters__
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error.  |
 
 __Example__
+
 ```js
 minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   if (err) {
@@ -661,6 +676,7 @@ __Parameters__
 | `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error.   |
 
 __Example__
+
 ```js
 minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
   if (err) {
@@ -689,6 +705,7 @@ __Parameters__
 | `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request.  |
 
 __Example__
+
 ```js
 // expires in a day.
 minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, presignedUrl) {
@@ -712,6 +729,7 @@ __Parameters__
 | `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request.  |
 
 __Example__
+
 ```js
 // expires in a day.
 minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, presignedUrl) {
@@ -732,9 +750,11 @@ __Parameters__
 | `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. |
 
 Create policy:
+
 ```js
 var policy = minioClient.newPostPolicy()
 ```
+
 Apply upload policy restrictions:
 
 ```js
@@ -761,7 +781,9 @@ policy.setContentType('text/plain')
 // Only allow content size in range 1KB to 1MB.
 policy.setContentLengthRange(1024, 1024*1024)
 ```
+
 POST your content from the browser using `superagent`:
+
 ```js
 minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
   if (err) return console.log(err)
@@ -782,6 +804,7 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
   })
 })
 ```
+
 ## 5. Explore Further
 
 - [Build your own Shopping App Example](/docs/javascript-shopping-app)
