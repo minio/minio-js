@@ -2,7 +2,7 @@
 
 ## Initialize Minio Client object.  
 
-### Minio
+## Minio
 
 ```js
 var Minio = require('minio')
