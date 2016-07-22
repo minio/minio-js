@@ -46,8 +46,8 @@ var s3Client = new Minio({
 
 ## 1.  Constructor
 
-<a name="MinioClient_endpoint">
-####  new Minio ({endPoint, port, secure, accessKey, secretKey})
+<a name="MinioClient_endpoint"></a>
+###  new Minio ({endPoint, port, secure, accessKey, secretKey})
 
 |     |
 | ---- |
@@ -157,9 +157,9 @@ var s3Client = new Minio({
 
 
 ## 2. Bucket operations
-<a name="makeBucket">
+<a name="makeBucket"></a>
 
-#### makeBucket(bucketName, region, callback)
+### makeBucket(bucketName, region, callback)
 
 Creates a new bucket.
 
@@ -221,8 +221,8 @@ minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
 
 ```
 
-<a name="listBuckets">
-#### listBuckets(callback)
+<a name="listBuckets"></a>
+### listBuckets(callback)
 
 Lists all buckets.
 
@@ -301,8 +301,8 @@ minioClient.bucketExists('mybucket', function(err) {
 })
 
 ```
-<a name="removeBucket">
-#### removeBucket(bucketName, callback)
+<a name="removeBucket"></a>
+### removeBucket(bucketName, callback)
 
 Removes a bucket.
 
@@ -327,8 +327,8 @@ minioClient.removeBucket('mybucket', function(err) {
 
 ```
 
-<a name="listObjects">
-#### listObjects(bucketName, prefix, recursive)
+<a name="listObjects"></a>
+### listObjects(bucketName, prefix, recursive)
 
 Lists all objects in a bucket.
 
@@ -388,8 +388,8 @@ stream.on('error', function(err) { console.log(err) } )
 
 ```
 
-<a name="listIncompleteUploads">
-#### listIncompleteUploads(bucketName, prefix, recursive)
+<a name="listIncompleteUploads"></a>
+### listIncompleteUploads(bucketName, prefix, recursive)
 
 Lists partially uploaded objects in a bucket.
 
@@ -457,8 +457,8 @@ Stream.on('error', function(err) {
 
 ## 3.  Object operations
 
-<a name="getObject">
-#### getObject(bucketName, objectName, callback)
+<a name="getObject"></a>
+### getObject(bucketName, objectName, callback)
 
 Downloads an object as a stream.
 
@@ -493,8 +493,8 @@ minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
 })
 
 ```
-<a name="getPartialObject">
-#### getPartialObject(bucketName, objectName, offset, length, callback)
+<a name="getPartialObject"></a>
+### getPartialObject(bucketName, objectName, offset, length, callback)
 
 Downloads the specified range bytes of an object as a stream.
 
@@ -533,8 +533,8 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, data
 
 ```
 
-<a name="fGetObject">
-#### fGetObject(bucketName, objectName, filePath, callback)
+<a name="fGetObject"></a>
+### fGetObject(bucketName, objectName, filePath, callback)
 
 Downloads and saves the object as a file in the local filesystem.
 
@@ -564,8 +564,8 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
 })
 
 ```
-<a name="putObject">
-#### putObject(bucketName, objectName, stream, size, contentType, callback)
+<a name="putObject"></a>
+### putObject(bucketName, objectName, stream, size, contentType, callback)
 
 Uploads an object from a stream/Buffer.
 
@@ -629,8 +629,8 @@ minioClient.putObject('mybucket', 'hello-file', buffer, 'application/octet-strea
 })
 
 ```
-<a name="fPutObject">
-#### fPutObject(bucketName, objectName, filePath, contentType, callback)
+<a name="fPutObject"></a>
+### fPutObject(bucketName, objectName, filePath, contentType, callback)
 
 Uploads contents from a file to objectName.
 
@@ -659,8 +659,8 @@ minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream',
 
 ```
 
-<a name="statObject">
-#### statObject(bucketName, objectName, callback)
+<a name="statObject"></a>
+### statObject(bucketName, objectName, callback)
 
 Gets metadata of an object.
 
@@ -688,7 +688,6 @@ __Parameters__
             </td>
            </tr>
           <tr>
-
           <td>objectName</td>
           <td>string</td>
           <td>Name of the object.</td>
@@ -700,7 +699,6 @@ __Parameters__
             <td>
             function
             </td>
-
             <td>
             err is not null in case of error, stat contains the object information:
                 <ul>
@@ -730,8 +728,8 @@ minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
 
 ```
 
-<a name="removeObject">
-#### removeObject(bucketName, objectName, callback)
+<a name="removeObject"></a>
+### removeObject(bucketName, objectName, callback)
 
 Removes an object.
 
@@ -759,8 +757,8 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
 
 ```
 
-<a name="removeIncompleteUpload">
-#### removeIncompleteUpload(bucketName, objectName, callback)
+<a name="removeIncompleteUpload"></a>
+### removeIncompleteUpload(bucketName, objectName, callback)
 
 Removes a partially uploaded object.
 
@@ -792,8 +790,8 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 
 Presigned URLs are generated for temporary download/upload access to private objects.
 
-<a name="presignedGetObject">
-#### presignedGetObject(bucketName, objectName, expiry, cb)
+<a name="presignedGetObject"></a>
+### presignedGetObject(bucketName, objectName, expiry, cb)
 
 Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
 
@@ -823,8 +821,8 @@ minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 
 ```
 
-<a name="presignedPutObject">
-#### presignedPutObject(bucketName, objectName, expiry, callback)
+<a name="presignedPutObject"></a>
+### presignedPutObject(bucketName, objectName, expiry, callback)
 
 Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
 
@@ -853,8 +851,8 @@ minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 
 ```
 
-<a name="presignedPostPolicy">
-#### presignedPostPolicy(policy, callback)
+<a name="presignedPostPolicy"></a>
+### presignedPostPolicy(policy, callback)
 
 Allows setting policy conditions to a presigned URL for POST operations. Policies such as bucket name to receive object uploads, key name prefixes, expiry policy may be set.
 
