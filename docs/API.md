@@ -122,7 +122,7 @@ __Parameters__
 
 __Example__
 
-## 1. Minio
+## Minio
 
 ```js
 
@@ -138,7 +138,7 @@ var minioClient = new Minio({
 
 ```
 
-## 2. AWS S3
+## AWS S3
 
 
 ```js
