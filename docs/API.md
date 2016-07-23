@@ -68,10 +68,10 @@ __Parameters__
     <tbody>
         <tr>
             <td>
-           endPoint
+         <code>  endPoint <code>
             </td>
             <td>
-            string
+           <i>  string </i>
             </td>
             <td>
             endPoint is an URL, domain name, IPv4 or IPv6 address.
@@ -92,28 +92,28 @@ __Parameters__
         </tr>
         <tr>
          <td>
-           port
+          <code>  port </code>
             </td>
             <td>
-            number
+           <i> number </i>
             </td>
             <td>
             TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.
             </td>
         </tr>
         <tr>
-        <td>accessKey</td>
-        <td>string</td>
+        <td> <code> accessKey </code> </td>
+        <td> <i> string </i> </td>
         <td>accessKey is like user-id that uniquely identifies your account.</td>
         </tr>
         <tr>
-        <td>secretKey </td>
-        <td> string</td>
+        <td> <code> secretKey </code> </td>
+        <td> <i> string </i> </td>
         <td> secretKey is the password to your account.</td>
         </tr>
         <tr>
-        <td>secure </td>
-        <td> bool</td>
+        <td> <code> secure </code> </td>
+        <td> <i> bool </i> </td>
         <td>If set to true, https is used instead of http. Default is https if not set. </td>
         </tr>
     </tbody>
@@ -177,10 +177,10 @@ __Parameters__
     <tbody>
         <tr>
             <td>
-           bucketName
+          <code> bucketName </code>
             </td>
             <td>
-            string
+            <i> string </i>
             </td>
             <td>
             Name of the bucket.
@@ -188,10 +188,10 @@ __Parameters__
         </tr>
         <tr>
          <td>
-           region
+           <code> region </code>
             </td>
             <td>
-            string
+            <i> string </i>
             </td>
             <td>
             Default value is us-east-1
@@ -200,8 +200,8 @@ ap-southeast-2, sa-east-1 ].
             </td>
         </tr>
         <tr>
-        <td>callback(err) </td>
-        <td>function </td>
+        <td> <code> callback(err) </code> </td>
+        <td> <i> function </i> </td>
         <td>Callback function with err as the error argument. err is null if the bucket is successfully created. </td>
         </tr>
     </tbody>
@@ -241,10 +241,10 @@ __Parameters__
     <tbody>
         <tr>
             <td>
-           callback(err, bucketStream)
+           <code> callback(err, bucketStream) </code>
             </td>
             <td>
-            function
+            <i> function </i>
             </td>
             <td>
             Callback function with error as the first argument.
@@ -356,10 +356,10 @@ __Return Value__
     <tbody>
         <tr>
             <td>
-           stream
+          <code> stream </code>
             </td>
             <td>
-            Stream
+           <i> Stream </i>
             </td>
             <td>
             Stream emitting the objects in the bucket, the object is of the format:
@@ -417,10 +417,10 @@ __Return Value__
     <tbody>
         <tr>
             <td>
-           stream
+           <code> stream </code>
             </td>
             <td>
-          Stream
+          <i> Stream </i>
             </td>
             <td>
             Emits objects of the format:
@@ -678,26 +678,26 @@ __Parameters__
     <tbody>
         <tr>
             <td>
-           bucketName
+           <code> bucketName </code>
             </td>
             <td>
-            string
+            <i> string </i>
             </td>
             <td>
             Name of the bucket.
             </td>
            </tr>
           <tr>
-          <td>objectName</td>
-          <td>string</td>
+          <td> <code> objectName </code> </td>
+          <td> <i> string </i> </td>
           <td>Name of the object.</td>
           </tr>       
         <tr>
          <td>
-           callback(err, stat)
+           <code> callback(err, stat) </code>
             </td>
             <td>
-            function
+           <i> function </i>
             </td>
             <td>
             err is not null in case of error, stat contains the object information:
