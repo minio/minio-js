@@ -274,7 +274,7 @@ minioClient.listBuckets(function(err, buckets) {
 
 ```
 
-<a name="bucketExists">
+<a name="bucketExists"></a>
 #### bucketExists(bucketName, callback)
 
 Checks if a bucket exists.
