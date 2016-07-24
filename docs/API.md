@@ -195,14 +195,14 @@ __Parameters__
             </td>
             <td>
             Default value is us-east-1
-Region where the bucket is created. Valid values are [ us-east-1, us-west-1, us-west-2, eu-west-1, eu-central-1, ap-southeast-1, ap-northeast-1,
-ap-southeast-2, sa-east-1 ].
+Region where the bucket is created. Valid values are [  <i> us-east-1, us-west-1, us-west-2, eu-west-1, eu-central-1, ap-southeast-1, ap-northeast-1,
+ap-southeast-2, sa-east-1 </i> ].
             </td>
         </tr>
         <tr>
         <td> <code> callback(err) </code> </td>
         <td> <i> function </i> </td>
-        <td>Callback function with err as the error argument. err is null if the bucket is successfully created. </td>
+        <td>Callback function with <code>err</code> as the error argument. <code>err</code>  is null if the bucket is successfully created. </td>
         </tr>
     </tbody>
 </table>
@@ -248,11 +248,11 @@ __Parameters__
             </td>
             <td>
             Callback function with error as the first argument.
-  bucketStream is the stream emitting bucket information.
-  <br/>bucketStream emits Object with the format:-
+  <code>bucketStream</code> is the stream emitting bucket information.
+  <br/><code>bucketStream</code> emits Object with the format:-
                 <ul>
-                    <li>bucket.name string : bucket name</li>
-                    <li>bucket.creationDate Date: date when bucket was created.</li>
+                    <li> <code>bucket.name</code> <i>string</i> : bucket name</li>
+                    <li> <code>bucket.creationDate</code> <i>Date</i> : date when bucket was created.</li>
 
                 </ul>
             </td>
@@ -364,10 +364,10 @@ __Return Value__
             <td>
             Stream emitting the objects in the bucket, the object is of the format:
                 <ul>
-                    <li>obj.key string: name of the object.</li>
-                    <li>obj.size number: size of the object.</li>
-                    <li>obj.etag string: etag of the object.</li>
-                    <li>obj.lastModified Date: modified time stamp.</li>
+                    <li> <code>obj.key</code> <i>string</i>: name of the object.</li>
+                    <li> <code>obj.size</code> <i>number</i>: size of the object.</li>
+                    <li> <code>obj.etag</code> <i>string</i>: etag of the object.</li>
+                    <li> <code>obj.lastModified</code> <i>Date</i>: modified time stamp.</li>
                 </ul>
             </td>
         </tr>
@@ -426,9 +426,9 @@ __Return Value__
             Emits objects of the format:
 
                 <ul>
-                    <li>part.key string: name of the object.</li>
-                    <li>part.uploadId string: upload ID of the object.</li>
-                    <li>part.size Integer: size of the partially uploaded object.</li>
+                    <li> <code>part.key</code> <i>string</i>: name of the object.</li>
+                    <li> <code>part.uploadId</code> <i>string</i>: upload ID of the object.</li>
+                    <li> <code>part.size</code> <i>Integer</i>: size of the partially uploaded object.</li>
                 </ul>
             </td>
         </tr>
@@ -700,12 +700,12 @@ __Parameters__
            <i> function </i>
             </td>
             <td>
-            err is not null in case of error, stat contains the object information:
+            <code>err</code> is not <code>null</code> in case of error, <code>stat</code> contains the object information:
                 <ul>
-                    <li>stat.size number: size of the object.</li>
-                    <li>stat.etag string: etag of the object.</li>
-                    <li>stat.contentType string: Content-Type of the object.</li>
-                    <li>stat.lastModified string: modified time stamp.</li>
+                    <li> <code>stat.size</code> <i>number</i>: size of the object.</li>
+                    <li> <code>stat.etag</code> <i>string</i>: etag of the object.</li>
+                    <li> <code>stat.contentType</code> <i>string</i>: Content-Type of the object.</li>
+                    <li> <code>stat.lastModified</code> <i>string</i>: modified time stamp.</li>
                 </ul>
             </td>
             </td>
