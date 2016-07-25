@@ -671,7 +671,8 @@ export default class Client {
     var objStat
 
     // Rename wrapper.
-    var rename = () => {
+    var rename = err => {
+      if (err) return cb(err)
       fs.rename(partFile, filePath, cb)
     }
 
