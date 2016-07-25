@@ -672,7 +672,11 @@ export default class Client {
 
     // Rename wrapper.
     var rename = () => {
-      fs.rename(partFile, filePath, cb)
+      if (partFile) {
+        fs.rename(partFile, filePath, cb)
+      } else {
+        cb(new Error('Object not downloaded'))
+      }
     }
 
     async.waterfall([
