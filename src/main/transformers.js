@@ -138,18 +138,19 @@ export function getSizeLimiter(size, stream, chunker) {
 }
 
 // A through stream that calculates md5sum and sha256sum
-export function getHashSummer(anonymous) {
+export function getHashSummer(enableSHA256) {
   var md5 = Crypto.createHash('md5')
   var sha256 = Crypto.createHash('sha256')
 
   return Through2.obj(function(chunk, enc, cb) {
     md5.update(chunk)
-    if (!anonymous) sha256.update(chunk)
+    if (enableSHA256) sha256.update(chunk)
     cb()
   }, function(cb) {
     var md5sum = md5.digest('base64')
-    var hashData = {md5sum}
-    if (!anonymous) hashData.sha256sum = sha256.digest('hex')
+    var sha256sum = ''
+    if (enableSHA256) sha256sum = sha256.digest('hex')
+    var hashData = {md5sum, sha256sum}
     this.push(hashData)
     this.push(null)
     cb()
