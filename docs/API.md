@@ -286,8 +286,7 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err)`  | _function_  | `err` is `null` if the bucket exists.  |
-
+| `callback(err)`  | _function_  | `err` is `null` if the bucket exists. `err.code` is `NoSuchBucket` in case the bucket does not exist. |
 
 __Example__
 
@@ -296,7 +295,11 @@ __Example__
 
 
 minioClient.bucketExists('mybucket', function(err) {
-  if (err) return console.log('Bucket does not exist.')
+  if (err) {
+     if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
+     return console.log(err)
+  }
+  // if err is null it indicates that the bucket exists.
   console.log('Bucket exists.')
 })
 
