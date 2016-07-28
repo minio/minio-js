@@ -118,6 +118,10 @@ export default class Client {
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
+    // SHA256 is enabled only for authenticated http requests. If the request is authenticated
+    // and the connection is https we use x-amz-content-sha256=UNSIGNED-PAYLOAD
+    // header for signature calculation.
+    this.enableSHA256 = !this.anonymous && !params.secure
   }
 
   // returns *options* object that can be used with http.request()
@@ -304,7 +308,7 @@ export default class Client {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
-    if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
+    if (this.enableSHA256) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCode, region, cb)
   }
@@ -330,11 +334,13 @@ export default class Client {
     if(!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    // sha256sum will be empty for anonymous requests
-    if (sha256sum.length === 0 && !this.anonymous) {
-      throw new errors.InvalidArgumentError(`sha256sum cannot be empty for authenticated requests`)
+
+    // sha256sum will be empty for anonymous or https requests
+    if (!this.enableSHA256 && sha256sum.length !== 0) {
+      throw new errors.InvalidArgumentError(`sha256sum expected to be empty for anonymous or https requests`)
     }
-    if (sha256sum.length !== 64 && !this.anonymous) {
+    // sha256sum should be valid for non-anonymous http requests.
+    if (this.enableSHA256 && sha256sum.length !== 64) {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
@@ -343,6 +349,8 @@ export default class Client {
       options.region = region
       var reqOptions = this.getRequestOptions(options)
       if (!this.anonymous) {
+	// For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
+	if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
@@ -827,7 +835,7 @@ export default class Client {
           // simple PUT request, no multipart
           var multipart = false
           var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
-          var hash = transformers.getHashSummer(this.anonymous)
+          var hash = transformers.getHashSummer(this.enableSHA256)
           var start = 0
           var end = size - 1
           var autoClose = true
@@ -875,7 +883,7 @@ export default class Client {
           () => uploadedSize < size,
           cb => {
             var part = parts[partNumber]
-            var hash = transformers.getHashSummer()
+            var hash = transformers.getHashSummer(this.enableSHA256)
             var length = partSize
             if (length > (size - uploadedSize)) {
               length = size - uploadedSize
@@ -1003,7 +1011,7 @@ export default class Client {
           var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
           var readStream = readableStream(chunk)
           var sha256sum = ''
-          if (!this.anonymous) sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex')
+          if (this.enableSHA256) sha256sum = Crypto.createHash('sha256').update(chunk).digest('hex')
           var md5sum = Crypto.createHash('md5').update(chunk).digest('base64')
           uploader(readStream, chunk.length, sha256sum, md5sum, cb)
         })
@@ -1633,14 +1641,14 @@ export default class Client {
       // get new objects for a new part upload
       if (!aggregator) aggregator = Through2()
       if (!md5) md5 = Crypto.createHash('md5')
-      if (!sha256) sha256 = Crypto.createHash('sha256')
+      if (!sha256 && this.enableSHA256) sha256 = Crypto.createHash('sha256')
 
       aggregatedSize += chunk.length
       if (aggregatedSize > multipartSize) return cb(new Error('aggregated size cannot be greater than multipartSize'))
 
       aggregator.write(chunk)
       md5.update(chunk)
-      sha256.update(chunk)
+      if (this.enableSHA256) sha256.update(chunk)
 
       var done = false
       if (aggregatedSize === multipartSize) done = true
@@ -1666,7 +1674,8 @@ export default class Client {
         }
         // md5 doesn't match, upload again
       }
-      var sha256sum = sha256.digest('hex')
+      var sha256sum = ''
+      if (this.enableSHA256) sha256sum = sha256.digest('hex')
       var md5sumBase64 = (new Buffer(md5sumHex, 'hex')).toString('base64')
       var multipart = true
       var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
