@@ -32,11 +32,11 @@ var s3Client = new Minio({
 
 ```
 
-| Bucket operations       | Object operations      | Presigned operations |
-| ------------- |-------------| -----|
-| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) |
-| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) |
+| Bucket operations       | Object operations      | Presigned operations | Notification config. operations |
+| ------------- |-------------| -----| ----- |
+| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
+| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
+| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`deleteBucketNotification`](#deleteBucketNotification) |
 | [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |
 | [`listIncompleteUploads`](#listIncompleteUploads) |[`statObject`](#statObject) |
@@ -934,7 +934,103 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
 
 ```
 
-## 5. Explore Further
+## 5. Notification config operations
+
+Buckets are configured to trigger notifications on specified types of events and paths filters.
+
+<a name="getBucketNotification"></a>
+### getBucketNotification(bucketName, cb)
+
+Fetch the notification configuration stored in the S3 provider and that belongs to the specified bucket name.
+
+__Parameters__
+
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket.  |
+| `callback(err, bucketNotificationConfig)`  | _function_  | Callback function is called with non `null` err value in case of error. `bucketNotificationConfig` will be the object that carries all notification configurations associated to bucketName.  |
+
+
+__Example__
+
+
+```js
+
+minioClient.getBucketNotification('mybucket', function(err, bucketNotificationConfig) {
+  if (err) return console.log(err)
+  console.log(bucketNotificationConfig)
+})
+
+```
+
+<a name="setBucketNotification"></a>
+### setBucketNotification(bucketName, bucketNotificationConfig, callback)
+
+Upload a user-created notification configuration and associate it to the specified bucket name.
+
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket.  |
+| `bucketNotificationConfig`  | _BucketNotification_   | Javascript object that carries the notification configuration.  |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error.  |
+
+
+__Example__
+
+```js
+
+// Create a new notification object
+var bucketNotification = new Notify.BucketNotification();
+
+// Setup a new topic configuration
+var arn = Notify.newARN('aws', 'sns', 'us-west-2', '408065449417', 'TestTopic')
+var topic = new Notify.TopicConfig(arn)
+topic.addFilterSuffix('.jpg')
+topic.addFilterPrefix('myphotos/')
+topic.addEvent(Notify.ObjectReducedRedundancyLostObject)
+topic.addEvent(Notify.ObjectCreatedAll)
+
+// Add the topic to the overall notification object
+bucketNotification.addTopicConfiguration(topic)
+
+minioClient.setBucketNotification('mybucket', bucketNotification, function(err) {
+  if (err) return console.log(err)
+  console.log('Success')
+})
+
+```
+
+<a name="deleteBucketNotification"></a>
+### deletBucketNotification(bucketName, callback)
+
+Remove the bucket notification configuration associated to the specified bucket.
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. |
+
+
+```js
+minioClient.deleteBucketNotification('my-bucketname', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("True")
+})
+```
+
+
+## 6. Explore Further
 
 
 - [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)

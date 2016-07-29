@@ -194,3 +194,8 @@ export function getCompleteMultipartTransformer() {
 export function getBucketRegionTransformer() {
   return getConcater(xmlParsers.parseBucketRegion)
 }
+
+// Parses GET/SET BucketNotification response
+export function getBucketNotificationTransformer() {
+  return getConcater(xmlParsers.parseBucketNotification)
+}

@@ -25,6 +25,7 @@ import Through2 from 'through2'
 import BlockStream2 from 'block-stream2'
 import Url from 'url'
 import Xml from 'xml'
+import xml2js from 'xml2js'
 import Moment from 'moment'
 import async from 'async'
 import mkdirp from 'mkdirp'
@@ -1784,10 +1785,51 @@ export default class Client {
     }
     return simpleUploader
   }
+
+   // Remove all the notification configurations in the S3 provider
+  setBucketNotification(bucketName, bucketNotification, cb) {
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'PUT'
+    var query = 'notification'
+    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true});
+    var payload = builder.buildObject(bucketNotification.data)
+    this.makeRequest({method, bucketName, query}, payload, 200, '', (e, response) => {
+      if (e) return cb(e)
+      cb(null)
+    })
+  }
+
+  deleteBucketNotification(bucketName, cb) {
+    this.setBucketNotification(bucketName, new BucketNotification(), cb)
+  }
+
+  // Return the list of notification configurations stored
+  // in the S3 provider
+  getBucketNotification(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'GET'
+    var query = 'notification'
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getBucketNotificationTransformer()
+      var bucketNotification
+      pipesetup(response, transformer)
+        .on('data', result => bucketNotification = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, bucketNotification))
+    })
+  }
 }
 
 // Build PostPolicy object that can be signed by presignedPostPolicy
-class PostPolicy {
+export class PostPolicy {
   constructor() {
     this.policy = {
       conditions: []
@@ -1857,4 +1899,82 @@ class PostPolicy {
     }
     this.policy.conditions.push(['content-length-range', min, max])
   }
+}
+
+exports.ObjectCreatedAll                      = "s3:ObjectCreated:*"
+exports.ObjectCreatePut                       = "s3:ObjectCreated:Put"
+exports.ObjectCreatedPost                     = "s3:ObjectCreated:Post"
+exports.ObjectCreatedCopy                     = "s3:ObjectCreated:Copy"
+exports.ObjectCreatedCompleteMultipartUpload  = "sh:ObjectCreated:CompleteMultipartUpload"
+exports.ObjectRemovedAll                      = "s3:ObjectRemoved:*"
+exports.ObjectRemovedDelete                   = "s3:ObjectRemoved:Delete"
+exports.ObjectRemovedDeleteMarkerCreated      = "s3:ObjectRemoved:DeleteMarkerCreated"
+exports.ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostObject"
+
+export class BucketNotification {
+  constructor() {
+    this.data = {TopicConfiguration:[], QueueConfiguration:[], CloudFunctionConfiguration:[]}
+  }
+  addTopicConfiguration(topic) {
+    this.data.TopicConfiguration.push(topic.data)
+  }
+  addQueueConfiguration(queue) {
+    this.data.QueueConfiguration.push(queue.data)
+  }
+  addCloudFunctionConfiguration(cloudfunction) {
+    this.data.CloudFunctionConfiguration.push(cloudfunction.data)
+  }
+}
+
+export class NotificationConfig {
+  constructor() {
+    this.data = {Id:'', Event:[], Filter:[]}
+  }
+  setId(id) {
+    this.data.Id = id
+  }
+  addEvent(newevent){
+    this.data.Event.push(newevent)
+  }
+  addFilterSuffix(suffix) {
+    if (this.data.Filter.S3Key === undefined) {
+      this.data.Filter = {S3Key : {FilterRule:[]}}
+    }
+    this.data.Filter.S3Key.FilterRule.push({Name:"suffix", Value:suffix})
+  }
+  addFilterPrefix(prefix) {
+    if (this.data.Filter.S3Key === undefined) {
+      this.data.Filter = {S3Key : {FilterRule:[]}}
+    }
+    this.data.Filter.S3Key.FilterRule.push({Name:"prefix", Value:prefix})
+  }
+}
+
+export class TopicConfig extends NotificationConfig {
+  constructor(arn) {
+    super();
+    this.data.Topic = arn
+  }
+}
+
+export class QueueConfig extends NotificationConfig {
+  constructor(arn) {
+    super();
+    this.data.Queue = arn
+  }
+}
+
+export class CloudFunctionConfig extends NotificationConfig {
+  constructor(arn) {
+    super();
+    this.data.CloudFunction = arn
+  }
+}
+
+exports.newBucketNotification = function() {
+    return new BucketNotification()
+}
+
+exports.newARN = function(partition, service, region, accountId, resource) {
+    return "arn:" + partition + ":" + service + ":" + region + ":" + accountId + ":" + resource
 }
