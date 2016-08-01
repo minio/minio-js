@@ -18,11 +18,13 @@ import stream from 'stream'
 import _ from 'lodash'
 
 export function uriEscape(string) {
-  return encodeURIComponent(string)
+  return encodeURIComponent(string).replace(/[*]/g, function(ch) {
+    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
+  })
 }
 
 export function uriResourceEscape(string) {
-  return encodeURIComponent(string).replace(/%2F/g, '/')
+  return uriEscape(string).replace(/%2F/g, '/')
 }
 
 export function getScope(region, date) {
