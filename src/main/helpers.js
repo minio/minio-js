@@ -18,25 +18,13 @@ import stream from 'stream'
 import _ from 'lodash'
 
 export function uriEscape(string) {
-  var output = string
-    // this was originally escape instead of encodeURIComponent but escape is deprecated.
-  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
-
-  // AWS percent-encodes some extra non-standard characters in a URI
-  output = output.replace(/[*]/g, function(ch) {
-    return '%' + ch.charCodeAt(0).toString(16).toUpperCase()
+  return encodeURIComponent(string).replace(/[*]/g, function(ch) {
+    return '%' + ch.charCodeAt(0).toString(16).toUpperCase();
   })
-
-  return output
 }
 
 export function uriResourceEscape(string) {
-  var output = string
-    // this was originally escape instead of encodeURIComponent but escape is deprecated.
-  output = output.replace(/[^A-Za-z0-9_.~\-%]+/g, encodeURIComponent)
-  output = output.replace(/%2F/g, '/')
-
-  return output
+  return uriEscape(string).replace(/%2F/g, '/')
 }
 
 export function getScope(region, date) {
