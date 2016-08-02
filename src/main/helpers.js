@@ -41,9 +41,9 @@ export function uriEscape(string) {
     }
     // elem needs encoding - i.e elem should be encoded if it's not unreserved
     // character or if it's a unicode character.
-    buf.forEach(c => {
-      acc = acc + "%" + c.toString(16).toUpperCase()
-    })
+    for (var i = 0; i < buf.length; i++) {
+      acc = acc + "%" + buf[i].toString(16).toUpperCase()
+    }
     return acc
   }, '')
 }
