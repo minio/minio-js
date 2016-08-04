@@ -18,18 +18,18 @@
  // dummy values, please replace them with original values.
 
 
-var Minio = require('minio').default
+var Minio = require('minio')
 
-var s3Client = new Minio({
+var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.deleteBucketNotification('my-bucketname', function(e) {
+s3Client.removeAllBucketNotification('my-bucketname', function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("True")
+  console.log("Success")
 })
 
