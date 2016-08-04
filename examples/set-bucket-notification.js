@@ -18,29 +18,25 @@
  // dummy values, please replace them with original values.
 
 
-var Minio = require('minio').default
-var BucketNotification = require('minio').BucketNotification
-var TopicConfig = require('minio').TopicConfig
-var ObjectCreatedAll = require('minio').ObjectCreatedAll
-var newARN = require('minio').newARN
+var Minio = require('minio')
 
-var s3Client = new Minio({
+var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var bucketNotification = new BucketNotification();
-var arn = newARN('aws', 'sns', 'us-west-2', '408011449174', 'TestTopic')
+var config = new Minio.NotificationConfig()
+var arn = Minio.buildARN('aws', 'sns', 'us-east-1', 111112222233, 'topicresource')
+var topic = new Minio.TopicConfig(arn)
 
-var topic = new TopicConfig(arn)
 topic.addFilterSuffix('.jpg')
 topic.addFilterPrefix('myphotos/')
-topic.addEvent(ObjectCreatedAll)
+topic.addEvent(Minio.ObjectCreatedAll)
 
-bucketNotification.addTopicConfiguration(topic)
+config.add(topic)
 
-s3Client.setBucketNotification('my-bucketname', bucketNotification, function(e) {
+s3Client.setBucketNotification('my-bucketname', config, function(e) {
   if (e) {
     return console.log(e)
   }
