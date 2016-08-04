@@ -1790,38 +1790,24 @@ export class Client {
 
   // Remove all the notification configurations in the S3 provider
   setBucketNotification(bucketName, config, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(config)) {
+      throw new TypeError('notification config shuld be of type "Object"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.getBucketRegion(bucketName, (e, region) => {
-      if (e) return cb(e)
-      let partition = 'minio'
-      if (isAmazonEndpoint(this.host)) partition = 'aws'
-      let updateARN = (target) => {
-	if (!target[target.arnTag]) {
-	  target[target.arnTag] = `arn:${partition}:${target.service}:${region}:${this.accessKey}:${target.resource}`
-	}
-	delete(target.resource)
-	delete(target.service)
-	delete(target.arnTag)
-	return target
-      }
-      Object.keys(config).forEach(key => {
-	config[key] = config[key].map(updateARN)
-      })
-      var method = 'PUT'
-      var query = 'notification'
-      var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true});
-      var payload = builder.buildObject(config)
-      this.makeRequest({method, bucketName, query}, payload, 200, '', (e, response) => {
-	if (e) return cb(e)
-	cb(null)
-      })
-    })
+    var method = 'PUT'
+    var query = 'notification'
+    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true});
+    var payload = builder.buildObject(config)
+    this.makeRequest({method, bucketName, query}, payload, 200, '', cb)
   }
 
-  deleteBucketNotification(bucketName, cb) {
-    this.setBucketNotification(bucketName, new Notification.Config(), cb)
+  removeAllBucketNotification(bucketName, cb) {
+    this.setBucketNotification(bucketName, new Notification.NotificationConfig(), cb)
   }
 
   // Return the list of notification configurations stored
@@ -1920,4 +1906,4 @@ export class PostPolicy {
   }
 }
 
-export {Notification} from './notification'
+export * from './notification'

@@ -21,19 +21,23 @@
 // 3. CloudFront (lambda function)
 export class NotificationConfig {
   add(target) {
-    // type can be : TopicConfiguration QueueConfiguration CloudFunctionConfiguration
-    var type = target.type
-    delete(target.type)
-    if (!this[type]) this[type] = []
-    this[type].push(target)
+    let instance = ''
+    if (target instanceof TopicConfig) {
+      instance = 'TopicConfiguration'
+    }
+    if (target instanceof QueueConfig) {
+      instance = 'QueueConfiguration'
+    }
+    if (target instanceof CloudFunctionConfig) {
+      instance = 'CloudFunctionConfiguration'
+    }
+    if (!this[instance]) this[instance] = []
+    this[instance].push(target)
   }
 }
 
 // Base class for three supported configs.
 class TargetConfig {
-  setResource(resource) {
-    this.resource = resource
-  }
   setId(id) {
     this.Id = id
   }
@@ -52,51 +56,40 @@ class TargetConfig {
 }
 
 // 1. Topic (simple notification service)
-class TopicConfig extends TargetConfig {
-  constructor() {
+export class TopicConfig extends TargetConfig {
+  constructor(arn) {
     super();
-    this.type = 'TopicConfiguration'
-    this.service = 'sns'
-    this.arnTag = 'Topic'
+    this.Topic = arn
   }
 }
 
 // 2. Queue (simple queue service)
-class QueueConfig extends TargetConfig {
-  constructor() {
+export class QueueConfig extends TargetConfig {
+  constructor(arn) {
     super();
-    this.type = 'QueueConfiguration'
-    this.service = 'sqs'
-    this.arnTag = 'Queue'
+    this.Queue = arn
   }
 }
 
 // 3. CloudFront (lambda function)
-class CloudFunctionConfig extends TargetConfig {
-  constructor() {
+export class CloudFunctionConfig extends TargetConfig {
+  constructor(arn) {
     super();
-    this.type = 'CloudFunctionConfiguration'
-    this.service = 'sqs'
-    this.arnTag = 'CloudFunction'
+    this.CloudFunction = arn
   }
 }
 
-// Namespace for all the notification related features.
-export var Notification = {
-  Config: NotificationConfig,
-  Topic: TopicConfig,
-  Queue: QueueConfig,
-  CloudFunction: CloudFunctionConfig,
-  Event: {
-    ObjectCreatedAll                      : "s3:ObjectCreated:*",
-    ObjectCreatedPut                       : "s3:ObjectCreated:Put",
-    ObjectCreatedPost                     : "s3:ObjectCreated:Post",
-    ObjectCreatedCopy                     : "s3:ObjectCreated:Copy",
-    ObjectCreatedCompleteMultipartUpload  : "sh:ObjectCreated:CompleteMultipartUpload",
-    ObjectRemovedAll                      : "s3:ObjectRemoved:*",
-    ObjectRemovedDelete                   : "s3:ObjectRemoved:Delete",
-    ObjectRemovedDeleteMarkerCreated      : "s3:ObjectRemoved:DeleteMarkerCreated",
-    ObjectReducedRedundancyLostObject     : "s3:ReducedRedundancyLostObject",
-  }
+export const buildARN = (partition, service, region, accountId, resource) => {
+  return "arn:" + partition + ":" + service + ":" + region + ":" + accountId + ":" + resource
 }
 
+
+export const ObjectCreatedAll                      = "s3:ObjectCreated:*"
+export const ObjectCreatedPut                      = "s3:ObjectCreated:Put"
+export const ObjectCreatedPost                     = "s3:ObjectCreated:Post"
+export const ObjectCreatedCopy                     = "s3:ObjectCreated:Copy"
+export const ObjectCreatedCompleteMultipartUpload  = "sh:ObjectCreated:CompleteMultipartUpload"
+export const ObjectRemovedAll                      = "s3:ObjectRemoved:*"
+export const ObjectRemovedDelete                   = "s3:ObjectRemoved:Delete"
+export const ObjectRemovedDeleteMarkerCreated      = "s3:ObjectRemoved:DeleteMarkerCreated"
+export const ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostObject"

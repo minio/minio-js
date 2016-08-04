@@ -19,10 +19,6 @@
 
 
 var Minio = require('minio')
-var Notification = Minio.Notification
-
-var config = new Notification.Config()
-var topic = new Notification.Topic()
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -30,10 +26,13 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-topic.addResource('TestTopic')
+var config = new Minio.NotificationConfig()
+var arn = Minio.buildARN('aws', 'sns', 'us-east-1', 111112222233, 'topicresource')
+var topic = new Minio.TopicConfig(arn)
+
 topic.addFilterSuffix('.jpg')
 topic.addFilterPrefix('myphotos/')
-topic.addEvent(Notification.Event.ObjectCreatedAll)
+topic.addEvent(Minio.ObjectCreatedAll)
 
 config.add(topic)
 
