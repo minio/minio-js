@@ -46,7 +46,7 @@ import * as errors from './errors.js';
 
 import { getS3Endpoint } from './s3-endpoints.js';
 
-import { Notification } from './notification'
+import { NotificationConfig } from './notification'
 
 var Package = require('../../package.json');
 
@@ -1807,7 +1807,7 @@ export class Client {
   }
 
   removeAllBucketNotification(bucketName, cb) {
-    this.setBucketNotification(bucketName, new Notification.NotificationConfig(), cb)
+    this.setBucketNotification(bucketName, new NotificationConfig(), cb)
   }
 
   // Return the list of notification configurations stored
