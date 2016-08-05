@@ -1208,10 +1208,14 @@ export default class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds
+  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned PUT url cannot be generated for anonymous requests')
+    }
+    if (isFunction(expires)) {
+      cb = expires
+      expires = 24 * 60 * 60 * 7
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
