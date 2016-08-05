@@ -195,6 +195,13 @@ describe('Client', function() {
           done()
         })
       })
+      it('should use default expiry if none is given', (done) => {
+        client.presignedPutObject('bucket', 'object', (e, url) => {
+          assert.equal(e, null)
+          assert(url.length > 0)
+          done()
+        })
+      })
     })
   })
   describe('User Agent', () => {
