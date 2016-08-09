@@ -1,5 +1,5 @@
 /*
- * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 Minio, Inc.
+ * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 Minio, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
-// are dummy values, please replace them with original values.
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+
 
 var Minio = require('minio')
 
@@ -25,19 +26,10 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var size = 0
-// Get a full object.
-s3Client.getObject('my-bucketname', 'my-objectname', function(e, dataStream) {
+s3Client.removeAllBucketNotification('my-bucketname', function(e) {
   if (e) {
     return console.log(e)
   }
-  dataStream.on('data', function(chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function() {
-    console.log("End. Total size = " + size)
-  })
-  dataStream.on('error', function(e) {
-    console.log(e)
-  })
+  console.log("Success")
 })
+

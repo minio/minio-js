@@ -22,7 +22,7 @@ import Http from 'http';
 import Nock from 'nock';
 import Through2 from 'through2';
 import Stream from 'stream';
-import Minio from '../../../dist/main/minio.js';
+import * as Minio from '../../../dist/main/minio';
 
 var Package = require('../../../package.json')
 
@@ -49,7 +49,7 @@ describe('Client', function() {
       })
       return request
     },
-    client = new Minio({
+    client = new Minio.Client({
       endPoint: 'localhost',
       port: 9000,
       accessKey: 'accesskey',
@@ -58,7 +58,7 @@ describe('Client', function() {
     })
   describe('new client', () => {
     it('should work with https', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
@@ -66,7 +66,7 @@ describe('Client', function() {
       assert.equal(client.port, 443)
     })
     it('should override port with http', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
@@ -76,7 +76,7 @@ describe('Client', function() {
       assert.equal(client.port, 9000)
     })
     it('should work with http', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -85,7 +85,7 @@ describe('Client', function() {
       assert.equal(client.port, 80)
     })
     it('should override port with https', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
@@ -95,7 +95,7 @@ describe('Client', function() {
     })
     it('should fail with url', (done) => {
       try {
-        new Minio({
+        new Minio.Client({
           endPoint: 'http://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -106,7 +106,7 @@ describe('Client', function() {
     })
     it('should fail with alphanumeric', (done) => {
       try {
-        new Minio({
+        new Minio.Client({
           endPoint: 'localhost##$@3',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -117,7 +117,7 @@ describe('Client', function() {
     })
     it('should fail with no url', (done) => {
       try {
-        new Minio({
+        new Minio.Client({
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
@@ -127,7 +127,7 @@ describe('Client', function() {
     })
     it('should fail with bad port', (done) => {
       try {
-        new Minio({
+        new Minio.Client({
           endPoint: 'localhost',
           port: -1,
           accessKey: 'accesskey',
@@ -142,7 +142,7 @@ describe('Client', function() {
     describe('presigned-get', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
-          var client = new Minio({
+          var client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             secure: false
@@ -171,7 +171,7 @@ describe('Client', function() {
     describe('presigned-put', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
-          var client = new Minio({
+          var client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             secure: false
@@ -206,7 +206,7 @@ describe('Client', function() {
   })
   describe('User Agent', () => {
     it('should have a default user agent', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
@@ -215,7 +215,7 @@ describe('Client', function() {
                    client.userAgent)
     })
     it('should set user agent', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
@@ -225,7 +225,7 @@ describe('Client', function() {
                    client.userAgent)
     })
     it('should set user agent without comments', () => {
-      var client = new Minio({
+      var client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey'
@@ -236,7 +236,7 @@ describe('Client', function() {
     })
     it('should not set user agent without name', (done) => {
       try {
-        var client = new Minio({
+        var client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -248,7 +248,7 @@ describe('Client', function() {
     })
     it('should not set user agent with empty name', (done) => {
       try {
-        var client = new Minio({
+        var client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -260,7 +260,7 @@ describe('Client', function() {
     })
     it('should not set user agent without version', (done) => {
       try {
-        var client = new Minio({
+        var client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -272,7 +272,7 @@ describe('Client', function() {
     })
     it('should not set user agent with empty version', (done) => {
       try {
-        var client = new Minio({
+        var client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey'
@@ -286,7 +286,7 @@ describe('Client', function() {
   describe('Authentication', () => {
     describe('not set', () => {
       it('should not send auth info without keys', (done) => {
-        client = new Minio({
+        client = new Minio.Client({
           endPoint: 'localhost',
           port: 9000,
           secure: false
@@ -313,7 +313,7 @@ describe('Client', function() {
     })
     describe('set with access and secret keys', () => {
       it('should not send auth info without keys', (done) => {
-        client = new Minio({
+        client = new Minio.Client({
           endPoint: 'localhost',
           port: 9000,
           accessKey: 'accessKey',
@@ -876,9 +876,54 @@ describe('Client', function() {
       })
     })
 
+    describe('#deleteBucketNotification()', () => {
+      it('remove all bucket notifications', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+        MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
+        client.removeAllBucketNotification('bucket', function(e) {
+          assert.equal(e, null)
+          done()
+        })
+      })
+    })
+
+    describe('#setBucketNotification()', () => {
+      it('set a bucket notification', (done) => {
+        MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
+
+          var config = new Minio.NotificationConfig()
+          var arn = Minio.buildARN('aws', 'sns', 'us-west-2', 408065444917, 'TestTopic')
+          var topic = new Minio.TopicConfig(arn)
+
+          topic.addFilterSuffix('.jpg')
+          topic.addFilterPrefix('myphotos/')
+          topic.addEvent(Minio.ObjectCreatedAll)
+
+          config.add(topic)
+
+          client.setBucketNotification('bucket', config, function(e) {
+            assert.equal(e, null)
+              done()
+          })
+      })
+    })
+
+    describe('#getBucketNotification()', () => {
+      it('get and parse a bucket notification response', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?notification').reply(200, '<NotificationConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><TopicConfiguration><Id>YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Topic>arn:aws:sns:us-east-1:83310034:s3notificationtopic2</Topic><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event><Filter><S3Key><FilterRule><Name>suffix</Name><Value>.jpg</Value></FilterRule><FilterRule><Name>prefix</Name><Value>photos/</Value></FilterRule></S3Key></Filter></TopicConfiguration><QueueConfiguration><Id>ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Queue>arn:aws:sns:us-east-1:83310034:s3notificationqueue2</Queue><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>')
+          client.getBucketNotification('bucket', function(e, bucketNotification) {
+            var expectedResults = {
+              TopicConfiguration:[{ Id: 'YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Topic:'arn:aws:sns:us-east-1:83310034:s3notificationtopic2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[{Name:'suffix', Value:'.jpg'}, {Name:'prefix', Value:'photos/'}]}],
+              QueueConfiguration:[ { Id: 'ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Queue:'arn:aws:sns:us-east-1:83310034:s3notificationqueue2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[]}],
+              CloudFunctionConfiguration:[]}
+            assert.deepEqual(bucketNotification, expectedResults)
+              done()
+          })
+      })
+    })
+
     describe('#listObjects()', () => {
       it('should iterate without a prefix', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').get('/bucket?max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key1</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key2</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key2&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>true</IsTruncated><Contents><Key>key3</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key4</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?marker=key4&max-keys=1000').reply(200, '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Name>bucket</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter></Delimiter><IsTruncated>false</IsTruncated><Contents><Key>key5</Key><LastModified>2015-05-05T02:21:15.716Z</LastModified><ETag>"5eb63bbbe01eeed093cb22bb8f5acdc3"</ETag><Size>11</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents><Contents><Key>key6</Key><LastModified>2015-05-05T20:36:17.498Z</LastModified><ETag>"2a60eaffa7a82804bdc682ce1df6c2d4"</ETag><Size>1661</Size><StorageClass>STANDARD</StorageClass><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner></Contents></ListBucketResult>')

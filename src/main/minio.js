@@ -25,6 +25,7 @@ import Through2 from 'through2'
 import BlockStream2 from 'block-stream2'
 import Url from 'url'
 import Xml from 'xml'
+import xml2js from 'xml2js'
 import Moment from 'moment'
 import async from 'async'
 import mkdirp from 'mkdirp'
@@ -45,9 +46,11 @@ import * as errors from './errors.js';
 
 import { getS3Endpoint } from './s3-endpoints.js';
 
+import { NotificationConfig } from './notification'
+
 var Package = require('../../package.json');
 
-export default class Client {
+export class Client {
   constructor(params) {
     // Default values if not specified.
     if (typeof params.secure === 'undefined') params.secure = true
@@ -1788,10 +1791,54 @@ export default class Client {
     }
     return simpleUploader
   }
+
+  // Remove all the notification configurations in the S3 provider
+  setBucketNotification(bucketName, config, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(config)) {
+      throw new TypeError('notification config shuld be of type "Object"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'PUT'
+    var query = 'notification'
+    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true});
+    var payload = builder.buildObject(config)
+    this.makeRequest({method, bucketName, query}, payload, 200, '', cb)
+  }
+
+  removeAllBucketNotification(bucketName, cb) {
+    this.setBucketNotification(bucketName, new NotificationConfig(), cb)
+  }
+
+  // Return the list of notification configurations stored
+  // in the S3 provider
+  getBucketNotification(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'GET'
+    var query = 'notification'
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getBucketNotificationTransformer()
+      var bucketNotification
+      pipesetup(response, transformer)
+        .on('data', result => bucketNotification = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, bucketNotification))
+    })
+  }
 }
 
 // Build PostPolicy object that can be signed by presignedPostPolicy
-class PostPolicy {
+export class PostPolicy {
   constructor() {
     this.policy = {
       conditions: []
@@ -1862,3 +1909,5 @@ class PostPolicy {
     this.policy.conditions.push(['content-length-range', min, max])
   }
 }
+
+export * from './notification'

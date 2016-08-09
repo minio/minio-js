@@ -105,6 +105,72 @@ export function parseListBucket(xml) {
   return result
 }
 
+// parse XML response for bucket notification
+export function parseBucketNotification(xml) {
+  var result = {
+    TopicConfiguration  : [],
+    QueueConfiguration  : [],
+    CloudFunctionConfiguration : [],
+  }
+  // Parse the events list
+  var genEvents = function(events) {
+    var result = []
+    if (events) {
+        events.forEach(s3event => {
+          result.push(s3event)
+        })
+      }
+    return result
+  }
+  // Parse all filter rules
+  var genFilterRules = function(filters) {
+    var result = []
+      if (filters && filters[0].S3Key && filters[0].S3Key[0].FilterRule) {
+        filters[0].S3Key[0].FilterRule.forEach(rule => {
+          var Name = rule.Name[0]
+          var Value = rule.Value[0]
+          result.push({Name, Value})
+        })
+      }
+    return result
+  }
+
+  var xmlobj = parseXml(xml)
+
+  // Parse all topic configurations in the xml
+  if (xmlobj.TopicConfiguration) {
+    xmlobj.TopicConfiguration.forEach(config => {
+      var Id = config.Id[0]
+      var Topic = config.Topic[0]
+      var Event = genEvents(config.Event)
+      var Filter = genFilterRules(config.Filter)
+      result.TopicConfiguration.push({ Id, Topic, Event, Filter})
+    })
+  }
+  // Parse all topic configurations in the xml
+  if (xmlobj.QueueConfiguration) {
+    xmlobj.QueueConfiguration.forEach(config => {
+      var Id = config.Id[0]
+      var Queue = config.Queue[0]
+      var Event = genEvents(config.Event)
+      var Filter = genFilterRules(config.Filter)
+      result.QueueConfiguration.push({ Id, Queue, Event, Filter})
+    })
+  }
+  // Parse all QueueConfiguration arrays
+  if (xmlobj.CloudFunctionConfiguration) {
+    xmlobj.CloudFunctionConfiguration.forEach(config => {
+      var Id = config.Id[0]
+      var CloudFunction = config.CloudFunction[0]
+      var Event = genEvents(config.Event)
+      var Filter = genFilterRules(config.Filter)
+      result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter})
+    })
+  }
+
+  return result
+}
+
 // parse XML response for bucket region
 export function parseBucketRegion(xml) {
   return parseXml(xml)
