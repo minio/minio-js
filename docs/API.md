@@ -32,13 +32,13 @@ var s3Client = new Minio({
 
 ```
 
-| Bucket operations       | Object operations      | Presigned operations | Notification config. operations |
+| Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
 | ------------- |-------------| -----| ----- |
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`deleteBucketNotification`](#deleteBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |
-| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy)
+| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listIncompleteUploads`](#listIncompleteUploads) |[`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
@@ -768,7 +768,7 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
 
 ```
 
-## 5. Notification config operations
+## 5. Bucket Policy & Notification operations
 
 Buckets are configured to trigger notifications on specified types of events and paths filters.
 
@@ -860,6 +860,61 @@ minioClient.deleteBucketNotification('my-bucketname', function(e) {
     return console.log(e)
   }
   console.log("True")
+})
+```
+
+<a name="getBucketPolicy"></a>
+### getBucketPolicy(bucketName, objectPrefix, callback)
+
+Get the bucket policy associated with the specified bucket. If `objectPrefix`
+is not empty, the bucket policy will be filtered based on object permissions
+as well.
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket |
+| `objectPrefix` | _string_ | Prefix of objects in the bucket with which to filter permissions off of. Use `''` for entire bucket. |
+| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` will be the string representation of the bucket policy (`minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`). |
+
+
+```js
+// Retrieve bucket policy of 'my-bucketname' that applies to all objects that
+// start with 'img-'.
+minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
+  if (err) throw err
+
+  console.log(`Bucket policy: ${policy}`)
+})
+```
+
+<a name="setBucketPolicy"></a>
+### setBucketPolicy(bucketName, objectPrefix, bucketPolicy, callback)
+
+Set the bucket policy associated with the specified bucket. If `objectPrefix`
+is not empty, the bucket policy will only be assigned to objects that fit the
+given prefix.
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket |
+| `objectPrefix` | _string_ | Prefix of objects in the bucket to modify permissions of. Use `''` for entire bucket. |
+| `bucketPolicy` | _string_ | The bucket policy. This can be: `minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`. |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. |
+
+
+```js
+// Set the bucket policy of `my-bucketname` to `readonly` (only allow retrieval),
+// but only for objects that start with 'img-'.
+minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, function(err) {
+  if (err) throw err
+
+  console.log('Set bucket policy to \'readonly\'.')
 })
 ```
 

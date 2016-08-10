@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import minio from '../main/minio.js'
+import { Client, Policy } from '../main/minio.js'
 import os from 'os'
 import stream from 'stream'
 import crypto from 'crypto'
@@ -30,7 +30,7 @@ require('source-map-support').install()
 
 describe('functional tests', function() {
   this.timeout(30*60*1000)
-  var client = new minio({
+  var client = new Client({
     endPoint: 's3.amazonaws.com',
     accessKey: process.env['ACCESS_KEY'],
     secretKey: process.env['SECRET_KEY']
@@ -351,6 +351,79 @@ describe('functional tests', function() {
     it('should remove tmp files', done => {
       fs.unlinkSync(localFile)
       client.removeObject(bucketName, _5mbObjectName, done)
+    })
+  })
+
+  describe('bucket policy', () => {
+    let policies = [Policy.READONLY, Policy.WRITEONLY, Policy.READWRITE]
+
+    // Iterate through the basic policies ensuring it can set and check each of them.
+    policies.forEach(policy => {
+      it(`should set bucket policy to ${policy}, then verify`, done => {
+        client.setBucketPolicy(bucketName, '', policy, err => {
+          if (err) return done(err)
+
+          // Check using the client.
+          client.getBucketPolicy(bucketName, '', (err, response) => {
+            if (err) return done(err)
+
+            if (response != policy) {
+              return done(new Error(`policy is incorrect (${response} != ${policy})`))
+            }
+
+            done()
+          })
+        })
+      })
+    })
+
+    it('should set bucket policy only on a prefix', done => {
+      // READONLY also works, as long as it can read.
+      let policy = Policy.READWRITE
+
+      // Set the bucket policy on `prefix`, and check to make sure it only
+      // returns this bucket policy when asked about `prefix`.
+      client.setBucketPolicy(bucketName, 'prefix', policy, err => {
+        if (err) return done(err)
+
+        // Check on the prefix.
+        client.getBucketPolicy(bucketName, 'prefix', (err, response) => {
+          if (err) return done(err)
+
+          if (response != policy) {
+            return done(new Error(`policy is incorrect (${response} != ${policy})`))
+          }
+
+          // Check on a different prefix.
+          client.getBucketPolicy(bucketName, 'wrongprefix', (err, response) => {
+            if (err) return done(err)
+
+            if (response == policy) {
+              return done(new Error(`policy is incorrect (${response} == ${policy})`))
+            }
+
+            done()
+          })
+        })
+      })
+    })
+
+    it('should set bucket policy to none, then error', done => {
+      client.setBucketPolicy(bucketName, '', Policy.NONE, err => {
+        if (err) return done(err)
+
+        // Check using the client — this should error.
+        client.getBucketPolicy(bucketName, '', (err, response) => {
+          if (!err) return done(new Error('getBucketPolicy should error'))
+
+          if (!(/does not have a bucket policy/.test(err.message)) &&
+              !(/bucket policy does not exist/.test(err.message))) {
+            return done(new Error(`error message is incorrect (${err.message})`))
+          }
+
+          done()
+        })
+      })
     })
   })
 

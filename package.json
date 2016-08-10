@@ -31,7 +31,7 @@
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
     "es6-error": "^2.0.2",
-    "lodash": "^3.10.1",
+    "lodash": "^4.14.2",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
     "source-map-support": "^0.2.10",

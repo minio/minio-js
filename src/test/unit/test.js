@@ -24,6 +24,8 @@ import Through2 from 'through2';
 import Stream from 'stream';
 import * as Minio from '../../../dist/main/minio';
 
+import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy'
+
 var Package = require('../../../package.json')
 
 describe('Client', function() {
@@ -487,6 +489,72 @@ describe('Client', function() {
         } catch (e) {
           done()
         }
+      })
+    })
+  })
+
+  describe('bucket policy', () => {
+    describe('constants', () => {
+      it('should equal string values', () => {
+        assert.equal(Minio.Policy.NONE, 'none')
+        assert.equal(Minio.Policy.READONLY, 'readonly')
+        assert.equal(Minio.Policy.READWRITE, 'readwrite')
+        assert.equal(Minio.Policy.WRITEONLY, 'writeonly')
+      })
+    })
+    describe('internal #parseBucketPolicy(policy, bucketName, objectPrefix)', () => {
+      it('should parse Policy.READONLY', () => {
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucket"],"Resource":["arn:aws:s3:::bucket"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::bucket/*"]}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.READONLY)
+      })
+      it('should parse Policy.WRITEONLY', () => {
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::bucket"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::bucket/*"]}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.WRITEONLY)
+      })
+      it('should parse Policy.READWRITE', () => {
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::bucket"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject","s3:GetObject"],"Resource":["arn:aws:s3:::bucket/*"]}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.READWRITE)
+      })
+      it('should parse AWS Policy.READONLY', () => {
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":"s3:GetBucketLocation","Resource":"arn:aws:s3:::bucket"},{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":"s3:GetObject","Resource":"arn:aws:s3:::bucket/*"},{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":"s3:ListBucket","Resource":"arn:aws:s3:::bucket"}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.READONLY)
+      })
+      it('should parse AWS Policy.READWRITE', () => {
+        // AWS drops the array for the string, so the parser should normalize this back.
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":"arn:aws:s3:::bucket"},{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":["s3:GetObject","s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":"arn:aws:s3:::bucket/*"},{"Sid":"","Effect":"Allow","Principal":{"AWS":"*"},"Action":"s3:ListBucket","Resource":"arn:aws:s3:::bucket"}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.READWRITE)
+      })
+      it('should parse Policy.NONE', () => {
+        let payload = JSON.parse('{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:DeleteObject"],"Resource":["arn:aws:s3:::bucket/*"]}]}')
+
+        assert.equal(parseBucketPolicy(payload, 'bucket', ''), Minio.Policy.NONE)
+      })
+    })
+    describe('internal #generateBucketPolicy(policy, bucketName, objectPrefix)', () => {
+      it('should handle Policy.READONLY', () => {
+        let payload = generateBucketPolicy(Minio.Policy.READONLY, 'bucket5', '')
+
+        assert.equal(JSON.stringify(payload), '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation"],"Resource":["arn:aws:s3:::bucket5"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::bucket5/*"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::bucket5"]}]}')
+      })
+      it('should handle Policy.WRITEONLY', () => {
+        let payload = generateBucketPolicy(Minio.Policy.WRITEONLY, 'bucket6', '')
+
+        assert.equal(JSON.stringify(payload), '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::bucket6"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::bucket6/*"]}]}')
+      })
+      it('should handle Policy.READWRITE', () => {
+        let payload = generateBucketPolicy(Minio.Policy.READWRITE, 'bucket8', '')
+
+        assert.equal(JSON.stringify(payload), '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::bucket8"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject","s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::bucket8/*"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::bucket8"]}]}')
+      })
+      it('should handle Policy.READWRITE with prefix', () => {
+        let payload = generateBucketPolicy(Minio.Policy.READWRITE, 'bucket9', 'prefix')
+
+        assert.equal(JSON.stringify(payload), '{"Version":"2012-10-17","Statement":[{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetBucketLocation","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::bucket9"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject","s3:AbortMultipartUpload","s3:DeleteObject","s3:ListMultipartUploadParts","s3:PutObject"],"Resource":["arn:aws:s3:::bucket9/prefix*"]},{"Sid":"","Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:ListBucket"],"Resource":["arn:aws:s3:::bucket9"],"Condition":{"StringEquals":{"s3:prefix":"prefix"}}}]}')
       })
     })
   })
