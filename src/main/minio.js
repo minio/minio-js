@@ -1443,7 +1443,14 @@ export class Client {
       var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, transformer)
         .on('error', e => cb(e))
-        .on('data', result => cb(null, result.etag))
+        .on('data', result => {
+          if (result.errCode) {
+            // Multipart Complete API returns an error XML after a 200 http status
+            cb(new errors.S3Error(result.errMessage))
+          } else {
+            cb(null, result.etag)
+          }
+        })
     })
   }
 

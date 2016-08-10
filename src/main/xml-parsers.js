@@ -209,14 +209,22 @@ export function parseInitiateMultipart(xml) {
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
   var xmlobj = parseXml(xml)
-  var location = xmlobj.Location[0]
-  var bucket = xmlobj.Bucket[0]
-  var key = xmlobj.Key[0]
-  var etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
-                           .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                           .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+  if (xmlobj.Location) {
+    var location = xmlobj.Location[0]
+    var bucket = xmlobj.Bucket[0]
+    var key = xmlobj.Key[0]
+    var etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
 
-  return {location, bucket, key, etag}
+    return {location, bucket, key, etag}
+  }
+  // Complete Multipart can return XML Error after a 200 OK response
+  if (xmlobj.Code && xmlobj.Message) {
+    var errCode = xmlobj.Code[0]
+    var errMessage = xmlobj.Message[0]
+    return {errCode, errMessage}
+  }
 }
 
 // parse XML response for list objects in a bucket
