@@ -56,68 +56,18 @@ var s3Client = new Minio({
 
 __Parameters__
 
+| Param  | Type  | Description  |
+|---|---|---|
+| `endPoint`  |  _string_ | endPoint is an URL, domain name, IPv4 address or IPv6 address.Valid endpoints are listed below: |
+| | |https://s3.amazonaws.com |
+| | |https://play.minio.io:9000 |
+| | |localhost |
+| | |play.minio.io|
+| `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
+| `accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. | 
+|`secretKey`  |  _string_   | secretKey is the password to your account.|
+|`secure`    | _bool_    |If set to true, https is used instead of http. Default is https if not set. |
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-         <code>  endPoint <code>
-            </td>
-            <td>
-           <i>  string </i>
-            </td>
-            <td>
-            endPoint is an URL, domain name, IPv4 or IPv6 address.
-<br/>Valid endpoints:
-                <ul>
-                    <li>https://s3.amazonaws.com</li>
-                    <li>https://s3.amazonaws.com/</li>
-                    <li>https://play.minio.io:9000</li>
-                    <li>http://play.minio.io:9010/</li>
-                    <li>localhost</li>
-                    <li>localhost.localdomain</li>
-                    <li>play.minio.io</li>
-                    <li>127.0.0.1</li>
-                    <li>192.168.1.60</li>
-                    <li>::1</li>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-         <td>
-          <code>  port </code>
-            </td>
-            <td>
-           <i> number </i>
-            </td>
-            <td>
-            TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.
-            </td>
-        </tr>
-        <tr>
-        <td> <code> accessKey </code> </td>
-        <td> <i> string </i> </td>
-        <td>accessKey is like user-id that uniquely identifies your account.</td>
-        </tr>
-        <tr>
-        <td> <code> secretKey </code> </td>
-        <td> <i> string </i> </td>
-        <td> secretKey is the password to your account.</td>
-        </tr>
-        <tr>
-        <td> <code> secure </code> </td>
-        <td> <i> bool </i> </td>
-        <td>If set to true, https is used instead of http. Default is https if not set. </td>
-        </tr>
-    </tbody>
-</table>
 
 
 __Example__
@@ -165,47 +115,21 @@ Creates a new bucket.
 
 __Parameters__
 
+| Param  | Type  | Description  |
+|---|---|---|
+|`bucketName`  | _string_  | Name of the bucket. | 
+| `region`  |  _string_ | Default value is us-east-1 Region where the bucket is created. Valid values are listed below: |
+| | |us-east-1 |
+| | |us-west-1 |
+| | |us-west-2 |
+| | |eu-west-1 |
+| | | eu-central-1|
+| | | ap-southeast-1|
+| | | ap-northeast-1|
+| | | ap-southeast-2|
+| | | sa-east-1| 
+|`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-          <code> bucketName </code>
-            </td>
-            <td>
-            <i> string </i>
-            </td>
-            <td>
-            Name of the bucket.
-            </td>
-        </tr>
-        <tr>
-         <td>
-           <code> region </code>
-            </td>
-            <td>
-            <i> string </i>
-            </td>
-            <td>
-            Default value is us-east-1
-Region where the bucket is created. Valid values are [  <i> us-east-1, us-west-1, us-west-2, eu-west-1, eu-central-1, ap-southeast-1, ap-northeast-1,
-ap-southeast-2, sa-east-1 </i> ].
-            </td>
-        </tr>
-        <tr>
-        <td> <code> callback(err) </code> </td>
-        <td> <i> function </i> </td>
-        <td>Callback function with <code>err</code> as the error argument. <code>err</code>  is null if the bucket is successfully created. </td>
-        </tr>
-    </tbody>
-</table>
 
 
 
@@ -230,36 +154,17 @@ Lists all buckets.
 __Parameters__
 
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-           <code> callback(err, bucketStream) </code>
-            </td>
-            <td>
-            <i> function </i>
-            </td>
-            <td>
-            Callback function with error as the first argument.
-  <code>bucketStream</code> is the stream emitting bucket information.
-  <br/><code>bucketStream</code> emits Object with the format:-
-                <ul>
-                    <li> <code>bucket.name</code> <i>string</i> : bucket name</li>
-                    <li> <code>bucket.creationDate</code> <i>Date</i> : date when bucket was created.</li>
+| Param  | Type  | Description  |
+|---|---|---|
+|`callback(err, bucketStream) `  | _function_  | Callback function with error as the first argument. bucketStream is the stream emitting bucket information. |
 
-                </ul>
-            </td>
-        </tr>
+bucketStream emits Object with the format:-
 
-    </tbody>
-</table>
+| Param  | Type  | Description  |
+|---|---|---|
+|`bucket.name`  | _string_ |bucket name |
+|`bucket.creationDate`| _Date_ |date when bucket was created.  | 
+
 
 
 __Example__
@@ -304,6 +209,7 @@ minioClient.bucketExists('mybucket', function(err) {
 })
 
 ```
+
 <a name="removeBucket"></a>
 ### removeBucket(bucketName, callback)
 
@@ -348,37 +254,18 @@ __Parameters__
 __Return Value__
 
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-          <code> stream </code>
-            </td>
-            <td>
-           <i> Stream </i>
-            </td>
-            <td>
-            Stream emitting the objects in the bucket, the object is of the format:
-                <ul>
-                    <li> <code>obj.key</code> <i>string</i>: name of the object.</li>
-                    <li> <code>obj.size</code> <i>number</i>: size of the object.</li>
-                    <li> <code>obj.etag</code> <i>string</i>: etag of the object.</li>
-                    <li> <code>obj.lastModified</code> <i>Date</i>: modified time stamp.</li>
-                </ul>
-            </td>
-        </tr>
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `stream` | _Stream_ | Stream emitting the objects in the bucket. |
 
-    </tbody>
-</table>
+The object is of the format:
 
-
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `obj.key` | _string_ | name of the object. |
+| `obj.size` | _number_ | size of the object. |
+| `obj.etag` | _string_ |etag of the object. |
+| `obj.lastModified` | _Date_ | modified time stamp. |
 
 __Example__
 
@@ -409,36 +296,15 @@ __Parameters__
 __Return Value__
 
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-           <code> stream </code>
-            </td>
-            <td>
-          <i> Stream </i>
-            </td>
-            <td>
-            Emits objects of the format:
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `stream`  | _Stream_  |  Emits objects of the format listed below:|
 
-                <ul>
-                    <li> <code>part.key</code> <i>string</i>: name of the object.</li>
-                    <li> <code>part.uploadId</code> <i>string</i>: upload ID of the object.</li>
-                    <li> <code>part.size</code> <i>Integer</i>: size of the partially uploaded object.</li>
-                </ul>
-            </td>
-        </tr>
-
-    </tbody>
-</table>
-
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `part.key`  | _string_  | name of the object.|
+| `part.uploadId`  | _string_  | upload ID of the object.|
+| `part.size`  | _Integer_  | size of the partially uploaded object.|
 
 __Example__
 
@@ -543,8 +409,6 @@ Downloads and saves the object as a file in the local filesystem.
 
 __Parameters__
 
-
-
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_   | Name of the bucket.  |
@@ -586,6 +450,7 @@ __Parameters__
 |`size`   | _number_  | Size of the object.  |
 |`contentType`   | _string_  | Content-Type of the object (optional, default `application/octet-stream`).  |
 | `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.|
+
 
 __Example__
 
@@ -670,51 +535,20 @@ Gets metadata of an object.
 __Parameters__
 
 
-<table>
-    <thead>
-        <tr>
-            <th>Param</th>
-            <th>Type</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-           <code> bucketName </code>
-            </td>
-            <td>
-            <i> string </i>
-            </td>
-            <td>
-            Name of the bucket.
-            </td>
-           </tr>
-          <tr>
-          <td> <code> objectName </code> </td>
-          <td> <i> string </i> </td>
-          <td>Name of the object.</td>
-          </tr>       
-        <tr>
-         <td>
-           <code> callback(err, stat) </code>
-            </td>
-            <td>
-           <i> function </i>
-            </td>
-            <td>
-            <code>err</code> is not <code>null</code> in case of error, <code>stat</code> contains the object information:
-                <ul>
-                    <li> <code>stat.size</code> <i>number</i>: size of the object.</li>
-                    <li> <code>stat.etag</code> <i>string</i>: etag of the object.</li>
-                    <li> <code>stat.contentType</code> <i>string</i>: Content-Type of the object.</li>
-                    <li> <code>stat.lastModified</code> <i>string</i>: modified time stamp.</li>
-                </ul>
-            </td>
-            </td>
-        </tr>
-    </tbody>
-</table>
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below: |
+
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `stat.size`  | _number_  | size of the object.  |
+| `stat.etag`  | _string_  | etag of the object.  |
+| `stat.size`  | _string_  | Content-Type of the object.|
+| `stat.size`  | _string_  | modified time stamp.|
 
 
 __Example__
@@ -1034,3 +868,4 @@ minioClient.deleteBucketNotification('my-bucketname', function(e) {
 
 
 - [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)
+
