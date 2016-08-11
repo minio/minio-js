@@ -17,6 +17,7 @@ node_js:
 script:
 - gulp browserify
 - gulp lint
+- npm test
 
 notifications:
   slack:
