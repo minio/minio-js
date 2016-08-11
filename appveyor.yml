@@ -13,6 +13,7 @@ build_script:
   - npm install -g gulp
   - gulp browserify
   - gulp lint
+  - npm test
 
 # to disable automatic tests
 test: off
