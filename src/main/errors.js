@@ -104,6 +104,13 @@ export class InvalidPrefixError extends ExtendableError {
   }
 }
 
+// InvalidBucketPolicyError generated when the given bucket policy is invalid.
+export class InvalidBucketPolicyError extends ExtendableError {
+  constructor(message) {
+    super(message)
+  }
+}
+
 // IncorrectSizeError generated when total data read mismatches with
 // the input size.
 export class IncorrectSizeError extends ExtendableError {
