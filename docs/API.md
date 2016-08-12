@@ -39,7 +39,8 @@ var s3Client = new Minio({
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`deleteBucketNotification`](#deleteBucketNotification) |
 | [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy)
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
-| [`listIncompleteUploads`](#listIncompleteUploads) |[`statObject`](#statObject) |
+| [`listObjectsV2`](#listObjectsV2) | [`statObject`](#statObject)   |
+| [`listIncompleteUploads`](#listIncompleteUploads) | |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 
@@ -277,6 +278,49 @@ stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 
 ```
+
+<a name="listObjectsV2"></a>
+### listObjectsV2(bucketName, prefix, recursive)
+
+Lists all objects in a bucket using S3 listing objects V2 API
+
+__Parameters__
+
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
+| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
+
+
+__Return Value__
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `stream` | _Stream_ | Stream emitting the objects in the bucket. |
+
+The object is of the format:
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `obj.key` | _string_ | name of the object. |
+| `obj.size` | _number_ | size of the object. |
+| `obj.etag` | _string_ |etag of the object. |
+| `obj.lastModified` | _Date_ | modified time stamp. |
+
+
+__Example__
+
+
+```js
+
+var stream = minioClient.listObjectsV2('mybucket','', true)
+stream.on('data', function(obj) { console.log(obj) } )
+stream.on('error', function(err) { console.log(err) } )
+
+```
+
 
 <a name="listIncompleteUploads"></a>
 ### listIncompleteUploads(bucketName, prefix, recursive)
