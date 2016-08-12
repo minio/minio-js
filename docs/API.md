@@ -591,8 +591,8 @@ __Parameters__
 |---|---|---|
 | `stat.size`  | _number_  | size of the object.  |
 | `stat.etag`  | _string_  | etag of the object.  |
-| `stat.size`  | _string_  | Content-Type of the object.|
-| `stat.size`  | _string_  | modified time stamp.|
+| `stat.contentType`  | _string_  | Content-Type of the object.|
+| `stat.lastModified`  | _string_  | Last Modified time stamp.|
 
 
 __Example__
