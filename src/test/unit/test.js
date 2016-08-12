@@ -727,6 +727,30 @@ describe('Client', function() {
             }
           })
         })
+        it('should fail with invalid bucket name', () => {
+          assert.throws(() => {
+            client.putObject('ab', 'object', () => {})
+          }, /Invalid bucket name/)
+        })
+        it('should fail with invalid object name', () => {
+          assert.throws(() => {
+            client.putObject('bucket', '', () => {})
+          }, /Invalid object name/)
+        })
+        it('should fail without callback', () => {
+          // Whether or not size is there.
+          assert.throws(() => {
+            client.putObject('bucket', 'object', 'slugz', 5)
+          }, /callback should be of type "function"/)
+          assert.throws(() => {
+            client.putObject('bucket', 'object', new Buffer('slug'))
+          }, /callback should be of type "function"/)
+        })
+        it('should error with size > maxObjectSize', () => {
+          assert.throws(() => {
+            client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1, () => {})
+          }, /size should not be more than/)
+        })
         it('should fail on null bucket', (done) => {
           try {
             client.putObject(null, 'hello', null, 1, '')
@@ -849,7 +873,7 @@ describe('Client', function() {
           s.push(null)
           client.putObject('bucket', 'object', s, 11 * 1024 * 1024, '', done)
         })
-        it('should fail if actual size is smaller than expected', (done) => {
+        it('should succeed if actual size is smaller than expected', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
           MockResponse('http://localhost:9000').post('/bucket/object?uploads').reply(200, '<?xml version="1.0" encoding="UTF-8"?>\n<InitiateMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><UploadId>uploadid</UploadId></InitiateMultipartUploadResult>')
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=1&uploadId=uploadid', (body) => {
@@ -859,20 +883,22 @@ describe('Client', function() {
           })
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=2&uploadId=uploadid', (body) => {
             return body.length === 5 * 1024 * 1024
-
           }).reply(200, '', {
             etag: 'etag2'
           })
+          MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
+            return body.length === 1 * 1024 * 1024
+          }).reply(200, '', {
+            etag: 'etag3'
+          })
+          MockResponse('http://localhost:9000').post('/bucket/object?uploadId=uploadid').reply(200, '<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUploadResult><Bucket>bucket</Bucket><Key>object</Key><Location>location</Location><ETag>"3858f62230ac3c915f300c664312c11f"</ETag></CompleteMultipartUploadResult>')
           var s = new Stream.Readable()
           s._read = function() {}
           for (var i = 0; i < 11 * 1024; i++) {
             s.push(uploadData)
           }
           s.push(null)
-          client.putObject('bucket', 'object', s, 12 * 1024 * 1024, '', (e) => {
-            assert.equal(e.name, 'IncorrectSizeError')
-            done()
-          })
+          client.putObject('bucket', 'object', s, 12 * 1024 * 1024, '', done)
         })
         it('should succeed if actual size is larger than expected', (done) => {
           MockResponse('http://localhost:9000').get('/bucket?uploads&max-uploads=1000&prefix=object').reply(200, '<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Bucket>golang</Bucket><KeyMarker></KeyMarker><UploadIdMarker></UploadIdMarker><NextKeyMarker></NextKeyMarker><NextUploadIdMarker></NextUploadIdMarker><EncodingType></EncodingType><MaxUploads>1000</MaxUploads><IsTruncated>false</IsTruncated><Prefix></Prefix><Delimiter></Delimiter></ListMultipartUploadsResult>')
@@ -889,7 +915,7 @@ describe('Client', function() {
             etag: 'etag2'
           })
           MockResponse('http://localhost:9000').put('/bucket/object?partNumber=3&uploadId=uploadid', (body) => {
-            return body.length === 1 * 1024 * 1024
+            return body.length === 2 * 1024 * 1024
 
           }).reply(200, '', {
             etag: 'etag3'

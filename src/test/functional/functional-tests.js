@@ -231,11 +231,7 @@ describe('functional tests', function() {
 
   describe('listIncompleteUploads removeIncompleteUpload', () => {
     it('should create multipart request', done => {
-      var stream = readableStream('')
-      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e) => {
-        if(!e) return done(new Error('Expecing error'))
-        done()
-      })
+      client.initiateNewMultipartUpload(bucketName, _11mbObjectName, 'application/octet-stream', done)
     })
     it('should list incomplete upload', done => {
       var found = false
@@ -275,70 +271,6 @@ describe('functional tests', function() {
       fs.unlinkSync(tmpFileDownload)
       client.removeObject(bucketName, _11mbObjectName, done)
     })
-  })
-
-  describe('putObject (resume)', () => {
-    it('should create an incomplete upload', done => {
-      var stream = readableStream(_10mb)
-      // write just 10mb, so that it errors out and incomplete upload is created
-      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
-        if (!e) done(new Error('Expecting Error'))
-        done()
-      })
-    })
-    it('should confirm the presence of incomplete upload', done => {
-      var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
-      var result
-      stream.on('error', done)
-      stream.on('data', data => {
-        if (data.key === _11mbObjectName)
-          result = data
-      })
-      stream.on('end', () => {
-        if (result) {
-          return done()
-        }
-        done(new Error('Uploaded part not found'))
-      })
-    })
-    it('should resume upload', done => {
-      var stream = readableStream(_11mb)
-      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
-        if (e) return done(e)
-        done()
-      })
-    })
-    it('should remove the uploaded object', done => client.removeObject(bucketName, _11mbObjectName, done))
-  })
-
-  describe('fPutObject-resume', () => {
-    var _11mbTmpFile = `${tmpDir}/${_11mbObjectName}`
-    it('should create tmp file', () => fs.writeFileSync(_11mbTmpFile, _11mb))
-    it('should create an incomplete upload', done => {
-      var stream = readableStream(_10mb)
-      // write just 10mb, so that it errors out and incomplete upload is created
-      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', (e, etag) => {
-        if (!e) done(new Error('Expecting Error'))
-        done()
-      })
-    })
-    it('should confirm the presence of incomplete upload', done => {
-      var stream = client.listIncompleteUploads(bucketName, _11mbObjectName, true)
-      var result
-      stream.on('error', done)
-      stream.on('data', data => {
-        if (data.key === _11mbObjectName)
-          result = data
-      })
-      stream.on('end', () => {
-        if (result) {
-          return done()
-        }
-        done(new Error('Uploaded part not found'))
-      })
-    })
-    it('should resume upload', done => client.fPutObject(bucketName, _11mbObjectName, _11mbTmpFile, '', done))
-    it('should remove the uploaded object', done => client.removeObject(bucketName, _11mbObjectName, done))
   })
 
   describe('fGetObject-resume', () => {
