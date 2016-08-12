@@ -1159,9 +1159,48 @@ describe('Client', function() {
       })
     })
 
+    describe('#listObjectsV2()', () => {
+      it('should iterate with a truncated flag', (done) => {
+        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
+        MockResponse('http://localhost:9000').get('/bucket?list-type=2&max-keys=1000').reply(200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>bucket</Name><Prefix></Prefix><KeyCount>7</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>true</IsTruncated><NextContinuationToken>6b9d1e3d20436</NextContinuationToken><Contents><Key>7mb.bin</Key><LastModified>2016-07-17T07:21:54.000Z</LastModified><ETag>&quot;67dc7f4b9253ab418a9f7fbc4282432a-2&quot;</ETag><Size>7340032</Size><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>')
+        MockResponse('http://localhost:9000').get('/bucket?continuation-token=6b9d1e3d20436&list-type=2&max-keys=1000').reply(200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>bucket</Name><Prefix></Prefix><KeyCount>7</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><Contents><Key>hosts</Key><LastModified>2016-07-15T11:46:53.000Z</LastModified><ETag>&quot;2bb4dbc9f2171fcd060366f4ea235c1c&quot;</ETag><Size>220</Size><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>main.go</Key><LastModified>2016-07-19T10:29:14.000Z</LastModified><ETag>&quot;16c5f5a9817b6b9d1e3d204366a22f96&quot;</ETag><Size>8231</Size><StorageClass>STANDARD</StorageClass></Contents><CommonPrefixes><Prefix>1100/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>caddy/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>hosts/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>uploads/</Prefix></CommonPrefixes></ListBucketResult>')
+        var stream = client.listObjectsV2('bucket', '', true),
+        results = [],
+        expectedResults = [{
+          'etag': '67dc7f4b9253ab418a9f7fbc4282432a-2',
+          'lastModified': new Date('2016-07-17T07:21:54.000Z'),
+          'name': '7mb.bin',
+          'size': 7340032},
+        { 'etag': '2bb4dbc9f2171fcd060366f4ea235c1c',
+          'lastModified': new Date('2016-07-15T11:46:53.000Z'),
+          'name': 'hosts',
+          'size': 220 },
+        { 'etag': '16c5f5a9817b6b9d1e3d204366a22f96',
+          'lastModified': new Date('2016-07-19T10:29:14.000Z'),
+           'name': 'main.go',
+           'size': 8231 },
+        { 'prefix': '1100/',
+          'size': 0 },
+        { 'prefix': 'caddy/',
+          'size': 0 },
+        { 'prefix': 'hosts/',
+          'size': 0 },
+        { 'prefix': 'uploads/',
+          'size': 0 
+        }]
+        stream.pipe(Through2.obj(function(object, enc, end) {
+          results.push(object)
+          end()
+        }, function(end) {
+          assert.deepEqual(results, expectedResults)
+          end()
+          done()
+        }))
+      })
+    })
+
     describe('#statObject(bucket, object, callback)', () => {
       it('should retrieve object metadata', (done) => {
-        MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').head('/bucket/object').reply(200, '', {
           'ETag': 'etag',
           'Content-Length': 11,

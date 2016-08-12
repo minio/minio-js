@@ -1153,6 +1153,120 @@ export class Client {
     return readStream
   }
 
+  // list a batch of objects using S3 ListObjects v2
+  listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(continuationToken)) {
+      throw new TypeError('continuationToken should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    if (!isNumber(maxKeys)) {
+      throw new TypeError('maxKeys should be of type "number"')
+    }
+    var queries = []
+
+    // Call for listing objects v2 API
+    queries.push(`list-type=2`)
+
+    // escape every value in query string, except maxKeys
+    if (prefix) {
+      prefix = uriEscape(prefix)
+      queries.push(`prefix=${prefix}`)
+    }
+    if (continuationToken) {
+      continuationToken = uriEscape(continuationToken)
+      queries.push(`continuation-token=${continuationToken}`)
+    }
+    if (delimiter) {
+      delimiter = uriEscape(delimiter)
+      queries.push(`delimiter=${delimiter}`)
+    }
+    // no need to escape maxKeys
+    if (maxKeys) {
+      if (maxKeys >= 1000) {
+        maxKeys = 1000
+      }
+      queries.push(`max-keys=${maxKeys}`)
+    }
+    queries.sort()
+    var query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+    var method = 'GET'
+    var transformer = transformers.getListObjectsV2Transformer()
+    this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
+      if (e) return transformer.emit('error', e)
+      pipesetup(response, transformer)
+    })
+    return transformer
+  }
+
+
+  // List the objects in the bucket using S3 ListObjects V2
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
+  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  //
+  // __Return Value__
+  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
+  //   * `stat.key` _string_: name of the object
+  //   * `stat.size` _number_: size of the object
+  //   * `stat.etag` _string_: etag of the object
+  //   * `stat.lastModified` _string_: modified time stamp
+  listObjectsV2(bucketName, prefix, recursive) {
+    if (prefix === undefined) prefix = ''
+    if (recursive === undefined) recursive = false
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isBoolean(recursive)) {
+      throw new TypeError('recursive should be of type "boolean"')
+    }
+    // if recursive is false set delimiter to '/'
+    var delimiter = recursive ? '' : '/'
+    var continuationToken = ''
+    var objects = []
+    var ended = false
+    var readStream = Stream.Readable({objectMode: true})
+    readStream._read = () => {
+      // push one object per _read()
+      if (objects.length) {
+        readStream.push(objects.shift())
+        return
+      }
+      if (ended) return readStream.push(null)
+      // if there are no objects to push do query for the next batch of objects
+      this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000)
+          .on('error', e => readStream.emit('error', e))
+          .on('data', result => {
+            if (result.isTruncated) {
+              continuationToken = result.nextContinuationToken
+            } else {
+              ended = true
+            }
+            objects = result.objects
+            readStream._read()
+          })
+    }
+    return readStream
+  }
+
   // Stat information of the object.
   //
   // __Arguments__

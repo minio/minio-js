@@ -427,7 +427,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('presigned operatons', () => {
+  describe('presigned operations', () => {
     it('should upload using presignedUrl', done => {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
@@ -569,6 +569,18 @@ describe('functional tests', function() {
         .on('data', data => {
           listArray.push(data.name)
         })
+    })
+
+    it('should list objects using v2 api', done => {
+      client.listObjectsV2(bucketName, '', true)
+        .on('error', done)
+        .on('end', () => {
+          if (_.isEqual(objArray, listArray)) return done()
+            return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
+        })
+      .on('data', data => {
+        listArray.push(data.name)
+      })
     })
 
     it(`should delete objects`, done => {
