@@ -944,7 +944,15 @@ describe('Client', function() {
       })
     })
 
-    describe('#deleteBucketNotification()', () => {
+    describe('#removeAllBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
+        assert.throws(() => {
+          client.removeAllBucketNotification('ab', () => {})
+        }, /Invalid bucket name/)
+        assert.throws(() => {
+          client.removeAllBucketNotification('bucket', 13)
+        }, /callback should be of type "function"/)
+      })
       it('remove all bucket notifications', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
         MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
@@ -956,6 +964,17 @@ describe('Client', function() {
     })
 
     describe('#setBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
+        assert.throws(() => {
+          client.setBucketNotification('ab', () => {})
+        }, /Invalid bucket name/)
+        assert.throws(() => {
+          client.setBucketNotification('bucket', 49, () => {})
+        }, /notification config should be of type "Object"/)
+        assert.throws(() => {
+          client.setBucketNotification('bucket', {}, 13)
+        }, /callback should be of type "function"/)
+      })
       it('set a bucket notification', (done) => {
         MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
 
@@ -977,6 +996,14 @@ describe('Client', function() {
     })
 
     describe('#getBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
+        assert.throws(() => {
+          client.getBucketNotification('ab', () => {})
+        }, /Invalid bucket name/)
+        assert.throws(() => {
+          client.getBucketNotification('bucket', 13)
+        }, /callback should be of type "function"/)
+      })
       it('get and parse a bucket notification response', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?notification').reply(200, '<NotificationConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><TopicConfiguration><Id>YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Topic>arn:aws:sns:us-east-1:83310034:s3notificationtopic2</Topic><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event><Filter><S3Key><FilterRule><Name>suffix</Name><Value>.jpg</Value></FilterRule><FilterRule><Name>prefix</Name><Value>photos/</Value></FilterRule></S3Key></Filter></TopicConfiguration><QueueConfiguration><Id>ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Queue>arn:aws:sns:us-east-1:83310034:s3notificationqueue2</Queue><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>')
           client.getBucketNotification('bucket', function(e, bucketNotification) {

@@ -1999,7 +1999,7 @@ export class Client {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isObject(config)) {
-      throw new TypeError('notification config shuld be of type "Object"')
+      throw new TypeError('notification config should be of type "Object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')

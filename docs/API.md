@@ -36,7 +36,7 @@ var s3Client = new Minio({
 | ------------- |-------------| -----| ----- |
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`deleteBucketNotification`](#deleteBucketNotification) |
+| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
 | [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy)
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`statObject`](#statObject)   |
@@ -884,8 +884,8 @@ minioClient.setBucketNotification('mybucket', bucketNotification, function(err) 
 
 ```
 
-<a name="deleteBucketNotification"></a>
-### deletBucketNotification(bucketName, callback)
+<a name="removeAllBucketNotification"></a>
+### removeAllBucketNotification(bucketName, callback)
 
 Remove the bucket notification configuration associated to the specified bucket.
 
@@ -899,7 +899,7 @@ __Parameters__
 
 
 ```js
-minioClient.deleteBucketNotification('my-bucketname', function(e) {
+minioClient.removeAllBucketNotification('my-bucketname', function(e) {
   if (e) {
     return console.log(e)
   }
