@@ -18,7 +18,8 @@ import * as xmlParsers from './xml-parsers.js'
 import { parseBucketPolicy } from './bucket-policy.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
-import Crypto from 'crypto';
+import Crypto from 'crypto'
+import JSONParser from 'json-stream'
 
 import { isFunction } from './helpers.js'
 import * as errors from './errors.js'
@@ -204,6 +205,12 @@ export function getBucketRegionTransformer() {
 // Parses GET/SET BucketNotification response
 export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
+}
+
+// Parses a notification.
+export function getNotificationTransformer() {
+  // This will parse and return each object.
+  return new JSONParser()
 }
 
 // Parses GET BucketPolicy response.

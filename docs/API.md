@@ -37,7 +37,7 @@ var s3Client = new Minio({
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy)
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy) | [`listenBucketNotification`](#listenBucketNotification) |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`statObject`](#statObject)   |
 | [`listIncompleteUploads`](#listIncompleteUploads) | |
@@ -904,6 +904,40 @@ minioClient.removeAllBucketNotification('my-bucketname', function(e) {
     return console.log(e)
   }
   console.log("True")
+})
+```
+
+<a name="listenBucketNotification"></a>
+### listenBucketNotification(bucketName, notificationARN)
+
+Listen for notifications on a bucket, using the given notification ARN. The bucket
+must already have a notification configuration set.
+
+Returns an `EventEmitter`, which will emit a `notification` event carrying the record.
+
+To stop listening, call `.stop()` on the returned `EventEmitter`.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket |
+| `notificationARN`  | _string_  | Amazon Resource Name, built using `Minio.buildARN`. |
+
+See [here](../examples/minio/listen-bucket-notification.js) for a full example.
+
+```js
+// 'us-east-1' may have to be replaced with your bucket region (use `getBucketRegion`).
+// '123' is an account ID, which need not be changed.
+var arn = Minio.buildARN('minio', 'sns', 'us-east-1', '123', 'listen')
+
+var listener = minioClient.listenBucketNotification('my-bucketname', arn)
+
+listener.on('notification', function(record) {
+  // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
+  console.log('%s event occurred (%s)', record.eventName, record.eventTime)
+
+  listener.stop()
 })
 ```
 
