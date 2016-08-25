@@ -51,7 +51,7 @@ import * as errors from './errors.js';
 
 import { getS3Endpoint } from './s3-endpoints.js';
 
-import { NotificationConfig } from './notification'
+import { NotificationConfig, NotificationPoller } from './notification'
 
 var Package = require('../../package.json');
 
@@ -2035,6 +2035,21 @@ export class Client {
         .on('error', e => cb(e))
         .on('end', () => cb(null, bucketNotification))
     })
+  }
+
+  // Listens for bucket notifications. Returns an EventEmitter.
+  listenBucketNotification(bucketName, notificationARN) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (typeof notificationARN !== 'string') {
+      throw new TypeError('notificationARN must be of type string')
+    }
+
+    let listener = new NotificationPoller(this, bucketName, notificationARN)
+    listener.start()
+
+    return listener
   }
 }
 

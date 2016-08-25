@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+import querystring from 'querystring'
+import { EventEmitter } from 'events'
+import * as transformers from './transformers'
+import { pipesetup } from './helpers'
+
 // Notification config - array of target configs.
 // Target configs can be
 // 1. Topic (simple notification service)
@@ -93,3 +98,70 @@ export const ObjectRemovedAll                      = "s3:ObjectRemoved:*"
 export const ObjectRemovedDelete                   = "s3:ObjectRemoved:Delete"
 export const ObjectRemovedDeleteMarkerCreated      = "s3:ObjectRemoved:DeleteMarkerCreated"
 export const ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostObject"
+
+// Poll for notifications, used in #listenBucketNotification.
+// Listening constitutes repeatedly requesting s3 whether or not any
+// changes have occurred.
+export class NotificationPoller extends EventEmitter {
+  constructor(client, bucketName, notificationARN) {
+    super()
+
+    this.client = client
+    this.bucketName = bucketName
+    this.notificationARN = notificationARN
+
+    this.ending = false
+  }
+
+  // Starts the polling.
+  start() {
+    this.ending = false
+
+    process.nextTick(() => {
+      this.checkForChanges()
+    })
+  }
+
+  // Stops the polling.
+  stop() {
+    this.ending = true
+  }
+
+  checkForChanges() {
+    // Don't continue if we're looping again but are cancelled.
+    if (this.ending) return
+
+    let method = 'GET'
+    let query = querystring.stringify({ notificationARN: this.notificationARN })
+
+    this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', 200, '', (e, response) => {
+      if (e) return this.emit('error', e)
+
+      let transformer = transformers.getNotificationTransformer()
+      pipesetup(response, transformer)
+        .on('data', result => {
+          // Data is flushed periodically (every 5 seconds), so we should
+          // handle it after flushing from the JSON parser.
+          let records = result.Records
+          // If null (= no records), change to an empty array.
+          if (!records) records = []
+
+          // Iterate over the notifications and emit them individually.
+          records.forEach(record => {
+            this.emit('notification', record)
+          })
+
+          // If we're done, stop.
+          if (this.ending) response.destroy()
+        })
+        .on('error', e => this.emit('error', e))
+        .on('end', () => {
+          // Do it again, if we haven't cancelled yet.
+          process.nextTick(() => {
+            this.checkForChanges()
+          })
+        })
+    })
+  }
+
+}
