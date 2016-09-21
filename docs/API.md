@@ -8,7 +8,7 @@
 
 var Minio = require('minio')
 
-var minioClient = new Minio({
+var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
   	secure: true,
@@ -24,7 +24,7 @@ var minioClient = new Minio({
 
 var Minio = require('minio')
 
-var s3Client = new Minio({
+var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
 	  accessKey: 'YOUR-ACCESSKEYID',
 	  secretKey: 'YOUR-SECRETACCESSKEY'
@@ -48,11 +48,11 @@ var s3Client = new Minio({
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
-###  new Minio ({endPoint, port, secure, accessKey, secretKey})
+###  new Minio.Client ({endPoint, port, secure, accessKey, secretKey})
 
 |     |
 | ---- |
-|``new Minio ({endPoint, port, secure, accessKey, secretKey})``|
+|``new Minio.Client ({endPoint, port, secure, accessKey, secretKey})``|
 |Initializes a new client object.|
 
 __Parameters__
@@ -79,7 +79,7 @@ __Example__
 
 var Minio = require('minio')
 
-var minioClient = new Minio({
+var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
     secure: true,
@@ -97,7 +97,7 @@ var minioClient = new Minio({
 
 var Minio = require('minio')
 
-var s3Client = new Minio({
+var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
