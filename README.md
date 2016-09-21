@@ -47,7 +47,7 @@ You need five items in order to connect to Minio object storage server.
 
 var Minio = require('minio')
 
-var minioClient = new Minio({
+var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
     secure: true,
@@ -71,7 +71,7 @@ var Minio = require('minio')
 
 // Instantiate the minio client with the endpoint 
 // and access keys as shown below.
-var minioClient = new Minio({
+var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
     secure: true,
