@@ -13,7 +13,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 
 ```sh
 
-$ npm install --save minio
+$ npm install --save minio@3.0.0
 
 ```
 
@@ -48,6 +48,22 @@ You need five items in order to connect to Minio object storage server.
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
+    endPoint: 'play.minio.io',
+    port: 9000,
+    secure: true,
+    accessKey: 'Q3AM3UQ867SPQQA43P2F',
+    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+});
+
+```
+
+If you are using minio-js version [2X](https://github.com/minio/minio-js/tree/release-2.0), Initialize Minio Client as below.
+
+```js
+
+var Minio = require('minio')
+
+var minioClient = new Minio({
     endPoint: 'play.minio.io',
     port: 9000,
     secure: true,
