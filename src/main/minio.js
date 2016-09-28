@@ -35,7 +35,7 @@ import _ from 'lodash'
 import { isValidPrefix, isValidEndpoint, isValidBucketName,
          isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-         isString, isObject, isNullOrUndefined, pipesetup,
+         isString, isObject, isArray, isNullOrUndefined, pipesetup,
          readableStream, isReadableStream, isVirtualHostStyle } from './helpers.js';
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
@@ -62,7 +62,7 @@ export class Client {
     if (!params.port) params.port = 0
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
-      throw new errors.InvalidEndPointError(`endPoint ${params.endPoint} is invalid`)
+      throw new errors.InvalidEndpointError(`endPoint ${params.endPoint} is invalid`)
     }
     if (!isValidPort(params.port)) {
       throw new errors.InvalidArgumentError(`port ${params.port} is invalid`)
@@ -357,8 +357,8 @@ export class Client {
       options.region = region
       var reqOptions = this.getRequestOptions(options)
       if (!this.anonymous) {
-	// For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
-	if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
+        // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
+        if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
         reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
@@ -1397,7 +1397,7 @@ export class Client {
       policyPayload = JSON.stringify(policyPayload)
     }
 
-    this.makeRequest({method, bucketName, query}, policyPayload, 204, '', cb) 
+    this.makeRequest({method, bucketName, query}, policyPayload, 204, '', cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -2038,15 +2038,20 @@ export class Client {
   }
 
   // Listens for bucket notifications. Returns an EventEmitter.
-  listenBucketNotification(bucketName, notificationARN) {
+  listenBucketNotification(bucketName, prefix, suffix, events) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
-    if (typeof notificationARN !== 'string') {
-      throw new TypeError('notificationARN must be of type string')
+    if (!isString(prefix)) {
+      throw new TypeError('prefix must be of type string')
     }
-
-    let listener = new NotificationPoller(this, bucketName, notificationARN)
+    if (!isString(suffix)) {
+      throw new TypeError('suffix must be of type string')
+    }
+    if (!isArray(events)) {
+      throw new TypeError('events must be of type Array')
+    }
+    let listener = new NotificationPoller(this, bucketName, prefix, suffix, events)
     listener.start()
 
     return listener

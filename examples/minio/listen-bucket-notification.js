@@ -25,60 +25,37 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-s3Client.getBucketRegion('bucket1', (err, location) => {
-    // Build an ARN. `minio`, `sns`, and `listen` are all standard and need
-    // not be changed. Only `location` must be loaded, and the account ID
-    // (`123`) doesn't matter.
-    let arn = Minio.buildARN('minio', 'sns', location, '123', 'listen')
+// Start listening for notifications on the bucket, using our arn.
+let poller = s3Client.listenBucketNotification('bucket1', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+// Notification will be emitted every time a new notification is received.
+// For object creation, here is a sample record:
 
-    // For this example, we'll listen for object creations.
-    let topic = new Minio.TopicConfig(arn)
-    topic.addEvent(Minio.ObjectCreatedAll)
+// { eventVersion: '2.0',
+//   eventSource: 'aws:s3',
+//   awsRegion: 'us-east-1',
+//   eventTime: '2016-08-23T18:26:07.214Z',
+//   eventName: 's3:ObjectCreated:Put',
+//   userIdentity: { principalId: 'minio' },
+//   requestParameters: { sourceIPAddress: '...' },
+//   responseElements: {},
+//   s3:
+//    { s3SchemaVersion: '1.0',
+//      configurationId: 'Config',
+//      bucket:
+//       { name: 'bucket1',
+//         ownerIdentity: [Object],
+//         arn: 'arn:aws:s3:::bucket1' },
+//      object: { key: 'photos%2Fobject.jpg', size: 10, sequencer: '...' } } }
+poller.on('notification', record => {
+    console.log('New object: %s/%s (size: %d)', record.s3.bucket.name,
+                record.s3.object.key, record.s3.object.size)
 
-    // Create a new notification config. This will allow us to tell s3 to notify
-    // us when our events happen.
-    let bucketNotification = new Minio.NotificationConfig();
-    bucketNotification.add(topic)
+    // Now that we've received our notification, we can cancel the listener.
+    // We could leave it open if we wanted to continue to receive notifications.
+    poller.stop()
+})
 
-    // We need to update the bucket notification config in order to receive updates.
-    s3Client.setBucketNotification('bucket1', bucketNotification, function(err) {
-        if (err) throw err
-
-        // Start listening for notifications on the bucket, using our arn.
-        let poller = s3Client.listenBucketNotification('bucket1', arn)
-
-        // Notification will be emitted every time a new notification is received.
-        // For object creation, here is a sample record:
-
-        // { eventVersion: '2.0',
-        //   eventSource: 'aws:s3',
-        //   awsRegion: 'us-east-1',
-        //   eventTime: '2016-08-23T18:26:07.214Z',
-        //   eventName: 's3:ObjectCreated:Put',
-        //   userIdentity: { principalId: 'minio' },
-        //   requestParameters: { sourceIPAddress: '...' },
-        //   responseElements: {},
-        //   s3:
-        //    { s3SchemaVersion: '1.0',
-        //      configurationId: 'Config',
-        //      bucket:
-        //       { name: 'bucket1',
-        //         ownerIdentity: [Object],
-        //         arn: 'arn:aws:s3:::bucket1' },
-        //      object: { key: 'object', size: 10, sequencer: '...' } } }
-
-        poller.on('notification', record => {
-            console.log('New object: %s/%s (size: %d)', record.s3.bucket.name,
-                        record.s3.object.key, record.s3.object.size)
-
-            // Now that we've received our notification, we can cancel the listener.
-            // We could leave it open if we wanted to continue to receive notifications.
-            poller.stop()
-        })
-
-        // Create an object - this should trigger a notification.
-        s3Client.putObject('bucket1', 'file.jpg', 'stringdata', (err, etag) => {
-            if (err) throw err
-        })
-    })
+// Create an object - this should trigger a notification.
+s3Client.putObject('bucket1', 'file.jpg', 'stringdata', (err, etag) => {
+    if (err) throw err
 })

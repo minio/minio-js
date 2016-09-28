@@ -1020,11 +1020,17 @@ describe('Client', function() {
     describe('#listenBucketNotification', () => {
       it('should error on invalid arguments', () => {
         assert.throws(() => {
-          client.listenBucketNotification('ab', 'arn')
+          client.listenBucketNotification('ab', 'prefix', 'suffix', ['events'])
         }, /Invalid bucket name/)
         assert.throws(() => {
-          client.listenBucketNotification('bucket', { lol: 49 })
-        }, /notificationARN must be of type string/)
+          client.listenBucketNotification('bucket', {}, 'suffix', ['events'])
+        }, /prefix must be of type string/)
+        assert.throws(() => {
+          client.listenBucketNotification('bucket', '', {}, ['events'])
+        }, /suffix must be of type string/)
+        assert.throws(() => {
+          client.listenBucketNotification('bucket', '', '', {})
+        }, /events must be of type Array/)
       })
     })
 
@@ -1224,7 +1230,7 @@ describe('Client', function() {
         { 'prefix': 'hosts/',
           'size': 0 },
         { 'prefix': 'uploads/',
-          'size': 0 
+          'size': 0
         }]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)

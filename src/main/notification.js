@@ -17,7 +17,7 @@
 import querystring from 'querystring'
 import { EventEmitter } from 'events'
 import * as transformers from './transformers'
-import { pipesetup } from './helpers'
+import { pipesetup, uriEscape } from './helpers'
 
 // Notification config - array of target configs.
 // Target configs can be
@@ -103,12 +103,14 @@ export const ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostOb
 // Listening constitutes repeatedly requesting s3 whether or not any
 // changes have occurred.
 export class NotificationPoller extends EventEmitter {
-  constructor(client, bucketName, notificationARN) {
+  constructor(client, bucketName, prefix, suffix, events) {
     super()
 
     this.client = client
     this.bucketName = bucketName
-    this.notificationARN = notificationARN
+    this.prefix = prefix
+    this.suffix = suffix
+    this.events = events
 
     this.ending = false
   }
@@ -132,8 +134,24 @@ export class NotificationPoller extends EventEmitter {
     if (this.ending) return
 
     let method = 'GET'
-    let query = querystring.stringify({ notificationARN: this.notificationARN })
+    var queries = []
+    if (this.prefix) {
+      var prefix = uriEscape(this.prefix)
+      queries.push(`prefix=${prefix}`)
+    }
+    if (this.suffix) {
+      var suffix = uriEscape(this.suffix)
+      queries.push(`suffix=${suffix}`)
+    }
+    if (this.events) {
+      this.events.forEach(s3event => queries.push('events='+uriEscape(s3event)))
+    }
+    queries.sort()
 
+    var query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
     this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', 200, '', (e, response) => {
       if (e) return this.emit('error', e)
 
