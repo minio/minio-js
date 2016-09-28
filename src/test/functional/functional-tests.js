@@ -605,119 +605,51 @@ describe('functional tests', function() {
         }
       })
 
-      it('should forward error with bad ARN', done => {
-        let poller = client.listenBucketNotification(bucketName, 'baaad')
-
+      it('should forward error with bad events', done => {
+        let poller = client.listenBucketNotification(bucketName, 'photos/', '.jpg', ['bad'])
         poller.on('error', error => {
-          assert.match(error.message, /A specified destination ARN does not exist or is not well-formed/)
+          assert.match(error.message, /A specified event is not supported for notifications./)
           assert.equal(error.code, 'InvalidArgument')
 
           done()
         })
       })
 
-      it('should error without notification config', done => {
-        // Get the bucket region.
-        client.getBucketRegion(bucketName, (err, region) => {
-          if (err) return done(err)
-
-          let arn = Minio.buildARN('minio', 'sns', region, '123456789', 'listen')
-
-          let poller = client.listenBucketNotification(bucketName, arn)
-
-          poller.on('notification', assert.fail)
-
-          poller.on('error', error => {
-            assert.match(error.message, /A specified destination ARN does not exist or is not well-formed/)
-            assert.equal(error.code, 'InvalidArgument')
-
-            done()
-          })
-        })
-      })
-
       it('should give exactly one event for single action', done => {
-        // Get the bucket region.
-        client.getBucketRegion(bucketName, (err, region) => {
-          if (err) return done(err)
+        let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectCreated:*'])
+        let records = 0
+        poller.on('notification', record => {
+          records++
 
-          let arn = Minio.buildARN('minio', 'sns', region, '123456789', 'listen')
-
-          // Build the configs.
-          let topic = new Minio.TopicConfig(arn)
-          topic.addEvent(Minio.ObjectCreatedAll)
-
-          let config = new Minio.NotificationConfig();
-          config.add(topic)
-
-          client.setBucketNotification(bucketName, config, function(err) {
-            if (err) return done(err)
-
-            let poller = client.listenBucketNotification(bucketName, arn)
-
-            let records = 0
-            poller.on('notification', record => {
-              records++
-
-              assert.equal(record.eventName, 's3:ObjectCreated:Put')
-              assert.equal(record.s3.bucket.name, bucketName)
-              assert.equal(record.s3.object.key, objectName)
-            })
-
-            client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
-              if (err) return done(err)
-
-              // It polls every five seconds, so wait for two-ish polls, then end.
-              setTimeout(() => {
-                assert.equal(records, 1)
-
-                poller.stop()
-
-                client.removeAllBucketNotification(bucketName, () => {
-                  client.removeObject(bucketName, objectName, done)
-                })
-              }, 11 * 1000)
-            })
-          })
+          assert.equal(record.eventName, 's3:ObjectCreated:Put')
+          assert.equal(record.s3.bucket.name, bucketName)
+          assert.equal(record.s3.object.key, objectName)
         })
+        client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
+          if (err) return done(err)
+          // It polls every five seconds, so wait for two-ish polls, then end.
+            setTimeout(() => {
+            assert.equal(records, 1)
+            poller.stop()
+            client.removeObject(bucketName, objectName, done)
+          })
+        }, 11 * 1000)
       })
 
       // This test is very similar to that above, except it does not include
       // Minio.ObjectCreatedAll in the config. Thus, no events should be emitted.
       it('should give no events for single action', done => {
-        // Get the bucket region.
-        client.getBucketRegion(bucketName, (err, region) => {
-          if (err) return done(err)
+        let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
+        poller.on('notification', assert.fail)
 
-          let arn = Minio.buildARN('minio', 'sns', region, '123456789', 'listen')
-
-          // Build the configs.
-          let topic = new Minio.TopicConfig(arn)
-
-          let config = new Minio.NotificationConfig();
-          config.add(topic)
-
-          client.setBucketNotification(bucketName, config, function(err) {
-            if (err) return done(err)
-
-            let poller = client.listenBucketNotification(bucketName, arn)
-
-            poller.on('notification', assert.fail)
-
-            client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
-              if (err) return done(err)
-
-              // It polls every five seconds, so wait for two-ish polls, then end.
-              setTimeout(() => {
-                poller.stop()
-
-                client.removeAllBucketNotification(bucketName, () => {
-                  client.removeObject(bucketName, objectName, done)
-                })
-              }, 11 * 1000)
-            })
+        client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
+        if (err) return done(err)
+          // It polls every five seconds, so wait for two-ish polls, then end.
+          setTimeout(() => {
+            poller.stop()
+            client.removeObject(bucketName, objectName, done)
           })
-        })
+        }, 11 * 1000)
       })
     })
   })

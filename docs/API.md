@@ -1,6 +1,6 @@
 # JavaScript Client API Reference [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Minio/minio?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Initialize Minio Client object.  
+## Initialize Minio Client object.
 
 ## Minio
 
@@ -65,7 +65,7 @@ __Parameters__
 | | |localhost |
 | | |play.minio.io|
 | `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
-| `accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. | 
+| `accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
 |`secure`    | _bool_    |If set to true, https is used instead of http. Default is https if not set. |
 
@@ -118,7 +118,7 @@ __Parameters__
 
 | Param  | Type  | Description  |
 |---|---|---|
-|`bucketName`  | _string_  | Name of the bucket. | 
+|`bucketName`  | _string_  | Name of the bucket. |
 | `region`  |  _string_ | Default value is us-east-1 Region where the bucket is created. Valid values are listed below: |
 | | |us-east-1 |
 | | |us-west-1 |
@@ -128,7 +128,7 @@ __Parameters__
 | | | ap-southeast-1|
 | | | ap-northeast-1|
 | | | ap-southeast-2|
-| | | sa-east-1| 
+| | | sa-east-1|
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
 
 
@@ -164,7 +164,7 @@ bucketStream emits Object with the format:-
 | Param  | Type  | Description  |
 |---|---|---|
 |`bucket.name`  | _string_ |bucket name |
-|`bucket.creationDate`| _Date_ |date when bucket was created.  | 
+|`bucket.creationDate`| _Date_ |date when bucket was created.  |
 
 
 
@@ -908,10 +908,12 @@ minioClient.removeAllBucketNotification('my-bucketname', function(e) {
 ```
 
 <a name="listenBucketNotification"></a>
-### listenBucketNotification(bucketName, notificationARN)
+### listenBucketNotification(bucketName, prefix, suffix, events)
 
-Listen for notifications on a bucket, using the given notification ARN. The bucket
-must already have a notification configuration set.
+Listen for notifications on a bucket. Additionally one can provider
+filters for prefix, suffix and events. There is no prior set bucket notification
+needed to use this API. This is an Minio extension API where unique identifiers
+are regitered and unregistered by the server automatically based on incoming requests.
 
 Returns an `EventEmitter`, which will emit a `notification` event carrying the record.
 
@@ -922,21 +924,17 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket |
-| `notificationARN`  | _string_  | Amazon Resource Name, built using `Minio.buildARN`. |
+| `prefix`  | _string_  | Object key prefix to filter notifications for. |
+| `suffix`  | _string_  | Object key suffix to filter notifications for. |
+| `events`  | _Array_ | Enables notifications for specific event types. |
 
 See [here](../examples/minio/listen-bucket-notification.js) for a full example.
 
 ```js
-// 'us-east-1' may have to be replaced with your bucket region (use `getBucketRegion`).
-// '123' is an account ID, which need not be changed.
-var arn = Minio.buildARN('minio', 'sns', 'us-east-1', '123', 'listen')
-
-var listener = minioClient.listenBucketNotification('my-bucketname', arn)
-
+var listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 listener.on('notification', function(record) {
   // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
   console.log('%s event occurred (%s)', record.eventName, record.eventTime)
-
   listener.stop()
 })
 ```
@@ -1001,4 +999,3 @@ minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, func
 
 
 - [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)
-
