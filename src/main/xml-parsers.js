@@ -65,6 +65,21 @@ export function parseError(xml, headerInfo) {
   return e
 }
 
+// parse XML response for copy object
+export function parseCopyObject(xml) {
+  var result = {
+    etag: "",
+    lastModified: ""
+  }
+  var xmlobj = parseXml(xml)
+  if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+  if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified[0])
+
+  return result
+}
+
 // parse XML response for listing in-progress multipart uploads
 export function parseListMultipart(xml) {
   var result = {
