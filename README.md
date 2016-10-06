@@ -138,6 +138,7 @@ The full API Reference is available here.
 * [`bucketExists`](https://docs.minio.io/docs/javascript-client-api-reference#bucketExists)
 * [`removeBucket`](https://docs.minio.io/docs/javascript-client-api-reference#removeBucket)
 * [`listObjects`](https://docs.minio.io/docs/javascript-client-api-reference#listObjects)
+* [`listObjectsV2`](https://docs.minio.io/docs/javascript-client-api-reference#listObjectsV2)
 * [`listIncompleteUploads`](https://docs.minio.io/docs/javascript-client-api-reference#listIncompleteUploads)
 
 ### API Reference : File Object Operations
@@ -159,6 +160,18 @@ The full API Reference is available here.
 * [`presignedPutObject`](https://docs.minio.io/docs/javascript-client-api-reference#presignedPutObject)
 * [`presignedPostPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#presignedPostPolicy)
 
+### API Reference : Bucket Notification Operations
+
+* [`getBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#getBucketNotification)
+* [`setBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#setBucketNotification)
+* [`removeAllBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#removeAllBucketNotification)
+* [`listenBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#listenBucketNotification) (Minio Extension)
+
+### API Reference : Bucket Policy Operations
+
+* [`getBucketPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#getBucketPolicy)
+* [`setBucketPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#setBucketPolicy)
+
 
 ## Full Examples
 
@@ -166,6 +179,7 @@ The full API Reference is available here.
 
 * [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
 * [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
+* [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 * [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.js)
@@ -180,6 +194,7 @@ The full API Reference is available here.
 * [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
 * [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
+* [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 * [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
 
 #### Full Examples : Presigned Operations
@@ -187,6 +202,15 @@ The full API Reference is available here.
 * [presigned-putobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
 * [presigned-postpolicy.js](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
 
+#### Full Examples: Bucket Notification Operations
+* [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
+* [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
+* [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
+* [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (Minio Extension)
+
+#### Full Examples: Bucket Policy Operations
+* [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
+* [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
  
 ## Explore Further
 * [Complete Documentation](https://docs.minio.io)
