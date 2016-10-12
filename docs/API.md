@@ -129,6 +129,7 @@ __Parameters__
 | | | ap-northeast-1|
 | | | ap-southeast-2|
 | | | sa-east-1|
+| | | cn-north-1|
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
 
 
