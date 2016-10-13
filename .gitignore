@@ -7,3 +7,4 @@ logs
 node_modules
 
 /dist/
+yarn.lock

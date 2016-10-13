@@ -56,9 +56,9 @@ export function getScope(region, date) {
   return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
 }
 
-// isAmazonEndpoint - true if endpoint is 's3.amazonaws.com'.
+// isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
 export function isAmazonEndpoint(endpoint) {
-  return endpoint === 's3.amazonaws.com'
+  return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
 // isVirtualHostStyle - verify if bucket name is support with virtual
@@ -73,18 +73,24 @@ export function isVirtualHostStyle(endpoint, protocol, bucket) {
   return isAmazonEndpoint(endpoint)
 }
 
+var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/;
+
+export function isValidIP(ip) {
+  return ipv4Regex.test(ip)
+}
+
 // isValidEndpoint - true if endpoint is valid domain.
 export function isValidEndpoint(endpoint) {
-  if (!isValidDomain(endpoint)) {
+  if (!isValidDomain(endpoint) && !isValidIP(endpoint)) {
     return false
   }
   // Endpoint matches amazon, make sure its 's3.amazonaws.com'
-  if (endpoint.match('.amazonaws.com$')) {
+  if (endpoint.match('.amazonaws.com$') || endpoint.match('.amazonaws.com.cn$')) {
     if (!isAmazonEndpoint(endpoint)) {
       return false
     }
   }
-  // Returning true for all other cases.
+  // Return true.
   return true
 }
 
