@@ -39,8 +39,8 @@ var s3Client = new Minio.Client({
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
 | [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy) | [`listenBucketNotification`](#listenBucketNotification) |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
-| [`listObjectsV2`](#listObjectsV2) | [`statObject`](#statObject)   |
-| [`listIncompleteUploads`](#listIncompleteUploads) | |
+| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject)   |
+| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 
@@ -571,6 +571,39 @@ minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream',
 })
 
 ```
+
+<a name="copyObject"></a>
+### copyObject(bucketName, objectName, sourceObject, conditions, callback)
+
+Copy a source object into a new object in the specied bucket.
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket.  |
+|`objectName`   |_string_   | Name of the object.  |
+| `sourceObject`  | _string_  | Path of the file to be copied.  |
+| `conditions`  | _CopyConditions_  | Conditions to be satisfied before allowing object copy.  |
+| `callback(err, {etag, lastModified})`  |  _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. |
+
+__Example__
+
+```js
+
+var conds = new Minio.CopyConditions()
+conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
+minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function(e, data) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Successfully copied the object:")
+  console.log("etag = " + data.etag + ", lastModified = " + data.lastModified)
+})
+
+```
+
 
 <a name="statObject"></a>
 ### statObject(bucketName, objectName, callback)

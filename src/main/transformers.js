@@ -162,6 +162,11 @@ export function getHashSummer(enableSHA256) {
 // Following functions return a stream object that parses XML
 // and emits suitable Javascript objects.
 
+// Parses CopyObject response.
+export function getCopyObjectTransformer() {
+  return getConcater(xmlParsers.parseCopyObject)
+}
+
 // Parses listBuckets response.
 export function getListBucketTransformer() {
   return getConcater(xmlParsers.parseListBucket)

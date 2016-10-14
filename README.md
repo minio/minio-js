@@ -150,6 +150,7 @@ The full API Reference is available here.
 
 * [`getObject`](https://docs.minio.io/docs/javascript-client-api-reference#getObject)
 * [`putObject`](https://docs.minio.io/docs/javascript-client-api-reference#putObject)
+* [`copyObject`](https://docs.minio.io/docs/javascript-client-api-reference#copyObject)
 * [`statObject`](https://docs.minio.io/docs/javascript-client-api-reference#statObject)
 * [`removeObject`](https://docs.minio.io/docs/javascript-client-api-reference#removeObjec)
 * [`removeIncompleteUpload`](https://docs.minio.io/docs/javascript-client-api-reference#removeIncompleteUpload)
@@ -192,6 +193,7 @@ The full API Reference is available here.
 #### Full Examples : Object Operations
 * [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
 * [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+* [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
 * [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)

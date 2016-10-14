@@ -1044,6 +1044,71 @@ export class Client {
     ], cb)
   }
 
+  // Copy the object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `srcObject` _string_: path of the source object to be copied
+  // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
+  // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
+  copyObject(arg1, arg2, arg3, arg4, arg5) {
+    var bucketName = arg1
+    var objectName = arg2
+    var srcObject = arg3
+    var conditions, cb
+    if (typeof arg4 == 'function' && arg5 === undefined) {
+      conditions = null
+      cb = arg4
+    } else {
+      conditions = arg4
+      cb = arg5
+    }
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(srcObject)) {
+      throw new TypeError('srcObject should be of type "string"')
+    }
+    if (srcObject === "") {
+      throw new errors.InvalidPrefixError(`Empty source prefix`)
+    }
+
+    if (conditions !== null && !(conditions instanceof CopyConditions)) {
+      throw new TypeError('conditions should be of type "CopyConditions"')
+    }
+
+    var headers = {}
+    headers['x-amz-copy-source'] = uriEscape(srcObject)
+
+    if (conditions !== null) {
+      if (conditions.modified !== "") {
+        headers['x-amz-copy-source-if-modified-since'] = conditions.modified
+      }
+      if (conditions.unmodified !== "") {
+        headers['x-amz-copy-source-if-unmodified-since'] = conditions.unmodified
+      }
+      if (conditions.matchETag !== "") {
+        headers['x-amz-copy-source-if-match'] = conditions.matchETag
+      }
+      if (conditions.matchEtagExcept !== "") {
+        headers['x-amz-copy-source-if-none-match'] = conditions.matchETagExcept
+      }
+    }
+
+    var method = 'PUT'
+    this.makeRequest({method, bucketName, objectName, headers}, '', 200, '', (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getCopyObjectTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', data => cb(null, data))
+    })
+  }
+
   // list a batch of objects
   listObjectsQuery(bucketName, prefix, marker, delimiter, maxKeys) {
     if (!isValidBucketName(bucketName)) {
@@ -2055,6 +2120,37 @@ export class Client {
     listener.start()
 
     return listener
+  }
+}
+
+export class CopyConditions {
+  constructor() {
+    this.modified = ""
+    this.unmodified = ""
+    this.matchETag = ""
+    this.matchETagExcept = ""
+  }
+
+  setModified(nativedate) {
+    if (!isDate(nativedate)) {
+      throw new errors.InvalidDateError('Invalid date : cannot be null')
+    }
+    this.modified = Moment(nativedate).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
+  }
+
+  setUnmodified(nativedate) {
+    if (!isDate(nativedate)) {
+      throw new errors.InvalidDateError('Invalid date : cannot be null')
+    }
+    this.unmodified = Moment(nativedate).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
+  }
+
+  setMatchETag(etag) {
+    this.matchETag = etag
+  }
+
+  setMatchETagExcept(etag) {
+    this.matchETagExcept = etag
   }
 }
 

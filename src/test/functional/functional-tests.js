@@ -56,6 +56,8 @@ describe('functional tests', function() {
   var _11mbObjectName = 'miniojsobject_11mb'
   var _11mbmd5 = crypto.createHash('md5').update(_11mb).digest('hex')
 
+  var _11mbObjectNameCopy = _11mbObjectName + '_copy'
+
   var _10mb = new Buffer(10*1024*1024)
   _10mb.fill('a')
   var _10mbObjectName = 'miniojsobject_10mb'
@@ -122,7 +124,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('tests for putObject getObject getPartialObject statObject removeObject', function() {
+  describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
     it('should upload 100KB stream', done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
@@ -206,6 +208,13 @@ describe('functional tests', function() {
       })
     })
 
+    it('should copy object', done => {
+      client.copyObject(bucketName, _11mbObjectNameCopy, "/" + bucketName + "/" + _11mbObjectName, (e, data) => {
+        if (e) return done(e)
+        done()
+      })
+    })
+
     it('should stat object', done => {
       client.statObject(bucketName, _11mbObjectName, (e, stat) => {
         if (e) return done(e)
@@ -215,7 +224,7 @@ describe('functional tests', function() {
     })
 
     it('should remove objects created for test', done => {
-      async.map([_100kbObjectName, _100kbObjectBufferName, _100kbObjectStringName, _11mbObjectName], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+      async.map([_100kbObjectName, _100kbObjectBufferName, _100kbObjectStringName, _11mbObjectName, _11mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
     })
 
   })
