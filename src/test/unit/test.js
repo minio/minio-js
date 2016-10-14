@@ -23,10 +23,32 @@ import Nock from 'nock';
 import Through2 from 'through2';
 import Stream from 'stream';
 import * as Minio from '../../../dist/main/minio';
+import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers';
 
-import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy'
+import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy';
 
 var Package = require('../../../package.json')
+
+describe('Helpers', () => {
+  it('should validate for s3 endpoint', () => {
+    assert.equal(isValidEndpoint('s3.amazonaws.com'), true)
+  })
+  it('should validate for s3 china', () => {
+    assert.equal(isValidEndpoint('s3.cn-north-1.amazonaws.com.cn'), true)
+  })
+  it('should fail for invalid endpoint', () => {
+    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), false)
+  })
+  it('should fail for invalid endpoint characters', () => {
+    assert.equal(isValidEndpoint('111.#2.11'), false)
+  })
+  it('should validate for valid ip', () => {
+    assert.equal(isValidIP('1.1.1.1'), true)
+  })
+  it('should fail for invalid ip', () => {
+    assert.equal(isValidIP('1.1.1'), false)
+  })
+})
 
 describe('Client', function() {
   var nockRequests = []
