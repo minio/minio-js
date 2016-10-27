@@ -19,6 +19,7 @@ import { isString } from './helpers.js'
 // List of currently supported endpoints.
 let awsS3Endpoint = {
   'us-east-1': 's3.amazonaws.com',
+  'us-east-2': 's3-us-east-2.amazonaws.com',
   'us-west-1': 's3-us-west-1.amazonaws.com',
   'us-west-2': 's3-us-west-2.amazonaws.com',
   'eu-west-1': 's3-eu-west-1.amazonaws.com',
