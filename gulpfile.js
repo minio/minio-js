@@ -18,12 +18,11 @@ var babel = require('gulp-babel')
 var gulp = require('gulp')
 var sourcemaps = require('gulp-sourcemaps')
 var notify = require('gulp-notify');
-var jscs = require('gulp-jscs');
-var jshint = require('gulp-jshint');
 
 var fs = require("fs");
 var browserify = require("browserify");
 var mocha = require('gulp-mocha')
+var eslint = require('gulp-eslint')
 
 gulp.task('browserify', ['compile'], function() {
   browserify("./dist/main/minio.js", {
@@ -54,25 +53,12 @@ gulp.task('test', ['compile', 'test:compile'], function() {
     }))
 })
 
-gulp.task('jscs', function() {
-  gulp.src('src/main/*.js')
-    .pipe(jscs())
-    .pipe(notify({
-      title: 'JSCS',
-      message: 'JSCS Passed. Let it fly!'
-    }))
-});
-
 gulp.task('lint', function() {
-  gulp.src('src/main/*.js')
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter('jshint-stylish'))
-    .pipe(jshint.reporter('fail'))
-    .pipe(notify({
-      title: 'JSHint',
-      message: 'JSHint Passed. Let it fly!',
-    }))
-});
+  gulp.src('src/**/*.js')
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError())
+})
 
 gulp.task('functional-test', ['compile'], function() {
   compile('src/test/functional/*.js', 'functional', 'dist/test/functional/', function() {
