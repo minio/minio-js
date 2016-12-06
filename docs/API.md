@@ -492,7 +492,7 @@ __Parameters__
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `stream`  | _Stream_  |Readable stream.   |
-|`size`   | _number_  | Size of the object.  |
+|`size`   | _number_  | Size of the object (optional).  |
 |`contentType`   | _string_  | Content-Type of the object (optional, default `application/octet-stream`).  |
 | `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.|
 
@@ -510,7 +510,7 @@ var fileStat = Fs.stat(file, function(err, stats) {
   if (err) {
     return console.log(err)
   }
-  minioClient.putObject('mybucket', '40mbfile', fileStream, stats.size, 'application/octet-stream', function(err, etag) {
+  minioClient.putObject('mybucket', '40mbfile', fileStream, stats.size, function(err, etag) {
     return console.log(err, etag) // err should be null
   })
 })
@@ -537,7 +537,7 @@ __Example__
 ```js
 
 var buffer = 'Hello World'
-minioClient.putObject('mybucket', 'hello-file', buffer, 'application/octet-stream', function(err, etag) {
+minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
 

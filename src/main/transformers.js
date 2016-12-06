@@ -114,31 +114,6 @@ export function getErrorTransformer(response) {
   }, true)
 }
 
-// Makes sure that only size number of bytes go through this stream
-export function getSizeLimiter(size, stream, chunker) {
-  var sizeRemaining = size
-  return Through2.obj(function(chunk, enc, cb) {
-    var length = Math.min(chunk.length, sizeRemaining)
-    // We should read only till 'size'
-    if (length < chunk.length) chunk = chunk.slice(0, length)
-    this.push(chunk)
-    sizeRemaining -= length
-    if (sizeRemaining === 0) {
-      // Unpipe so that the streams do not send us more data
-      stream.unpipe()
-      chunker.unpipe()
-      this.push(null)
-    }
-    cb()
-  }, function(cb) {
-    if (sizeRemaining !== 0) {
-      return cb(new errors.IncorrectSizeError(`size of the input stream is not equal to the expected size(${size})`))
-    }
-    this.push(null)
-    cb()
-  })
-}
-
 // A through stream that calculates md5sum and sha256sum
 export function getHashSummer(enableSHA256) {
   var md5 = Crypto.createHash('md5')
