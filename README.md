@@ -13,7 +13,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 
 ```sh
 
-$ npm install --save minio@3.0.0
+npm install --save minio@3.0.0
 
 ```
 
@@ -21,10 +21,10 @@ $ npm install --save minio@3.0.0
 
 ```sh
 
-$ git clone https://github.com/minio/minio-js
-$ cd minio-js
-$ npm install
-$ npm install -g
+git clone https://github.com/minio/minio-js
+cd minio-js
+npm install
+npm install -g
 
 
 ```
@@ -117,10 +117,10 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
 
 ```sh
 
-$ node file-uploader.js
+node file-uploader.js
 Bucket created successfully in "us-east-1".
 
-$ mc ls play/europetrip/
+mc ls play/europetrip/
 [2016-05-25 23:49:50 PDT]  17MiB photos-europe.tar
 
 ```
