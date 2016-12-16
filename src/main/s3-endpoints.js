@@ -24,6 +24,7 @@ let awsS3Endpoint = {
   'us-west-2': 's3-us-west-2.amazonaws.com',
   'ca-central-1': 's3.ca-central-1.amazonaws.com',
   'eu-west-1': 's3-eu-west-1.amazonaws.com',
+  'eu-west-2': 's3-eu-west-2.amazonaws.com',
   'sa-east-1': 's3-sa-east-1.amazonaws.com',
   'eu-central-1': 's3-eu-central-1.amazonaws.com',
   'ap-south-1': 's3-ap-south-1.amazonaws.com',
