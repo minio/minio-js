@@ -26,23 +26,23 @@ var Minio = require('minio')
 
 var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
-	  accessKey: 'YOUR-ACCESSKEYID',
-	  secretKey: 'YOUR-SECRETACCESSKEY'
+	accessKey: 'YOUR-ACCESSKEYID',
+	secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 ```
-
 | Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
 | ------------- |-------------| -----| ----- |
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy) | [`listenBucketNotification`](#listenBucketNotification) |
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy) |  | 
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
-| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject)   |
+| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+  
 
 
 ## 1.  Constructor
@@ -124,12 +124,12 @@ __Parameters__
 | | |us-west-1 |
 | | |us-west-2 |
 | | |eu-west-1 |
-| | | eu-central-1|
-| | | ap-southeast-1|
-| | | ap-northeast-1|
-| | | ap-southeast-2|
-| | | sa-east-1|
-| | | cn-north-1|
+| | |eu-central-1|
+| | |ap-southeast-1|
+| | |ap-northeast-1|
+| | |ap-southeast-2|
+| | |sa-east-1|
+| | |cn-north-1|
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
 
 
