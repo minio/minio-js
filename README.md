@@ -13,7 +13,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 
 ```sh
 
-npm install --save minio@3.0.0
+npm install --save minio@3.1.0
 
 ```
 
@@ -34,11 +34,11 @@ npm install -g
 You need five items in order to connect to Minio object storage server.
 
 
-| Params     | Description |  
-| :------- | :------------ |  
-| endPoint	 | URL to object storage service. |  
+| Params     | Description |
+| :------- | :------------ |
+| endPoint	 | URL to object storage service. |
 |port| TCP/IP port number. This input is optional. Default value set to ``80`` for HTTP and ``443`` for HTTPs.|
-| accessKey | Access key is like user ID that uniquely identifies your account.   |   
+| accessKey | Access key is like user ID that uniquely identifies your account.   |
 | secretKey	| Secret key is the password to your account.    |
 |secure |Set this value to 'true' to enable secure (HTTPS) access |
 
@@ -75,7 +75,7 @@ var minioClient = new Minio({
 
 ## Quick Start Example - File Uploader
 
-This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket. 
+This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket.
 
 We will use the Minio server running at [https://play.minio.io:9000](https://play.minio.io:9000) in this example. Feel free to use this service for testing and development. Access credentials shown in this example are open to the public.
 
@@ -85,7 +85,7 @@ We will use the Minio server running at [https://play.minio.io:9000](https://pla
 
 var Minio = require('minio')
 
-// Instantiate the minio client with the endpoint 
+// Instantiate the minio client with the endpoint
 // and access keys as shown below.
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
@@ -103,8 +103,8 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
     if (err) return console.log(err)
 
     console.log('Bucket created successfully in "us-east-1".')
-    
-    // Using fPutObject API upload your file to the bucket europetrip. 
+
+    // Using fPutObject API upload your file to the bucket europetrip.
     minioClient.fPutObject('europetrip', 'photos-europe.tar', file, 'application/octet-stream', function(err, etag) {
       if (err) return console.log(err)
       console.log('File uploaded successfully.')
@@ -128,7 +128,7 @@ mc ls play/europetrip/
 ## API Reference
 
 The full API Reference is available here.
- 
+
 * [Complete API Reference](https://docs.minio.io/docs/javascript-client-api-reference)
 
 ### API Reference : Bucket Operations
@@ -213,10 +213,10 @@ The full API Reference is available here.
 #### Full Examples: Bucket Policy Operations
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
 * [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
- 
+
 ## Explore Further
 * [Complete Documentation](https://docs.minio.io)
-* [Minio JavaScript Client SDK API Reference](https://docs.minio.io/docs/javascript-client-api-reference) 
+* [Minio JavaScript Client SDK API Reference](https://docs.minio.io/docs/javascript-client-api-reference)
 * [Build your own Shopping App Example- Full Application Example ](https://docs.minio.io/docs/javascript-shopping-app)
 
 ## Contribute
