@@ -227,9 +227,9 @@ export class Client {
   }
 
   // partSize will be atleast minimumPartSize or a multiple of minimumPartSize
-  // for size <= 50000 MB partSize is always 5MB (10000*5 = 50000)
-  // for size > 50000MB partSize will be a multiple of 5MB
-  // for size = 5TB partSize will be 525MB
+  // for size <= 50GiB partSize is always 5MiB (10000*5MiB = 50GiB)
+  // for size > 50GiB partSize will be a multiple of 5MiB
+  // for size = 5TiB partSize will be 525MiB
   calculatePartSize(size) {
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
