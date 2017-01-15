@@ -35,7 +35,8 @@ import { isValidPrefix, isValidEndpoint, isValidBucketName,
          isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
          isString, isObject, isArray, isNullOrUndefined, pipesetup,
-         readableStream, isReadableStream, isVirtualHostStyle } from './helpers.js';
+         readableStream, isReadableStream, isVirtualHostStyle,
+         probeContentType } from './helpers.js';
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
 
@@ -758,7 +759,7 @@ export class Client {
   // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getPartialObject(bucketName, objectName, offset, length, cb) {
-    if (typeof length === 'function') {
+    if (isFunction(length)) {
       cb = length
       length = 0
     }
@@ -819,15 +820,23 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isString(contentType)) {
-      throw new TypeError('contentType should be of type "string"')
-    }
+
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
     }
 
+    if (isFunction(contentType)) {
+      callback = contentType
+      contentType = '' // Set contentType empty if no contentType provided.
+    }
+
+    if (!isString(contentType)) {
+      throw new TypeError('contentType should be of type "string"')
+    }
+
+    // For contentType if empty probe using file extension.
     if (contentType.trim() === '') {
-      contentType = 'application/octet-stream'
+      contentType = probeContentType(filePath)
     }
 
     var size
@@ -964,10 +973,16 @@ export class Client {
     }
 
     // We'll need to shift arguments to the left because of size and contentType.
-    if (typeof size === 'function') {
+    if (isFunction(size)) {
       callback = size
-    } else if (typeof contentType === 'function') {
+    } else if (isFunction(contentType)) {
       callback = contentType
+    }
+
+    // We'll need to shift arguments to the left because of contentType
+    // and size being optional.
+    if (isString(size)) {
+       contentType = size
     }
 
     if (typeof stream === 'string' || stream instanceof Buffer) {
@@ -981,6 +996,7 @@ export class Client {
     if (!isFunction(callback)) {
       throw new TypeError('callback should be of type "function"')
     }
+
     if (isNumber(size) && size < 0) {
       throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
     }
@@ -999,7 +1015,7 @@ export class Client {
 
     // This is a Writable stream that can be written to in order to upload
     // to the specified bucket and object automatically.
-    let uploader = new ObjectUploader(this, bucketName, objectName, size, callback)
+    let uploader = new ObjectUploader(this, bucketName, objectName, size, contentType, callback)
 
     // stream => chunker => uploader
     stream.pipe(chunker).pipe(uploader)

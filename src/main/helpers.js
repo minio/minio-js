@@ -15,6 +15,8 @@
  */
 
 import stream from 'stream'
+import mime from 'mime-types'
+
 import _ from 'lodash'
 
 // All characters in string which are NOT unreserved should be percent encoded.
@@ -27,16 +29,16 @@ export function uriEscape(string) {
       // length 1 indicates that elem is not a unicode character.
       // Check if it is an unreserved characer.
       if ('A' <= elem && elem <= 'Z' ||
-	  'a' <= elem && elem <= 'z' ||
-	  '0' <= elem && elem <= '9' ||
-	  elem === '_' ||
-	  elem === '.' ||
-	  elem === '~' ||
-	  elem === '-')
+          'a' <= elem && elem <= 'z' ||
+          '0' <= elem && elem <= '9' ||
+          elem === '_' ||
+          elem === '.' ||
+          elem === '~' ||
+          elem === '-')
       {
-	// Unreserved characer should not be encoded.
-	acc = acc + elem
-	return acc
+        // Unreserved characer should not be encoded.
+        acc = acc + elem
+        return acc
       }
     }
     // elem needs encoding - i.e elem should be encoded if it's not unreserved
@@ -123,6 +125,17 @@ export function isValidDomain(host) {
   // No need to regexp match, since the list is non-exhaustive.
   // We let it be valid and fail later.
   return true
+}
+
+// Probes contentType using file extensions.
+// For example: probeContentType('file.png') returns 'image/png'.
+export function probeContentType(path) {
+  if (!mime.lookup(path)) {
+    contentType = 'application/octet-stream'
+  } else {
+    contentType = mime.lookup(filePath)
+  }
+  return contentType
 }
 
 // isValidPort - is input port valid.
