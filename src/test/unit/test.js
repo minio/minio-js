@@ -695,7 +695,7 @@ describe('Client', function() {
           s._read = function() {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', s, 11, '', done)
+          client.putObject('bucket', 'object', s, 11, 'text/plain', done)
         })
         it('should pass error to callback', (done) => {
           MockResponse('http://localhost:9000').put('/bucket/object', 'hello world').reply(400, generateError('code', 'message', 'requestid', 'hostid', 'resource'))

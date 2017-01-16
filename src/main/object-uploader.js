@@ -20,8 +20,7 @@ import * as querystring from 'querystring'
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
-
-  constructor(client, bucketName, objectName, partSize, callback) {
+  constructor(client, bucketName, objectName, partSize, contentType, callback) {
     super()
 
     this.client = client
@@ -29,6 +28,10 @@ export default class ObjectUploader extends Transform {
     this.objectName = objectName
     // The size of each multipart, chunked by BlockStream2.
     this.partSize = partSize
+
+    // This contentType for the object.
+    this.contentType = contentType
+
     // Call like: callback(error, etag).
     this.callback = callback
 
@@ -43,9 +46,6 @@ export default class ObjectUploader extends Transform {
     // Keep track of the etags for aggregating the chunks together later. Each
     // etag represents a single chunk of the file.
     this.etags = []
-
-    // Don't bother with the content-type, default to octet stream for simplicity.
-    this.contentType = 'application/octet-stream'
 
     // This is for the multipart upload request — if null, we're either not initiated
     // yet or we're flushing in one packet.
