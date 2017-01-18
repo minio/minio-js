@@ -384,11 +384,12 @@ export class Client {
         this.logHTTP(reqOptions, response)
         cb(null, response)
       })
-      pipesetup(stream, req)
-        .on('error', e => {
+      let pipe = pipesetup(stream, req)
+      pipe.on('error', e => {
           this.logHTTP(reqOptions, null, e)
           cb(e)
         })
+      req.once('finish', () => pipe.removeAllListeners('error'));
     }
     if (region) return _makeRequest(null, region)
     this.getBucketRegion(options.bucketName, _makeRequest)
