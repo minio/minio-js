@@ -975,8 +975,10 @@ export class Client {
     // We'll need to shift arguments to the left because of size and contentType.
     if (isFunction(size)) {
       callback = size
+      contentType = ''
     } else if (isFunction(contentType)) {
       callback = contentType
+      contentType = ''
     }
 
     // We'll need to shift arguments to the left because of contentType
