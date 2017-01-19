@@ -112,8 +112,7 @@ export class Client {
     // User agent block ends.
 
     // enable connection reuse and pooling
-    transport.globalAgent.keepAlive = true
-
+    this.agent = new http.Agent({ keepAlive: true })
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -198,7 +197,7 @@ export class Client {
       // have all header keys in lower case - to make signing easy
       _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
-
+    reqOptions.agent = this.agent
     return reqOptions
   }
 
