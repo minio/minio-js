@@ -80,14 +80,14 @@ export class Client {
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
     if (params.secure === false) {
-      transport = new Http.Agent({ keepAlive: true })
+      transport = Http
       protocol = 'http:'
       if (port === 0) {
         port = 80
       }
     } else {
       // Defaults to secure.
-      transport = new Https.Agent({ keepAlive: true })
+      transport = Https
       protocol = 'https:'
       if (port === 0) {
         port = 443
@@ -111,6 +111,7 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
+    this.agent = new transport.Agent({ keepAlive: true });
     this.transport = transport
     this.host = host
     this.port = port
@@ -195,6 +196,9 @@ export class Client {
       // have all header keys in lower case - to make signing easy
       _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
+
+    // Use the Minio agent with keep-alive
+    reqOptions.agent = this.agent;
 
     return reqOptions
   }
