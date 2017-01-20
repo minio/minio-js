@@ -80,14 +80,14 @@ export class Client {
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
     if (params.secure === false) {
-      transport = Http
+      transport = new Http.Agent({ keepAlive: true })
       protocol = 'http:'
       if (port === 0) {
         port = 80
       }
     } else {
       // Defaults to secure.
-      transport = Https
+      transport = new Https.Agent({ keepAlive: true })
       protocol = 'https:'
       if (port === 0) {
         port = 443
@@ -111,9 +111,7 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    // enable connection reuse and pooling
-    this.agent = new transport.Agent({ keepAlive: true })
-
+    this.transport = transport
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -365,7 +363,7 @@ export class Client {
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
         reqOptions.headers.authorization = authorization
       }
-      var req = this.agent.request(reqOptions, response => {
+      var req = this.transport.request(reqOptions, response => {
         if (statusCode !== response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
