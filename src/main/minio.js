@@ -112,7 +112,7 @@ export class Client {
     // User agent block ends.
 
     // enable connection reuse and pooling
-    transport.globalAgent.keepAlive = true
+    this.agent = new transport.Agent({ keepAlive: true })
 
     this.host = host
     this.port = port
@@ -123,7 +123,6 @@ export class Client {
     if (!this.accessKey) this.accessKey = ''
     if (!this.secretKey) this.secretKey = ''
     this.anonymous = !this.accessKey || !this.secretKey
-    this.transport = transport
     this.regionMap = {}
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
@@ -366,7 +365,7 @@ export class Client {
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
         reqOptions.headers.authorization = authorization
       }
-      var req = this.transport.request(reqOptions, response => {
+      var req = this.agent.request(reqOptions, response => {
         if (statusCode !== response.statusCode) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
