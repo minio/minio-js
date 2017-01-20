@@ -111,9 +111,8 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    // enable connection reuse and pooling
-    transport.globalAgent.keepAlive = true
-
+    this.agent = new transport.Agent({ keepAlive: true });
+    this.transport = transport
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -123,7 +122,6 @@ export class Client {
     if (!this.accessKey) this.accessKey = ''
     if (!this.secretKey) this.secretKey = ''
     this.anonymous = !this.accessKey || !this.secretKey
-    this.transport = transport
     this.regionMap = {}
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
@@ -198,6 +196,9 @@ export class Client {
       // have all header keys in lower case - to make signing easy
       _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
+
+    // Use the Minio agent with keep-alive
+    reqOptions.agent = this.agent;
 
     return reqOptions
   }
