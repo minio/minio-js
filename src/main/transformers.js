@@ -100,7 +100,7 @@ export function getErrorTransformer(response) {
   headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
 
   return getConcater(xmlString => {
-    if (!xmlString) {
+    let getError = () => {
       // Message should be instantiated for each S3Errors.
       var e = new errors.S3Error(message)
       // S3 Error code.
@@ -110,7 +110,16 @@ export function getErrorTransformer(response) {
       })
       return e
     }
-    return xmlParsers.parseError(xmlString, headerInfo)
+    if (!xmlString) {
+      return getError()
+    }
+    let e
+    try {
+      e = xmlParsers.parseError(xmlString, headerInfo)
+    } catch (ex) {
+      return getError()
+    }
+    return e
   }, true)
 }
 
