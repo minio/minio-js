@@ -130,10 +130,9 @@ export function isValidDomain(host) {
 // Probes contentType using file extensions.
 // For example: probeContentType('file.png') returns 'image/png'.
 export function probeContentType(path) {
-  if (!mime.lookup(path)) {
+  let contentType = mime.lookup(path)
+  if (!contentType) {
     contentType = 'application/octet-stream'
-  } else {
-    contentType = mime.lookup(filePath)
   }
   return contentType
 }
