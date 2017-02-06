@@ -73,7 +73,7 @@ export class Client {
       throw new errors.InvalidArgumentError(`secure option is of invalid type should be of type boolean true/false`)
     }
 
-    var host = params.endPoint
+    var host = params.endPoint.toLowerCase()
     var port = params.port;
     var protocol = ''
     var transport;
