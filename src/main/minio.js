@@ -2036,16 +2036,11 @@ export class PostPolicy {
   }
 
   // set expiration date
-  setExpires(nativedate) {
-    if (!nativedate) {
+  setExpires(date) {
+    if (!date) {
       throw new errrors.InvalidDateError('Invalid date : cannot be null')
     }
-    var date = Moment(nativedate)
-
-    function getExpirationString(date) {
-      return date.format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
-    }
-    this.policy.expiration = getExpirationString(date)
+    this.policy.expiration = date.toISOString()
   }
 
   // set object name
