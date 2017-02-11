@@ -73,6 +73,13 @@ export class Client {
       throw new errors.InvalidArgumentError(`secure option is of invalid type should be of type boolean true/false`)
     }
 
+    // Validate region only if its set.
+    if (params.region) {
+      if (!isString(params.region)) {
+        throw new errors.InvalidArgumentError(`region ${params.region} is invalid`)
+      }
+    }
+
     var host = params.endPoint.toLowerCase()
     var port = params.port;
     var protocol = ''
@@ -119,10 +126,16 @@ export class Client {
     this.accessKey = params.accessKey
     this.secretKey = params.secretKey
     this.userAgent = `${libraryAgent}`
+
     if (!this.accessKey) this.accessKey = ''
     if (!this.secretKey) this.secretKey = ''
     this.anonymous = !this.accessKey || !this.secretKey
+
     this.regionMap = {}
+    if (params.region) {
+        this.region = params.region
+    }
+
     this.minimumPartSize = 5*1024*1024
     this.maximumPartSize = 5*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
@@ -404,6 +417,10 @@ export class Client {
     if (!isFunction(cb)) {
       throw new TypeError('cb should be of type "function"')
     }
+
+    // Region is set with constructor, return the region right here.
+    if (this.region) return cb(null, this.region)
+
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
     var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
@@ -469,6 +486,14 @@ export class Client {
     }
 
     var payload = ''
+
+    // Region already set in constructor, validate if
+    // caller requested bucket location is same.
+    if (region && this.region) {
+      if (region !== this.region) {
+        throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
+      }
+    }
 
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
