@@ -68,7 +68,7 @@ __Parameters__
 | `accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
 |`secure`    | _bool_    |If set to true, https is used instead of http. Default is https if not set. |
-
+|`region`    | _string_  |Set this value to override auto bucket region discovery. (Optional)|
 
 
 __Example__
@@ -131,8 +131,6 @@ __Parameters__
 | | |sa-east-1|
 | | |cn-north-1|
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
-
-
 
 
 __Example__

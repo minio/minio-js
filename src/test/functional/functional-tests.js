@@ -32,11 +32,29 @@ require('source-map-support').install()
 
 describe('functional tests', function() {
   this.timeout(30*60*1000)
-  var client = new Client({
-    endPoint: 's3.amazonaws.com',
-    accessKey: process.env['ACCESS_KEY'],
-    secretKey: process.env['SECRET_KEY']
-  })
+  var playConfig = {
+    endPoint: 'play.minio.io',
+    accessKey: 'Q3AM3UQ867SPQQA43P2F',
+    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
+  }
+  if (process.env['S3_ENDPOINT']) {
+    playConfig.endPoint = process.env['S3_ENDPOINT']
+  }
+  if (process.env['ACCESS_KEY']) {
+    playConfig.accessKey = process.env['ACCESS_KEY']
+  }
+  if (process.env['SECRET_KEY']) {
+    playConfig.secretKey = process.env['SECRET_KEY']
+  }
+  if (playConfig.endPoint === 'play.minio.io') {
+      playConfig.port = 9000
+  }
+
+  var client = new Client(playConfig)
+  var usEastConfig = playConfig
+  usEastConfig.region = 'us-east-1'
+  var clientUsEastRegion = new Client(usEastConfig)
+
   var bucketName = 'miniojs-bucket2'
   var objectName = 'miniojsobject'
 
@@ -98,19 +116,40 @@ describe('functional tests', function() {
     })
   }
 
-  describe('makeBucket with period', () => {
-    it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
-                                                                                     'eu-central-1', done))
-    it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
+  describe('makeBucket with period and region', () => {
+    if (playConfig.endPoint !== 'play.minio.io') {
+      it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
+                                                                                       'eu-central-1', done))
+      it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
+    }
   })
 
   describe('listBuckets', () => {
     it('should list bucket', done => {
       client.listBuckets((e, buckets) => {
         if (e) return done(e)
-        if(_.find(buckets, {name : bucketName})) return done()
+        if (_.find(buckets, {name : bucketName})) return done()
         done(new Error('bucket not found'))
       })
+    })
+  })
+
+  describe('makeBucket with region', () => {
+    it('should fail', done => {
+      try {
+        clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-2')
+      } catch(e) {
+        done()
+      }
+    })
+  })
+
+  describe('makeBucket with region', () => {
+    it('should succeed', done => {
+      clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-1', done)
+    })
+    it('should delete bucket', done => {
+      clientUsEastRegion.removeBucket(`${bucketName}.region`, done)
     })
   })
 
@@ -375,7 +414,7 @@ describe('functional tests', function() {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'PUT'
         options.headers = {
           'content-length' : _1byte.length
@@ -397,7 +436,7 @@ describe('functional tests', function() {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if(e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'GET'
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
@@ -428,7 +467,7 @@ describe('functional tests', function() {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
-        var options = _.pick(url.parse(presignedUrl), ['host', 'path', 'protocol'])
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'GET'
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
