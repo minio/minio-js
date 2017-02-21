@@ -11,7 +11,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 
 ## Download from NPM
 
-```sh
+```
 
 npm install --save minio@3.1.1
 
@@ -19,7 +19,7 @@ npm install --save minio@3.1.1
 
 ## Download from Source
 
-```sh
+```
 
 git clone https://github.com/minio/minio-js
 cd minio-js
@@ -115,7 +115,7 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
 
 #### Run file-uploader
 
-```sh
+```
 
 node file-uploader.js
 Bucket created successfully in "us-east-1".
