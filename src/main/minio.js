@@ -725,11 +725,8 @@ export class Client {
       cb => this.statObject(bucketName, objectName, cb),
       (result, cb) => {
         objStat = result
-        var dir = path.dirname(filePath)
-        // If file is in current directory skip.
-        if (dir === '.') return cb()
         // Create any missing top level directories.
-        mkdirp(dir, cb)
+        mkdirp(path.dirname(filePath), cb)
       },
       (ignore, cb) => {
         partFile = `${filePath}.${objStat.etag}.part.minio`
