@@ -1683,7 +1683,7 @@ export class Client {
     }
 
     var method = 'POST'
-    var query = `uploadId=${uploadId}`
+    var query = `uploadId=${uriEscape(uploadId)}`
 
     var parts = []
 
@@ -1772,7 +1772,7 @@ export class Client {
     if (marker && marker !== 0) {
       query += `part-number-marker=${marker}&`
     }
-    query += `uploadId=${uploadId}`
+    query += `uploadId=${uriEscape(uploadId)}`
 
     var method = 'GET'
     this.makeRequest({method, bucketName, objectName, query}, '', 200, '', (e, response) => {
@@ -1924,7 +1924,7 @@ export class Client {
         throw new errors.InvalidArgumentError('partNumber cannot be 0')
       }
       validate(...rest)
-      var query = `partNumber=${partNumber}&uploadId=${uploadId}`
+      var query = `partNumber=${partNumber}&uploadId=${uriEscape(uploadId)}`
       upload(query, ...rest)
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
