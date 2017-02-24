@@ -1,6 +1,6 @@
 {
   "name": "minio",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "S3 Compatible Cloud Storage client",
   "main": "./dist/main/minio.js",
   "scripts": {

@@ -13,7 +13,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 
 ```sh
 
-npm install --save minio@3.1.1
+npm install --save minio@3.1.2
 
 ```
 
