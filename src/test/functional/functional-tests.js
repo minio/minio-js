@@ -510,7 +510,7 @@ describe('functional tests', function() {
         if (e) return done(e)
         var req = superagent.post(`${urlStr}`)
         _.each(formData, (value, key) => req.field(key, value))
-        req.field('file', _1byte)
+	req.attach('file', new Buffer([_1byte]), 'test')
         req.end(function(e, response) {
           if (e) return done(e)
           done()
@@ -554,6 +554,7 @@ describe('functional tests', function() {
     })
 
     it('should list objects using v2 api', done => {
+      listArray = []
       client.listObjectsV2(bucketName, '', true)
         .on('error', done)
         .on('end', () => {
