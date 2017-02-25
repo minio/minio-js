@@ -6,7 +6,8 @@
   "scripts": {
     "compile": "gulp compile",
     "test": "gulp test",
-    "prepublish": "gulp test"
+    "prepublish": "gulp test",
+    "functional": "gulp functional-test"
   },
   "repository": {
     "type": "git",
