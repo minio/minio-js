@@ -12,7 +12,7 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 ## Download from NPM
 
 ```sh
-npm install --save minio@3.1.2
+npm install --save minio@3.1.3
 ```
 
 ## Download from Source
