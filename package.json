@@ -37,7 +37,7 @@
     "mime-types": "^2.1.14",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.3",
-    "source-map-support": "^0.2.10",
+    "source-map-support": "^0.4.12",
     "through2": "^0.6.5",
     "xml": "^1.0.0",
     "xml2js": "^0.4.15"
