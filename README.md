@@ -12,21 +12,16 @@ This document assumes that you have a working [nodejs](http://nodejs.org/) setup
 ## Download from NPM
 
 ```sh
-
 npm install --save minio@3.1.2
-
 ```
 
 ## Download from Source
 
 ```sh
-
 git clone https://github.com/minio/minio-js
 cd minio-js
 npm install
 npm install -g
-
-
 ```
 
 ## Initialize Minio Client
@@ -44,7 +39,6 @@ You need five items in order to connect to Minio object storage server.
 
 
 ```js
-
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
@@ -54,13 +48,11 @@ var minioClient = new Minio.Client({
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
-
 ```
 
 If you are using minio-js version [2X](https://github.com/minio/minio-js/tree/release-2.0), Initialize Minio Client as below.
 
 ```js
-
 var Minio = require('minio')
 
 var minioClient = new Minio({
@@ -70,7 +62,6 @@ var minioClient = new Minio({
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
-
 ```
 
 ## Quick Start Example - File Uploader
@@ -82,7 +73,6 @@ We will use the Minio server running at [https://play.minio.io:9000](https://pla
 #### file-uploader.js
 
 ```js
-
 var Minio = require('minio')
 
 // Instantiate the minio client with the endpoint
@@ -110,19 +100,16 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
       console.log('File uploaded successfully.')
     });
 });
-
 ```
 
 #### Run file-uploader
 
 ```sh
-
 node file-uploader.js
 Bucket created successfully in "us-east-1".
 
 mc ls play/europetrip/
 [2016-05-25 23:49:50 PDT]  17MiB photos-europe.tar
-
 ```
 
 ## API Reference
