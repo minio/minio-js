@@ -59,21 +59,17 @@ __Parameters__
 
 | Param  | Type  | Description  |
 |---|---|---|
-| `endPoint`  |  _string_ | endPoint is an URL, domain name, IPv4 address or IPv6 address.Valid endpoints are listed below: |
-| | |https://s3.amazonaws.com |
-| | |https://play.minio.io:9000 |
-| | |localhost |
-| | |play.minio.io|
+| `endPoint`  |  _string_ | endPoint is a host name or an IP address. |
 | `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
 | `accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
-|`secure`    | _bool_    |If set to true, https is used instead of http. Default is https if not set. |
+|`secure`    | _bool_    |If set to true, https is used instead of http. Default is true. |
 |`region`    | _string_  |Set this value to override auto bucket region discovery. (Optional)|
 
 
 __Example__
 
-## Minio
+## Create client for Minio
 
 ```js
 
@@ -89,7 +85,7 @@ var minioClient = new Minio.Client({
 
 ```
 
-## AWS S3
+## Create client for AWS S3
 
 
 ```js
