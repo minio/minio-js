@@ -5,7 +5,6 @@
 ## Minio
 
 ```js
-
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
@@ -15,13 +14,11 @@ var minioClient = new Minio.Client({
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
-
 ```
 
 ## AWS S3
 
 ```js
-
 var Minio = require('minio')
 
 var s3Client = new Minio.Client({
@@ -29,7 +26,6 @@ var s3Client = new Minio.Client({
 	accessKey: 'YOUR-ACCESSKEYID',
 	secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
 ```
 | Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
 | ------------- |-------------| -----| ----- |
@@ -72,7 +68,6 @@ __Example__
 ## Create client for Minio
 
 ```js
-
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
@@ -82,15 +77,12 @@ var minioClient = new Minio.Client({
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
-
 ```
 
 ## Create client for AWS S3
 
 
 ```js
-
-
 var Minio = require('minio')
 
 var s3Client = new Minio.Client({
@@ -98,8 +90,6 @@ var s3Client = new Minio.Client({
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
-
-
 ```
 
 
@@ -133,12 +123,10 @@ __Example__
 
 
 ```js
-
 minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
   if (err) return console.log('Error creating bucket.', err)
   console.log('Bucket created successfully in "us-east-1".')
 })
-
 ```
 
 <a name="listBuckets"></a>
@@ -167,12 +155,10 @@ __Example__
 
 
 ```js
-
 minioClient.listBuckets(function(err, buckets) {
   if (err) return console.log(err)
   console.log('buckets :', buckets)
 })
-
 ```
 
 <a name="bucketExists"></a>
@@ -193,8 +179,6 @@ __Example__
 
 
 ```js
-
-
 minioClient.bucketExists('mybucket', function(err) {
   if (err) {
      if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
@@ -203,7 +187,6 @@ minioClient.bucketExists('mybucket', function(err) {
   // if err is null it indicates that the bucket exists.
   console.log('Bucket exists.')
 })
-
 ```
 
 <a name="removeBucket"></a>
@@ -223,13 +206,10 @@ __Example__
 
 
 ```js
-
 minioClient.removeBucket('mybucket', function(err) {
   if (err) return console.log('unable to remove bucket.')
   console.log('Bucket removed successfully.')
 })
-
-
 ```
 
 <a name="listObjects"></a>
@@ -267,11 +247,9 @@ __Example__
 
 
 ```js
-
 var stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
-
 ```
 
 <a name="listObjectsV2"></a>
@@ -309,11 +287,9 @@ __Example__
 
 
 ```js
-
 var stream = minioClient.listObjectsV2('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
-
 ```
 
 
@@ -349,7 +325,6 @@ __Example__
 
 
 ```js
-
 var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function(obj) {
   console.log(obj)
@@ -360,7 +335,6 @@ Stream.on('end', function() {
 Stream.on('error', function(err) {
   console.log(err)
 })
-
 ```
 
 ## 3.  Object operations
@@ -383,7 +357,6 @@ __Example__
 
 
 ```js
-
 var size = 0
 minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
   if (err) {
@@ -399,7 +372,6 @@ minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
     console.log(err)
   })
 })
-
 ```
 <a name="getPartialObject"></a>
 ### getPartialObject(bucketName, objectName, offset, length, callback)
@@ -421,7 +393,6 @@ __Example__
 
 
 ```js
-
 var size = 0
 // reads 30 bytes from the offset 10.
 minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, dataStream) {
@@ -438,7 +409,6 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, data
     console.log(err)
   })
 })
-
 ```
 
 <a name="fGetObject"></a>
@@ -460,7 +430,6 @@ __Example__
 
 
 ```js
-
 var size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) {
   if (err) {
@@ -468,7 +437,6 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
   }
   console.log('success')
 })
-
 ```
 <a name="putObject"></a>
 ### putObject(bucketName, objectName, stream, size, contentType, callback)
@@ -496,7 +464,6 @@ __Example__
 The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-
 var Fs = require('fs')
 var file = '/tmp/40mbfile'
 var fileStream = Fs.createReadStream(file)
@@ -508,7 +475,6 @@ var fileStat = Fs.stat(file, function(err, stats) {
     return console.log(err, etag) // err should be null
   })
 })
-
 ```
 
 ##### From a "Buffer" or a "string"
@@ -529,12 +495,10 @@ __Example__
 
 
 ```js
-
 var buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
-
 ```
 <a name="fPutObject"></a>
 ### fPutObject(bucketName, objectName, filePath, contentType, callback)
@@ -558,12 +522,10 @@ __Example__
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-
 var file = '/tmp/40mbfile'
 minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
   return console.log(err, etag) // err should be null
 })
-
 ```
 
 <a name="copyObject"></a>
@@ -585,7 +547,6 @@ __Parameters__
 __Example__
 
 ```js
-
 var conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function(e, data) {
@@ -595,7 +556,6 @@ minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, fu
   console.log("Successfully copied the object:")
   console.log("etag = " + data.etag + ", lastModified = " + data.lastModified)
 })
-
 ```
 
 
@@ -627,14 +587,12 @@ __Example__
 
 
 ```js
-
 minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
   if (err) {
     return console.log(err)
   }
   console.log(stat)
 })
-
 ```
 
 <a name="removeObject"></a>
@@ -656,14 +614,12 @@ __Example__
 
 
 ```js
-
 minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   if (err) {
     return console.log('Unable to remove object', err)
   }
   console.log('Removed the object')
 })
-
 ```
 
 <a name="removeIncompleteUpload"></a>
@@ -685,14 +641,12 @@ __Example__
 
 
 ```js
-
 minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
   if (err) {
     return console.log('Unable to remove incomplete object', err)
   }
   console.log('Incomplete object removed successfully.')
 })
-
 ```
 
 ## 4. Presigned operations
@@ -721,13 +675,11 @@ __Example__
 
 
 ```js
-
 // expires in a day.
 minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, presignedUrl) {
   if (err) return console.log(err)
   console.log(presignedUrl)
 })
-
 ```
 
 <a name="presignedPutObject"></a>
@@ -751,13 +703,11 @@ __Example__
 
 
 ```js
-
 // expires in a day.
 minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, presignedUrl) {
   if (err) return console.log(err)
   console.log(presignedUrl)
 })
-
 ```
 
 <a name="presignedPostPolicy"></a>
@@ -778,26 +728,21 @@ Create policy:
 
 
 ```js
-
 var policy = minioClient.newPostPolicy()
-
 ```
 
 Apply upload policy restrictions:
 
 ```js
-
 // Policy restricted only for bucket 'mybucket'.
 policy.setBucket('mybucket')
 
 // Policy restricted only for hello.txt object.
 policy.setKey('hello.txt')
-
 ```
 or
 
 ```js
-
 // Policy restricted for incoming objects with keyPrefix.
 policy.setKeyStartsWith('keyPrefix')
 
@@ -811,14 +756,12 @@ policy.setContentType('text/plain')
 
 // Only allow content size in range 1KB to 1MB.
 policy.setContentLengthRange(1024, 1024*1024)
-
 ```
 
 POST your content from the browser using `superagent`:
 
 
 ```js
-
 minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
   if (err) return console.log(err)
 
@@ -837,7 +780,6 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
     console.log('Upload successful.')
   })
 })
-
 ```
 
 ## 5. Bucket Policy & Notification operations
@@ -863,12 +805,10 @@ __Example__
 
 
 ```js
-
 minioClient.getBucketNotification('mybucket', function(err, bucketNotificationConfig) {
   if (err) return console.log(err)
   console.log(bucketNotificationConfig)
 })
-
 ```
 
 <a name="setBucketNotification"></a>
@@ -890,7 +830,6 @@ __Parameters__
 __Example__
 
 ```js
-
 // Create a new notification object
 var bucketNotification = new Notify.BucketNotification();
 
@@ -909,7 +848,6 @@ minioClient.setBucketNotification('mybucket', bucketNotification, function(err) 
   if (err) return console.log(err)
   console.log('Success')
 })
-
 ```
 
 <a name="removeAllBucketNotification"></a>
