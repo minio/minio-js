@@ -2060,7 +2060,7 @@ export class PostPolicy {
   // set expiration date
   setExpires(date) {
     if (!date) {
-      throw new errrors.InvalidDateError('Invalid date : cannot be null')
+      throw new errors.InvalidDateError('Invalid date : cannot be null')
     }
     this.policy.expiration = date.toISOString()
   }
