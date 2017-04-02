@@ -64,19 +64,19 @@ export class Client {
     if (!params.port) params.port = 0
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
-      throw new errors.InvalidEndpointError(`endPoint ${params.endPoint} is invalid`)
+      throw new errors.InvalidEndpointError(`Invalid endPoint : ${params.endPoint}`)
     }
     if (!isValidPort(params.port)) {
-      throw new errors.InvalidArgumentError(`port ${params.port} is invalid`)
+      throw new errors.InvalidArgumentError(`Invalid port : ${params.port}`)
     }
     if (!isBoolean(params.secure)) {
-      throw new errors.InvalidArgumentError(`secure option is of invalid type should be of type boolean true/false`)
+      throw new errors.InvalidArgumentError(`Invalid secure flag type : ${params.secure}, expected to be of type "boolean"`)
     }
 
     // Validate region only if its set.
     if (params.region) {
       if (!isString(params.region)) {
-        throw new errors.InvalidArgumentError(`region ${params.region} is invalid`)
+        throw new errors.InvalidArgumentError(`Invalid region : ${params.region}`)
       }
     }
 
@@ -104,7 +104,7 @@ export class Client {
     // if custom transport is set, use it.
     if (params.transport) {
       if (!isObject(params.transport)) {
-        throw new errors.InvalidArgumentError('transport should be of type "object"')
+        throw new errors.InvalidArgumentError('Invalid transport type : ${params.transport}, expected to be type "object"')
       }
       transport = params.transport
     }
@@ -2077,7 +2077,7 @@ export class PostPolicy {
   // set object name prefix, i.e policy allows any keys with this prefix
   setKeyStartsWith(prefix) {
     if (!isValidPrefix(prefix)) {
-      throw new errors.InvalidPrefixError(`invalid prefix : ${prefix}`)
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
     }
     this.policy.conditions.push(['starts-with', '$key', prefix])
     this.formData.key = prefix

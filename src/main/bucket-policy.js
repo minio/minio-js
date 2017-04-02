@@ -100,7 +100,7 @@ export function generateBucketPolicy(policy, bucketName, objectPrefix) {
     throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
   }
   if (!isValidBucketPolicy(policy)) {
-      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${bucketPolicy}` +
+      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy}` +
                                                 `(must be 'none', 'readonly', 'writeonly', or 'readwrite')`)
   }
 
