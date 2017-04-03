@@ -589,7 +589,7 @@ export class Client {
       }
       if (ended) return readStream.push(null)
       this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
-        .on('error', e => dummyTransformer.emit('error', e))
+        .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           result.prefixes.forEach(prefix => uploads.push(prefix))
           async.eachSeries(result.uploads, (upload, cb) => {
