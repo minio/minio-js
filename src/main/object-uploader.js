@@ -15,7 +15,7 @@
  */
 
 import { Transform } from 'stream'
-import { Hash } from 'crypto'
+import Crypto from 'crypto'
 import * as querystring from 'querystring'
 
 // We extend Transform because Writable does not implement ._flush().
@@ -58,8 +58,8 @@ export default class ObjectUploader extends Transform {
   }
 
   _transform(chunk, encoding, callback) {
-    // Calculate the md5 sum.
-    let md5 = new Hash('md5')
+    // Calculate the md5sum.
+    let md5 = Crypto.createHash('md5')
     md5.update(chunk)
     let md5sum = md5.digest()
 
