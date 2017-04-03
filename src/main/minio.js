@@ -34,7 +34,7 @@ import _ from 'lodash'
 import { isValidPrefix, isValidEndpoint, isValidBucketName,
          isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-         isString, isObject, isArray, pipesetup,
+         isString, isObject, isDate, isArray, pipesetup,
          readableStream, isReadableStream, isVirtualHostStyle,
          probeContentType } from './helpers.js';
 
