@@ -7,7 +7,8 @@
     "compile": "gulp compile",
     "test": "gulp test",
     "prepublish": "gulp test",
-    "functional": "gulp functional-test"
+    "functional": "gulp functional-test",
+    "browserify": "gulp browserify"
   },
   "repository": {
     "type": "git",

@@ -279,7 +279,7 @@ export class Client {
         this.logStream.write(`${k}: ${v}\n`)
       })
       this.logStream.write('\n')
-    }.bind(this)
+    }
     this.logStream.write(`REQUEST: ${reqOptions.method} ${reqOptions.path}\n`)
     logHeaders(reqOptions.headers)
     if (response) {
