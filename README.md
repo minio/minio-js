@@ -125,7 +125,7 @@ The full API Reference is available here.
 * [`putObject`](https://docs.minio.io/docs/javascript-client-api-reference#putObject)
 * [`copyObject`](https://docs.minio.io/docs/javascript-client-api-reference#copyObject)
 * [`statObject`](https://docs.minio.io/docs/javascript-client-api-reference#statObject)
-* [`removeObject`](https://docs.minio.io/docs/javascript-client-api-reference#removeObjec)
+* [`removeObject`](https://docs.minio.io/docs/javascript-client-api-reference#removeObject)
 * [`removeIncompleteUpload`](https://docs.minio.io/docs/javascript-client-api-reference#removeIncompleteUpload)
 
 ### API Reference : Presigned Operations
