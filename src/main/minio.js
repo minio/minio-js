@@ -403,7 +403,6 @@ export class Client {
           this.logHTTP(reqOptions, null, e)
           cb(e)
         })
-      req.once('finish', () => pipe.removeAllListeners('error'));
     }
     if (region) return _makeRequest(null, region)
     this.getBucketRegion(options.bucketName, _makeRequest)
