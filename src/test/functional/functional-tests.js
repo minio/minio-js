@@ -32,26 +32,25 @@ require('source-map-support').install()
 
 describe('functional tests', function() {
   this.timeout(30*60*1000)
-  var playConfig = {
-    endPoint: 'play.minio.io',
-    accessKey: 'Q3AM3UQ867SPQQA43P2F',
-    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
-  }
-  if (process.env['S3_ENDPOINT']) {
-    playConfig.endPoint = process.env['S3_ENDPOINT']
-  }
-  if (process.env['ACCESS_KEY']) {
-    playConfig.accessKey = process.env['ACCESS_KEY']
-  }
-  if (process.env['SECRET_KEY']) {
-    playConfig.secretKey = process.env['SECRET_KEY']
-  }
-  if (playConfig.endPoint === 'play.minio.io') {
-      playConfig.port = 9000
+  var minioConfig = {}
+  minioConfig.endPoint = process.env['MINIO_TEST_ENDPOINT']
+  minioConfig.accessKey = process.env['MINIO_TEST_ACCESS_KEY']
+  minioConfig.secretKey = process.env['MINIO_TEST_SECRET_KEY']
+  minioConfig.port = parseInt(process.env['MINIO_TEST_PORT'])
+  minioConfig.secure = process.env['MINIO_TEST_ENABLE_HTTPS'] ? true : false
+
+  if (!minioConfig.endPoint) {
+    minioConfig = {
+      endPoint: 'play.minio.io',
+      accessKey: 'Q3AM3UQ867SPQQA43P2F',
+      secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
+      port: 9000,
+      secure: true
+    }
   }
 
-  var client = new Client(playConfig)
-  var usEastConfig = playConfig
+  var client = new Client(minioConfig)
+  var usEastConfig = minioConfig
   usEastConfig.region = 'us-east-1'
   var clientUsEastRegion = new Client(usEastConfig)
 
@@ -117,7 +116,7 @@ describe('functional tests', function() {
   }
 
   describe('makeBucket with period and region', () => {
-    if (playConfig.endPoint === 's3.amazonaws.com') {
+    if (minioConfig.endPoint === 's3.amazonaws.com') {
       it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
                                                                                        'eu-central-1', done))
       it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
