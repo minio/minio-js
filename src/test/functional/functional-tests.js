@@ -117,7 +117,7 @@ describe('functional tests', function() {
   }
 
   describe('makeBucket with period and region', () => {
-    if (playConfig.endPoint !== 'play.minio.io') {
+    if (playConfig.endPoint === 's3.amazonaws.com') {
       it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
                                                                                        'eu-central-1', done))
       it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
