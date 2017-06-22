@@ -86,6 +86,7 @@ gulp.task('functional-test', ['compile'], function() {
       reporter: 'spec',
       ui: 'bdd',
     }))
+    .once('end', function(){process.exit()})
   })
 })
 
