@@ -14,31 +14,31 @@
  * limitations under the License.
  */
 
-import { Client, Policy } from '../main/minio.js'
-import * as Minio from '../main/minio.js'
-import os from 'os'
-import stream from 'stream'
-import crypto from 'crypto'
-import async from 'async'
-import _ from 'lodash'
-import fs from 'fs'
-import http from 'http'
-import https from 'https'
-import url from 'url'
-import { assert } from 'chai'
-import superagent from 'superagent'
+const minio = require('minio');
+const Policy = minio.Policy;
+const Client = minio.Client;
+const os = require('os');
+const stream = require('stream');
+const crypto = require('crypto');
+const async = require('async');
+const _ = require('lodash');
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
+const url = require('url');
+const chai = require('chai');
+const superagent = require('superagent');
+var uuid = require("uuid");
 
 require('source-map-support').install()
 
 describe('functional tests', function() {
-  this.timeout(30*60*1000)
-  var playConfig = {
-    endPoint: 'play.minio.io',
-    accessKey: 'Q3AM3UQ867SPQQA43P2F',
-    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
-  }
-  if (process.env['S3_ENDPOINT']) {
-    playConfig.endPoint = process.env['S3_ENDPOINT']
+  this.timeout(30 * 60 * 1000)
+  var playConfig = {}
+  if (process.env['SERVER_ENDPOINT']) {
+    var res = process.env['SERVER_ENDPOINT'].split(":")
+    playConfig.endPoint = res[0]
+    playConfig.port = parseInt(res[1])
   }
   if (process.env['ACCESS_KEY']) {
     playConfig.accessKey = process.env['ACCESS_KEY']
@@ -46,43 +46,42 @@ describe('functional tests', function() {
   if (process.env['SECRET_KEY']) {
     playConfig.secretKey = process.env['SECRET_KEY']
   }
-  if (playConfig.endPoint === 'play.minio.io') {
-      playConfig.port = 9000
+  if (process.env['ENABLE_HTTPS'] == "1") {
+    playConfig.secure = true
+  } else {
+    playConfig.secure = false
   }
-
-  var client = new Client(playConfig)
+  var dataDir = "/mint/data"
+  if (process.env['DATA_DIR']) {
+    dataDir = process.env['DATA_DIR']
+  }
+  var client = new minio.Client(playConfig)
   var usEastConfig = playConfig
   usEastConfig.region = 'us-east-1'
-  var clientUsEastRegion = new Client(usEastConfig)
+  var clientUsEastRegion = new minio.Client(usEastConfig)
 
-  var bucketName = 'miniojs-bucket2'
-  var objectName = 'miniojsobject'
+  var bucketName = uuid.v4()
+  var objectName = uuid.v4()
 
   var _1byte = new Buffer(1)
   _1byte.fill('a')
   var _1byteObjectName = 'miniojsobject_1byte'
 
-  var _100kb = new Buffer(100*1024)
-  _100kb.fill('a')
+  var _100kb = fs.readFileSync(dataDir + "/datafile-100-kB")
   var _100kbObjectName = 'miniojsobject_100kb'
+  var _100kbObjectNameCopy = _100kbObjectName + '_copy'
+
   var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
   var _100kbObjectStringName = `${_100kbObjectName}.string`
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
 
-  var _11mb = new Buffer(11*1024*1024)
-  _11mb.fill('a')
-  var _11mbObjectName = 'miniojsobject_11mb'
-  var _11mbmd5 = crypto.createHash('md5').update(_11mb).digest('hex')
+  var _6mb = fs.readFileSync(dataDir + "/datafile-6-MB")
+  var _6mbObjectName = 'miniojsobject_6mb'
+  var _6mbmd5 = crypto.createHash('md5').update(_6mb).digest('hex')
 
-  var _11mbObjectNameCopy = _11mbObjectName + '_copy'
+  var _6mbObjectNameCopy = _6mbObjectName + '_copy'
 
-  var _10mb = new Buffer(10*1024*1024)
-  _10mb.fill('a')
-  var _10mbObjectName = 'miniojsobject_10mb'
-  var _10mbmd5 = crypto.createHash('md5').update(_10mb).digest('hex')
-
-  var _5mb = new Buffer(5*1024*1024)
-  _5mb.fill('a')
+  var _5mb = fs.readFileSync(dataDir + "/datafile-5-MB")
   var _5mbObjectName = 'miniojsobject_5mb'
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
@@ -98,7 +97,7 @@ describe('functional tests', function() {
     if (filePath === 'process.stdout') {
       traceStream = process.stdout
     } else {
-      traceStream = fs.createWriteStream(filePath, {flags: 'a'})
+      traceStream = fs.createWriteStream(filePath, { flags: 'a' })
     }
     traceStream.write('====================================\n')
     client.traceOn(traceStream)
@@ -119,7 +118,7 @@ describe('functional tests', function() {
   describe('makeBucket with period and region', () => {
     if (playConfig.endPoint === 's3.amazonaws.com') {
       it('should create bucket in eu-central-1 with period', done => client.makeBucket(`${bucketName}.sec.period`,
-                                                                                       'eu-central-1', done))
+          'eu-central-1', done))
       it('should delete bucket', done => client.removeBucket(`${bucketName}.sec.period`, done))
     }
   })
@@ -128,7 +127,7 @@ describe('functional tests', function() {
     it('should list bucket', done => {
       client.listBuckets((e, buckets) => {
         if (e) return done(e)
-        if (_.find(buckets, {name : bucketName})) return done()
+        if (_.find(buckets, { name: bucketName })) return done()
         done(new Error('bucket not found'))
       })
     })
@@ -138,7 +137,7 @@ describe('functional tests', function() {
     it('should fail', done => {
       try {
         clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-2')
-      } catch(e) {
+      } catch (e) {
         done()
       }
     })
@@ -156,13 +155,22 @@ describe('functional tests', function() {
   describe('bucketExists', () => {
     it('should check if bucket exists', done => client.bucketExists(bucketName, done))
     it('should check if bucket does not exist', done => {
-      client.bucketExists(bucketName+'random', (e) => {
+      client.bucketExists(bucketName + 'random', (e) => {
         if (e.code === 'NoSuchBucket') return done()
         done(new Error())
       })
     })
   })
 
+
+  describe('removeBucket', () => {
+    it('should fail for nonexistent bucket', done => {
+      client.removeBucket("nonexistentbucket", (e) => {
+        if (e.code === 'NoSuchBucket') return done()
+        done(new Error())
+      })
+    })
+  })
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
     it('should upload 100KB stream', done => {
       var stream = readableStream(_100kb)
@@ -216,27 +224,27 @@ describe('functional tests', function() {
       })
     })
 
-    it('should upload 11mb', done => {
-      var stream = readableStream(_11mb)
-      client.putObject(bucketName, _11mbObjectName, stream, _11mb.length, '', done)
+    it('should upload 6mb', done => {
+      var stream = readableStream(_6mb)
+      client.putObject(bucketName, _6mbObjectName, stream, _6mb.length, '', done)
     })
 
-    it('should download 11mb and match content', done => {
+    it('should download 6mb and match content', done => {
       var hash = crypto.createHash('md5')
-      client.getObject(bucketName, _11mbObjectName, (e, stream) => {
+      client.getObject(bucketName, _6mbObjectName, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
         stream.on('end', () => {
-          if (hash.digest('hex') === _11mbmd5) return done()
+          if (hash.digest('hex') === _6mbmd5) return done()
           done(new Error('content mismatch'))
         })
       })
     })
 
-    it('should download partial data (100kb of the 11mb file) and match content', done => {
+    it('should download partial data (100kb of the 6mb file) and match content', done => {
       var hash = crypto.createHash('md5')
-      client.getPartialObject(bucketName, _11mbObjectName, 0, 100*1024, (e, stream) => {
+      client.getPartialObject(bucketName, _6mbObjectName, 0, 100 * 1024, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
@@ -248,67 +256,111 @@ describe('functional tests', function() {
     })
 
     it('should copy object', done => {
-      client.copyObject(bucketName, _11mbObjectNameCopy, "/" + bucketName + "/" + _11mbObjectName, (e, data) => {
+      client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName, (e, data) => {
         if (e) return done(e)
         done()
       })
     })
 
     it('should stat object', done => {
-      client.statObject(bucketName, _11mbObjectName, (e, stat) => {
+      client.statObject(bucketName, _6mbObjectName, (e, stat) => {
         if (e) return done(e)
-        if (stat.size !== _11mb.length) return done(new Error('sise mismatch'))
+        if (stat.size !== _6mb.length) return done(new Error('size mismatch'))
         done()
       })
     })
 
     it('should remove objects created for test', done => {
-      async.map([_100kbObjectName, _100kbObjectBufferName, _100kbObjectStringName, _11mbObjectName, _11mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+      async.map([_100kbObjectName, _100kbObjectBufferName, _100kbObjectStringName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+    })
+
+  })
+
+  describe('tests for copyObject statObject', function() {
+    it('should upload 100KB Buffer with custom content type', done => {
+        client.putObject(bucketName, _100kbObjectName, _100kb, 'custom/content-type', done)
+    })
+
+    it('should copy object with no conditions specified', done => {
+        client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, (e, data) => {
+            if (e) return done(e)
+            done()
+        })
+    })
+
+    it('should stat copied object', done => {
+      client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
+        if (e) return done(e)
+        if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
+        if (stat.contentType !== 'custom/content-type') return done(new Error('content-type mismatch'))
+        done()
+      })
+    })
+    it('should copy object with conditions specified', done => {
+      var conds = new minio.CopyConditions()
+      conds.setMatchETagExcept('bd891862ea3e22c93ed53a098218791d')
+      client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e, data) => {
+        if (e) return done(e)
+        done()
+      })
+    })
+
+    it('should stat copied object', done => {
+      client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
+        if (e) return done(e)
+        if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
+        if (stat.contentType !== 'custom/content-type') return done(new Error('content-type mismatch'))
+        done()
+      })
+    })
+
+    it('should remove objects created for test', done => {
+      async.map([_100kbObjectName, _100kbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
     })
 
   })
 
   describe('listIncompleteUploads removeIncompleteUpload', () => {
     it('should create multipart request', done => {
-      client.initiateNewMultipartUpload(bucketName, _11mbObjectName, 'application/octet-stream', done)
+      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, 'application/octet-stream', done)
     })
     it('should list incomplete upload', done => {
       var found = false
-      client.listIncompleteUploads(bucketName, _11mbObjectName, true)
+      client.listIncompleteUploads(bucketName, _6mbObjectName, true)
         .on('error', e => done(e))
         .on('data', data => {
-          if (data.key === _11mbObjectName) found = true
+            if (data.key === _6mbObjectName) found = true
         })
         .on('end', () => {
           if (found) return done()
-          done(new Error(`${_11mbObjectName} not found during listIncompleteUploads`))
+          done(new Error(`${_6mbObjectName} not found during listIncompleteUploads`))
         })
     })
     it('should delete incomplete upload', done => {
-      client.removeIncompleteUpload(bucketName, _11mbObjectName, done)
+      client.removeIncompleteUpload(bucketName, _6mbObjectName, done)
     })
   })
 
   describe('fPutObject fGetObject', function() {
-    var tmpFileUpload = `${tmpDir}/${_11mbObjectName}`
-    var tmpFileDownload = `${tmpDir}/${_11mbObjectName}.download`
+    var tmpFileUpload = `${tmpDir}/${_6mbObjectName}`
+    var tmpFileDownload = `${tmpDir}/${_6mbObjectName}.download`
 
-    it(`should create ${tmpFileUpload}`, () => fs.writeFileSync(tmpFileUpload, _11mb))
+    it(`should create ${tmpFileUpload}`, () => fs.writeFileSync(tmpFileUpload, _6mb))
 
-    it('should upload object using fPutObject', done => client.fPutObject(bucketName, _11mbObjectName, tmpFileUpload, '', done))
+    it('should upload object using fPutObject', done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, '', done))
 
-    it('should download object using fGetObject', done => client.fGetObject(bucketName, _11mbObjectName, tmpFileDownload, done))
+    it('should download object using fGetObject', done => client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload, done))
 
     it('should verify checksum', done => {
       var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
-      if (md5sum === _11mbmd5) return done()
+      if (md5sum === _6mbmd5) return done()
       return done(new Error('md5sum mismatch'))
     })
 
     it('should remove files and objects created', (done) => {
       fs.unlinkSync(tmpFileUpload)
       fs.unlinkSync(tmpFileDownload)
-      client.removeObject(bucketName, _11mbObjectName, done)
+      client.removeObject(bucketName, _6mbObjectName, done)
     })
   })
 
@@ -316,7 +368,7 @@ describe('functional tests', function() {
     var localFile = `${tmpDir}/${_5mbObjectName}`
     it('should upload object', done => {
       var stream = readableStream(_5mb)
-      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '' , done)
+      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '', done)
     })
     it('should simulate a partially downloaded file', () => {
       var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio-js`
@@ -337,6 +389,7 @@ describe('functional tests', function() {
   })
 
   describe('bucket policy', () => {
+    "use strict;"
     let policies = [Policy.READONLY, Policy.WRITEONLY, Policy.READWRITE]
 
     // Iterate through the basic policies ensuring it can set and check each of them.
@@ -354,10 +407,10 @@ describe('functional tests', function() {
             }
 
             done()
+            })
           })
         })
       })
-    })
 
     it('should set bucket policy only on a prefix', done => {
       // READONLY also works, as long as it can read.
@@ -399,10 +452,9 @@ describe('functional tests', function() {
           if (!err) return done(new Error('getBucketPolicy should error'))
 
           if (!(/does not have a bucket policy/.test(err.message)) &&
-              !(/bucket policy does not exist/.test(err.message))) {
+            !(/bucket policy does not exist/.test(err.message))) {
             return done(new Error(`error message is incorrect (${err.message})`))
           }
-
           done()
         })
       })
@@ -412,12 +464,12 @@ describe('functional tests', function() {
   describe('presigned operations', () => {
     it('should upload using presignedUrl', done => {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-        if(e) return done(e)
+        if (e) return done(e)
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'PUT'
         options.headers = {
-          'content-length' : _1byte.length
+          'content-length': _1byte.length
         }
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
@@ -429,12 +481,12 @@ describe('functional tests', function() {
         request.on('error', e => done(e))
         request.write(_1byte)
         request.end()
+        })
       })
-    })
 
     it('should download using presignedUrl', done => {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-        if(e) return done(e)
+        if (e) return done(e)
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'GET'
@@ -455,7 +507,7 @@ describe('functional tests', function() {
       })
     })
 
-    it('should response headers set to expected values during download for presignedUrl', done => {
+    it('should set response headers to expected values during download for presignedUrl', done => {
       var respHeaders = {
         'response-content-type': 'text/html',
         'response-content-language': 'en',
@@ -498,7 +550,7 @@ describe('functional tests', function() {
       })
     })
 
-    it('should upload using presinged POST', done => {
+    it('should upload using presigned POST', done => {
       var policy = client.newPostPolicy()
       policy.setKey(_1byteObjectName)
       policy.setBucket(bucketName)
@@ -510,7 +562,7 @@ describe('functional tests', function() {
         if (e) return done(e)
         var req = superagent.post(`${urlStr}`)
         _.each(formData, (value, key) => req.field(key, value))
-	req.attach('file', new Buffer([_1byte]), 'test')
+        req.attach('file', new Buffer([_1byte]), 'test')
         req.end(function(e, response) {
           if (e) return done(e)
           done()
@@ -546,11 +598,11 @@ describe('functional tests', function() {
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
-          return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
-        })
-        .on('data', data => {
-          listArray.push(data.name)
-        })
+            return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
+      })
+      .on('data', data => {
+        listArray.push(data.name)
+      })
     })
 
     it('should list objects using v2 api', done => {
@@ -559,14 +611,14 @@ describe('functional tests', function() {
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
-            return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
+          return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
         })
-      .on('data', data => {
-        listArray.push(data.name)
-      })
+        .on('data', data => {
+          listArray.push(data.name)
+        })
     })
 
-    it(`should delete objects`, done => {
+    it(`should remove objects`, done => {
       async.mapLimit(
         listArray,
         20,
@@ -575,6 +627,14 @@ describe('functional tests', function() {
       )
     })
   })
+
+  function readableStream(data) {
+    var s = new stream.Readable()
+    s._read = () => {}
+    s.push(data)
+    s.push(null)
+    return s
+  }
 
   describe('bucket notifications', () => {
     describe('#listenBucketNotification', () => {
@@ -589,28 +649,27 @@ describe('functional tests', function() {
       it('should forward error with bad events', done => {
         let poller = client.listenBucketNotification(bucketName, 'photos/', '.jpg', ['bad'])
         poller.on('error', error => {
-          assert.match(error.message, /A specified event is not supported for notifications./)
-          assert.equal(error.code, 'InvalidArgument')
+          chai.assert.match(error.message, /A specified event is not supported for notifications./)
+          chai.assert.equal(error.code, 'InvalidArgument')
 
           done()
         })
       })
-
       it('should give exactly one event for single action', done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectCreated:*'])
         let records = 0
         poller.on('notification', record => {
           records++
 
-          assert.equal(record.eventName, 's3:ObjectCreated:Put')
-          assert.equal(record.s3.bucket.name, bucketName)
-          assert.equal(record.s3.object.key, objectName)
+          chai.assert.equal(record.eventName, 's3:ObjectCreated:Put')
+          chai.assert.equal(record.s3.bucket.name, bucketName)
+          chai.assert.equal(record.s3.object.key, objectName)
         })
         client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
           if (err) return done(err)
           // It polls every five seconds, so wait for two-ish polls, then end.
-            setTimeout(() => {
-            assert.equal(records, 1)
+          setTimeout(() => {
+            chai.assert.equal(records, 1)
             poller.stop()
             client.removeObject(bucketName, objectName, done)
           })
@@ -621,25 +680,22 @@ describe('functional tests', function() {
       // Minio.ObjectCreatedAll in the config. Thus, no events should be emitted.
       it('should give no events for single action', done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
-        poller.on('notification', assert.fail)
+        poller.on('notification', record => {
+          console.log('New object: %s/%s (size: %d)', record.s3.bucket.name,
+              record.s3.object.key, record.s3.object.size)
+          chai.assert.fail
+        })
 
         client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
-        if (err) return done(err)
-          // It polls every five seconds, so wait for two-ish polls, then end.
-          setTimeout(() => {
-            poller.stop()
-            client.removeObject(bucketName, objectName, done)
-          })
-        }, 11 * 1000)
+            if (err) return done(err)
+            // It polls every five seconds, so wait for two-ish polls, then end.
+            setTimeout(() => {
+                poller.stop()
+                    // clean up object now
+                client.removeObject(bucketName, objectName, done)
+            })
+          }, 11 * 1000)
       })
     })
-  })
+    })
 })
-
-function readableStream(data) {
-   var s = new stream.Readable()
-   s._read = () => {}
-   s.push(data)
-   s.push(null)
-   return s
-}
