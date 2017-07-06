@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Client, Policy } from '../main/minio.js'
-import * as Minio from '../main/minio.js'
+
+import { Client, Policy } from '../../../dist/main/minio'
+import * as Minio from '../../../dist/main/minio'
 import os from 'os'
 import stream from 'stream'
 import crypto from 'crypto'
@@ -26,7 +27,7 @@ import https from 'https'
 import url from 'url'
 import superagent from 'superagent'
 import { assert } from 'chai'
-
+import path from 'path'
 import uuid from 'uuid'
 
 require('source-map-support').install()
@@ -34,26 +35,30 @@ require('source-map-support').install()
 describe('functional tests', function() {
     this.timeout(30 * 60 * 1000)
     var playConfig = {}
+    // If credentials aren't given, default to play.minio.io.
     if (process.env['SERVER_ENDPOINT']) {
         var res = process.env['SERVER_ENDPOINT'].split(":")
         playConfig.endPoint = res[0]
         playConfig.port = parseInt(res[1])
-    }
-    if (process.env['ACCESS_KEY']) {
-        playConfig.accessKey = process.env['ACCESS_KEY']
-    }
-    if (process.env['SECRET_KEY']) {
-        playConfig.secretKey = process.env['SECRET_KEY']
-    }
-    if (process.env['ENABLE_HTTPS'] == "1") {
-        playConfig.secure = true
     } else {
-        playConfig.secure = false
+        playConfig.endPoint = 'play.minio.io'
+        playConfig.port = 9000
     }
-    var dataDir = "/mint/data"
-    if (process.env['DATA_DIR']) {
-        dataDir = process.env['DATA_DIR']
+    playConfig.accessKey = process.env['ACCESS_KEY'] || 'Q3AM3UQ867SPQQA43P2F'
+    playConfig.secretKey = process.env['SECRET_KEY'] || 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+
+    // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
+    // Otherwise default to secure.
+    if (process.env['ENABLE_HTTPS'] !== undefined) {
+      playConfig.secure = (process.env['ENABLE_HTTPS'] == '1')
+    } else {
+      playConfig.secure = true
     }
+
+    // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
+    // a directory with files to read from, i.e. /mint/data.
+    var dataDir = process.env['MINT_DATA_DIR']
+
     var client = new Minio.Client(playConfig)
     var usEastConfig = playConfig
     usEastConfig.region = 'us-east-1'
@@ -62,26 +67,24 @@ describe('functional tests', function() {
     var bucketName = uuid.v4()
     var objectName = uuid.v4()
 
-    var _1byte = new Buffer(1)
-    _1byte.fill('a')
-    var _1byteObjectName = 'miniojsobject_1byte'
+    var _1byteObjectName = 'datafile-1-b'
+    var _1byte = dataDir ? fs.readFileSync(dataDir + '/' + _1byteObjectName) : (new Buffer(1)).fill(0)
 
-    var _100kb = fs.readFileSync(dataDir + "/datafile-100-kB")
-    var _100kbObjectName = 'miniojsobject_100kb'
+    var _100kbObjectName = 'datafile-100-kB'
+    var _100kb = dataDir ? fs.readFileSync(dataDir + '/' + _100kbObjectName) : (new Buffer(100 * 1024)).fill(0)
     var _100kbObjectNameCopy = _100kbObjectName + '_copy'
 
     var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
     var _100kbObjectStringName = `${_100kbObjectName}.string`
     var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
 
-    var _6mb = fs.readFileSync(dataDir + "/datafile-6-MB")
-    var _6mbObjectName = 'miniojsobject_6mb'
+    var _6mbObjectName = 'datafile-6-MB'
+    var _6mb = dataDir ? fs.readFileSync(dataDir + '/' + _6mbObjectName) : (new Buffer(6 * 1024 * 1024)).fill(0)
     var _6mbmd5 = crypto.createHash('md5').update(_6mb).digest('hex')
-
     var _6mbObjectNameCopy = _6mbObjectName + '_copy'
 
-    var _5mb = fs.readFileSync(dataDir + "/datafile-5-MB")
-    var _5mbObjectName = 'miniojsobject_5mb'
+    var _5mbObjectName = 'datafile-5-MB'
+    var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : (new Buffer(5 * 1024 * 1024)).fill(0)
     var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
     var tmpDir = os.tmpdir()
@@ -670,27 +673,26 @@ describe('functional tests', function() {
                         assert.equal(records, 1)
                         poller.stop()
                         client.removeObject(bucketName, objectName, done)
-                    })
-                }, 11 * 1000)
+                    }, 11 * 1000)
+                })
             })
 
             // This test is very similar to that above, except it does not include
             // Minio.ObjectCreatedAll in the config. Thus, no events should be emitted.
             it('should give no events for single action', done => {
                 let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
-                poller.on('notification', record => {
-                    assert.fail
-                })
+                poller.on('notification', assert.fail)
 
                 client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
                     if (err) return done(err)
                         // It polls every five seconds, so wait for two-ish polls, then end.
                     setTimeout(() => {
                         poller.stop()
+                        poller.removeAllListeners('notification')
                             // clean up object now
                         client.removeObject(bucketName, objectName, done)
-                    })
-                }, 11 * 1000)
+                    }, 11 * 1000)
+                })
             })
         })
     })
