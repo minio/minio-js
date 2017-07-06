@@ -34,7 +34,7 @@ import { isValidPrefix, isValidEndpoint, isValidBucketName,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  probeContentType, makeDateLong } from './helpers.js'
+  probeContentType, makeDateLong, promisify } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -2014,6 +2014,32 @@ export class Client {
     return listener
   }
 }
+
+// Promisify various public-facing APIs on the Client module.
+Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
+Client.prototype.listBuckets = promisify(Client.prototype.listBuckets)
+Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
+Client.prototype.removeBucket = promisify(Client.prototype.removeBucket)
+
+Client.prototype.getObject = promisify(Client.prototype.getObject)
+Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
+Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
+Client.prototype.putObject = promisify(Client.prototype.putObject)
+Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
+Client.prototype.copyObject = promisify(Client.prototype.copyObject)
+Client.prototype.statObject = promisify(Client.prototype.statObject)
+Client.prototype.removeObject = promisify(Client.prototype.removeObject)
+
+Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
+Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
+Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostPolicy)
+Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNotification)
+Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
+Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
+Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
+Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
+Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
+
 
 export class CopyConditions {
   constructor() {

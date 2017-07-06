@@ -222,14 +222,14 @@ describe('Client', function() {
             port: 9000,
             secure: false
           })
-          client.presignedGetObject('bucket', 'object', 1000)
+          client.presignedGetObject('bucket', 'object', 1000, function() {})
         } catch (e) {
           done()
         }
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          client.presignedGetObject('bucket', 'object', '0')
+          client.presignedGetObject('bucket', 'object', '0', function() {})
         } catch (e) {
           done()
         }
@@ -251,14 +251,14 @@ describe('Client', function() {
             port: 9000,
             secure: false
           })
-          client.presignedPutObject('bucket', 'object', 1000)
+          client.presignedPutObject('bucket', 'object', 1000, function() {})
         } catch (e) {
           done()
         }
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          client.presignedPutObject('bucket', 'object', '0')
+          client.presignedPutObject('bucket', 'object', '0', function() {})
         } catch (e) {
           done()
         }
@@ -435,21 +435,21 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.makeBucket(null)
+          client.makeBucket(null, '', assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.makeBucket('')
+          client.makeBucket('', '', assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.makeBucket('  \n  \t  ')
+          client.makeBucket('  \n  \t  ', '', assert.fail)
         } catch (e) {
           done()
         }
@@ -507,21 +507,21 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.bucketExists(null)
+          client.bucketExists(null, assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.bucketExists('')
+          client.bucketExists('', assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.BucketExists('  \n  \t  ')
+          client.BucketExists('  \n  \t  ', assert.fail)
         } catch (e) {
           done()
         }
@@ -543,21 +543,21 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.removeBucket(null)
+          client.removeBucket(null, assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucket('')
+          client.removeBucket('', assert.fail)
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucket('  \n  \t  ')
+          client.removeBucket('  \n  \t  ', assert.fail)
         } catch (e) {
           done()
         }
@@ -650,42 +650,35 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.getObject(null, 'hello')
+          client.getObject(null, 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.getObject('', 'hello')
+          client.getObject('', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.getObject('  \n  \t  ', 'hello')
+          client.getObject('  \n  \t  ', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on null object', (done) => {
         try {
-          client.getObject('hello', null)
+          client.getObject('hello', null, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty object', (done) => {
         try {
-          client.getObject('hello', '')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.getObject('hello', '  \n  \t  ')
+          client.getObject('hello', '', function() {})
         } catch (e) {
           done()
         }
@@ -787,15 +780,6 @@ describe('Client', function() {
             client.putObject('bucket', '', () => {})
           }, /Invalid object name/)
         })
-        it('should fail without callback', () => {
-          // Whether or not size is there.
-          assert.throws(() => {
-            client.putObject('bucket', 'object', 'slugz', 5)
-          }, /callback should be of type "function"/)
-          assert.throws(() => {
-            client.putObject('bucket', 'object', new Buffer('slug'))
-          }, /callback should be of type "function"/)
-        })
         it('should error with size > maxObjectSize', () => {
           assert.throws(() => {
             client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1, () => {})
@@ -803,42 +787,35 @@ describe('Client', function() {
         })
         it('should fail on null bucket', (done) => {
           try {
-            client.putObject(null, 'hello', null, 1, '')
+            client.putObject(null, 'hello', null, 1, '', function() {})
           } catch (e) {
             done()
           }
         })
         it('should fail on empty bucket', (done) => {
           try {
-            client.putObject(' \n \t ', 'hello', null, 1, '')
+            client.putObject(' \n \t ', 'hello', null, 1, '', function() {})
           } catch (e) {
             done()
           }
         })
         it('should fail on empty bucket', (done) => {
           try {
-            client.putObject('', 'hello', null, 1, '')
+            client.putObject('', 'hello', null, 1, '', function() {})
           } catch (e) {
             done()
           }
         })
         it('should fail on null object', (done) => {
           try {
-            client.putObject('hello', null, null, 1, '')
+            client.putObject('hello', null, null, 1, '', function() {})
           } catch (e) {
             done()
           }
         })
         it('should fail on empty object', (done) => {
           try {
-            client.putObject('hello', '', null, 1, '')
-          } catch (e) {
-            done()
-          }
-        })
-        it('should fail on empty object', (done) => {
-          try {
-            client.putObject('hello', ' \n \t ', null, 1, '')
+            client.putObject('hello', '', null, 1, '', function() {})
           } catch (e) {
             done()
           }
@@ -1045,11 +1022,8 @@ describe('Client', function() {
     describe('#removeAllBucketNotification()', () => {
       it('should error on invalid arguments', () => {
         assert.throws(() => {
-          client.removeAllBucketNotification('ab', () => {})
+          client.removeAllBucketNotification('ab', () => {}, function() {})
         }, /Invalid bucket name/)
-        assert.throws(() => {
-          client.removeAllBucketNotification('bucket', 13)
-        }, /callback should be of type "function"/)
       })
       it('remove all bucket notifications', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?location').reply(200, '<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">EU</LocationConstraint>')
@@ -1069,9 +1043,6 @@ describe('Client', function() {
         assert.throws(() => {
           client.setBucketNotification('bucket', 49, () => {})
         }, /notification config should be of type "Object"/)
-        assert.throws(() => {
-          client.setBucketNotification('bucket', {}, 13)
-        }, /callback should be of type "function"/)
       })
       it('set a bucket notification', (done) => {
         MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
@@ -1098,9 +1069,6 @@ describe('Client', function() {
         assert.throws(() => {
           client.getBucketNotification('ab', () => {})
         }, /Invalid bucket name/)
-        assert.throws(() => {
-          client.getBucketNotification('bucket', 13)
-        }, /callback should be of type "function"/)
       })
       it('get and parse a bucket notification response', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?notification').reply(200, '<NotificationConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><TopicConfiguration><Id>YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Topic>arn:aws:sns:us-east-1:83310034:s3notificationtopic2</Topic><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event><Filter><S3Key><FilterRule><Name>suffix</Name><Value>.jpg</Value></FilterRule><FilterRule><Name>prefix</Name><Value>photos/</Value></FilterRule></S3Key></Filter></TopicConfiguration><QueueConfiguration><Id>ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Queue>arn:aws:sns:us-east-1:83310034:s3notificationqueue2</Queue><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>')
@@ -1369,42 +1337,35 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.statObject(null, 'hello')
+          client.statObject(null, 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.statObject('', 'hello')
+          client.statObject('', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.statObject('  \n  \t  ', 'hello')
+          client.statObject('  \n  \t  ', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on null object', (done) => {
         try {
-          client.statObject('hello', null)
+          client.statObject('hello', null, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty object', (done) => {
         try {
-          client.statObject('hello', '')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.statObject('hello', '  \n  \t  ')
+          client.statObject('hello', '', function() {})
         } catch (e) {
           done()
         }
@@ -1427,42 +1388,35 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.removeObject(null, 'hello')
+          client.removeObject(null, 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeObject('', 'hello')
+          client.removeObject('', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeObject('  \n  \t  ', 'hello')
+          client.removeObject('  \n  \t  ', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on null object', (done) => {
         try {
-          client.removeObject('hello', null)
+          client.removeObject('hello', null, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty object', (done) => {
         try {
-          client.removeObject('hello', '')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.removeObject('hello', '  \n  \t  ')
+          client.removeObject('hello', '', function() {})
         } catch (e) {
           done()
         }
@@ -1495,42 +1449,35 @@ describe('Client', function() {
       })
       it('should fail on null bucket', (done) => {
         try {
-          client.removeIncompleteUpload(null, 'hello')
+          client.removeIncompleteUpload(null, 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeIncompleteUpload('', 'hello')
+          client.removeIncompleteUpload('', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeIncompleteUpload('  \n  \t  ', 'hello')
+          client.removeIncompleteUpload('  \n  \t  ', 'hello', function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on null object', (done) => {
         try {
-          client.removeIncompleteUpload('hello', null)
+          client.removeIncompleteUpload('hello', null, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty object', (done) => {
         try {
-          client.removeIncompleteUpload('hello', '')
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.removeIncompleteUpload('hello', '  \n  \t  ')
+          client.removeIncompleteUpload('hello', '', function() {})
         } catch (e) {
           done()
         }

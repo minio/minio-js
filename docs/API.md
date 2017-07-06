@@ -96,7 +96,7 @@ var s3Client = new Minio.Client({
 ## 2. Bucket operations
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName, region, callback)
+### makeBucket(bucketName, region[, callback])
 
 Creates a new bucket.
 
@@ -116,7 +116,7 @@ __Parameters__
 | | |ap-southeast-2|
 | | |sa-east-1|
 | | |cn-north-1|
-|`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created.   |
+|`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -130,7 +130,7 @@ minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
 ```
 
 <a name="listBuckets"></a>
-### listBuckets(callback)
+### listBuckets([callback])
 
 Lists all buckets.
 
@@ -140,7 +140,7 @@ __Parameters__
 
 | Param  | Type  | Description  |
 |---|---|---|
-|`callback(err, bucketStream) `  | _function_  | Callback function with error as the first argument. bucketStream is the stream emitting bucket information. |
+|`callback(err, bucketStream) `  | _function_  | Callback function with error as the first argument. `bucketStream` is the stream emitting bucket information. If no callback is passed, a `Promise` is returned. |
 
 bucketStream emits Object with the format:-
 
@@ -162,7 +162,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName, callback)
+#### bucketExists(bucketName[, callback])
 
 Checks if a bucket exists.
 
@@ -173,7 +173,7 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err)`  | _function_  | `err` is `null` if the bucket exists. `err.code` is `NoSuchBucket` in case the bucket does not exist. |
+| `callback(err)`  | _function_  | `err` is `null` if the bucket exists. `err.code` is `NoSuchBucket` in case the bucket does not exist. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -190,7 +190,7 @@ minioClient.bucketExists('mybucket', function(err) {
 ```
 
 <a name="removeBucket"></a>
-### removeBucket(bucketName, callback)
+### removeBucket(bucketName[, callback])
 
 Removes a bucket.
 
@@ -200,7 +200,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
-| `callback(err)`  | _function_  |  `err` is `null` if the bucket is removed successfully. |
+| `callback(err)`  | _function_  |  `err` is `null` if the bucket is removed successfully. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -340,7 +340,7 @@ Stream.on('error', function(err) {
 ## 3.  Object operations
 
 <a name="getObject"></a>
-### getObject(bucketName, objectName, callback)
+### getObject(bucketName, objectName[, callback])
 
 Downloads an object as a stream.
 
@@ -351,7 +351,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  |  Name of the object. |
-| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream.|
+| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -374,7 +374,7 @@ minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
 })
 ```
 <a name="getPartialObject"></a>
-### getPartialObject(bucketName, objectName, offset, length, callback)
+### getPartialObject(bucketName, objectName, offset, length[, callback])
 
 Downloads the specified range bytes of an object as a stream.
 
@@ -387,7 +387,7 @@ __Parameters__
 | `objectName`   | _string_  | Name of the object.  |
 | `offset`   | _number_  | `offset` of the object from where the stream will start.  |
 | `length`  | _number_  | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).  |
-|`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream.|
+|`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -412,7 +412,7 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, data
 ```
 
 <a name="fGetObject"></a>
-### fGetObject(bucketName, objectName, filePath, callback)
+### fGetObject(bucketName, objectName, filePath[, callback])
 
 Downloads and saves the object as a file in the local filesystem.
 
@@ -423,7 +423,7 @@ __Parameters__
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
-| `callback(err)`  | _function_  | Callback is called with `err` in case of error.  |
+| `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -439,7 +439,7 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
 })
 ```
 <a name="putObject"></a>
-### putObject(bucketName, objectName, stream, size, contentType, callback)
+### putObject(bucketName, objectName, stream, size, contentType[, callback])
 
 Uploads an object from a stream/Buffer.
 
@@ -456,7 +456,7 @@ __Parameters__
 | `stream`  | _Stream_  |Readable stream.   |
 |`size`   | _number_  | Size of the object (optional).  |
 |`contentType`   | _string_  | Content-Type of the object (optional, default `application/octet-stream`).  |
-| `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.|
+| `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -501,7 +501,7 @@ minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
 })
 ```
 <a name="fPutObject"></a>
-### fPutObject(bucketName, objectName, filePath, contentType, callback)
+### fPutObject(bucketName, objectName, filePath, contentType[, callback])
 
 Uploads contents from a file to objectName.
 
@@ -514,7 +514,7 @@ __Parameters__
 |`objectName`   |_string_   | Name of the object.  |
 | `filePath`  | _string_  | Path of the file to be uploaded.  |
 | `contentType`  | _string_  | Content-Type of the object.  |
-| `callback(err, etag)`  |  _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.  |
+| `callback(err, etag)`  |  _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -529,7 +529,7 @@ minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream',
 ```
 
 <a name="copyObject"></a>
-### copyObject(bucketName, objectName, sourceObject, conditions, callback)
+### copyObject(bucketName, objectName, sourceObject, conditions[, callback])
 
 Copy a source object into a new object in the specied bucket.
 
@@ -542,7 +542,7 @@ __Parameters__
 |`objectName`   |_string_   | Name of the object.  |
 | `sourceObject`  | _string_  | Path of the file to be copied.  |
 | `conditions`  | _CopyConditions_  | Conditions to be satisfied before allowing object copy.  |
-| `callback(err, {etag, lastModified})`  |  _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. |
+| `callback(err, {etag, lastModified})`  |  _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -560,7 +560,7 @@ minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, fu
 
 
 <a name="statObject"></a>
-### statObject(bucketName, objectName, callback)
+### statObject(bucketName, objectName[, callback])
 
 Gets metadata of an object.
 
@@ -571,7 +571,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
-| `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below: |
+| `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
 
 
@@ -596,7 +596,7 @@ minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
 ```
 
 <a name="removeObject"></a>
-### removeObject(bucketName, objectName, callback)
+### removeObject(bucketName, objectName[, callback])
 
 Removes an object.
 
@@ -607,7 +607,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
-| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error.  |
+| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -623,7 +623,7 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
 ```
 
 <a name="removeIncompleteUpload"></a>
-### removeIncompleteUpload(bucketName, objectName, callback)
+### removeIncompleteUpload(bucketName, objectName[, callback])
 
 Removes a partially uploaded object.
 
@@ -634,7 +634,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error.   |
+| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
 
 
 __Example__
@@ -654,7 +654,7 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 Presigned URLs are generated for temporary download/upload access to private objects.
 
 <a name="presignedGetObject"></a>
-### presignedGetObject(bucketName, objectName, expiry, cb)
+### presignedGetObject(bucketName, objectName, expiry[, cb])
 
 Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
 
@@ -668,7 +668,7 @@ __Parameters__
 | `bucketName`  | _string_  | Name of the bucket.  |
 |`objectName`   | _string_  | Name of the object.  |
 | `expiry`  |_number_   | Expiry in seconds. Default expiry is set to 7 days.  |
-| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request.  |
+| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -683,7 +683,7 @@ minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 ```
 
 <a name="presignedPutObject"></a>
-### presignedPutObject(bucketName, objectName, expiry, callback)
+### presignedPutObject(bucketName, objectName, expiry[, callback])
 
 Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
 
@@ -696,7 +696,7 @@ __Parameters__
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
 | `expiry`  | _number_   | Expiry in seconds. Default expiry is set to 7 days.  |
-| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request.  |
+| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -711,7 +711,7 @@ minioClient.presignedPutObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 ```
 
 <a name="presignedPostPolicy"></a>
-### presignedPostPolicy(policy, callback)
+### presignedPostPolicy(policy[, callback])
 
 Allows setting policy conditions to a presigned URL for POST operations. Policies such as bucket name to receive object uploads, key name prefixes, expiry policy may be set.
 
@@ -721,7 +721,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `policy`  | _object_  | Policy object created by minioClient.newPostPolicy() |
-| `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. |
+| `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
 
 
 Create policy:
@@ -787,7 +787,7 @@ minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
 Buckets are configured to trigger notifications on specified types of events and paths filters.
 
 <a name="getBucketNotification"></a>
-### getBucketNotification(bucketName, cb)
+### getBucketNotification(bucketName[, cb])
 
 Fetch the notification configuration stored in the S3 provider and that belongs to the specified bucket name.
 
@@ -798,7 +798,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
-| `callback(err, bucketNotificationConfig)`  | _function_  | Callback function is called with non `null` err value in case of error. `bucketNotificationConfig` will be the object that carries all notification configurations associated to bucketName.  |
+| `callback(err, bucketNotificationConfig)`  | _function_  | Callback function is called with non `null` err value in case of error. `bucketNotificationConfig` will be the object that carries all notification configurations associated to bucketName. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -812,7 +812,7 @@ minioClient.getBucketNotification('mybucket', function(err, bucketNotificationCo
 ```
 
 <a name="setBucketNotification"></a>
-### setBucketNotification(bucketName, bucketNotificationConfig, callback)
+### setBucketNotification(bucketName, bucketNotificationConfig[, callback])
 
 Upload a user-created notification configuration and associate it to the specified bucket name.
 
@@ -824,7 +824,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `bucketNotificationConfig`  | _BucketNotification_   | Javascript object that carries the notification configuration.  |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error.  |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -851,7 +851,7 @@ minioClient.setBucketNotification('mybucket', bucketNotification, function(err) 
 ```
 
 <a name="removeAllBucketNotification"></a>
-### removeAllBucketNotification(bucketName, callback)
+### removeAllBucketNotification(bucketName[, callback])
 
 Remove the bucket notification configuration associated to the specified bucket.
 
@@ -861,7 +861,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -906,7 +906,7 @@ listener.on('notification', function(record) {
 ```
 
 <a name="getBucketPolicy"></a>
-### getBucketPolicy(bucketName, objectPrefix, callback)
+### getBucketPolicy(bucketName, objectPrefix[, callback])
 
 Get the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will be filtered based on object permissions
@@ -919,7 +919,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket |
 | `objectPrefix` | _string_ | Prefix of objects in the bucket with which to filter permissions off of. Use `''` for entire bucket. |
-| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` will be the string representation of the bucket policy (`minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`). |
+| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` will be the string representation of the bucket policy (`minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`). If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -933,7 +933,7 @@ minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
 ```
 
 <a name="setBucketPolicy"></a>
-### setBucketPolicy(bucketName, objectPrefix, bucketPolicy, callback)
+### setBucketPolicy(bucketName, objectPrefix, bucketPolicy[, callback])
 
 Set the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will only be assigned to objects that fit the
@@ -947,7 +947,7 @@ __Parameters__
 | `bucketName`  | _string_  | Name of the bucket |
 | `objectPrefix` | _string_ | Prefix of objects in the bucket to modify permissions of. Use `''` for entire bucket. |
 | `bucketPolicy` | _string_ | The bucket policy. This can be: `minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`. |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. |
+| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
