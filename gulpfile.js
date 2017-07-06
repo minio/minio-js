@@ -45,7 +45,7 @@ gulp.task('test:compile', ['compile'], function(cb) {
 })
 
 gulp.task('test', ['compile', 'test:compile'], function() {
-  gulp.src('dist/test/unit/*.js', {
+  gulp.src('dist/test/**/*.js', {
     read: false
   })
     .pipe(mocha({
@@ -75,17 +75,14 @@ gulp.task('lint', function() {
 });
 
 gulp.task('functional-test', ['compile'], function() {
-  gulp.src('src/test/functional/functional-tests.js')
-  .pipe(sourcemaps.init())
-  .pipe(babel())
-  .pipe(sourcemaps.write('.'))
-  .pipe(gulp.dest('dist/test'))
-  .on('end', function() {
-    gulp.src('dist/test/functional-tests.js')
-    .pipe(mocha({
-      reporter: 'spec',
-      ui: 'bdd',
-    }))
+  compile('src/test/functional/*.js', 'functional', 'dist/test/functional/', function() {
+    gulp.src('dist/test/functional/*.js', {
+      read: false
+    })
+      .pipe(mocha({
+        reporter: 'spec',
+        ui: 'bdd',
+      }))
   })
 })
 
