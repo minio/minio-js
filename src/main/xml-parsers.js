@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import util from 'util'
-import Concat from 'concat-stream';
 import xml2js from 'xml2js'
 import _ from 'lodash'
-import * as errors from './errors.js';
+import * as errors from './errors.js'
 
 var options = {  // options passed to xml2js parser
   explicitRoot: false,    // return the root node in the resulting object?
@@ -26,19 +24,19 @@ var options = {  // options passed to xml2js parser
 }
 
 var parseXml = (xml) => {
-  var result = null;
-  var error = null;
+  var result = null
+  var error = null
 
-  var parser = new xml2js.Parser(options);
+  var parser = new xml2js.Parser(options)
   parser.parseString(xml, function (e, r) {
-    error = e;
-    result = r;
-  });
+    error = e
+    result = r
+  })
 
   if (error) {
-    throw new Error('XML parse error');
+    throw new Error('XML parse error')
   }
-  return result;
+  return result
 }
 
 // Parse XML and return information as Javascript types
@@ -72,7 +70,7 @@ export function parseCopyObject(xml) {
     lastModified: ""
   }
   var xmlobj = parseXml(xml)
-  if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+  if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified[0])
@@ -205,7 +203,7 @@ export function parseListParts(xml) {
     xmlobj.Part.forEach(p => {
       var part = +p.PartNumber[0]
       var lastModified = new Date(p.LastModified[0])
-      var etag = p.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+      var etag = p.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
                            .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
                            .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       result.parts.push({part, lastModified, etag})
@@ -228,7 +226,7 @@ export function parseCompleteMultipart(xml) {
     var location = xmlobj.Location[0]
     var bucket = xmlobj.Bucket[0]
     var key = xmlobj.Key[0]
-    var etag = xmlobj.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+    var etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
 
@@ -255,7 +253,7 @@ export function parseListObjects(xml) {
     xmlobj.Contents.forEach(content => {
       var name = content.Key[0]
       var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
                                  .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
                                  .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       var size = +content.Size[0]
@@ -282,7 +280,6 @@ export function parseListObjectsV2(xml) {
         objects: [],
         isTruncated: false
       }
-  var nextMarker
   var xmlobj = parseXml(xml)
   if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
@@ -291,7 +288,7 @@ export function parseListObjectsV2(xml) {
     xmlobj.Contents.forEach(content => {
       var name = content.Key[0]
       var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^\"/g, '').replace(/\"$/g, '')
+      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
                                  .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
                                  .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       var size = +content.Size[0]

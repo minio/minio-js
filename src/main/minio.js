@@ -22,7 +22,6 @@ import Http from 'http'
 import Https from 'https'
 import Stream from 'stream'
 import BlockStream2 from 'block-stream2'
-import Url from 'url'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 import Moment from 'moment'
@@ -36,9 +35,9 @@ import { isValidPrefix, isValidEndpoint, isValidBucketName,
          uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
          isString, isObject, isDate, isArray, pipesetup,
          readableStream, isReadableStream, isVirtualHostStyle,
-         probeContentType } from './helpers.js';
+         probeContentType } from './helpers.js'
 
-import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js';
+import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
 import { isValidBucketPolicy, generateBucketPolicy,
          parseBucketPolicy } from './bucket-policy'
@@ -49,13 +48,13 @@ import ObjectUploader from './object-uploader'
 
 import * as transformers from './transformers'
 
-import * as errors from './errors.js';
+import * as errors from './errors.js'
 
-import { getS3Endpoint } from './s3-endpoints.js';
+import { getS3Endpoint } from './s3-endpoints.js'
 
 import { NotificationConfig, NotificationPoller } from './notification'
 
-var Package = require('../../package.json');
+var Package = require('../../package.json')
 
 export class Client {
   constructor(params) {
@@ -81,9 +80,9 @@ export class Client {
     }
 
     var host = params.endPoint.toLowerCase()
-    var port = params.port;
+    var port = params.port
     var protocol = ''
-    var transport;
+    var transport
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
     if (params.secure === false) {
@@ -118,7 +117,7 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    this.agent = new transport.Agent({ keepAlive: true });
+    this.agent = new transport.Agent({ keepAlive: true })
     this.transport = transport
     this.host = host
     this.port = port
@@ -211,7 +210,7 @@ export class Client {
     }
 
     // Use the Minio agent with keep-alive
-    reqOptions.agent = this.agent;
+    reqOptions.agent = this.agent
 
     return reqOptions
   }
@@ -887,8 +886,6 @@ export class Client {
               var md5sum = data.md5sum
               var sha256sum = data.sha256sum
               var stream = fs.createReadStream(filePath, options)
-              var uploadId = ''
-              var partNumber = 0
               uploader(stream, size, sha256sum, md5sum, (err, etag) => {
                 callback(err, etag)
                 cb(true)
@@ -1365,7 +1362,7 @@ export class Client {
       }
       var etag = response.headers.etag
       if (etag) {
-        etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+        etag = etag.replace(/^"/, '').replace(/"$/, '')
         result.etag = etag
       }
       cb(null, result)
@@ -1938,7 +1935,7 @@ export class Client {
         if (e) return cb(e)
         var etag = response.headers.etag
         if (etag) {
-          etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+          etag = etag.replace(/^"/, '').replace(/"$/, '')
         }
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
         response.on('data', () => {})
@@ -1964,7 +1961,7 @@ export class Client {
     }
     var method = 'PUT'
     var query = 'notification'
-    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true});
+    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
     var payload = builder.buildObject(config)
     this.makeRequest({method, bucketName, query}, payload, 200, '', cb)
   }

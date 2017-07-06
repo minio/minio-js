@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import querystring from 'querystring'
 import { EventEmitter } from 'events'
 import * as transformers from './transformers'
 import { pipesetup, uriEscape } from './helpers'
@@ -63,7 +62,7 @@ class TargetConfig {
 // 1. Topic (simple notification service)
 export class TopicConfig extends TargetConfig {
   constructor(arn) {
-    super();
+    super()
     this.Topic = arn
   }
 }
@@ -71,7 +70,7 @@ export class TopicConfig extends TargetConfig {
 // 2. Queue (simple queue service)
 export class QueueConfig extends TargetConfig {
   constructor(arn) {
-    super();
+    super()
     this.Queue = arn
   }
 }
@@ -79,7 +78,7 @@ export class QueueConfig extends TargetConfig {
 // 3. CloudFront (lambda function)
 export class CloudFunctionConfig extends TargetConfig {
   constructor(arn) {
-    super();
+    super()
     this.CloudFunction = arn
   }
 }

@@ -15,7 +15,7 @@
  */
 
 import _ from 'lodash'
-import * as errors from './errors';
+import * as errors from './errors'
 import { isValidBucketName } from './helpers'
 
 export const Policy = {

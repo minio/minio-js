@@ -15,7 +15,6 @@
  */
 
 import * as xmlParsers from './xml-parsers.js'
-import { parseBucketPolicy } from './bucket-policy.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
 import Crypto from 'crypto'

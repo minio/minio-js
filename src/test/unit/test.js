@@ -16,16 +16,15 @@
 
 require('source-map-support').install()
 
-import { assert } from 'chai';
-import Concat from 'concat-stream';
-import Http from 'http';
-import Nock from 'nock';
-import Through2 from 'through2';
-import Stream from 'stream';
-import * as Minio from '../../../dist/main/minio';
-import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers';
+import { assert } from 'chai'
+import Concat from 'concat-stream'
+import Nock from 'nock'
+import Through2 from 'through2'
+import Stream from 'stream'
+import * as Minio from '../../../dist/main/minio'
+import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers'
 
-import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy';
+import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy'
 
 var Package = require('../../../package.json')
 
@@ -408,7 +407,6 @@ describe('Client', function() {
     describe('#listBuckets()', () => {
       it('should generate a bucket iterator', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(200, '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>')
-        var results = []
         var expectedResults = [{
           name: 'bucket',
           creationDate: new Date('2015-05-05T20:35:51.410Z')

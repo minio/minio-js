@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Client, Policy } from '../../../dist/main/minio'
+import { Policy } from '../../../dist/main/minio'
 import * as Minio from '../../../dist/main/minio'
 import os from 'os'
 import stream from 'stream'
@@ -27,7 +27,6 @@ import https from 'https'
 import url from 'url'
 import superagent from 'superagent'
 import { assert } from 'chai'
-import path from 'path'
 import uuid from 'uuid'
 
 require('source-map-support').install()
@@ -258,7 +257,7 @@ describe('functional tests', function() {
         })
 
         it('should copy object', done => {
-            client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName, (e, data) => {
+            client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName, (e) => {
                 if (e) return done(e)
                 done()
             })
@@ -284,7 +283,7 @@ describe('functional tests', function() {
         })
 
         it('should copy object with no conditions specified', done => {
-            client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, (e, data) => {
+            client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, (e) => {
                 if (e) return done(e)
                 done()
             })
@@ -301,7 +300,7 @@ describe('functional tests', function() {
         it('should copy object with conditions specified', done => {
             var conds = new Minio.CopyConditions()
             conds.setMatchETagExcept('bd891862ea3e22c93ed53a098218791d')
-            client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e, data) => {
+            client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e) => {
                 if (e) return done(e)
                 done()
             })
@@ -449,7 +448,7 @@ describe('functional tests', function() {
                 if (err) return done(err)
 
                 // Check using the client — this should error.
-                client.getBucketPolicy(bucketName, '', (err, response) => {
+                client.getBucketPolicy(bucketName, '', (err) => {
                     if (!err) return done(new Error('getBucketPolicy should error'))
 
                     if (!(/does not have a bucket policy/.test(err.message)) &&
@@ -543,7 +542,7 @@ describe('functional tests', function() {
                     if (respHeaders['response-content-encoding'] != response.headers['content-encoding']) {
                         return done(new Error(`content-encoding header mismatch`))
                     }
-                    response.on('data', (data) => {})
+                    response.on('data', () => {})
                     done()
                 })
                 request.on('error', e => done(e))
@@ -564,7 +563,7 @@ describe('functional tests', function() {
                 var req = superagent.post(`${urlStr}`)
                 _.each(formData, (value, key) => req.field(key, value))
                 req.attach('file', new Buffer([_1byte]), 'test')
-                req.end(function(e, response) {
+                req.end(function(e) {
                     if (e) return done(e)
                     done()
                 })
@@ -666,7 +665,7 @@ describe('functional tests', function() {
                     assert.equal(record.s3.bucket.name, bucketName)
                     assert.equal(record.s3.object.key, objectName)
                 })
-                client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
+                client.putObject(bucketName, objectName, 'stringdata', (err) => {
                     if (err) return done(err)
                         // It polls every five seconds, so wait for two-ish polls, then end.
                     setTimeout(() => {
@@ -683,7 +682,7 @@ describe('functional tests', function() {
                 let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
                 poller.on('notification', assert.fail)
 
-                client.putObject(bucketName, objectName, 'stringdata', (err, etag) => {
+                client.putObject(bucketName, objectName, 'stringdata', (err) => {
                     if (err) return done(err)
                         // It polls every five seconds, so wait for two-ish polls, then end.
                     setTimeout(() => {
