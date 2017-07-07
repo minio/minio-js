@@ -16,16 +16,15 @@
 
 require('source-map-support').install()
 
-import { assert } from 'chai';
-import Concat from 'concat-stream';
-import Http from 'http';
-import Nock from 'nock';
-import Through2 from 'through2';
-import Stream from 'stream';
-import * as Minio from '../../../dist/main/minio';
-import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers';
+import { assert } from 'chai'
+import Concat from 'concat-stream'
+import Nock from 'nock'
+import Through2 from 'through2'
+import Stream from 'stream'
+import * as Minio from '../../../dist/main/minio'
+import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers'
 
-import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy';
+import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy'
 
 var Package = require('../../../package.json')
 
@@ -408,7 +407,6 @@ describe('Client', function() {
     describe('#listBuckets()', () => {
       it('should generate a bucket iterator', (done) => {
         MockResponse('http://localhost:9000').get('/').reply(200, '<ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01"><Owner><ID>minio</ID><DisplayName>minio</DisplayName></Owner><Buckets><Bucket><Name>bucket</Name><CreationDate>2015-05-05T20:35:51.410Z</CreationDate></Bucket><Bucket><Name>foo</Name><CreationDate>2015-05-05T20:35:47.170Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>')
-        var results = []
         var expectedResults = [{
           name: 'bucket',
           creationDate: new Date('2015-05-05T20:35:51.410Z')
@@ -1026,20 +1024,20 @@ describe('Client', function() {
       it('set a bucket notification', (done) => {
         MockResponse('http://localhost:9000').put('/bucket?notification').reply(200, '')
 
-          var config = new Minio.NotificationConfig()
-          var arn = Minio.buildARN('aws', 'sns', 'us-west-2', 408065444917, 'TestTopic')
-          var topic = new Minio.TopicConfig(arn)
+        var config = new Minio.NotificationConfig()
+        var arn = Minio.buildARN('aws', 'sns', 'us-west-2', 408065444917, 'TestTopic')
+        var topic = new Minio.TopicConfig(arn)
 
-          topic.addFilterSuffix('.jpg')
-          topic.addFilterPrefix('myphotos/')
-          topic.addEvent(Minio.ObjectCreatedAll)
+        topic.addFilterSuffix('.jpg')
+        topic.addFilterPrefix('myphotos/')
+        topic.addEvent(Minio.ObjectCreatedAll)
 
-          config.add(topic)
+        config.add(topic)
 
-          client.setBucketNotification('bucket', config, function(e) {
-            assert.equal(e, null)
-              done()
-          })
+        client.setBucketNotification('bucket', config, function(e) {
+          assert.equal(e, null)
+          done()
+        })
       })
     })
 
@@ -1054,14 +1052,14 @@ describe('Client', function() {
       })
       it('get and parse a bucket notification response', (done) => {
         MockResponse('http://localhost:9000').get('/bucket?notification').reply(200, '<NotificationConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><TopicConfiguration><Id>YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Topic>arn:aws:sns:us-east-1:83310034:s3notificationtopic2</Topic><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event><Filter><S3Key><FilterRule><Name>suffix</Name><Value>.jpg</Value></FilterRule><FilterRule><Name>prefix</Name><Value>photos/</Value></FilterRule></S3Key></Filter></TopicConfiguration><QueueConfiguration><Id>ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4</Id><Queue>arn:aws:sns:us-east-1:83310034:s3notificationqueue2</Queue><Event>s3:ReducedRedundancyLostObject</Event><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>')
-          client.getBucketNotification('bucket', function(e, bucketNotification) {
-            var expectedResults = {
-              TopicConfiguration:[{ Id: 'YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Topic:'arn:aws:sns:us-east-1:83310034:s3notificationtopic2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[{Name:'suffix', Value:'.jpg'}, {Name:'prefix', Value:'photos/'}]}],
-              QueueConfiguration:[ { Id: 'ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Queue:'arn:aws:sns:us-east-1:83310034:s3notificationqueue2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[]}],
-              CloudFunctionConfiguration:[]}
-            assert.deepEqual(bucketNotification, expectedResults)
-              done()
-          })
+        client.getBucketNotification('bucket', function(e, bucketNotification) {
+          var expectedResults = {
+            TopicConfiguration:[{ Id: 'YjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Topic:'arn:aws:sns:us-east-1:83310034:s3notificationtopic2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[{Name:'suffix', Value:'.jpg'}, {Name:'prefix', Value:'photos/'}]}],
+            QueueConfiguration:[ { Id: 'ZjVkM2Y0YmUtNGI3NC00ZjQyLWEwNGItNDIyYWUxY2I0N2M4', Queue:'arn:aws:sns:us-east-1:83310034:s3notificationqueue2', Event:['s3:ReducedRedundancyLostObject', 's3:ObjectCreated:*'], Filter:[]}],
+            CloudFunctionConfiguration:[]}
+          assert.deepEqual(bucketNotification, expectedResults)
+          done()
+        })
       })
     })
 
@@ -1257,29 +1255,31 @@ describe('Client', function() {
         MockResponse('http://localhost:9000').get('/bucket?list-type=2&max-keys=1000').reply(200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>bucket</Name><Prefix></Prefix><KeyCount>7</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>true</IsTruncated><NextContinuationToken>6b9d1e3d20436</NextContinuationToken><Contents><Key>7mb.bin</Key><LastModified>2016-07-17T07:21:54.000Z</LastModified><ETag>&quot;67dc7f4b9253ab418a9f7fbc4282432a-2&quot;</ETag><Size>7340032</Size><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>')
         MockResponse('http://localhost:9000').get('/bucket?continuation-token=6b9d1e3d20436&list-type=2&max-keys=1000').reply(200, '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>bucket</Name><Prefix></Prefix><KeyCount>7</KeyCount><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><Contents><Key>hosts</Key><LastModified>2016-07-15T11:46:53.000Z</LastModified><ETag>&quot;2bb4dbc9f2171fcd060366f4ea235c1c&quot;</ETag><Size>220</Size><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>main.go</Key><LastModified>2016-07-19T10:29:14.000Z</LastModified><ETag>&quot;16c5f5a9817b6b9d1e3d204366a22f96&quot;</ETag><Size>8231</Size><StorageClass>STANDARD</StorageClass></Contents><CommonPrefixes><Prefix>1100/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>caddy/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>hosts/</Prefix></CommonPrefixes><CommonPrefixes><Prefix>uploads/</Prefix></CommonPrefixes></ListBucketResult>')
         var stream = client.listObjectsV2('bucket', '', true),
-        results = [],
-        expectedResults = [{
-          'etag': '67dc7f4b9253ab418a9f7fbc4282432a-2',
-          'lastModified': new Date('2016-07-17T07:21:54.000Z'),
-          'name': '7mb.bin',
-          'size': 7340032},
-        { 'etag': '2bb4dbc9f2171fcd060366f4ea235c1c',
-          'lastModified': new Date('2016-07-15T11:46:53.000Z'),
-          'name': 'hosts',
-          'size': 220 },
-        { 'etag': '16c5f5a9817b6b9d1e3d204366a22f96',
-          'lastModified': new Date('2016-07-19T10:29:14.000Z'),
-           'name': 'main.go',
-           'size': 8231 },
-        { 'prefix': '1100/',
-          'size': 0 },
-        { 'prefix': 'caddy/',
-          'size': 0 },
-        { 'prefix': 'hosts/',
-          'size': 0 },
-        { 'prefix': 'uploads/',
-          'size': 0
-        }]
+          results = [],
+          expectedResults = [
+            {
+              'etag': '67dc7f4b9253ab418a9f7fbc4282432a-2',
+              'lastModified': new Date('2016-07-17T07:21:54.000Z'),
+              'name': '7mb.bin',
+              'size': 7340032 },
+            { 'etag': '2bb4dbc9f2171fcd060366f4ea235c1c',
+              'lastModified': new Date('2016-07-15T11:46:53.000Z'),
+              'name': 'hosts',
+              'size': 220 },
+            { 'etag': '16c5f5a9817b6b9d1e3d204366a22f96',
+              'lastModified': new Date('2016-07-19T10:29:14.000Z'),
+              'name': 'main.go',
+              'size': 8231 },
+            { 'prefix': '1100/',
+              'size': 0 },
+            { 'prefix': 'caddy/',
+              'size': 0 },
+            { 'prefix': 'hosts/',
+              'size': 0 },
+            { 'prefix': 'uploads/',
+              'size': 0
+            }
+          ]
         stream.pipe(Through2.obj(function(object, enc, end) {
           results.push(object)
           end()

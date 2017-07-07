@@ -17,8 +17,6 @@
 import stream from 'stream'
 import mime from 'mime-types'
 
-import _ from 'lodash'
-
 // All characters in string which are NOT unreserved should be percent encoded.
 // Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
@@ -75,7 +73,7 @@ export function isVirtualHostStyle(endpoint, protocol, bucket) {
   return isAmazonEndpoint(endpoint)
 }
 
-var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/;
+var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/
 
 export function isValidIP(ip) {
   return ipv4Regex.test(ip)
@@ -115,7 +113,7 @@ export function isValidDomain(host) {
   if (host[0] === '.' || host.substr(-1) === '.') {
     return false
   }
-  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\\"\';:><?/'.split('')
+  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
   // All non alphanumeric characters are invalid.
   for (var i in alphaNumerics) {
     if (host.indexOf(alphaNumerics[i]) > -1) {
@@ -145,8 +143,8 @@ export function isValidPort(port) {
   if (port < 0) return false
   // port '0' is valid and special case return true.
   if (port === 0) return true
-  var min_port = 1;
-  var max_port = 65535;
+  var min_port = 1
+  var max_port = 65535
   // Verify if port is in range.
   return port >= min_port && port <= max_port
 }
@@ -196,17 +194,17 @@ export function isNumber(arg) {
 
 // check if typeof arg function
 export function isFunction(arg) {
-  return typeof(arg) === 'function';
+  return typeof(arg) === 'function'
 }
 
 // check if typeof arg string
 export function isString(arg) {
-  return typeof(arg) === 'string';
+  return typeof(arg) === 'string'
 }
 
 // check if typeof arg object
 export function isObject(arg) {
-  return typeof(arg) === 'object' && arg !== null;
+  return typeof(arg) === 'object' && arg !== null
 }
 
 // check if object is readable stream

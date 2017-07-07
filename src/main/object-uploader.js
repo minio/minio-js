@@ -87,7 +87,7 @@ export default class ObjectUploader extends Transform {
 
         let etag = response.headers.etag
         if (etag) {
-          etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+          etag = etag.replace(/^"/, '').replace(/"$/, '')
         }
 
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
@@ -190,7 +190,7 @@ export default class ObjectUploader extends Transform {
       // In order to aggregate the parts together, we need to collect the etags.
       let etag = response.headers.etag
       if (etag)
-        etag = etag.replace(/^\"/, '').replace(/\"$/, '')
+        etag = etag.replace(/^"/, '').replace(/"$/, '')
 
       this.etags.push({part: partNumber, etag})
 
@@ -209,16 +209,16 @@ export default class ObjectUploader extends Transform {
     // completing the multipart upload.
     this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id,
                                         this.etags, (err, etag) => {
-      if (err) return callback(err)
+                                          if (err) return callback(err)
 
-      // Call our callback on the next tick to allow the streams infrastructure
-      // to finish what its doing before we continue.
-      process.nextTick(() => {
-        this.callback(null, etag)
-      })
+                                          // Call our callback on the next tick to allow the streams infrastructure
+                                          // to finish what its doing before we continue.
+                                          process.nextTick(() => {
+                                            this.callback(null, etag)
+                                          })
 
-      callback()
-    })
+                                          callback()
+                                        })
   }
 
 }

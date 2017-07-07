@@ -15,7 +15,7 @@
  */
 
 import _ from 'lodash'
-import * as errors from './errors';
+import * as errors from './errors'
 import { isValidBucketName } from './helpers'
 
 export const Policy = {
@@ -100,7 +100,7 @@ export function generateBucketPolicy(policy, bucketName, objectPrefix) {
     throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
   }
   if (!isValidBucketPolicy(policy)) {
-      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy}` +
+    throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy}` +
                                                 `(must be 'none', 'readonly', 'writeonly', or 'readwrite')`)
   }
 
