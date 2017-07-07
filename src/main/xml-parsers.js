@@ -71,8 +71,8 @@ export function parseCopyObject(xml) {
   }
   var xmlobj = parseXml(xml)
   if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+    .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+    .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified[0])
 
   return result
@@ -129,22 +129,22 @@ export function parseBucketNotification(xml) {
   var genEvents = function(events) {
     var result = []
     if (events) {
-        events.forEach(s3event => {
-          result.push(s3event)
-        })
-      }
+      events.forEach(s3event => {
+        result.push(s3event)
+      })
+    }
     return result
   }
   // Parse all filter rules
   var genFilterRules = function(filters) {
     var result = []
-      if (filters && filters[0].S3Key && filters[0].S3Key[0].FilterRule) {
-        filters[0].S3Key[0].FilterRule.forEach(rule => {
-          var Name = rule.Name[0]
-          var Value = rule.Value[0]
-          result.push({Name, Value})
-        })
-      }
+    if (filters && filters[0].S3Key && filters[0].S3Key[0].FilterRule) {
+      filters[0].S3Key[0].FilterRule.forEach(rule => {
+        var Name = rule.Name[0]
+        var Value = rule.Value[0]
+        result.push({Name, Value})
+      })
+    }
     return result
   }
 
@@ -204,8 +204,8 @@ export function parseListParts(xml) {
       var part = +p.PartNumber[0]
       var lastModified = new Date(p.LastModified[0])
       var etag = p.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-                           .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                           .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       result.parts.push({part, lastModified, etag})
     })
   }
@@ -227,8 +227,8 @@ export function parseCompleteMultipart(xml) {
     var bucket = xmlobj.Bucket[0]
     var key = xmlobj.Key[0]
     var etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+      .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
 
     return {location, bucket, key, etag}
   }
@@ -243,9 +243,9 @@ export function parseCompleteMultipart(xml) {
 // parse XML response for list objects in a bucket
 export function parseListObjects(xml) {
   var result = {
-        objects: [],
-        isTruncated: false
-      }
+    objects: [],
+    isTruncated: false
+  }
   var nextMarker
   var xmlobj = parseXml(xml)
   if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
@@ -254,8 +254,8 @@ export function parseListObjects(xml) {
       var name = content.Key[0]
       var lastModified = new Date(content.LastModified[0])
       var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-                                 .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                                 .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       var size = +content.Size[0]
       result.objects.push({name, lastModified, etag, size})
       nextMarker = name
@@ -277,9 +277,9 @@ export function parseListObjects(xml) {
 // parse XML response for list objects v2 in a bucket
 export function parseListObjectsV2(xml) {
   var result = {
-        objects: [],
-        isTruncated: false
-      }
+    objects: [],
+    isTruncated: false
+  }
   var xmlobj = parseXml(xml)
   if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
@@ -289,8 +289,8 @@ export function parseListObjectsV2(xml) {
       var name = content.Key[0]
       var lastModified = new Date(content.LastModified[0])
       var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-                                 .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-                                 .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       var size = +content.Size[0]
       result.objects.push({name, lastModified, etag, size})
     })

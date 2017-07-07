@@ -7,8 +7,16 @@ parserOptions:
   sourceType: module
 rules:
   indent:
-    - off
+    - error
     - 2
+    - FunctionDeclaration:
+        parameters: first
+      FunctionExpression:
+        parameters: first
+      CallExpression:
+        arguments: first
+      ArrayExpression: first
+      ObjectExpression: first
   linebreak-style:
     - error
     - unix

@@ -40,25 +40,25 @@ export function getConcater(parser, emitError) {
   }
 
   return Through2({objectMode},
-  function (chunk, enc, cb) {
-    bufs.push(chunk)
-    cb()
-  }, function (cb) {
-    if (emitError) {
-      cb(parser(Buffer.concat(bufs).toString()))
-      // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
-      this.push(null)
-      return
-    }
-    if (bufs.length) {
-      if (parser) {
-        this.push(parser(Buffer.concat(bufs).toString()))
-      } else {
-        this.push(Buffer.concat(bufs))
-      }
-    }
-    cb()
-  })
+                  function (chunk, enc, cb) {
+                    bufs.push(chunk)
+                    cb()
+                  }, function (cb) {
+                    if (emitError) {
+                      cb(parser(Buffer.concat(bufs).toString()))
+                      // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
+                      this.push(null)
+                      return
+                    }
+                    if (bufs.length) {
+                      if (parser) {
+                        this.push(parser(Buffer.concat(bufs).toString()))
+                      } else {
+                        this.push(Buffer.concat(bufs))
+                      }
+                    }
+                    cb()
+                  })
 }
 
 // Generates an Error object depending on http statusCode and XML body

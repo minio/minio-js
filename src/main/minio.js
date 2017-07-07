@@ -31,16 +31,16 @@ import path from 'path'
 import _ from 'lodash'
 
 import { isValidPrefix, isValidEndpoint, isValidBucketName,
-         isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
-         uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-         isString, isObject, isDate, isArray, pipesetup,
-         readableStream, isReadableStream, isVirtualHostStyle,
-         probeContentType } from './helpers.js'
+  isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
+  uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
+  isString, isObject, isDate, isArray, pipesetup,
+  readableStream, isReadableStream, isVirtualHostStyle,
+  probeContentType } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
 import { isValidBucketPolicy, generateBucketPolicy,
-         parseBucketPolicy } from './bucket-policy'
+  parseBucketPolicy } from './bucket-policy'
 
 export { Policy } from './bucket-policy'
 
@@ -132,7 +132,7 @@ export class Client {
 
     this.regionMap = {}
     if (params.region) {
-        this.region = params.region
+      this.region = params.region
     }
 
     this.minimumPartSize = 5*1024*1024
@@ -399,9 +399,9 @@ export class Client {
       })
       let pipe = pipesetup(stream, req)
       pipe.on('error', e => {
-          this.logHTTP(reqOptions, null, e)
-          cb(e)
-        })
+        this.logHTTP(reqOptions, null, e)
+        cb(e)
+      })
     }
     if (region) return _makeRequest(null, region)
     this.getBucketRegion(options.bucketName, _makeRequest)
@@ -944,13 +944,13 @@ export class Client {
                 // part is not uploaded yet, or md5 mismatch
                 var stream = fs.createReadStream(filePath, options)
                 uploader(uploadId, partNumber, stream, length,
-                  data.sha256sum, data.md5sum, (e, etag) => {
-                    if (e) return cb(e)
-                    partsDone.push({part: partNumber, etag})
-                    partNumber++
-                    uploadedSize += length
-                    return cb()
-                  })
+                         data.sha256sum, data.md5sum, (e, etag) => {
+                           if (e) return cb(e)
+                           partsDone.push({part: partNumber, etag})
+                           partNumber++
+                           uploadedSize += length
+                           return cb()
+                         })
               })
               .on('error', e => cb(e))
           },
@@ -1004,7 +1004,7 @@ export class Client {
     // We'll need to shift arguments to the left because of contentType
     // and size being optional.
     if (isString(size)) {
-       contentType = size
+      contentType = size
     }
 
     if (typeof stream === 'string' || stream instanceof Buffer) {
@@ -1126,7 +1126,7 @@ export class Client {
       throw new TypeError('maxKeys should be of type "number"')
     }
     var queries = []
-      // escape every value in query string, except maxKeys
+    // escape every value in query string, except maxKeys
     if (prefix) {
       prefix = uriEscape(prefix)
       queries.push(`prefix=${prefix}`)
@@ -1203,16 +1203,16 @@ export class Client {
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000)
-          .on('error', e => readStream.emit('error', e))
-          .on('data', result => {
-            if (result.isTruncated) {
-              marker = result.nextMarker
-            } else {
-              ended = true
-            }
-            objects = result.objects
-            readStream._read()
-          })
+        .on('error', e => readStream.emit('error', e))
+        .on('data', result => {
+          if (result.isTruncated) {
+            marker = result.nextMarker
+          } else {
+            ended = true
+          }
+          objects = result.objects
+          readStream._read()
+        })
     }
     return readStream
   }
@@ -1317,16 +1317,16 @@ export class Client {
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000)
-          .on('error', e => readStream.emit('error', e))
-          .on('data', result => {
-            if (result.isTruncated) {
-              continuationToken = result.nextContinuationToken
-            } else {
-              ended = true
-            }
-            objects = result.objects
-            readStream._read()
-          })
+        .on('error', e => readStream.emit('error', e))
+        .on('data', result => {
+          if (result.isTruncated) {
+            continuationToken = result.nextContinuationToken
+          } else {
+            ended = true
+          }
+          objects = result.objects
+          readStream._read()
+        })
     }
     return readStream
   }
@@ -1931,16 +1931,16 @@ export class Client {
         'Content-MD5': md5sum
       }
       this.makeRequestStream({method, bucketName, objectName, query, headers},
-                            stream, sha256sum, 200, '', (e, response) => {
-        if (e) return cb(e)
-        var etag = response.headers.etag
-        if (etag) {
-          etag = etag.replace(/^"/, '').replace(/"$/, '')
-        }
-        // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-        response.on('data', () => {})
-        cb(null, etag)
-      })
+                             stream, sha256sum, 200, '', (e, response) => {
+                               if (e) return cb(e)
+                               var etag = response.headers.etag
+                               if (etag) {
+                                 etag = etag.replace(/^"/, '').replace(/"$/, '')
+                               }
+                               // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+                               response.on('data', () => {})
+                               cb(null, etag)
+                             })
     }
     if (multipart) {
       return multipartUploader

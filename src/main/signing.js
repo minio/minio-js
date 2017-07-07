@@ -49,9 +49,9 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
     throw new TypeError('hashedPayload should be of type "string"')
   }
   var headersArray = signedHeaders.reduce((acc, i) => {
-      acc.push(`${i.toLowerCase()}:${headers[i]}`)
-      return acc
-    }, [])
+    acc.push(`${i.toLowerCase()}:${headers[i]}`)
+    return acc
+  }, [])
 
   var requestResource = path.split('?')[0]
   var requestQuery = path.split('?')[1]
@@ -123,8 +123,8 @@ function getSignedHeaders(headers) {
 
   var ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
   return _.map(headers, (v, header) => header)
-                .filter(header => ignoredHeaders.indexOf(header) === -1)
-                .sort()
+    .filter(header => ignoredHeaders.indexOf(header) === -1)
+    .sort()
 }
 
 // returns the key used for calculating signature
@@ -211,7 +211,7 @@ export function signV4(request, accessKey, secretKey, region) {
 
   var signedHeaders = getSignedHeaders(request.headers)
   var canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers,
-                                              signedHeaders, sha256sum)
+                                             signedHeaders, sha256sum)
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
   var credential = getCredential(accessKey, region, requestDate)
@@ -278,7 +278,7 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   var path = resource + '?' + query
 
   var canonicalRequest = getCanonicalRequest(request.method, path,
-                                              request.headers, signedHeaders, hashedPayload)
+                                             request.headers, signedHeaders, hashedPayload)
 
   var stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   var signingKey = getSigningKey(requestDate, region, secretKey)
