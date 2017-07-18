@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-import { Policy } from '../../../dist/main/minio'
-import * as Minio from '../../../dist/main/minio'
-import os from 'os'
-import stream from 'stream'
-import crypto from 'crypto'
-import async from 'async'
-import _ from 'lodash'
-import fs from 'fs'
-import http from 'http'
-import https from 'https'
-import url from 'url'
-import superagent from 'superagent'
-import { assert } from 'chai'
-import uuid from 'uuid'
+var minio
+
+try {
+  minio = require('../../../dist/main/minio')
+} catch (err){
+  minio = require('minio')
+}
+
+const Policy = minio.Policy
+const os = require('os')
+const stream = require('stream')
+const crypto = require('crypto')
+const async = require('async')
+const _ = require('lodash')
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
+const url = require('url')
+const chai = require('chai')
+const assert = chai.assert
+const superagent = require('superagent')
+var uuid = require("uuid")
 
 require('source-map-support').install()
 
@@ -58,10 +66,10 @@ describe('functional tests', function() {
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
 
-  var client = new Minio.Client(playConfig)
+  var client = new minio.Client(playConfig)
   var usEastConfig = playConfig
   usEastConfig.region = 'us-east-1'
-  var clientUsEastRegion = new Minio.Client(usEastConfig)
+  var clientUsEastRegion = new minio.Client(usEastConfig)
 
   var bucketName = uuid.v4()
   var objectName = uuid.v4()
@@ -298,7 +306,7 @@ describe('functional tests', function() {
       })
     })
     it('should copy object with conditions specified', done => {
-      var conds = new Minio.CopyConditions()
+      var conds = new minio.CopyConditions()
       conds.setMatchETagExcept('bd891862ea3e22c93ed53a098218791d')
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e) => {
         if (e) return done(e)
