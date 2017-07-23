@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-var minio
-
-try {
-  minio = require('../../../dist/main/minio')
-} catch (err){
-  minio = require('minio')
-}
-
-const Policy = minio.Policy
 const os = require('os')
 const stream = require('stream')
 const crypto = require('crypto')
@@ -35,7 +26,16 @@ const url = require('url')
 const chai = require('chai')
 const assert = chai.assert
 const superagent = require('superagent')
-var uuid = require("uuid")
+const uuid = require("uuid")
+let minio
+
+try {
+  minio = require('../../../dist/main/minio')
+} catch (err){
+  minio = require('minio')
+}
+
+const Policy = minio.Policy
 
 require('source-map-support').install()
 
