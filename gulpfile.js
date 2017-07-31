@@ -74,7 +74,7 @@ gulp.task('functional-test', ['compile'], function() {
 })
 
 function compile(src, dest, cb) {
-  var tsproject = ts.createProject('src/tsconfig.json')
+  var tsproject = ts.createProject('tsconfig.json')
   gulp.src(src)
     .pipe(tsproject())
     .js
