@@ -36,11 +36,11 @@ gulp.task('browserify', ['compile'], function() {
 gulp.task('default', ['test', 'browserify'], function() {})
 
 gulp.task('compile', function(cb) {
-  compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
+  compile('src/main/**/*.js', 'dist/main', cb)
 })
 
 gulp.task('test:compile', ['compile'], function(cb) {
-  compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
+  compile('src/test/**/*.js', 'dist/test', cb)
 })
 
 gulp.task('test', ['compile', 'test:compile'], function() {
@@ -61,7 +61,7 @@ gulp.task('lint', function() {
 })
 
 gulp.task('functional-test', ['compile'], function() {
-  compile('src/test/functional/*.js', 'functional', 'dist/test/functional/', function() {
+  compile('src/test/functional/*.js', 'dist/test/functional/', function() {
     gulp.src('dist/test/functional/*.js', {
       read: false
     })
@@ -72,7 +72,7 @@ gulp.task('functional-test', ['compile'], function() {
   })
 })
 
-function compile(src, name, dest, cb) {
+function compile(src, dest, cb) {
   gulp.src(src)
     .pipe(sourcemaps.init())
     .pipe(babel())
