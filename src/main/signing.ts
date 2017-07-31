@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import Moment from 'moment'
-import Crypto from 'crypto'
-import _ from 'lodash'
+import * as Moment from 'moment'
+import * as Crypto from 'crypto'
+import * as _ from 'lodash'
 import { uriEscape, getScope, isString, isObject, isArray, isDate, isNumber } from './helpers.js'
 import * as errors from './errors.js'
 

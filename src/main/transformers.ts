@@ -17,7 +17,7 @@
 import * as xmlParsers from './xml-parsers.js'
 import * as _ from 'lodash'
 import Through2 from 'through2'
-import Crypto from 'crypto'
+import * as Crypto from 'crypto'
 import JSONParser from 'json-stream'
 
 import { isFunction } from './helpers.js'

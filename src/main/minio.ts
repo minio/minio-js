@@ -16,19 +16,19 @@
 
 require('source-map-support').install()
 
-import fs from 'fs'
-import Crypto from 'crypto'
-import Http from 'http'
-import Https from 'https'
-import Stream from 'stream'
+import * as fs from 'fs'
+import * as Crypto from 'crypto'
+import * as Http from 'http'
+import * as Https from 'https'
+import * as Stream from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
-import Moment from 'moment'
+import * as Moment from 'moment'
 import async from 'async'
 import mkdirp from 'mkdirp'
-import path from 'path'
-import _ from 'lodash'
+import * as path from 'path'
+import * as _ from 'lodash'
 
 import { isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,

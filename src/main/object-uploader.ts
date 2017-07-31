@@ -15,7 +15,7 @@
  */
 
 import { Transform } from 'stream'
-import Crypto from 'crypto'
+import * as Crypto from 'crypto'
 import * as querystring from 'querystring'
 
 // We extend Transform because Writable does not implement ._flush().

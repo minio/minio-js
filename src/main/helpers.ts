@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import stream from 'stream'
+import * as stream from 'stream'
 import mime from 'mime-types'
 
 // All characters in string which are NOT unreserved should be percent encoded.

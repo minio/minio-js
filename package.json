@@ -45,6 +45,9 @@
     "xml2js": "^0.4.15"
   },
   "devDependencies": {
+    "@types/es6-error": "^4.0.0",
+    "@types/lodash": "^4.14.71",
+    "@types/node": "^8.0.17",
     "browserify": "^12.0.1",
     "chai": "^3.4.0",
     "eslint": "^4.1.1",

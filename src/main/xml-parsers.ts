@@ -15,7 +15,7 @@
  */
 
 import xml2js from 'xml2js'
-import _ from 'lodash'
+import * as _ from 'lodash'
 import * as errors from './errors.js'
 
 var options = {  // options passed to xml2js parser
