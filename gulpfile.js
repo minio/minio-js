@@ -21,6 +21,7 @@ var notify = require('gulp-notify');
 
 var fs = require("fs");
 var browserify = require("browserify");
+var ts = require('gulp-typescript')
 var mocha = require('gulp-mocha')
 var eslint = require('gulp-eslint')
 
@@ -36,7 +37,7 @@ gulp.task('browserify', ['compile'], function() {
 gulp.task('default', ['test', 'browserify'], function() {})
 
 gulp.task('compile', function(cb) {
-  compile('src/main/**/*.js', 'dist/main', cb)
+  compile('src/main/**/*.ts', 'dist/main', cb)
 })
 
 gulp.task('test:compile', ['compile'], function(cb) {
@@ -73,10 +74,10 @@ gulp.task('functional-test', ['compile'], function() {
 })
 
 function compile(src, dest, cb) {
+  var tsproject = ts.createProject('src/tsconfig.json')
   gulp.src(src)
-    .pipe(sourcemaps.init())
-    .pipe(babel())
-    .pipe(sourcemaps.write('.'))
+    .pipe(tsproject())
+    .js
     .pipe(gulp.dest(dest))
     .on('end', function() {
       cb()
