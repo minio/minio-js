@@ -18,11 +18,23 @@ import * as _ from 'lodash'
 import * as errors from './errors'
 import { isValidBucketName } from './helpers'
 
-export const Policy = {
-  NONE: 'none',
-  READONLY: 'readonly',
-  WRITEONLY: 'writeonly',
-  READWRITE: 'readwrite'
+type PrincipalKey = 'AWS'
+type PrincipalValue = '*'
+type Condition = { StringEquals: { 's3:prefix': string } }
+interface Statement {
+  Sid: string,
+  Effect: 'Allow' | 'Deny',
+  Principal: { [k in PrincipalKey]: PrincipalValue[] },
+  Action: string[],
+  Resource: string[],
+  Condition?: Condition
+}
+
+export enum Policy {
+  NONE = 'none',
+  READONLY = 'readonly',
+  WRITEONLY = 'writeonly',
+  READWRITE = 'readwrite'
 }
 
 const resourcePrefix = 'arn:aws:s3:::'
@@ -39,7 +51,7 @@ const writeActions = {
 }
 
 // Returns the string version of the bucket policy.
-export function parseBucketPolicy(policy, bucketName, objectPrefix) {
+export function parseBucketPolicy(policy: { Statement: Statement[] }, bucketName: string, objectPrefix: string) {
   let statements = policy.Statement
 
   // If there are no statements, it's none.
@@ -49,8 +61,8 @@ export function parseBucketPolicy(policy, bucketName, objectPrefix) {
   let objectResource = `${resourcePrefix}${bucketName}/${objectPrefix}`
 
   let actions = {
-    bucket: [],
-    object: []
+    bucket: [] as string[],
+    object: [] as string[]
   }
 
   // Loop through the statements and aggregate actions which are allowed.
@@ -95,7 +107,7 @@ export function parseBucketPolicy(policy, bucketName, objectPrefix) {
 }
 
 // Generate a statement payload to submit to S3 based on the given policy.
-export function generateBucketPolicy(policy, bucketName, objectPrefix) {
+export function generateBucketPolicy(policy: Policy, bucketName: string, objectPrefix: string) {
   if (!isValidBucketName(bucketName)) {
     throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
   }
@@ -106,8 +118,8 @@ export function generateBucketPolicy(policy, bucketName, objectPrefix) {
 
   // Merge the actions together based on the given policy.
   let actions = {
-    bucket: [],
-    object: []
+    bucket: [] as string[],
+    object: [] as string[]
   }
 
   if (policy == Policy.READONLY || policy == Policy.READWRITE) {
@@ -130,7 +142,7 @@ export function generateBucketPolicy(policy, bucketName, objectPrefix) {
   // one for basic bucket permissions, one for basic object permissions,
   // and finally a special statement for ListBucket, which should be
   // handled separately.
-  let statements = []
+  let statements: Statement[] = []
 
   if (actions.bucket.length > 0) {
     statements.push(createStatement(actions.bucket, `${resourcePrefix}${bucketName}`))
@@ -159,7 +171,7 @@ export function generateBucketPolicy(policy, bucketName, objectPrefix) {
   }
 }
 
-export function isValidBucketPolicy(policy) {
+export function isValidBucketPolicy(policy: any): policy is Policy {
   return policy == Policy.NONE ||
          policy == Policy.READONLY ||
          policy == Policy.WRITEONLY ||
@@ -169,12 +181,12 @@ export function isValidBucketPolicy(policy) {
 // Checks to see if the parent array has all the values in the child array.
 // Take the intersection for both. If the lengths are the same, the contents
 // of the child are inside the parent.
-function isSubArrayOf(parent, child) {
+function isSubArrayOf<T>(parent: T[], child: T[]) {
   return (_.intersection(parent, child)).length == child.length
 }
 
 // Checks if the statement pertains to the given resource. Returns a boolean.
-function pertainsTo(statement, resource) {
+function pertainsTo(statement: Statement, resource: string) {
   let resources = statement.Resource
 
   for (let i = 0; i < resources.length; i++) {
@@ -185,19 +197,18 @@ function pertainsTo(statement, resource) {
 }
 
 // Create an s3 Allow Statement.
-function createStatement(action, resource) {
-  return {
+export const createStatement: (acton: string[], resource: string) => Statement =
+  (action, resource) => ({
     Sid: '',
     Effect: 'Allow',
     Principal: { 'AWS': ['*'] },
     Action: action,
-    Resource: [ resource ]
-  }
-}
+    Resource: [resource]
+  })
 
 // AWS will sometimes drop arrays of length 1 for their values, so normalize
 // these back to arrays with length 1.
-function normalizeStatement(statement) {
+function normalizeStatement(statement: Statement) {
   if (typeof statement.Principal.AWS === 'string')
     statement.Principal.AWS = [ statement.Principal.AWS ]
 
