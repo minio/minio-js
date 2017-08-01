@@ -15,12 +15,13 @@
  */
 
 import * as stream from 'stream'
-import mime from 'mime-types'
+import * as mime from 'mime-types'
+import { Moment } from "moment";
 
 // All characters in string which are NOT unreserved should be percent encoded.
 // Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
-export function uriEscape(string) {
+export function uriEscape(string: string) {
   return string.split('').reduce((acc, elem) => {
     let buf = new Buffer(elem)
     if (buf.length === 1) {
@@ -48,16 +49,17 @@ export function uriEscape(string) {
   }, '')
 }
 
-export function uriResourceEscape(string) {
+export function uriResourceEscape(string: string) {
   return uriEscape(string).replace(/%2F/g, '/')
 }
 
-export function getScope(region, date) {
+export function getScope(region: string, date: Moment) {
   return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
 }
 
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
-export function isAmazonEndpoint(endpoint) {
+type AmazonEndpoint = 's3.amazonaws.com' | 's3.cn-north-1.amazonaws.com.cn'
+export function isAmazonEndpoint<T extends string>(endpoint: T): endpoint is T & AmazonEndpoint {
   return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
@@ -66,7 +68,7 @@ export function isAmazonEndpoint(endpoint) {
 // style if the protocol is 'https:', this is due to SSL wildcard
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
-export function isVirtualHostStyle(endpoint, protocol, bucket) {
+export function isVirtualHostStyle(endpoint: string, protocol: string, bucket: string) {
   if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
@@ -75,12 +77,15 @@ export function isVirtualHostStyle(endpoint, protocol, bucket) {
 
 var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/
 
-export function isValidIP(ip) {
+const enum IP {}
+export function isValidIP<T extends string>(ip: T): ip is T & IP {
   return ipv4Regex.test(ip)
 }
 
 // isValidEndpoint - true if endpoint is valid domain.
-export function isValidEndpoint(endpoint) {
+type Endpoint = Domain | IP
+export function isValidEndpoint<T>(endpoint: T): endpoint is T & Endpoint {
+  if (!isString(endpoint)) return false
   if (!isValidDomain(endpoint) && !isValidIP(endpoint)) {
     return false
   }
@@ -95,8 +100,8 @@ export function isValidEndpoint(endpoint) {
 }
 
 // isValidDomain - true if input host is a valid domain.
-export function isValidDomain(host) {
-  if (!isString(host)) return false
+const enum Domain {}
+export function isValidDomain<T extends string>(host: T): host is T & Domain {
   // See RFC 1035, RFC 3696.
   if (host.length === 0 || host.length > 255) {
     return false
@@ -127,7 +132,7 @@ export function isValidDomain(host) {
 
 // Probes contentType using file extensions.
 // For example: probeContentType('file.png') returns 'image/png'.
-export function probeContentType(path) {
+export function probeContentType(path: string) {
   let contentType = mime.lookup(path)
   if (!contentType) {
     contentType = 'application/octet-stream'
@@ -136,7 +141,7 @@ export function probeContentType(path) {
 }
 
 // isValidPort - is input port valid.
-export function isValidPort(port) {
+export function isValidPort<T>(port: T) {
   // verify if port is a number.
   if (!isNumber(port)) return false
   // port cannot be negative.
@@ -149,7 +154,8 @@ export function isValidPort(port) {
   return port >= min_port && port <= max_port
 }
 
-export function isValidBucketName(bucket) {
+const enum BucketName {}
+export function isValidBucketName<T>(bucket: T): bucket is T & string & BucketName {
   if (!isString(bucket)) return false
 
   // bucket length should be less than and no more than 63
@@ -174,63 +180,65 @@ export function isValidBucketName(bucket) {
 }
 
 // check if objectName is a valid object name
-export function isValidObjectName(objectName) {
+const enum ObjectName {}
+export function isValidObjectName<T>(objectName: T): objectName is T & string & Prefix & ObjectName {
   if (!isValidPrefix(objectName)) return false
   if (objectName.length === 0) return false
   return true
 }
 
 // check if prefix is valid
-export function isValidPrefix(prefix) {
+const enum Prefix {} 
+export function isValidPrefix<T>(prefix: T): prefix is T & string & Prefix {
   if (!isString(prefix)) return false
   if (prefix.length > 1024) return false
   return true
 }
 
 // check if typeof arg number
-export function isNumber(arg) {
+export function isNumber<T>(arg: T): arg is T & number {
   return typeof(arg) === 'number'
 }
 
 // check if typeof arg function
-export function isFunction(arg) {
+export function isFunction<T>(arg: T): arg is T & Function {
   return typeof(arg) === 'function'
 }
 
 // check if typeof arg string
-export function isString(arg) {
+export function isString<T>(arg: T): arg is T & string {
   return typeof(arg) === 'string'
 }
 
 // check if typeof arg object
-export function isObject(arg) {
+export function isObject<T>(arg: T): arg is T & object {
   return typeof(arg) === 'object' && arg !== null
 }
 
 // check if object is readable stream
-export function isReadableStream(arg) {
-  return isObject(arg) && isFunction(arg._read)
+export function isReadableStream<T>(arg: T): arg is T & NodeJS.ReadableStream {
+  return isObject(arg) && arg.hasOwnProperty('_read') && isFunction(arg._read)
 }
 
 // check if arg is boolean
-export function isBoolean(arg) {
+export function isBoolean(arg: any): arg is boolean {
   return typeof(arg) === 'boolean'
 }
 
 // check if arg is array
-export function isArray(arg) {
+export function isArray(arg: any): arg is any[] {
   return Array.isArray(arg)
 }
 
 // check if arg is Date
-export function isDate(arg) {
+export function isDate(arg: any): arg is Moment {
   return arg._isAMomentObject
 }
 
 // pipesetup sets up pipe() from left to right os streams array
 // pipesetup will also make sure that error emitted at any of the upstream Stream
 // will be emitted at the last stream. This makes error handling simple
-export function pipesetup(...streams) {
+export function pipesetup(...streams: (NodeJS.ReadableStream & NodeJS.WritableStream)[]) {
   return streams.reduce((src, dst) => {
     src.on('error', err => dst.emit('error', err))
     return src.pipe(dst)
@@ -238,7 +246,7 @@ export function pipesetup(...streams) {
 }
 
 // return a Readable stream that emits data
-export function readableStream(data) {
+export function readableStream(data: any) {
   var s = new stream.Readable()
   s._read = () => {}
   s.push(data)
