@@ -53,7 +53,7 @@ export function uriResourceEscape(string) {
 }
 
 export function getScope(region, date) {
-  return `${date.format('YYYYMMDD')}/${region}/s3/aws4_request`
+  return `${makeDateShort(date)}/${region}/s3/aws4_request`
 }
 
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
@@ -222,9 +222,32 @@ export function isArray(arg) {
   return Array.isArray(arg)
 }
 
-// check if arg is Date
-export function isDate(arg) {
-  return arg._isAMomentObject
+// Create a Date string with format:
+// 'YYYYMMDDTHHmmss' + Z
+export function makeDateLong(date) {
+  date = date || new Date()
+
+  // Gives format like: '2017-08-07T16:28:59.889Z'
+  date = date.toISOString()
+
+  return date.substr(0, 4) +
+    date.substr(5, 2) +
+    date.substr(8, 5) +
+    date.substr(14, 2) +
+    date.substr(17, 2) + 'Z'
+}
+
+// Create a Date string with format:
+// 'YYYYMMDD'
+export function makeDateShort(date) {
+  date = date || new Date()
+
+  // Gives format like: '2017-08-07T16:28:59.889Z'
+  date = date.toISOString()
+
+  return date.substr(0, 4) +
+    date.substr(5, 2) +
+    date.substr(8, 2)
 }
 
 // pipesetup sets up pipe() from left to right os streams array

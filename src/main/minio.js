@@ -24,7 +24,6 @@ import Stream from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
-import Moment from 'moment'
 import async from 'async'
 import mkdirp from 'mkdirp'
 import path from 'path'
@@ -33,9 +32,9 @@ import _ from 'lodash'
 import { isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-  isString, isObject, isDate, isArray, pipesetup,
+  isString, isObject, isArray, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  probeContentType } from './helpers.js'
+  probeContentType, makeDateLong } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -374,9 +373,12 @@ export class Client {
       if (!this.anonymous) {
         // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
         if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
-        reqOptions.headers['x-amz-date'] = Moment().utc().format('YYYYMMDDTHHmmss') + 'Z'
+
+        let date = new Date()
+
+        reqOptions.headers['x-amz-date'] = makeDateLong(date)
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
-        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region)
+        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, response => {
@@ -1488,7 +1490,7 @@ export class Client {
       throw new TypeError('expires should be of type "number"')
     }
     var method = 'PUT'
-    var requestDate = Moment().utc()
+    var requestDate = new Date()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
@@ -1551,7 +1553,7 @@ export class Client {
       }
     })
     var method = 'GET'
-    var requestDate = Moment().utc()
+    var requestDate = new Date()
     var query = _.map(respHeaders, (value, key) => `${key}=${uriEscape(value)}`).join('&')
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
@@ -1593,8 +1595,8 @@ export class Client {
     }
     this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
       if (e) return cb(e)
-      var date = Moment.utc()
-      var dateStr = date.format('YYYYMMDDTHHmmss') + 'Z'
+      var date = new Date()
+      var dateStr = makeDateLong(date)
 
       if (!postPolicy.policy.expiration) {
         // 'expiration' is mandatory field for S3.
@@ -2021,18 +2023,18 @@ export class CopyConditions {
     this.matchETagExcept = ""
   }
 
-  setModified(nativedate) {
-    if (!isDate(nativedate)) {
-      throw new errors.InvalidDateError('Invalid date : cannot be null')
-    }
-    this.modified = Moment(nativedate).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
+  setModified(date) {
+    if (!(date instanceof Date))
+      throw new TypeError('date must be of type Date')
+
+    this.modified = date.toISOString()
   }
 
-  setUnmodified(nativedate) {
-    if (!isDate(nativedate)) {
-      throw new errors.InvalidDateError('Invalid date : cannot be null')
-    }
-    this.unmodified = Moment(nativedate).format('YYYY-MM-DDThh:mm:ss.SSS') + 'Z'
+  setUnmodified(date) {
+    if (!(date instanceof Date))
+      throw new TypeError('date must be of type Date')
+
+    this.unmodified = date.toISOString()
   }
 
   setMatchETag(etag) {

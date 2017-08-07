@@ -333,7 +333,13 @@ describe('functional tests', function() {
     it('should create multipart request', done => {
       client.initiateNewMultipartUpload(bucketName, _6mbObjectName, 'application/octet-stream', done)
     })
-    it('should list incomplete upload', done => {
+    it('should list incomplete upload', function(done) {
+      // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
+      // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
+      if (!client.host.includes('s3.amazonaws.com')) {
+        this.skip()
+      }
+
       var found = false
       client.listIncompleteUploads(bucketName, _6mbObjectName, true)
         .on('error', e => done(e))
