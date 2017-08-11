@@ -22,7 +22,7 @@ import Nock from 'nock'
 import Through2 from 'through2'
 import Stream from 'stream'
 import * as Minio from '../../../dist/main/minio'
-import { isValidEndpoint, isValidIP } from '../../../dist/main/helpers'
+import { isValidEndpoint, isValidIP, makeDateLong, makeDateShort } from '../../../dist/main/helpers'
 
 import { parseBucketPolicy, generateBucketPolicy } from '../../../dist/main/bucket-policy'
 
@@ -46,6 +46,58 @@ describe('Helpers', () => {
   })
   it('should fail for invalid ip', () => {
     assert.equal(isValidIP('1.1.1'), false)
+  })
+  it('should make date short', () => {
+    let date = new Date('2012-12-03T17:25:36.331Z')
+
+    assert.equal(makeDateShort(date), '20121203')
+  })
+  it('should make date long', () => {
+    let date = new Date('2017-08-11T17:26:34.935Z')
+
+    assert.equal(makeDateLong(date), '20170811T172634Z')
+  })
+})
+
+describe('CopyConditions', () => {
+  let date = '2017-08-11T19:34:18.437Z'
+
+  let cc = new Minio.CopyConditions()
+
+  describe('#setModified', () => {
+    it('should take a date argument', () => {
+      cc.setModified(new Date(date))
+
+      assert.equal(cc.modified, date)
+    })
+
+    it('should throw without date', () => {
+      assert.throws(() => {
+        cc.setModified()
+      }, /date must be of type Date/)
+
+      assert.throws(() => {
+        cc.setModified({ hi: 'there' })
+      }, /date must be of type Date/)
+    })
+  })
+
+  describe('#setUnmodified', () => {
+    it('should take a date argument', () => {
+      cc.setUnmodified(new Date(date))
+
+      assert.equal(cc.unmodified, date)
+    })
+
+    it('should throw without date', () => {
+      assert.throws(() => {
+        cc.setUnmodified()
+      }, /date must be of type Date/)
+
+      assert.throws(() => {
+        cc.setUnmodified({ hi: 'there' })
+      }, /date must be of type Date/)
+    })
   })
 })
 

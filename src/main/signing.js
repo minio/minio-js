@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import Moment from 'moment'
 import Crypto from 'crypto'
 import _ from 'lodash'
-import { uriEscape, getScope, isString, isObject, isArray, isDate, isNumber } from './helpers.js'
+import { uriEscape, getScope, isString, isObject, isArray, isNumber,
+  makeDateShort, makeDateLong } from './helpers.js'
 import * as errors from './errors.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
@@ -138,7 +138,7 @@ function getSigningKey(date, region, secretKey) {
   if (!isString(secretKey)) {
     throw new TypeError('secretKey should be of type "string"')
   }
-  var dateLine = date.format('YYYYMMDD'),
+  var dateLine = makeDateShort(date),
     hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest(),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest(),
     hmac3 = Crypto.createHmac('sha256', hmac2).update('s3').digest()
@@ -160,7 +160,7 @@ function getStringToSign(canonicalRequest, requestDate, region) {
   var scope = getScope(region, requestDate)
   var stringToSign = []
   stringToSign.push(signV4Algorithm)
-  stringToSign.push(requestDate.format('YYYYMMDDTHHmmss') + 'Z')
+  stringToSign.push(makeDateLong(requestDate))
   stringToSign.push(scope)
   stringToSign.push(hash)
   return stringToSign.join('\n')
@@ -185,7 +185,7 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
 }
 
 // Returns the authorization header
-export function signV4(request, accessKey, secretKey, region) {
+export function signV4(request, accessKey, secretKey, region, requestDate) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -206,7 +206,6 @@ export function signV4(request, accessKey, secretKey, region) {
     throw new errors.SecretKeyRequiredError('secretKey is required for signing')
   }
 
-  var requestDate = Moment(request.headers['x-amz-date'], 'YYYYMMDDTHHmmss')
   var sha256sum = request.headers['x-amz-content-sha256']
 
   var signedHeaders = getSignedHeaders(request.headers)
@@ -234,9 +233,6 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
-  if (!isDate(requestDate)) {
-    throw new TypeError('requestDate should be of type "Date"')
-  }
 
   if (!accessKey) {
     throw new errors.AccessKeyRequiredError('accessKey is required for presigning')
@@ -255,7 +251,7 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
     throw new errors.ExpiresParamError('expires param cannot be alrger than 7 days')
   }
 
-  var iso8601Date = requestDate.format('YYYYMMDDTHHmmss') + 'Z'
+  var iso8601Date = makeDateLong(requestDate)
   var signedHeaders = getSignedHeaders(request.headers)
   var credential = getCredential(accessKey, region, requestDate)
   var hashedPayload = 'UNSIGNED-PAYLOAD'
