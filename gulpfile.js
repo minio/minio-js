@@ -51,6 +51,12 @@ gulp.task('test', ['compile', 'test:compile'], function() {
       reporter: 'spec',
       ui: 'bdd',
     }))
+    .once('error', () => {
+			process.exit(1);
+		})
+		.once('end', () => {
+			process.exit();
+		})
 })
 
 gulp.task('lint', function() {
@@ -69,6 +75,12 @@ gulp.task('functional-test', ['compile'], function() {
         reporter: 'spec',
         ui: 'bdd',
       }))
+      .once('error', () => {
+        process.exit(1);
+      })
+      .once('end', () => {
+        process.exit();
+      })
   })
 })
 
