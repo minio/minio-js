@@ -60,7 +60,7 @@ describe('Helpers', () => {
 })
 
 describe('CopyConditions', () => {
-  let date = '2017-08-11T19:34:18.437Z'
+  let date = 'Fri, 11 Aug 2017 19:34:18 GMT'
 
   let cc = new Minio.CopyConditions()
 

@@ -2053,14 +2053,14 @@ export class CopyConditions {
     if (!(date instanceof Date))
       throw new TypeError('date must be of type Date')
 
-    this.modified = date.toISOString()
+    this.modified = date.toUTCString()
   }
 
   setUnmodified(date) {
     if (!(date instanceof Date))
       throw new TypeError('date must be of type Date')
 
-    this.unmodified = date.toISOString()
+    this.unmodified = date.toUTCString()
   }
 
   setMatchETag(etag) {
