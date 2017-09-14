@@ -4,7 +4,7 @@
 
 The Minio JavaScript Client SDK provides simple APIs to access any Amazon S3 compatible object storage server.
 
-This quickstart guide will show you how to install the client SDK and execute an example JavaScript program. For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://docs.minio.io/docs/javascript-client-api-reference) documentation.
+This guide will show you how to install the client SDK and execute an example JavaScript program. For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://docs.minio.io/docs/javascript-client-api-reference) documentation.
 
 This document assumes that you have a working [nodejs](http://nodejs.org/) setup in place.
 
