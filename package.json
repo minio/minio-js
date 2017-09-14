@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/minio/minio-js#readme",
   "dependencies": {
-    "async": "^1.5.0",
+    "async": "^1.5.2",
     "block-stream2": "^1.0.0",
     "concat-stream": "^1.4.8",
     "es6-error": "^2.0.2",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "browserify": "^12.0.1",
-    "chai": "^3.4.0",
+    "chai": "^3.5.0",
     "eslint": "^4.1.1",
     "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
@@ -54,9 +54,10 @@
     "gulp-notify": "^2.2.0",
     "gulp-sourcemaps": "^1.5.2",
     "mocha": "^2.3.2",
+    "mocha-steps": "^1.1.0",
     "nock": "^2.12.0",
     "rewire": "^2.3.3",
-    "superagent": "^1.6.1"
+    "superagent": "^1.8.5"
   },
   "keywords": [
     "api",
