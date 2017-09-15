@@ -123,6 +123,7 @@ export class Client {
     this.protocol = protocol
     this.accessKey = params.accessKey
     this.secretKey = params.secretKey
+    this.sessionToken = params.sessionToken
     this.userAgent = `${libraryAgent}`
 
     if (!this.accessKey) this.accessKey = ''
@@ -378,6 +379,10 @@ export class Client {
 
         reqOptions.headers['x-amz-date'] = makeDateLong(date)
         reqOptions.headers['x-amz-content-sha256'] = sha256sum
+        if (this.sessionToken) {
+          reqOptions.headers['x-amz-security-token'] = this.sessionToken
+        }
+
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
         reqOptions.headers.authorization = authorization
       }
