@@ -986,7 +986,7 @@ describe('functional tests', function() {
       objArray = objArray.sort()
       async.mapLimit(
         objArray,
-        50,
+        10,
         (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
         done
       )
@@ -1007,7 +1007,7 @@ describe('functional tests', function() {
     step(`removeObject(bucketName, objectName, callback)__Remove ${listObjectsNum} objects`, done => {
       async.mapLimit(
         listPrefixArray,
-        50,
+        10,
         (objectName, cb) => client.removeObject(bucketName, objectName, cb),
         done
       )
