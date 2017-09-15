@@ -84,7 +84,6 @@ describe('functional tests', function() {
 
   var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
   var _MultiPath100kbObjectBufferName = `path/to/${_100kbObjectName}.buffer`
-  var _100kbObjectStringName = `${_100kbObjectName}.string`
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
   var _100kb1kboffsetmd5 = crypto.createHash('md5').update(_100kb.slice(1024)).digest('hex')
 
@@ -287,23 +286,6 @@ describe('functional tests', function() {
       })
     })
 
-    step('putObject(bucketName, objectName, stream, contentType, callback)_stream:100kbString_', done => {
-      client.putObject(bucketName, _100kbObjectStringName, _100kb.toString(), '', done)
-    })
-
-    step('getObject(bucketName, objectName, callback)_objectName:100kbObjectName_download 100KiB string and match content', done => {
-      var hash = crypto.createHash('md5')
-      client.getObject(bucketName, _100kbObjectStringName, (e, stream) => {
-        if (e) return done(e)
-        stream.on('data', data => hash.update(data))
-        stream.on('error', done)
-        stream.on('end', () => {
-          if (hash.digest('hex') === _100kbmd5) return done()
-          done(new Error('content mismatch'))
-        })
-      })
-    })
-
     step('putObject(bucketName, objectName, stream, contentType)_stream:100Kib_', done => {
       client.putObject(bucketName, _100kbObjectBufferName, _100kb, '')
         .then(() => done())
@@ -375,12 +357,13 @@ describe('functional tests', function() {
 
     step('getPartialObject(bucketName, objectName, offset, length, cb)_length:100*1024_download partial data (100kb of the 6mb file) and match content', done => {
       var hash = crypto.createHash('md5')
+      var expectedHash = crypto.createHash('md5').update(_6mb.slice(0,100*1024)).digest('hex')
       client.getPartialObject(bucketName, _6mbObjectName, 0, 100 * 1024, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
         stream.on('end', () => {
-          if (hash.digest('hex') === _100kbmd5) return done()
+          if (hash.digest('hex') === expectedHash) return done()
           done(new Error('content mismatch'))
         })
       })
@@ -420,7 +403,7 @@ describe('functional tests', function() {
     step('removeObject(bucketName, objectName)__remove objects created for test', done => {
       client.removeObject(bucketName, _100kbObjectName)
         .then(function() {
-          async.map([_100kbObjectBufferName, _100kbObjectStringName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+          async.map([_100kbObjectBufferName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
         })
         .catch(done)
     })
@@ -489,7 +472,6 @@ describe('functional tests', function() {
         })
         .catch(() => done())
     })
-
 
     step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
       var conds = new minio.CopyConditions()
@@ -974,46 +956,7 @@ describe('functional tests', function() {
       )
     })
   })
-
-  describe('listObjects', function() {
-    var listObjectPrefix = 'miniojsPrefix'
-    var listObjectsNum = 1001
-    var objArray = []
-    var listPrefixArray = []
-
-    step(`putObject(bucketName, objectName, stream, size, contentType, callback)__Create ${listObjectsNum} objects`, done => {
-      _.times(listObjectsNum, i => objArray.push(`${listObjectPrefix}.${i}`))
-      objArray = objArray.sort()
-      async.mapLimit(
-        objArray,
-        10,
-        (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
-        done
-      )
-    })
-
-    step('listObjects(bucketName, prefix, recursive)_prefix: miniojsprefix, recursive:true_', done => {
-      client.listObjects(bucketName, listObjectPrefix, true)
-        .on('error', done)
-        .on('end', () => {
-          if (_.isEqual(objArray, listPrefixArray)) return done()
-          return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
-        })
-        .on('data', data => {
-          listPrefixArray.push(data.name)
-        })
-    })
-
-    step(`removeObject(bucketName, objectName, callback)__Remove ${listObjectsNum} objects`, done => {
-      async.mapLimit(
-        listPrefixArray,
-        10,
-        (objectName, cb) => client.removeObject(bucketName, objectName, cb),
-        done
-      )
-    })
-  })
-
+  
   function readableStream(data) {
     var s = new stream.Readable()
     s._read = () => {}
