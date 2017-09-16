@@ -956,6 +956,45 @@ describe('functional tests', function() {
       )
     })
   })
+
+  describe('listObjects', function() {
+    var listObjectPrefix = 'miniojsPrefix'
+    var listObjectsNum = 1001
+    var objArray = []
+    var listPrefixArray = []
+
+    step(`putObject(bucketName, objectName, stream, size, contentType, callback)__Create ${listObjectsNum} objects`, done => {
+      _.times(listObjectsNum, i => objArray.push(`${listObjectPrefix}.${i}`))
+      objArray = objArray.sort()
+      async.mapLimit(
+        objArray,
+        50,
+        (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
+        done
+      )
+    })
+
+    step('listObjects(bucketName, prefix, recursive)_prefix: miniojsprefix, recursive:true_', done => {
+      client.listObjects(bucketName, listObjectPrefix, true)
+        .on('error', done)
+        .on('end', () => {
+          if (_.isEqual(objArray, listPrefixArray)) return done()
+          return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
+        })
+        .on('data', data => {
+          listPrefixArray.push(data.name)
+        })
+    })
+
+    step(`removeObject(bucketName, objectName, callback)__Remove ${listObjectsNum} objects`, done => {
+      async.mapLimit(
+        listPrefixArray,
+        50,
+        (objectName, cb) => client.removeObject(bucketName, objectName, cb),
+        done
+      )
+    })
+  })
   
   function readableStream(data) {
     var s = new stream.Readable()
