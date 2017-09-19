@@ -401,6 +401,7 @@ export class Client {
             })
           return
         }
+        req.setTimeout(0)
         this.logHTTP(reqOptions, response)
         cb(null, response)
       })

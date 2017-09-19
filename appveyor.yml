@@ -5,7 +5,7 @@ version: "{build}"
 os: Windows Server 2012 R2
 
 environment:
-    nodejs_version: "0.12"
+    nodejs_version: "6.11.3"
 
 # to run your custom scripts instead of automatic MSBuild
 build_script:
@@ -13,7 +13,6 @@ build_script:
   - npm install -g gulp
   - gulp browserify
   - gulp lint
-  - npm test
 
 # to disable automatic tests
 test: off
