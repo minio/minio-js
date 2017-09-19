@@ -262,8 +262,8 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.setAppInfo('test', '3.2.0')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.0`,
+      client.setAppInfo('test', '3.2.1')
+      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should set user agent without comments', () => {
@@ -272,8 +272,8 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      client.setAppInfo('test', '3.2.0')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.0`,
+      client.setAppInfo('test', '3.2.1')
+      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should not set user agent without name', (done) => {
@@ -283,7 +283,7 @@ describe('Client', function() {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setAppInfo(null, '3.2.0')
+        client.setAppInfo(null, '3.2.1')
       } catch (e) {
         done()
       }
@@ -295,7 +295,7 @@ describe('Client', function() {
           accessKey: 'accesskey',
           secretKey: 'secretkey'
         })
-        client.setAppInfo('', '3.2.0')
+        client.setAppInfo('', '3.2.1')
       } catch (e) {
         done()
       }
