@@ -72,7 +72,7 @@ describe('functional tests', function() {
   usEastConfig.region = 'us-east-1'
   var clientUsEastRegion = new minio.Client(usEastConfig)
 
-  var bucketName = uuid.v4()
+  var bucketName = "minio-js-test-" + uuid.v4()
   var objectName = uuid.v4()
 
   var _1byteObjectName = 'datafile-1-b'

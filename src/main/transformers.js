@@ -128,13 +128,21 @@ export function getHashSummer(enableSHA256) {
   var sha256 = Crypto.createHash('sha256')
 
   return Through2.obj(function(chunk, enc, cb) {
-    md5.update(chunk)
-    if (enableSHA256) sha256.update(chunk)
+    
+    if (enableSHA256) {
+      sha256.update(chunk)
+    } else {
+      md5.update(chunk)
+    }
     cb()
   }, function(cb) {
-    var md5sum = md5.digest('base64')
+    var md5sum = ''
     var sha256sum = ''
-    if (enableSHA256) sha256sum = sha256.digest('hex')
+    if (enableSHA256) {
+      sha256sum = sha256.digest('hex')
+    } else {
+      md5sum = md5.digest('base64')
+    }
     var hashData = {md5sum, sha256sum}
     this.push(hashData)
     this.push(null)
