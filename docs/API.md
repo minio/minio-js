@@ -29,10 +29,10 @@ var s3Client = new Minio.Client({
 ```
 | Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
 | ------------- |-------------| -----| ----- |
-| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedGetObject`](#presignedGetObject) | [`getBucketNotification`](#getBucketNotification) |
-| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedPutObject`](#presignedPutObject) | [`setBucketNotification`](#setBucketNotification) |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPostPolicy`](#presignedPostPolicy) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)       |     | [`getBucketPolicy`](#getBucketPolicy) |  | 
+| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
+| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) |
+| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | 
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
@@ -349,9 +349,9 @@ __Parameters__
 
 | Param  |  Type | Description  |
 |---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `objectName`  | _string_  |  Name of the object. |
-| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+|`bucketName` | _string_ | Name of the bucket. |
+|`objectName` | _string_ | Name of the object. |
+|`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -653,10 +653,55 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 
 Presigned URLs are generated for temporary download/upload access to private objects.
 
+<a name="presignedUrl"></a>
+### presignedUrl(httpMethod, bucketName, objectName, expiry[, reqParams, cb])
+
+Generates a presigned URL for the provided HTTP method, 'httpMethod'. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
+
+
+__Parameters__
+
+
+
+| Param | Type | Description  |
+|---|---|---|
+|`bucketName` | _string_ | Name of the bucket. |
+|`objectName` | _string_ | Name of the object. |
+|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
+|`reqParams`  | _object_ | request parameters. |
+|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+
+
+__Example 1__
+
+
+```js
+// presigned url for 'getObject' method.
+// expires in a day.
+minioClient.presignedUrl('GET', 'mybucket', 'hello.txt', 24*60*60, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
+```
+
+
+__Example 2__
+
+
+```js
+// presigned url for 'listObject' method.
+// Lists objects in 'myBucket' with prefix 'data'.
+// Lists max 1000 of them.
+minioClient.presignedUrl('GET', 'mybucket', '', 1000, {'prefix': 'data', 'max-keys': 1000}, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
+```
+
 <a name="presignedGetObject"></a>
 ### presignedGetObject(bucketName, objectName, expiry[, cb])
 
-Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
+Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
 
 __Parameters__
@@ -665,10 +710,10 @@ __Parameters__
 
 | Param  |  Type | Description  |
 |---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-|`objectName`   | _string_  | Name of the object.  |
-| `expiry`  |_number_   | Expiry in seconds. Default expiry is set to 7 days.  |
-| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+|`bucketName` | _string_ | Name of the bucket. |
+|`objectName` | _string_ | Name of the object. |
+|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
+|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -685,7 +730,7 @@ minioClient.presignedGetObject('mybucket', 'hello.txt', 24*60*60, function(err, 
 <a name="presignedPutObject"></a>
 ### presignedPutObject(bucketName, objectName, expiry[, callback])
 
-Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default expiry is set to 7 days.
+Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private.  This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
 
 __Parameters__
@@ -693,10 +738,10 @@ __Parameters__
 
 | Param  |  Type | Description  |
 |---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `expiry`  | _number_   | Expiry in seconds. Default expiry is set to 7 days.  |
-| `callback(err, presignedUrl)`  | _function_  | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
+|`bucketName` | _string_ | Name of the bucket. |
+|`objectName` | _string_ | Name of the object. |
+|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
+|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
