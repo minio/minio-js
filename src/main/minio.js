@@ -1934,9 +1934,9 @@ export class Client {
       var method = 'PUT'
       var headers = {
         'Content-Length': length,
-        'Content-Type': contentType,
-        'Content-MD5': md5sum
+        'Content-Type': contentType
       }
+      if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},
                              stream, sha256sum, 200, '', (e, response) => {
                                if (e) return cb(e)

@@ -58,18 +58,20 @@ export default class ObjectUploader extends Transform {
   }
 
   _transform(chunk, encoding, callback) {
-    // Calculate the md5sum.
-    let md5 = Crypto.createHash('md5')
-    md5.update(chunk)
-    let md5sum = md5.digest()
-
     let method = 'PUT'
     let headers = {
       'Content-Length': chunk.length,
-      'Content-Type': this.contentType,
-      'Content-MD5': md5sum.toString('base64')
+      'Content-Type': this.contentType
     }
 
+    let md5digest = ''
+
+    // Calculate and set Content-MD5 header if SHA256 is not set.
+    // This will happen only when there is a secure connection to the s3 server.
+    if (!this.client.enableSHA256) {
+      md5digest = Crypto.createHash('md5').update(chunk).digest()
+      headers['Content-MD5'] = md5digest.toString('base64')
+    }
     // We can flush the object in one packet if it fits in one chunk. This is true
     // if the chunk size is smaller than the part size, signifying the end of the
     // stream.
@@ -163,7 +165,12 @@ export default class ObjectUploader extends Transform {
     if (this.oldParts) {
       let oldPart = this.oldParts[partNumber]
 
-      if (oldPart && md5sum.toString('hex') === oldPart.etag) {
+      //Calulcate the md5 hash, if it has not already been calculated.
+      if(!md5digest) {
+        md5digest = Crypto.createHash('md5').update(chunk).digest()
+      }
+
+      if (oldPart && md5digest.toString('hex') === oldPart.etag) {
         // The md5 matches, the chunk has already been uploaded.
         this.etags.push({part: partNumber, etag: oldPart.etag})
 
