@@ -978,15 +978,17 @@ describe('functional tests', function() {
       step('listenBucketNotification(bucketName, prefix, suffix, events)_events:bad_', done => {
         let poller = client.listenBucketNotification(bucketName, 'photos/', '.jpg', ['bad'])
         poller.on('error', error => {
-          assert.match(error.message, /A specified event is not supported for notifications./)
-          assert.equal(error.code, 'InvalidArgument')
-
+          if (error.code != 'NotImplemented') {
+            assert.match(error.message, /A specified event is not supported for notifications./)
+            assert.equal(error.code, 'InvalidArgument')
+          }
           done()
         })
       })
       step('listenBucketNotification(bucketName, prefix, suffix, events)_events: ObjectCreated_', done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectCreated:*'])
         let records = 0
+        let notImplemented = false
         poller.on('notification', record => {
           records++
 
@@ -994,11 +996,20 @@ describe('functional tests', function() {
           assert.equal(record.s3.bucket.name, bucketName)
           assert.equal(record.s3.object.key, objectName)
         })
+        poller.on('error', error => {
+          if (error.code != 'NotImplemented') {
+            done(error)
+          } else {
+            notImplemented = true
+          }
+        })
         client.putObject(bucketName, objectName, 'stringdata', (err) => {
           if (err) return done(err)
           // It polls every five seconds, so wait for two-ish polls, then end.
           setTimeout(() => {
-            assert.equal(records, 1)
+            if (notImplemented == false) {
+              assert.equal(records, 1)
+            }
             poller.stop()
             client.removeObject(bucketName, objectName, done)
           }, 11 * 1000)
