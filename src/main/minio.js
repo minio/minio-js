@@ -25,6 +25,7 @@ import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 import async from 'async'
+import querystring from 'querystring'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
@@ -1158,6 +1159,7 @@ export class Client {
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
+
     var method = 'GET'
     var transformer = transformers.getListObjectsTransformer()
     this.makeRequest({method, bucketName, query}, '', 200, '', (e, response) => {
@@ -1471,95 +1473,39 @@ export class Client {
     this.makeRequest({method, bucketName, query}, policyPayload, 204, '', cb)
   }
 
-  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+  // Generate a generic presigned URL which can be
+  // used for HTTP methods GET, PUT, HEAD and DELETE
   //
   // __Arguments__
+  // * `method` _string_: name of the HTTP method
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  presignedPutObject(bucketName, objectName, expires, cb) {
+  // * `reqParams` _object_: request parameters (optional)
+  presignedUrl(method, bucketName, objectName, expires, reqParams, cb) {
     if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned PUT url cannot be generated for anonymous requests')
+      throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
+    }
+    if (isFunction(reqParams)) {
+      cb = reqParams
+      reqParams = {}
     }
     if (isFunction(expires)) {
       cb = expires
-      expires = 24 * 60 * 60 * 7
-    }
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+      reqParams = {}
+      expires = 24 * 60 * 60 * 7 // 7 days in seconds
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
     }
-    var method = 'PUT'
-    var requestDate = new Date()
-    this.getBucketRegion(bucketName, (e, region) => {
-      if (e) return cb(e)
-      // This statement is added to ensure that we send error through
-      // callback on presign failure.
-      var url
-      var reqOptions = this.getRequestOptions({method,
-                                               region,
-                                               bucketName,
-                                               objectName})
-      try {
-        url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
-                                 region, requestDate, expires)
-      } catch (pe) {
-        return cb(pe)
-      }
-      cb(null, url)
-    })
-  }
-
-  // Generate a presigned URL for GET
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `respHeaders` _object_: response headers to override (optional)
-  presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
-    if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned GET url cannot be generated for anonymous requests')
-    }
-    if (isFunction(respHeaders)) {
-      cb = respHeaders
-      respHeaders = {}
-    }
-    if (isFunction(expires)) {
-      cb = expires
-      respHeaders = {}
-      expires = 24 * 60 * 60 * 7
-    }
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isNumber(expires)) {
-      throw new TypeError('expires should be of type "number"')
-    }
-    if (!isObject(respHeaders)) {
-      throw new TypeError('respHeaders should be of type "object"')
+    if (!isObject(reqParams)) {
+      throw new TypeError('reqParams should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
-                            'response-content-disposition', 'response-content-encoding']
-    validRespHeaders.forEach(header => {
-      if (respHeaders[header] !== undefined && !isString(respHeaders[header])) {
-        throw new TypeError(`response header ${header} should be of type "string"`)
-      }
-    })
-    var method = 'GET'
     var requestDate = new Date()
-    var query = _.map(respHeaders, (value, key) => `${key}=${uriEscape(value)}`).join('&')
+    var query = querystring.stringify(reqParams)
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
@@ -1578,6 +1524,46 @@ export class Client {
       }
       cb(null, url)
     })
+  }
+
+  // Generate a presigned URL for GET
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
+  // * `respHeaders` _object_: response headers to override (optional)
+  presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
+                            'response-content-disposition', 'response-content-encoding']
+    validRespHeaders.forEach(header => {
+      if  (respHeaders !== undefined && respHeaders[header] !== undefined && !isString(respHeaders[header])) {
+        throw new TypeError(`response header ${header} should be of type "string"`)
+      }
+    })
+    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, cb)
+  }
+
+  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
+  presignedPutObject(bucketName, objectName, expires, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ${bucketName}')
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError('Invalid object name: ${objectName}')
+    }
+    return this.presignedUrl('PUT', bucketName, objectName, expires, cb)
   }
 
   // return PostPolicy object

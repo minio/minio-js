@@ -742,7 +742,7 @@ describe('functional tests', function() {
     })
 
     step('presignedPutObject(bucketName, objectName)__', done => {
-      // negative values should trigger an error
+      // Putting the same object should not cause any error
       client.presignedPutObject(bucketName, _1byteObjectName)
         .then(() => done())
         .catch(done)
@@ -750,6 +750,29 @@ describe('functional tests', function() {
 
     step('presignedGetObject(bucketName, objectName, expires, cb)__', done => {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'GET'
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+          var error = null
+          response.on('error', e => done(e))
+          response.on('end', () => done(error))
+          response.on('data', (data) => {
+            if (data.toString() !== _1byte.toString()) {
+              error = new Error('content mismatch')
+            }
+          })
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
+    })
+
+    step('presignedUrl(getMethod, bucketName, objectName, expires, cb)__', done => {
+      client.presignedUrl('GET', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
@@ -872,8 +895,52 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('removeObject(bucketName, objectName, done)__', done => {
-      client.removeObject(bucketName, _1byteObjectName, done)
+    step('presignedUrl(listObjectMethod, bucketName, \'\', expires, reqParams, cb)__', done => {
+      client.presignedUrl('GET', bucketName, '', 1000, {'prefix': 'data', 'max-keys': 1000}, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'GET'
+        options.headers = {
+        }
+        var str = ''
+        if (options.protocol === 'https:') transport = https
+        var callback = function (response) {
+          if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+          response.on('error', e => done(e))
+          response.on('end', function () {
+            if (!str.match(`<Key>${_1byteObjectName}</Key>`)) {
+              return done(new Error('Listed object does not match the object in the bucket!'))
+            }
+            done()
+          })
+          response.on('data', function (chunk) {
+            str += chunk
+          })
+        }
+        var request = transport.request(options, callback)
+        request.end()
+      })
+    })
+
+    step('presignedUrl(deleteMethod, bucketName, objectName, expires, cb)__', done => {
+      client.presignedUrl('DELETE', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'DELETE'
+        options.headers = {
+        }
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 204) return done(new Error(`error on put : ${response.statusCode}`))
+          response.on('error', e => done(e))
+          response.on('end', () => done())
+          response.on('data', () => {})
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
     })
   })
 
