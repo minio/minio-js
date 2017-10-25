@@ -80,7 +80,7 @@ describe('functional tests', function() {
 
   var _100kbObjectName = 'datafile-100-kB'
   var _100kb = dataDir ? fs.readFileSync(dataDir + '/' + _100kbObjectName) : (new Buffer(100 * 1024)).fill(0)
-  var _100kbObjectNameCopy = _100kbObjectName + '_copy'
+  var _100kbObjectNameCopy = _100kbObjectName + '-copy'
 
   var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
   var _MultiPath100kbObjectBufferName = `path/to/${_100kbObjectName}.buffer`
@@ -90,7 +90,7 @@ describe('functional tests', function() {
   var _6mbObjectName = 'datafile-6-MB'
   var _6mb = dataDir ? fs.readFileSync(dataDir + '/' + _6mbObjectName) : (new Buffer(6 * 1024 * 1024)).fill(0)
   var _6mbmd5 = crypto.createHash('md5').update(_6mb).digest('hex')
-  var _6mbObjectNameCopy = _6mbObjectName + '_copy'
+  var _6mbObjectNameCopy = _6mbObjectName + '-copy'
 
   var _5mbObjectName = 'datafile-5-MB'
   var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : (new Buffer(5 * 1024 * 1024)).fill(0)
@@ -148,7 +148,7 @@ describe('functional tests', function() {
       client.listBuckets()
         .then(buckets => {
           if (!_.find(buckets, { name: bucketName }))
-            throw new Error('bucket not found')
+            return done(new Error('bucket not found'))
         })
         .then(() => done())
         .catch(done)
@@ -164,18 +164,24 @@ describe('functional tests', function() {
       }
     })
     step('makeBucket(bucketName, region, cb)__', done => {
-      clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-1', done)
+      clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
     })
     step('removeBucket(bucketName, cb)__', done => {
-      clientUsEastRegion.removeBucket(`${bucketName}.region`, done)
+      clientUsEastRegion.removeBucket(`${bucketName}-region`, done)
     })
     step('makeBucket(bucketName, region)__', done => {
-      clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-1')
-        .then(() => done())
-        .catch(done)
+      clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', (e)=>{
+        if (e) {
+          // Some object storage servers like Azure, might not delete a bucket rightaway
+          // Add a sleep of 40 seconds and retry
+          setTimeout(() => {
+            clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+          }, 40 * 1000)
+        } else done()
+      })
     })
     step('removeBucket(bucketName)__', done => {
-      clientUsEastRegion.removeBucket(`${bucketName}.region`)
+      clientUsEastRegion.removeBucket(`${bucketName}-region`)
         .then(() => done())
         .catch(done)
     })
@@ -205,8 +211,8 @@ describe('functional tests', function() {
       })
     })
     step('makeBucket(bucketName, region)_region:us-east-1_', done => {
-      client.makeBucket(`${bucketName}.region`, 'us-east-1')
-        .then(client.removeBucket(`${bucketName}.region`))
+      client.makeBucket(`${bucketName}-region-1`, 'us-east-1')
+        .then(() => client.removeBucket(`${bucketName}-region-1`))
         .then(() => done())
         .catch(done)
     })
@@ -358,7 +364,7 @@ describe('functional tests', function() {
     step('getPartialObject(bucketName, objectName, offset, length, cb)_length:100*1024_download partial data (100kb of the 6mb file) and match content', done => {
       var hash = crypto.createHash('md5')
       var expectedHash = crypto.createHash('md5').update(_6mb.slice(0,100*1024)).digest('hex')
-      client.getPartialObject(bucketName, _6mbObjectName, 0, 100 * 1024, (e, stream) => {
+      client.getPartialObject(bucketName, _6mbObjectName, 0, 100*1024, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
@@ -394,7 +400,7 @@ describe('functional tests', function() {
       client.statObject(bucketName, _6mbObjectName)
         .then(stat => {
           if (stat.size !== _6mb.length)
-            throw new Error('size mismatch')
+            return done(new Error('size mismatch'))
         })
         .then(() => done())
         .catch(done)
@@ -425,7 +431,7 @@ describe('functional tests', function() {
     })
 
     step('statObject(bucketName, objectName, cb)__', done => {
-      client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
+      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
         if (stat.contentType !== 'custom/content-type') return done(new Error('content-type mismatch'))
@@ -569,7 +575,7 @@ describe('functional tests', function() {
         .then(() => {
           var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
           if (md5sum === _6mbmd5) return done()
-          throw new Error('md5sum mismatch')
+          return done(new Error('md5sum mismatch'))
         })
         .catch(done)
     })
@@ -613,7 +619,7 @@ describe('functional tests', function() {
         .then(() => {
           var md5sum = crypto.createHash('md5').update(fs.readFileSync(localFile)).digest('hex')
           if (md5sum === _5mbmd5) return done()
-          throw new Error('md5sum mismatch')
+          return done(new Error('md5sum mismatch'))
         })
         .catch(done)
     })
@@ -622,22 +628,26 @@ describe('functional tests', function() {
       client.removeObject(bucketName, _5mbObjectName, done)
     })
   })
-
+  let policyNotImplemented = false
   describe('bucket policy', () => {
     let policies = [Policy.READONLY, Policy.WRITEONLY, Policy.READWRITE]
 
     // Iterate through the basic policies ensuring it can set and check each of them.
     policies.forEach(policy => {
+      policyNotImplemented = false
       step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketPolicy:${policy}_`, done => {
         client.setBucketPolicy(bucketName, '', policy, err => {
-          if (err) return done(err)
+          if (err) {
+            if(err.code != 'NotImplemented') return done(err)
+            else policyNotImplemented = true
+          }
           done()
         })
       })
       step('getBucketPolicy(bucketName, objectPrefix, cb)__', done => {
+        if (policyNotImplemented) return done()
         client.getBucketPolicy(bucketName, '', (err, response) => {
           if (err) return done(err)
-
           if (response != policy) {
             return done(new Error(`policy is incorrect (${response} != ${policy})`))
           }
@@ -656,33 +666,40 @@ describe('functional tests', function() {
       client.getBucketPolicy(bucketName, '')
         .then(response => {
           if (response != Policy.READONLY)
-            throw new Error(`policy is incorrect (${response} != ${Policy.READONLY})`)
+            return done(new Error(`policy is incorrect (${response} != ${Policy.READONLY})`))
           done()
         })
         .catch(done)
     })
 
     step('setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_objectPrefix: prefix_', done => {
-      client.setBucketPolicy(bucketName, 'prefix', Policy.READWRITE)
-        .then(() => done())
-        .catch(done)
+      policyNotImplemented = false
+      client.setBucketPolicy(bucketName, 'prefix', Policy.READWRITE, err => {
+        if (err) {
+          if(err.code != 'NotImplemented') return done(err)
+          else policyNotImplemented = true
+        }
+        done()
+      })
     })
 
     step('getBucketPolicy(bucketName, objectPrefix)_objectPrefix: prefix_', done => {
-      client.getBucketPolicy(bucketName, 'prefix')
-        .then(response => {
-          if (response != Policy.READWRITE)
-            throw new Error(`policy is incorrect (${response} != ${Policy.READWRITE})`)
-          done()
-        })
-        .catch(done)
+      if (!policyNotImplemented) {
+        client.getBucketPolicy(bucketName, 'prefix')
+          .then(response => {
+            if (response != Policy.READWRITE)
+              return done(new Error(`policy is incorrect (${response} != ${Policy.READWRITE})`))
+            done()
+          })
+          .catch(done)
+      } else done()
     })
 
     step('getBucketPolicy(bucketName, objectPrefix)_objectPrefix: wrongprefix_', done => {
       client.getBucketPolicy(bucketName, 'wrongprefix')
         .then(response => {
           if (response == Policy.READWRITE)
-            throw new Error(`policy is incorrect (${response} == ${Policy.READWRITE})`)
+            return done(new Error(`policy is incorrect (${response} == ${Policy.READWRITE})`))
           done()
         })
         .catch(done)
@@ -1088,6 +1105,11 @@ describe('functional tests', function() {
       step('listenBucketNotification(bucketName, prefix, suffix, events)_events:ObjectRemoved_', done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
         poller.on('notification', assert.fail)
+        poller.on('error', error => {
+          if (error.code != 'NotImplemented') {
+            done(error)
+          }
+        })
 
         client.putObject(bucketName, objectName, 'stringdata', (err) => {
           if (err) return done(err)
