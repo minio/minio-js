@@ -1087,17 +1087,20 @@ describe('functional tests', function() {
             notImplemented = true
           }
         })
-        client.putObject(bucketName, objectName, 'stringdata', (err) => {
-          if (err) return done(err)
-          // It polls every five seconds, so wait for two-ish polls, then end.
-          setTimeout(() => {
-            if (notImplemented == false) {
-              assert.equal(records, 1)
-            }
-            poller.stop()
-            client.removeObject(bucketName, objectName, done)
-          }, 11 * 1000)
-        })
+        setTimeout(() => { // Give it some time for the notification to be setup.
+          if (notImplemented) return done()
+          client.putObject(bucketName, objectName, 'stringdata', (err) => {
+            if (err) return done(err)
+            setTimeout(() => { // Give it some time to get the notification.
+              poller.stop()
+              client.removeObject(bucketName, objectName, err => {
+                if (err) return done(err)
+                if (!records) return done(new Error('notification not received'))
+                done()
+              })
+            }, 5 * 1000)
+          })
+        }, 3*1000)
       })
  
       // This test is very similar to that above, except it does not include
