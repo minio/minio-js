@@ -156,20 +156,20 @@ describe('functional tests', function() {
   })
 
   describe('makeBucket with region', () => {
-    step('makeBucket(bucketName, region, cb)_region:us-east-2_', done => {
+    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-2_`, done => {
       try {
-        clientUsEastRegion.makeBucket(`${bucketName}.region`, 'us-east-2', assert.fail)
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-2', assert.fail)
       } catch (e) {
         done()
       }
     })
-    step('makeBucket(bucketName, region, cb)__', done => {
+    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
       clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
     })
-    step('removeBucket(bucketName, cb)__', done => {
+    step(`removeBucket(bucketName, cb)_bucketName:${bucketName}-region_`, done => {
       clientUsEastRegion.removeBucket(`${bucketName}-region`, done)
     })
-    step('makeBucket(bucketName, region)__', done => {
+    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
       clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', (e)=>{
         if (e) {
           // Some object storage servers like Azure, might not delete a bucket rightaway
@@ -180,7 +180,7 @@ describe('functional tests', function() {
         } else done()
       })
     })
-    step('removeBucket(bucketName)__', done => {
+    step(`removeBucket(bucketName)_bucketName:${bucketName}-region_`, done => {
       clientUsEastRegion.removeBucket(`${bucketName}-region`)
         .then(() => done())
         .catch(done)
@@ -188,14 +188,14 @@ describe('functional tests', function() {
   })
 
   describe('bucketExists', () => {
-    step('bucketExists(bucketName, cb)__', done => client.bucketExists(bucketName, done))
-    step('bucketExists(bucketName, cb)_bucketName:nonexistentbucket_', done => {
+    step(`bucketExists(bucketName, cb)_bucketName:${bucketName}_`, done => client.bucketExists(bucketName, done))
+    step(`bucketExists(bucketName, cb)_bucketName:${bucketName}random_`, done => {
       client.bucketExists(bucketName + 'random', (e) => {
         if (e.code === 'NoSuchBucket') return done()
         done(new Error())
       })
     })
-    step('bucketExists(bucketName)__', done => {
+    step(`bucketExists(bucketName)_bucketName:${bucketName}_`, done => {
       client.bucketExists(bucketName)
         .then(() => done())
         .catch(done)
@@ -204,13 +204,13 @@ describe('functional tests', function() {
 
 
   describe('removeBucket', () => {
-    step('removeBucket(bucketName, cb)_bucketName:nonexistentbucket_', done => {
-      client.removeBucket("nonexistentbucket", (e) => {
+    step(`removeBucket(bucketName, cb)_bucketName:${bucketName}random_`, done => {
+      client.removeBucket(bucketName + 'random', (e) => {
         if (e.code === 'NoSuchBucket') return done()
         done(new Error())
       })
     })
-    step('makeBucket(bucketName, region)_region:us-east-1_', done => {
+    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region-1, region:us-east-1_`, done => {
       client.makeBucket(`${bucketName}-region-1`, 'us-east-1')
         .then(() => client.removeBucket(`${bucketName}-region-1`))
         .then(() => done())
@@ -218,13 +218,13 @@ describe('functional tests', function() {
     })
   })
   describe('tests for putObject getObject removeObject with multipath', function() {
-    step('putObject(bucketName, objectName, stream, contentType)_objectName:MultiPath100kbObjectBufferName,stream:100Kib_', done => {
+    step(`putObject(bucketName, objectName, stream, contentType)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}, stream:100Kib_`, done => {
       client.putObject(bucketName, _MultiPath100kbObjectBufferName, _100kb, '')
         .then(() => done())
         .catch(done)
     })
 
-    step('getObject(bucketName, objectName, callback)_objectName:MultiPath100kbObjectBufferName_download 100KiB Buffer and match content', done => {
+    step(`getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}_`, done => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _MultiPath100kbObjectBufferName, (e, stream) => {
         if (e) return done(e)
@@ -237,7 +237,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('removeObject(bucketName, objectName)_objectName:MultiPath100kbObjectBufferName_', done => {
+    step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}_`, done => {
       client.removeObject(bucketName, _MultiPath100kbObjectBufferName)
         .then(() => done())
         .catch(done)
@@ -247,22 +247,22 @@ describe('functional tests', function() {
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
     
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
-    step('fPutObject(bucketName, objectName, filePath, contentType, callback)__', done => {
+    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _100kb)
       client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload, '', done)
     })
 
-    step('putObject(bucketName, objectName, stream, size, contentType, callback)_objectName:100kbObjectName_', done => {
+    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}, contentType:${customContentType}_`, done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, customContentType, done)
     })
 
-    step('putObject(bucketName, objectName, stream, size, contentType, callback)_objectName:100kbObjectName_', done => {
+    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}_`, done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
     })
 
-    step('getObject(bucketName, objectName, callback)_objectName:100kbObjectName_', done => {
+    step(`getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _100kbObjectName, (e, stream) => {
         if (e) return done(e)
@@ -275,11 +275,11 @@ describe('functional tests', function() {
       })
     })
 
-    step('putObject(bucketName, objectName, stream, callback)_objectName:100kbObjectName, stream:100kb_', done => {
+    step(`putObject(bucketName, objectName, stream, callback)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_`, done => {
       client.putObject(bucketName, _100kbObjectBufferName, _100kb, '', done)
     })
 
-    step('getObject(bucketName, objectName, callback)_objectName:100kbObjectName_download 100KiB Buffer and match content', done => {
+    step(`getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}_`, done => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _100kbObjectBufferName, (e, stream) => {
         if (e) return done(e)
@@ -292,13 +292,13 @@ describe('functional tests', function() {
       })
     })
 
-    step('putObject(bucketName, objectName, stream, contentType)_stream:100Kib_', done => {
+    step(`putObject(bucketName, objectName, stream, contentType)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_`, done => {
       client.putObject(bucketName, _100kbObjectBufferName, _100kb, '')
         .then(() => done())
         .catch(done)
     })
 
-    step('getPartialObject(bucketName, objectName, offset, length, cb)_offset:0, length=1024_', done => {
+    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:0, length=1024_`, done => {
       client.getPartialObject(bucketName, _100kbObjectBufferName, 0, 1024)
         .then(stream => {
           stream.on('data', function() {})
@@ -307,7 +307,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('getPartialObject(bucketName, objectName, offset, length, cb)_offset:1024, length=1024_', done => {
+    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:1024, length=1024_`, done => {
       var expectedHash = crypto.createHash('md5').update(_100kb.slice(1024,2048)).digest('hex')
       var hash = crypto.createHash('md5')
       client.getPartialObject(bucketName, _100kbObjectBufferName, 1024, 1024)
@@ -321,7 +321,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('getPartialObject(bucketName, objectName, offset, length, cb)_offset:1024', done => {
+    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:1024`, done => {
       var hash = crypto.createHash('md5')
       client.getPartialObject(bucketName, _100kbObjectBufferName, 1024)
         .then(stream => {
@@ -334,7 +334,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('getObject(bucketName, objectName)__', done => {
+    step(`getObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}_`, done => {
       client.getObject(bucketName, _100kbObjectBufferName)
         .then(stream => {
           stream.on('data', function() {})
@@ -343,12 +343,12 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('putObject(bucketName, objectName, stream, cb)_objectName:_6mbObjectName_', done => {
+    step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
       var stream = readableStream(_6mb)
       client.putObject(bucketName, _6mbObjectName, stream, done)
     })
 
-    step('getObject(bucketName, objectName, cb)_objectName:_6mbObjectName_download 6mb and match content', done => {
+    step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _6mbObjectName, (e, stream) => {
         if (e) return done(e)
@@ -361,7 +361,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('getPartialObject(bucketName, objectName, offset, length, cb)_length:100*1024_download partial data (100kb of the 6mb file) and match content', done => {
+    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, offset:0, length:100*1024_`, done => {
       var hash = crypto.createHash('md5')
       var expectedHash = crypto.createHash('md5').update(_6mb.slice(0,100*1024)).digest('hex')
       client.getPartialObject(bucketName, _6mbObjectName, 0, 100*1024, (e, stream) => {
@@ -375,20 +375,20 @@ describe('functional tests', function() {
       })
     })
 
-    step('copyObject(bucketName, objectName, srcObject, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_6mbObjectNameCopy}, srcObject:/${bucketName}/${_6mbObjectName}_`, done => {
       client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName, (e) => {
         if (e) return done(e)
         done()
       })
     })
 
-    step('copyObject(bucketName, objectName, srcObject)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject)_bucketName:${bucketName}, objectName:${_6mbObjectNameCopy}, srcObject:/${bucketName}/${_6mbObjectName}_`, done => {
       client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName)
         .then(() => done())
         .catch(done)
     })
 
-    step('statObject(bucketName, objectName, cb)__', done => {
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
       client.statObject(bucketName, _6mbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _6mb.length) return done(new Error('size mismatch'))
@@ -396,7 +396,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('statObject(bucketName, objectName)__', done => {
+    step(`statObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
       client.statObject(bucketName, _6mbObjectName)
         .then(stat => {
           if (stat.size !== _6mb.length)
@@ -406,7 +406,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('removeObject(bucketName, objectName)__remove objects created for test', done => {
+    step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       client.removeObject(bucketName, _100kbObjectName)
         .then(function() {
           async.map([_100kbObjectBufferName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
@@ -419,18 +419,18 @@ describe('functional tests', function() {
   describe('tests for copyObject statObject', function() {
     var etag
     var modifiedDate
-    step('putObject(bucketName, objectName, stream, contentType, cb)_contentType: custom/content-type_', done => {
+    step(`putObject(bucketName, objectName, stream, contentType, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream: 100kb, contentType: custom/content-type_`, done => {
       client.putObject(bucketName, _100kbObjectName, _100kb, 'custom/content-type', done)
     })
 
-    step('copyObject(bucketName, objectName, srcObject, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}_`, done => {
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, (e) => {
         if (e) return done(e)
         done()
       })
     })
 
-    step('statObject(bucketName, objectName, cb)__', done => {
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
@@ -441,7 +441,7 @@ describe('functional tests', function() {
       })
     })
     
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:ExceptIncorrectEtag_`, done => {
       var conds = new minio.CopyConditions()
       conds.setMatchETagExcept('TestEtag')
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e) => {
@@ -450,7 +450,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:ExceptCorrectEtag_`, done => {
       var conds = new minio.CopyConditions()
       conds.setMatchETagExcept(etag)
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds)
@@ -460,7 +460,7 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:MatchCorrectEtag_`, done => {
       var conds = new minio.CopyConditions()
       conds.setMatchETag(etag)
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e) => {
@@ -469,7 +469,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:MatchIncorrectEtag_`, done => {
       var conds = new minio.CopyConditions()
       conds.setMatchETag('TestETag')
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds)
@@ -479,7 +479,7 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:Unmodified since ${modifiedDate}`, done => {
       var conds = new minio.CopyConditions()
       conds.setUnmodified(new Date(modifiedDate))
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds, (e) => {
@@ -488,7 +488,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('copyObject(bucketName, objectName, srcObject, conditions, cb)__', done => {
+    step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:Unmodified since 2010-03-26T12:00:00Z_`, done => {
       var conds = new minio.CopyConditions()
       conds.setUnmodified(new Date("2010-03-26T12:00:00Z"))
       client.copyObject(bucketName, _100kbObjectNameCopy, "/" + bucketName + "/" + _100kbObjectName, conds)
@@ -498,7 +498,7 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('statObject(bucketName, objectName, cb)__', done => {
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}_`, done => {
       client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
@@ -507,17 +507,17 @@ describe('functional tests', function() {
       })
     })
 
-    step('removeObject(bucketName, objectName, cb)__remove objects created for test', done => {
+    step(`removeObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}_`, done => {
       async.map([_100kbObjectName, _100kbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
     })
 
   })
   
   describe('listIncompleteUploads removeIncompleteUpload', () => {
-    step('initiateNewMultipartUpload(bucketName, objectName, contentType, cb)__', done => {
+    step(`initiateNewMultipartUpload(bucketName, objectName, contentType, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, contentType:application/octet-stream_`, done => {
       client.initiateNewMultipartUpload(bucketName, _6mbObjectName, 'application/octet-stream', done)
     })
-    step('listIncompleteUploads(bucket, prefix, recursive)_recursive: true_', function(done) {
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_6mbObjectName}, recursive: true_`, function(done) {
       // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       if (!client.host.includes('s3.amazonaws.com')) {
@@ -535,7 +535,7 @@ describe('functional tests', function() {
           done(new Error(`${_6mbObjectName} not found during listIncompleteUploads`))
         })
     })
-    step('listIncompleteUploads(bucket, prefix, recursive)_prefix: empty, recursive: true_', function(done) {
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function(done) {
       // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       if (!client.host.includes('s3.amazonaws.com')) {
@@ -553,7 +553,7 @@ describe('functional tests', function() {
           done(new Error(`${_6mbObjectName} not found during listIncompleteUploads`))
         })
     })
-    step('removeIncompleteUploads(bucket, prefix)__', done => {
+    step(`removeIncompleteUploads(bucketName, prefix)_bucketName:${bucketName}, prefix:${_6mbObjectName}_`, done => {
       client.removeIncompleteUpload(bucketName, _6mbObjectName)
         .then(done)
         .catch(done)
@@ -564,13 +564,13 @@ describe('functional tests', function() {
     var tmpFileUpload = `${tmpDir}/${_6mbObjectName}`
     var tmpFileDownload = `${tmpDir}/${_6mbObjectName}.download`
 
-    step('fPutObject(bucketName, objectName, filePath, contentType, callback)__', done => {
+    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _6mb)
       client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, '', done)
     })
 
-    step('fPutObject(bucketName, objectName, filePath, contentType, callback)_contentType: customContentType_', done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, customContentType, done))
-    step('fGetObject(bucketName, objectName, filePath, callback)__verify checksum', done => {
+    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}, contentType: ${customContentType}_`, done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, customContentType, done))
+    step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileDownload}_`, done => {
       client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload)
         .then(() => {
           var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
@@ -580,26 +580,26 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('removeObject(bucketName, objectName, filePath, callback)__', done => {
+    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
       fs.unlinkSync(tmpFileDownload)
       client.removeObject(bucketName, _6mbObjectName)
         .then(() => done())
         .catch(done)
     })
 
-    step('fPutObject(bucketName, objectName, filePath, contentType)__', done => {
+    step(`fPutObject(bucketName, objectName, filePath, contentType)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
       client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, '')
         .then(() => done())
         .catch(done)
     })
 
-    step('fGetObject(bucketName, objectName, filePath)__', done => {
+    step(`fGetObject(bucketName, objectName, filePath)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileDownload}_`, done => {
       client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload)
         .then(() => done())
         .catch(done)
     })
 
-    step('removeObject(bucketName, objectName, filePath, callback)__', (done) => {
+    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, (done) => {
       fs.unlinkSync(tmpFileUpload)
       fs.unlinkSync(tmpFileDownload)
       client.removeObject(bucketName, _6mbObjectName, done)
@@ -607,11 +607,11 @@ describe('functional tests', function() {
   })
   describe('fGetObject-resume', () => {
     var localFile = `${tmpDir}/${_5mbObjectName}`
-    step('putObject(bucketName, objectName, stream, contentType, cb)__', done => {
+    step(`putObject(bucketName, objectName, stream, contentType, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
       var stream = readableStream(_5mb)
       client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '', done)
     })
-    step('fGetObject(bucketName, objectName, filePath, callback)_filePath: resumePartialDownload_', done => {
+    step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`, done => {
       var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio`
       // create a partial file
       fs.writeFileSync(tmpFile, _100kb)
@@ -623,7 +623,7 @@ describe('functional tests', function() {
         })
         .catch(done)
     })
-    step('removeObject(bucketName, objectName, filePath, callback)__', done => {
+    step(`removeObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}_`, done => {
       fs.unlinkSync(localFile)
       client.removeObject(bucketName, _5mbObjectName, done)
     })
@@ -635,7 +635,7 @@ describe('functional tests', function() {
     // Iterate through the basic policies ensuring it can set and check each of them.
     policies.forEach(policy => {
       policyNotImplemented = false
-      step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketPolicy:${policy}_`, done => {
+      step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, done => {
         client.setBucketPolicy(bucketName, '', policy, err => {
           if (err) {
             if(err.code != 'NotImplemented') return done(err)
@@ -644,7 +644,7 @@ describe('functional tests', function() {
           done()
         })
       })
-      step('getBucketPolicy(bucketName, objectPrefix, cb)__', done => {
+      step(`getBucketPolicy(bucketName, objectPrefix, cb)_bucketName:${bucketName}_`, done => {
         if (policyNotImplemented) return done()
         client.getBucketPolicy(bucketName, '', (err, response) => {
           if (err) return done(err)
@@ -656,13 +656,13 @@ describe('functional tests', function() {
       })
     })
 
-    step('setBucketPolicy(bucketName, objectPrefix, bucketPolicy)__', done => {
+    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_bucketName:${bucketName}, bucketPolicy:READONLY_`, done => {
       client.setBucketPolicy(bucketName, '', Policy.READONLY)
         .then(() => done())
         .catch(done)
     })
 
-    step('getBucketPolicy(bucketName, objectPrefix)__', done => {
+    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName:${bucketName}_`, done => {
       client.getBucketPolicy(bucketName, '')
         .then(response => {
           if (response != Policy.READONLY)
@@ -672,7 +672,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_objectPrefix: prefix_', done => {
+    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_bucketName: ${bucketName}, objectPrefix: prefix, bucketPolicy: READWRITE_`, done => {
       policyNotImplemented = false
       client.setBucketPolicy(bucketName, 'prefix', Policy.READWRITE, err => {
         if (err) {
@@ -683,7 +683,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('getBucketPolicy(bucketName, objectPrefix)_objectPrefix: prefix_', done => {
+    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName: ${bucketName}, objectPrefix: prefix_`, done => {
       if (!policyNotImplemented) {
         client.getBucketPolicy(bucketName, 'prefix')
           .then(response => {
@@ -695,7 +695,7 @@ describe('functional tests', function() {
       } else done()
     })
 
-    step('getBucketPolicy(bucketName, objectPrefix)_objectPrefix: wrongprefix_', done => {
+    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName:${bucketName}, objectPrefix: wrongprefix_`, done => {
       client.getBucketPolicy(bucketName, 'wrongprefix')
         .then(response => {
           if (response == Policy.READWRITE)
@@ -705,14 +705,14 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step('setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketPolicy: NONE_', done => {
+    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy: NONE_`, done => {
       client.setBucketPolicy(bucketName, '', Policy.NONE, err => {
         if (err) return done(err)
         done()
       })
     })
 
-    step('getBucketPolicy(bucketName, objectPrefix, cb)__', done => {
+    step(`getBucketPolicy(bucketName, objectPrefix, cb)_bucketName:${bucketName}_`, done => {
       // Check using the client — this should error.
       client.getBucketPolicy(bucketName, '', (err) => {
         if (!err) return done(new Error('getBucketPolicy should error'))
@@ -727,7 +727,7 @@ describe('functional tests', function() {
   })
 
   describe('presigned operations', () => {
-    step('presignedPutObject(bucketName, objectName, expires, cb)__', done => {
+    step(`presignedPutObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires: 1000_`, done => {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -749,7 +749,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedPutObject(bucketName, objectName, expires)_expires:-123_', done => {
+    step(`presignedPutObject(bucketName, objectName, expires)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:-123_`, done => {
       // negative values should trigger an error
       client.presignedPutObject(bucketName, _1byteObjectName, -123)
         .then(() => {
@@ -758,14 +758,14 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('presignedPutObject(bucketName, objectName)__', done => {
+    step(`presignedPutObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
       // Putting the same object should not cause any error
       client.presignedPutObject(bucketName, _1byteObjectName)
         .then(() => done())
         .catch(done)
     })
 
-    step('presignedGetObject(bucketName, objectName, expires, cb)__', done => {
+    step(`presignedGetObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`, done => {
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -788,7 +788,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedUrl(getMethod, bucketName, objectName, expires, cb)__', done => {
+    step(`presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:GET, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`, done => {
       client.presignedUrl('GET', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -811,7 +811,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedGetObject(bucketName, objectName, cb)__', done => {
+    step(`presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
       client.presignedGetObject(bucketName, _1byteObjectName, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -834,13 +834,13 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedGetObject(bucketName, objectName, expires)__', done => {
+    step(`presignedGetObject(bucketName, objectName, expires)_bucketName:${bucketName}, objectName:this.does.not.exist, expires:2938_`, done => {
       client.presignedGetObject(bucketName, 'this.does.not.exist', 2938)
         .then(assert.fail)
         .catch(() => done())
     })
 
-    step('presignedGetObject(bucketName, objectName, expires, respHeaders, cb)__', done => {
+    step(`presignedGetObject(bucketName, objectName, expires, respHeaders, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`, done => {
       var respHeaders = {
         'response-content-type': 'text/html',
         'response-content-language': 'en',
@@ -883,7 +883,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedPostPolicy(postPolicy, cb)__', done => {
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:expiresin10days_', done => {
       var policy = client.newPostPolicy()
       policy.setKey(_1byteObjectName)
       policy.setBucket(bucketName)
@@ -912,7 +912,7 @@ describe('functional tests', function() {
         .catch(() => done())
     })
 
-    step('presignedUrl(listObjectMethod, bucketName, \'\', expires, reqParams, cb)__', done => {
+    step(`presignedUrl(httpMethod, bucketName, objectName, expires, reqParams, cb)_httpMethod:GET, bucketName:${bucketName}, expires:1000_`, done => {
       client.presignedUrl('GET', bucketName, '', 1000, {'prefix': 'data', 'max-keys': 1000}, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -940,7 +940,7 @@ describe('functional tests', function() {
       })
     })
 
-    step('presignedUrl(deleteMethod, bucketName, objectName, expires, cb)__', done => {
+    step(`presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:DELETE, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`, done => {
       client.presignedUrl('DELETE', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -968,7 +968,7 @@ describe('functional tests', function() {
     var listArray = []
     var listPrefixArray = []
 
-    step(`putObject(bucketName, objectName, stream, size, contentType, callback)__Create ${listObjectsNum} objects`, done => {
+    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
       _.times(listObjectsNum, i => objArray.push(`${listObjectPrefix}.${i}`))
       objArray = objArray.sort()
       async.mapLimit(
@@ -979,7 +979,7 @@ describe('functional tests', function() {
       )
     })
 
-    step('listObjects(bucketName, prefix, recursive)_prefix: miniojsprefix, recursive:true_', done => {
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix: miniojsprefix, recursive:true_`, done => {
       client.listObjects(bucketName, listObjectPrefix, true)
         .on('error', done)
         .on('end', () => {
@@ -991,7 +991,7 @@ describe('functional tests', function() {
         })
     })
 
-    step('listObjects(bucketName, prefix, recursive)_bucketName: empty, recursive:true_', done => {
+    step('listObjects(bucketName, prefix, recursive)_recursive:true_', done => {
       try {
         client.listObjects("", "", true)
           .on('end', () => {
@@ -1006,7 +1006,7 @@ describe('functional tests', function() {
       }
     })
 
-    step('listObjects(bucketName, prefix, recursive)_recursive:false_', done => {
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, done => {
       client.listObjects(bucketName, '', false)
         .on('error', done)
         .on('end', () => {
@@ -1018,7 +1018,7 @@ describe('functional tests', function() {
         })
     })
 
-    step('listObjectsV2(bucketName, prefix, recursive)_recursive:true_', done => {
+    step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:true_`, done => {
       listArray = []
       client.listObjectsV2(bucketName, '', true)
         .on('error', done)
@@ -1031,7 +1031,7 @@ describe('functional tests', function() {
         })
     })
 
-    step(`removeObject(bucketName, objectName, callback)__Remove ${listObjectsNum} objects`, done => {
+    step(`removeObject(bucketName, objectName, callback)_bucketName:${bucketName}_Remove ${listObjectsNum} objects`, done => {
       async.mapLimit(
         listArray,
         20,
@@ -1059,7 +1059,7 @@ describe('functional tests', function() {
         }
       })
 
-      step('listenBucketNotification(bucketName, prefix, suffix, events)_events:bad_', done => {
+      step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, prefix:photos/, suffix:.jpg, events:bad_`, done => {
         let poller = client.listenBucketNotification(bucketName, 'photos/', '.jpg', ['bad'])
         poller.on('error', error => {
           if (error.code != 'NotImplemented') {
@@ -1069,7 +1069,7 @@ describe('functional tests', function() {
           done()
         })
       })
-      step('listenBucketNotification(bucketName, prefix, suffix, events)_events: ObjectCreated_', done => {
+      step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, events: s3:ObjectCreated:*_`, done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectCreated:*'])
         let records = 0
         let notImplemented = false
@@ -1105,7 +1105,7 @@ describe('functional tests', function() {
  
       // This test is very similar to that above, except it does not include
       // Minio.ObjectCreatedAll in the config. Thus, no events should be emitted.
-      step('listenBucketNotification(bucketName, prefix, suffix, events)_events:ObjectRemoved_', done => {
+      step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, events:s3:ObjectRemoved:*`, done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
         poller.on('notification', assert.fail)
         poller.on('error', error => {
