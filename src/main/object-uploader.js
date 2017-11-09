@@ -84,7 +84,7 @@ export default class ObjectUploader extends Transform {
         objectName: this.objectName
       }
 
-      this.client.makeRequest(options, chunk, 200, '', (err, response) => {
+      this.client.makeRequest(options, chunk, 200, '', true, (err, response) => {
         if (err) return callback(err)
 
         let etag = response.headers.etag
@@ -191,7 +191,7 @@ export default class ObjectUploader extends Transform {
       objectName: this.objectName
     }
 
-    this.client.makeRequest(options, chunk, 200, '', (err, response) => {
+    this.client.makeRequest(options, chunk, 200, '', true, (err, response) => {
       if (err) return callback(err)
 
       // In order to aggregate the parts together, we need to collect the etags.

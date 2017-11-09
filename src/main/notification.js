@@ -151,7 +151,7 @@ export class NotificationPoller extends EventEmitter {
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
-    this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', 200, '', (e, response) => {
+    this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', 200, '', true, (e, response) => {
       if (e) return this.emit('error', e)
 
       let transformer = transformers.getNotificationTransformer()
