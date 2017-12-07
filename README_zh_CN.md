@@ -14,7 +14,7 @@ Minio JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的�
 npm install --save minio
 ```
 
-## 下载源码安装
+## 下载并安装源码
 
 ```sh
 git clone https://github.com/minio/minio-js
