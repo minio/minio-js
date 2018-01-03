@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 Minio, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import * as querystring from 'querystring'
 export default class ObjectUploader extends Transform {
   constructor(client, bucketName, objectName, partSize, contentType, callback) {
     super()
-
+    this.emptyStream=true;
     this.client = client
     this.bucketName = bucketName
     this.objectName = objectName
@@ -58,6 +58,7 @@ export default class ObjectUploader extends Transform {
   }
 
   _transform(chunk, encoding, callback) {
+    this.emptyStream=false;
     let method = 'PUT'
     let headers = {
       'Content-Length': chunk.length,
@@ -207,7 +208,43 @@ export default class ObjectUploader extends Transform {
   }
 
   _flush(callback) {
+   if (this.emptyStream) {
+     let method = 'PUT'
+     let headers = {
+       'Content-Length': 0,
+       'Content-Type': this.contentType
+     }
+     let options = {
+       method, headers,
+       query: '',
+       bucketName: this.bucketName,
+       objectName: this.objectName
+     }
+
+     this.client.makeRequest(options, '', 200, '', true, (err, response) => {
+       if (err) return callback(err)
+
+       let etag = response.headers.etag
+       if (etag) {
+         etag = etag.replace(/^"/, '').replace(/"$/, '')
+       }
+
+       // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+       response.on('data', () => {})
+
+       // Give the etag back, we're done!
+       process.nextTick(() => {
+         this.callback(null, etag)
+       })
+
+       // Because we're sure the stream has ended, allow it to flush and end.
+       callback()
+     })
+
+     return
+   }
     // If it has been uploaded in a single packet, we don't have to do anything.
+    else {
     if (this.id === null) {
       return
     }
@@ -227,5 +264,5 @@ export default class ObjectUploader extends Transform {
                                           callback()
                                         })
   }
-
+}
 }
