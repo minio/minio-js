@@ -244,23 +244,23 @@ export default class ObjectUploader extends Transform {
       return
     }
     // If it has been uploaded in a single packet, we don't have to do anything.
-      if (this.id === null) {
-        return
-      }
-
-      // This is called when all of the chunks uploaded successfully, thus
-      // completing the multipart upload.
-      this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id,
-                                          this.etags, (err, etag) => {
-                                            if (err) return callback(err)
-
-                                            // Call our callback on the next tick to allow the streams infrastructure
-                                            // to finish what its doing before we continue.
-                                            process.nextTick(() => {
-                                              this.callback(null, etag)
-                                            })
-
-                                            callback()
-                                          })
+    if (this.id === null) {
+      return
     }
+
+    // This is called when all of the chunks uploaded successfully, thus
+    // completing the multipart upload.
+    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id,
+                                        this.etags, (err, etag) => {
+                                          if (err) return callback(err)
+
+                                          // Call our callback on the next tick to allow the streams infrastructure
+                                          // to finish what its doing before we continue.
+                                          process.nextTick(() => {
+                                            this.callback(null, etag)
+                                          })
+
+                                          callback()
+                                        })
+  }
 }
