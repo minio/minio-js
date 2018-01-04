@@ -238,7 +238,8 @@ The object is of the format:
 
 | Param | Type | Description |
 | ---- | ---- | ---- |
-| `obj.key` | _string_ | name of the object. |
+| `obj.name` | _string_ | name of the object. |
+| `obj.prefix` | _string_ | name of the object prefix. |
 | `obj.size` | _number_ | size of the object. |
 | `obj.etag` | _string_ |etag of the object. |
 | `obj.lastModified` | _Date_ | modified time stamp. |
@@ -277,7 +278,8 @@ The object is of the format:
 
 | Param | Type | Description |
 | ---- | ---- | ---- |
-| `obj.key` | _string_ | name of the object. |
+| `obj.name` | _string_ | name of the object. |
+| `obj.prefix` | _string_ | name of the object prefix. |
 | `obj.size` | _number_ | size of the object. |
 | `obj.etag` | _string_ |etag of the object. |
 | `obj.lastModified` | _Date_ | modified time stamp. |
