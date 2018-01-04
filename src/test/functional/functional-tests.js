@@ -891,10 +891,10 @@ describe('functional tests', function() {
       expires.setSeconds(24 * 60 * 60 * 10)
       policy.setExpires(expires)
 
-      client.presignedPostPolicy(policy, (e, urlStr, formData) => {
+      client.presignedPostPolicy(policy, (e, data) => {
         if (e) return done(e)
-        var req = superagent.post(`${urlStr}`)
-        _.each(formData, (value, key) => req.field(key, value))
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', new Buffer([_1byte]), 'test')
         req.end(function(e) {
           if (e) return done(e)

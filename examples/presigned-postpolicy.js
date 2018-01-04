@@ -39,13 +39,13 @@ policy.setExpires(expires)
 
 policy.setContentLengthRange(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
 
-s3Client.presignedPostPolicy(policy, function(e, urlStr, formData) {
+s3Client.presignedPostPolicy(policy, function(e, data) {
   if (e) return console.log(e)
   var curl = []
-  curl.push(`curl ${urlStr}`)
-  for (var key in formData) {
-    if (formData.hasOwnProperty(key)) {
-      var value = formData[key]
+  curl.push(`curl ${data.postURL}`)
+  for (var key in data.formData) {
+    if (data.formData.hasOwnProperty(key)) {
+      var value = data.formData[key]
       curl.push(`-F ${key}=${value}`)
     }
   }

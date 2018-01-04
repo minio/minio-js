@@ -766,7 +766,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `policy`  | _object_  | Policy object created by minioClient.newPostPolicy() |
-| `callback(err, postURL, formData)`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
+| `callback(err, {postURL, formData})`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
 
 
 Create policy:
@@ -807,11 +807,11 @@ POST your content from the browser using `superagent`:
 
 
 ```js
-minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
+minioClient.presignedPostPolicy(policy, function(err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(postURL)
-  _.each(formData, function(value, key) {
+  var req = superagent.post(data.postURL)
+  _.each(data.formData, function(value, key) {
     req.field(key, value)
   })
 

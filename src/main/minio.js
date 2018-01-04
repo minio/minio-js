@@ -1628,7 +1628,7 @@ export class Client {
       var reqOptions = this.getRequestOptions(opts)
       var portStr = (this.port == 80 || this.port === 443) ? '' : `:${this.port.toString()}`
       var urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
-      cb(null, urlStr, postPolicy.formData)
+      cb(null, {postURL: urlStr,formData: postPolicy.formData})
     })
   }
 
