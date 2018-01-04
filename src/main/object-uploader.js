@@ -244,7 +244,6 @@ export default class ObjectUploader extends Transform {
       return
     }
     // If it has been uploaded in a single packet, we don't have to do anything.
-    else {
       if (this.id === null) {
         return
       }
@@ -264,5 +263,4 @@ export default class ObjectUploader extends Transform {
                                             callback()
                                           })
     }
-  }
 }
