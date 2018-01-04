@@ -22,7 +22,7 @@ import * as querystring from 'querystring'
 export default class ObjectUploader extends Transform {
   constructor(client, bucketName, objectName, partSize, contentType, callback) {
     super()
-    this.emptyStream=true
+    this.emptyStream = true
     this.client = client
     this.bucketName = bucketName
     this.objectName = objectName
@@ -58,7 +58,7 @@ export default class ObjectUploader extends Transform {
   }
 
   _transform(chunk, encoding, callback) {
-    this.emptyStream=false
+    this.emptyStream = false
     let method = 'PUT'
     let headers = {
       'Content-Length': chunk.length,
