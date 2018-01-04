@@ -764,7 +764,7 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `policy`  | _object_  | 通过minioClient.newPostPolicy()创建的Policy对象。 |
-| `callback(err, postURL, formData)`  | _function_  |如果`err`不是null则代表有错误。`postURL`用于使用post请求上传。`formData`是POST请求体中的键值对对象。如果没有传callback的话，则返回一个`Promise`对象。 |
+| `callback(err, {postURL, formData})`  | _function_  |如果`err`不是null则代表有错误。`postURL`用于使用post请求上传。`formData`是POST请求体中的键值对对象。如果没有传callback的话，则返回一个`Promise`对象。 |
 
 
 创建策略：
@@ -805,11 +805,11 @@ policy.setContentLengthRange(1024, 1024*1024)
 
 
 ```js
-minioClient.presignedPostPolicy(policy, function(err, postURL, formData) {
+minioClient.presignedPostPolicy(policy, function(err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(postURL)
-  _.each(formData, function(value, key) {
+  var req = superagent.post(data.postURL)
+  _.each(data.formData, function(value, key) {
     req.field(key, value)
   })
 
