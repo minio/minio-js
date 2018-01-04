@@ -208,61 +208,61 @@ export default class ObjectUploader extends Transform {
   }
 
   _flush(callback) {
-     if (this.emptyStream) {
-       let method = 'PUT'
-       let headers = {
+    if (this.emptyStream) {
+      let method = 'PUT'
+      let headers = {
         'Content-Length': 0,
         'Content-Type': this.contentType
-       }
-     let options = {
-       method, headers,
-       query: '',
-       bucketName: this.bucketName,
-       objectName: this.objectName
-     }
+      }
+      let options = {
+        method, headers,
+        query: '',
+        bucketName: this.bucketName,
+        objectName: this.objectName
+      }
 
-     this.client.makeRequest(options, '', 200, '', true, (err, response) => {
-       if (err) return callback(err)
+      this.client.makeRequest(options, '', 200, '', true, (err, response) => {
+        if (err) return callback(err)
 
-       let etag = response.headers.etag
-       if (etag) {
-         etag = etag.replace(/^"/, '').replace(/"$/, '')
-       }
+        let etag = response.headers.etag
+        if (etag) {
+          etag = etag.replace(/^"/, '').replace(/"$/, '')
+        }
 
-       // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-       response.on('data', () => {})
+        // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+        response.on('data', () => {})
 
-       // Give the etag back, we're done!
-       process.nextTick(() => {
-         this.callback(null, etag)
-       })
+        // Give the etag back, we're done!
+        process.nextTick(() => {
+          this.callback(null, etag)
+        })
 
-       // Because we're sure the stream has ended, allow it to flush and end.
-       callback()
-     })
+        // Because we're sure the stream has ended, allow it to flush and end.
+        callback()
+      })
 
-     return
-   }
-    // If it has been uploaded in a single packet, we don't have to do anything.
-    else {
-    if (this.id === null) {
       return
     }
+    // If it has been uploaded in a single packet, we don't have to do anything.
+    else {
+      if (this.id === null) {
+        return
+      }
 
-    // This is called when all of the chunks uploaded successfully, thus
-    // completing the multipart upload.
-    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id,
-                                        this.etags, (err, etag) => {
-                                          if (err) return callback(err)
+      // This is called when all of the chunks uploaded successfully, thus
+      // completing the multipart upload.
+      this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id,
+                                          this.etags, (err, etag) => {
+                                            if (err) return callback(err)
 
-                                          // Call our callback on the next tick to allow the streams infrastructure
-                                          // to finish what its doing before we continue.
-                                          process.nextTick(() => {
-                                            this.callback(null, etag)
+                                            // Call our callback on the next tick to allow the streams infrastructure
+                                            // to finish what its doing before we continue.
+                                            process.nextTick(() => {
+                                              this.callback(null, etag)
+                                            })
+
+                                            callback()
                                           })
-
-                                          callback()
-                                        })
-     }
+    }
   }
 }
