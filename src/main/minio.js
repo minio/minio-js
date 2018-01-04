@@ -410,7 +410,9 @@ export class Client {
         }
         this.logHTTP(reqOptions, response)
         if (returnResponse) return cb(null, response)
-        response.socket.end()
+        // We drain the socket so that the connection gets closed. Note that this
+        // is not expensive as the socket will not have any data.
+        response.on('data', ()=>{})
         cb(null)
       })
       let pipe = pipesetup(stream, req)
@@ -1372,7 +1374,11 @@ export class Client {
     var method = 'HEAD'
     this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
-      else response.socket.end()
+
+      // We drain the socket so that the connection gets closed. Note that this
+      // is not expensive as the socket will not have any data.
+      response.on('data', ()=>{})
+
       var result = {
         size: +response.headers['content-length'],
         contentType: response.headers['content-type'],
