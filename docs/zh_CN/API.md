@@ -238,7 +238,8 @@ __返回值__
 
 | 参数  |  类型 | 描述  |
 | ---- | ---- | ---- |
-| `obj.key` | _string_ | 对象名称。 |
+| `obj.name` | _string_ | 对象名称。 |
+| `obj.prefix` | _string_ | 对象名称的前缀。 |
 | `obj.size` | _number_ | 对象的大小。 |
 | `obj.etag` | _string_ |对象的etag值。 |
 | `obj.lastModified` | _Date_ | 最后修改时间。 |
@@ -277,7 +278,8 @@ __返回值__
 
 | 参数  |  类型 | 描述  |
 | ---- | ---- | ---- |
-| `obj.key` | _string_ | 对象名称。 |
+| `obj.name` | _string_ | 对象名称。 |
+| `obj.prefix` | _string_ | 对象名称的前缀。 |
 | `obj.size` | _number_ | 对象的大小。 |
 | `obj.etag` | _string_ |对象的etag值。 |
 | `obj.lastModified` | _Date_ | 最后修改时间。 |
