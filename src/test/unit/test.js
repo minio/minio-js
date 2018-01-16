@@ -33,8 +33,8 @@ describe('Helpers', () => {
   it('should validate for s3 china', () => {
     assert.equal(isValidEndpoint('s3.cn-north-1.amazonaws.com.cn'), true)
   })
-  it('should fail for invalid endpoint', () => {
-    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), false)
+  it('should validate for us-west-2', () => {
+    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), true)
   })
   it('should fail for invalid endpoint characters', () => {
     assert.equal(isValidEndpoint('111.#2.11'), false)
