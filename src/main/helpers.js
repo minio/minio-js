@@ -112,12 +112,6 @@ export function isValidEndpoint(endpoint) {
   if (!isValidDomain(endpoint) && !isValidIP(endpoint)) {
     return false
   }
-  // Endpoint matches amazon, make sure its 's3.amazonaws.com'
-  if (endpoint.match('.amazonaws.com$') || endpoint.match('.amazonaws.com.cn$')) {
-    if (!isAmazonEndpoint(endpoint)) {
-      return false
-    }
-  }
   // Return true.
   return true
 }
