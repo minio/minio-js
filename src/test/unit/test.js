@@ -33,20 +33,8 @@ describe('Helpers', () => {
   it('should validate for s3 china', () => {
     assert.equal(isValidEndpoint('s3.cn-north-1.amazonaws.com.cn'), true)
   })
-  it('should validate for EU (London)', () => {
-    assert.equal(isValidEndpoint('s3-eu-west-2.amazonaws.com'), true)
-  })
-  it('should validate for EU (Ireland)', () => {
-    assert.equal(isValidEndpoint('s3-eu-west-1.amazonaws.com'), true)
-  })
-  it('should validate for South America', () => {
-    assert.equal(isValidEndpoint('s3.sa-east-1.amazonaws.com'), true)
-  })
-  it('should validate for Asia Pacific', () => {
-    assert.equal(isValidEndpoint('s3.ap-northeast-1.amazonaws.com'), true)
-  })
-  it('should fail for invalid endpoint', () => {
-    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), false)
+  it('should validate for us-west-2', () => {
+    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), true)
   })
   it('should fail for invalid endpoint characters', () => {
     assert.equal(isValidEndpoint('111.#2.11'), false)
