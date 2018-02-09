@@ -190,8 +190,8 @@ describe('functional tests', function() {
   describe('bucketExists', () => {
     step(`bucketExists(bucketName, cb)_bucketName:${bucketName}_`, done => client.bucketExists(bucketName, done))
     step(`bucketExists(bucketName, cb)_bucketName:${bucketName}random_`, done => {
-      client.bucketExists(bucketName + 'random', (e) => {
-        if (e.code === 'NoSuchBucket') return done()
+      client.bucketExists(bucketName + 'random', (e, exists) => {
+        if (e === null && !exists) return done()
         done(new Error())
       })
     })

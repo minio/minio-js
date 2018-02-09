@@ -647,7 +647,13 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'HEAD'
-    this.makeRequest({method, bucketName}, '', 200, '', false, cb)
+    this.makeRequest({method, bucketName}, '', 200, '', false, err => {
+      if (err) {
+        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+        return cb(err)
+      }
+      cb(null, true)
+    })
   }
 
   // Remove a bucket.

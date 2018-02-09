@@ -162,7 +162,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName[, callback])
+#### bucketExists(bucketName, callback)
 
 Checks if a bucket exists.
 
@@ -173,19 +173,19 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err)`  | _function_  | `err` is `null` if the bucket exists. `err.code` is `NoSuchBucket` in case the bucket does not exist. If no callback is passed, a `Promise` is returned. |
+| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. |
 
 __Example__
 
 
 ```js
-minioClient.bucketExists('mybucket', function(err) {
+minioClient.bucketExists('mybucket', function(err, exists) {
   if (err) {
-     if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
-     return console.log(err)
+    return console.log(err)
   }
-  // if err is null it indicates that the bucket exists.
-  console.log('Bucket exists.')
+  if (exists) {
+    return console.log('Bucket exists.')
+  }
 })
 ```
 
