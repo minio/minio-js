@@ -248,7 +248,7 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
     throw new errors.ExpiresParamError('expires param cannot be less than 1 seconds')
   }
   if (expires > 604800) {
-    throw new errors.ExpiresParamError('expires param cannot be alrger than 7 days')
+    throw new errors.ExpiresParamError('expires param cannot be greater than 7 days')
   }
 
   var iso8601Date = makeDateLong(requestDate)
