@@ -173,7 +173,7 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. |
+| `callback(err)`  | _function_  | `err` is `null` if the bucket exists. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -183,9 +183,8 @@ minioClient.bucketExists('mybucket', function(err, exists) {
   if (err) {
     return console.log(err)
   }
-  if (exists) {
-    return console.log('Bucket exists.')
-  }
+
+  return console.log('Bucket exists.')
 })
 ```
 
@@ -878,18 +877,18 @@ __Example__
 
 ```js
 // Create a new notification object
-var bucketNotification = new Notify.BucketNotification();
+var bucketNotification = new Minio.NotificationConfig();
 
 // Setup a new topic configuration
-var arn = Notify.newARN('aws', 'sns', 'us-west-2', '408065449417', 'TestTopic')
-var topic = new Notify.TopicConfig(arn)
+var arn = Minio.buildARN('aws', 'sns', 'us-west-2', '408065449417', 'TestTopic')
+var topic = new Minio.TopicConfig(arn)
 topic.addFilterSuffix('.jpg')
 topic.addFilterPrefix('myphotos/')
-topic.addEvent(Notify.ObjectReducedRedundancyLostObject)
-topic.addEvent(Notify.ObjectCreatedAll)
+topic.addEvent(Minio.ObjectReducedRedundancyLostObject)
+topic.addEvent(Minio.ObjectCreatedAll)
 
 // Add the topic to the overall notification object
-bucketNotification.addTopicConfiguration(topic)
+bucketNotification.add(topic)
 
 minioClient.setBucketNotification('mybucket', bucketNotification, function(err) {
   if (err) return console.log(err)
