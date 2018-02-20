@@ -24,6 +24,12 @@ npm install
 npm install -g
 ```
 
+## Using with TypeScript
+
+```sh
+npm install --save-dev @types/minio
+```
+
 ## Initialize Minio Client
 
 You need five items in order to connect to Minio object storage server.
