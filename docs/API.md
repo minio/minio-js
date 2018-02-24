@@ -105,17 +105,7 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 |`bucketName`  | _string_  | Name of the bucket. |
-| `region`  |  _string_ | Default value is us-east-1 Region where the bucket is created. Valid values are listed below: |
-| | |us-east-1 |
-| | |us-west-1 |
-| | |us-west-2 |
-| | |eu-west-1 |
-| | |eu-central-1|
-| | |ap-southeast-1|
-| | |ap-northeast-1|
-| | |ap-southeast-2|
-| | |sa-east-1|
-| | |cn-north-1|
+| `region`  |  _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
 
 
