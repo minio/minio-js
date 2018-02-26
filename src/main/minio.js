@@ -494,6 +494,12 @@ export class Client {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
+
+    if (isFunction(region)) {
+      cb = region
+      region = ''
+    }
+
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
     }
