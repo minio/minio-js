@@ -208,8 +208,3 @@ export function getNotificationTransformer() {
   // This will parse and return each object.
   return new JSONParser()
 }
-
-// Parses GET BucketPolicy response.
-export function getBucketPolicyTransformer() {
-  return getConcater(response => JSON.parse(response))
-}

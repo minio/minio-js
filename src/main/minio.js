@@ -39,11 +39,6 @@ import { isValidPrefix, isValidEndpoint, isValidBucketName,
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
-import { isValidBucketPolicy, generateBucketPolicy,
-  parseBucketPolicy } from './bucket-policy'
-
-export { Policy } from './bucket-policy'
-
 import ObjectUploader from './object-uploader'
 
 import * as transformers from './transformers'
@@ -1421,15 +1416,11 @@ export class Client {
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `objectPrefix` _string_: object prefix
   // * `callback(err, policy)` _function_: callback function
-  getBucketPolicy(bucketName, objectPrefix, cb) {
+  getBucketPolicy(bucketName, cb) {
     // Validate arguments.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-    if (!isValidPrefix(objectPrefix)) {
-      throw new errors.InvalidPrefixError(`Invalid object prefix: ${objectPrefix}`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -1440,14 +1431,12 @@ export class Client {
     this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
 
-      let policy = ''
-
-      let transformer = transformers.getBucketPolicyTransformer(bucketName, objectPrefix)
-      pipesetup(response, transformer)
+      let policy = new Buffer('')
+      pipesetup(response, transformers.getConcater())
         .on('data', data => policy = data)
         .on('error', cb)
         .on('end', () => {
-          cb(null, parseBucketPolicy(policy, bucketName, objectPrefix))
+          cb(null, policy.toString())
         })
     })
   }
@@ -1456,20 +1445,15 @@ export class Client {
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `objectPrefix` _string_: object prefix
-  // * `bucketPolicy` _string_: bucket policy ('none', 'readonly', 'writeonly', or 'readwrite')
+  // * `bucketPolicy` _string_: bucket policy (JSON stringify'ed)
   // * `callback(err)` _function_: callback function
-  setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb) {
+  setBucketPolicy(bucketName, policy, cb) {
     // Validate arguments.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
-    if (!isValidPrefix(objectPrefix)) {
-      throw new errors.InvalidPrefixError(`Invalid object prefix: ${objectPrefix}`)
-    }
-    if (!isValidBucketPolicy(bucketPolicy)) {
-      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${bucketPolicy}` +
-                                                `(must be 'none', 'readonly', 'writeonly', or 'readwrite')`)
+    if (!isString(policy)) {
+      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy} - must be "string"`)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -1477,19 +1461,12 @@ export class Client {
 
     let method = 'DELETE'
     let query = 'policy'
-    let policyPayload = ''
 
-    // For 'none', we DELETE the bucket policy instead of doing a PUT request.
-    // If it is anything but, generate the bucket policy and send it as payload.
-    if (bucketPolicy != 'none') {
+    if (policy) {
       method = 'PUT'
-
-      // Generate the statements for S3.
-      policyPayload = generateBucketPolicy(bucketPolicy, bucketName, objectPrefix)
-      policyPayload = JSON.stringify(policyPayload)
     }
 
-    this.makeRequest({method, bucketName, query}, policyPayload, 204, '', false, cb)
+    this.makeRequest({method, bucketName, query}, policy, 204, '', false, cb)
   }
 
   // Generate a generic presigned URL which can be

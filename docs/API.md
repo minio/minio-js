@@ -943,7 +943,7 @@ listener.on('notification', function(record) {
 ```
 
 <a name="getBucketPolicy"></a>
-### getBucketPolicy(bucketName, objectPrefix[, callback])
+### getBucketPolicy(bucketName [, callback])
 
 Get the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will be filtered based on object permissions
@@ -955,45 +955,39 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket |
-| `objectPrefix` | _string_ | Prefix of objects in the bucket with which to filter permissions off of. Use `''` for entire bucket. |
-| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` will be the string representation of the bucket policy (`minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`). If no callback is passed, a `Promise` is returned. |
+| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` is the [bucket policy](https://github.com/minio/minio/blob/master/docs/bucket/policy/README.md). If no callback is passed, a `Promise` is returned. |
 
 
 ```js
-// Retrieve bucket policy of 'my-bucketname' that applies to all objects that
-// start with 'img-'.
-minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
+// Retrieve bucket policy of 'my-bucketname'
+minioClient.getBucketPolicy('my-bucketname', function(err, policy) {
   if (err) throw err
 
-  console.log(`Bucket policy: ${policy}`)
+  console.log(`Bucket policy file: ${policy}`)
 })
 ```
 
 <a name="setBucketPolicy"></a>
-### setBucketPolicy(bucketName, objectPrefix, bucketPolicy[, callback])
+### setBucketPolicy(bucketName, bucketPolicy[, callback])
 
-Set the bucket policy associated with the specified bucket. If `objectPrefix`
-is not empty, the bucket policy will only be assigned to objects that fit the
-given prefix.
+Set the bucket policy on the specified bucket. [bucketPolicy](https://github.com/minio/minio/blob/master/docs/bucket/policy/README.md) is detailed here.
 
 __Parameters__
 
 
 | Param  |  Type | Description  |
 |---|---|---|
-| `bucketName`  | _string_  | Name of the bucket |
-| `objectPrefix` | _string_ | Prefix of objects in the bucket to modify permissions of. Use `''` for entire bucket. |
-| `bucketPolicy` | _string_ | The bucket policy. This can be: `minio.Policy.NONE`, `minio.Policy.READONLY`, `minio.Policy.WRITEONLY`, or `minio.Policy.READWRITE`. |
+| `bucketName`  | _string_  | Name of the bucket. |
+| `bucketPolicy` | _string_ | bucket policy. |
 | `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
-// Set the bucket policy of `my-bucketname` to `readonly` (only allow retrieval),
-// but only for objects that start with 'img-'.
-minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, function(err) {
+// Set the bucket policy of `my-bucketname`
+minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function(err) {
   if (err) throw err
 
-  console.log('Set bucket policy to \'readonly\'.')
+  console.log('Bucket policy set')
 })
 ```
 

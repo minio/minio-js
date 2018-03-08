@@ -36,8 +36,6 @@ try {
   minio = require('minio')
 }
 
-const Policy = minio.Policy
-
 require('source-map-support').install()
 
 describe('functional tests', function() {
@@ -628,98 +626,24 @@ describe('functional tests', function() {
       client.removeObject(bucketName, _5mbObjectName, done)
     })
   })
-  let policyNotImplemented = false
+
   describe('bucket policy', () => {
-    let policies = [Policy.READONLY, Policy.WRITEONLY, Policy.READWRITE]
+    let policy = `{"Version":"2012-10-17","Statement":[{"Action":["s3:GetBucketLocation"],"Effect":"Allow","Principal":{"AWS":["*"]},"Resource":["arn:aws:s3:::${bucketName}"],"Sid":""},{"Action":["s3:ListBucket"],"Condition":{"StringEquals":{"s3:prefix":["foo","prefix/"]}},"Effect":"Allow","Principal":{"AWS":["*"]},"Resource":["arn:aws:s3:::${bucketName}"],"Sid":""},{"Action":["s3:GetObject"],"Effect":"Allow","Principal":{"AWS":["*"]},"Resource":["arn:aws:s3:::${bucketName}/foo*","arn:aws:s3:::${bucketName}/prefix/*"],"Sid":""}]}`
 
-    // Iterate through the basic policies ensuring it can set and check each of them.
-    policies.forEach(policy => {
-      policyNotImplemented = false
-      step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, done => {
-        client.setBucketPolicy(bucketName, '', policy, err => {
-          if (err) {
-            if(err.code != 'NotImplemented') return done(err)
-            else policyNotImplemented = true
-          }
-          done()
-        })
-      })
-      step(`getBucketPolicy(bucketName, objectPrefix, cb)_bucketName:${bucketName}_`, done => {
-        if (policyNotImplemented) return done()
-        client.getBucketPolicy(bucketName, '', (err, response) => {
-          if (err) return done(err)
-          if (response != policy) {
-            return done(new Error(`policy is incorrect (${response} != ${policy})`))
-          }
-          done()
-        })
-      })
-    })
-
-    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_bucketName:${bucketName}, bucketPolicy:READONLY_`, done => {
-      client.setBucketPolicy(bucketName, '', Policy.READONLY)
-        .then(() => done())
-        .catch(done)
-    })
-
-    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName:${bucketName}_`, done => {
-      client.getBucketPolicy(bucketName, '')
-        .then(response => {
-          if (response != Policy.READONLY)
-            return done(new Error(`policy is incorrect (${response} != ${Policy.READONLY})`))
-          done()
-        })
-        .catch(done)
-    })
-
-    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy)_bucketName: ${bucketName}, objectPrefix: prefix, bucketPolicy: READWRITE_`, done => {
-      policyNotImplemented = false
-      client.setBucketPolicy(bucketName, 'prefix', Policy.READWRITE, err => {
-        if (err) {
-          if(err.code != 'NotImplemented') return done(err)
-          else policyNotImplemented = true
-        }
-        done()
-      })
-    })
-
-    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName: ${bucketName}, objectPrefix: prefix_`, done => {
-      if (!policyNotImplemented) {
-        client.getBucketPolicy(bucketName, 'prefix')
-          .then(response => {
-            if (response != Policy.READWRITE)
-              return done(new Error(`policy is incorrect (${response} != ${Policy.READWRITE})`))
-            done()
-          })
-          .catch(done)
-      } else done()
-    })
-
-    step(`getBucketPolicy(bucketName, objectPrefix)_bucketName:${bucketName}, objectPrefix: wrongprefix_`, done => {
-      client.getBucketPolicy(bucketName, 'wrongprefix')
-        .then(response => {
-          if (response == Policy.READWRITE)
-            return done(new Error(`policy is incorrect (${response} == ${Policy.READWRITE})`))
-          done()
-        })
-        .catch(done)
-    })
-
-    step(`setBucketPolicy(bucketName, objectPrefix, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy: NONE_`, done => {
-      client.setBucketPolicy(bucketName, '', Policy.NONE, err => {
+    step(`setBucketPolicy(bucketName, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, done => {
+      client.setBucketPolicy(bucketName, policy, err => {
+        if (err && err.code == 'NotImplemented') return done()
         if (err) return done(err)
         done()
       })
     })
 
-    step(`getBucketPolicy(bucketName, objectPrefix, cb)_bucketName:${bucketName}_`, done => {
-      // Check using the client — this should error.
-      client.getBucketPolicy(bucketName, '', (err) => {
-        if (!err) return done(new Error('getBucketPolicy should error'))
-
-        if (!(/does not have a bucket policy/.test(err.message)) &&
-                      !(/bucket policy does not exist/.test(err.message))) {
-          return done(new Error(`error message is incorrect (${err.message})`))
+    step(`getBucketPolicy(bucketName, cb)_bucketName:${bucketName}_`, done => {
+      client.getBucketPolicy(bucketName, (err, response) => {
+        if (err && err.code == 'NotImplemented') return done()
+        if (err) return done(err)
+        if (response != policy) {
+          return done(new Error(`policy is incorrect (${response} != ${policy})`))
         }
         done()
       })
