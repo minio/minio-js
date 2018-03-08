@@ -117,7 +117,30 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    this.agent = new transport.Agent({ keepAlive: true })
+    // Look over configuration in Global Agent 
+    //   to copy some of values which defined to
+    //   be reused on base system global agent config
+    //   @link https://nodejs.org/api/https.html#https_https_globalagent
+    var globalAgent = transport.globalAgent;
+    // Currently supported options
+    // - List of CA certificates to trust
+    var caList = [];
+    // Check that Global agent has required chain of options
+    //  Can include following options:
+    //  - https://nodejs.org/api/http.html#http_http_request_options_callback
+    //  - https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options
+    //  However proper set of options which should be inherited is TBD
+    if(globalAgent.hasOwnProperty("options")) {
+      // Check CA rules
+      if(globalAgent.options.hasOwnProperty("ca")) {
+        // Check that CA rules is actual type of Array or String
+        if(globalAgent.options.ca.hasOwnProperty("length")) {
+          caList = globalAgent.options.ca; 
+        }
+      }
+    }
+    
+    this.agent = new transport.Agent({ keepAlive: true, ca: caList })
     this.transport = transport
     this.host = host
     this.port = port
