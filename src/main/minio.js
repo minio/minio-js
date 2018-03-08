@@ -536,18 +536,8 @@ export class Client {
     }
     var method = 'PUT'
     var headers = {}
-    // virtual-host-style request but signed  with region 'us-east-1'
-    // makeBucket request has to be always signed bye 'us-east-1'
-    this.makeRequest({method, bucketName, headers}, payload, 200, 'us-east-1', false, (e) => {
-      if (e && e.name === 'AuthorizationHeaderMalformed') {
-        // if the bucket already exists in non-standard location we try again
-        // by signing the request with the correct region and S3 returns:
-        // 1) BucketAlreadyOwnedByYou - if the user is the bucket owner
-        // 2) BucketAlreadyExists - if the user is not the bucket owner
-        return this.makeRequest({method, bucketName, headers}, payload, 200, e.Region, false, cb)
-      }
-      cb(e)
-    })
+    if (!region) region = 'us-east-1'
+    this.makeRequest({method, bucketName, headers}, payload, 200, region, false, cb)
   }
 
   // List of buckets created.
