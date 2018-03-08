@@ -572,7 +572,7 @@ __Parameters__
 | `stat.size`  | _number_  | size of the object.  |
 | `stat.etag`  | _string_  | etag of the object.  |
 | `stat.contentType`  | _string_  | Content-Type of the object.|
-| `stat.lastModified`  | _string_  | Last Modified time stamp.|
+| `stat.lastModified`  | _Date_  | Last Modified time stamp.|
 
 
 __Example__

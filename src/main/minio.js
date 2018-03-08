@@ -547,7 +547,7 @@ export class Client {
   //
   // `buckets` array element:
   // * `bucket.name` _string_ : bucket name
-  // * `bucket.creationDate` _string_: date when bucket was created
+  // * `bucket.creationDate` _Date_: date when bucket was created
   listBuckets(cb) {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -1190,10 +1190,11 @@ export class Client {
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `stat.key` _string_: name of the object
-  //   * `stat.size` _number_: size of the object
-  //   * `stat.etag` _string_: etag of the object
-  //   * `stat.lastModified` _string_: modified time stamp
+  //   * `obj.name` _string_: name of the object
+  //   * `obj.prefix` _string_: name of the object prefix
+  //   * `obj.size` _number_: size of the object
+  //   * `obj.etag` _string_: etag of the object
+  //   * `obj.lastModified` _Date_: modified time stamp
   listObjects(bucketName, prefix, recursive) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
@@ -1304,10 +1305,11 @@ export class Client {
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `stat.key` _string_: name of the object
-  //   * `stat.size` _number_: size of the object
-  //   * `stat.etag` _string_: etag of the object
-  //   * `stat.lastModified` _string_: modified time stamp
+  //   * `obj.name` _string_: name of the object
+  //   * `obj.prefix` _string_: name of the object prefix
+  //   * `obj.size` _number_: size of the object
+  //   * `obj.etag` _string_: etag of the object
+  //   * `obj.lastModified` _Date_: modified time stamp
   listObjectsV2(bucketName, prefix, recursive) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
@@ -1361,7 +1363,7 @@ export class Client {
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.contentType` _string_: Content-Type of the object
-  //   * `stat.lastModified` _string_: modified time stamp
+  //   * `stat.lastModified` _Date_: modified time stamp
   statObject(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1384,7 +1386,7 @@ export class Client {
       var result = {
         size: +response.headers['content-length'],
         contentType: response.headers['content-type'],
-        lastModified: response.headers['last-modified']
+        lastModified: new Date(response.headers['last-modified'])
       }
       var etag = response.headers.etag
       if (etag) {
