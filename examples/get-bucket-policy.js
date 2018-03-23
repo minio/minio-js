@@ -26,9 +26,7 @@ var s3Client = new Minio.Client({
 })
 
 // Retrieves the bucket policy and logs it to the console.
-// The second argument is the prefix for objects, leave empty if you don't
-// want to filter based on object-specific permissions.
-s3Client.getBucketPolicy('my-bucketname', '', (err, policy) => {
+s3Client.getBucketPolicy('testbucket', (err, policy) => {
 	if (err) throw err
 
 	console.log(`Bucket policy: ${policy}`)

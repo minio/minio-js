@@ -25,13 +25,48 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-// Sets the bucket policy to 'readonly'. This means that objects can only be
-// retrieved rather than created, modified, or destroyed in this bucket.
+// Bucket policy - GET requests on "testbucket" bucket will not need authentication.
+var policy = `
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:ListBucket"
+      ],
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "*"
+        ]
+      },
+      "Resource": [
+        "arn:aws:s3:::testbucket"
+      ],
+      "Sid": ""
+    },
+    {
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "*"
+        ]
+      },
+      "Resource": [
+        "arn:aws:s3:::testbucket/*"
+      ],
+      "Sid": ""
+    }
+  ]
+}
+`
 
-// The second parameter is for filtering based on objects — you can leave this
-// empty if you'd like the permissions to apply to the entire bucket.
-s3Client.setBucketPolicy('my-bucketname', '', Minio.Policy.READONLY, (err) => {
+s3Client.setBucketPolicy('testbucket', policy, (err) => {
 	if (err) throw err
 
-	console.log('Set bucket policy to \'readonly\'.')
+	console.log('Set bucket policy')
 })
