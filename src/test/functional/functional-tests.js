@@ -361,22 +361,10 @@ describe('functional tests', function() {
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName} non-existent object`, done => {
       client.getObject(bucketName, 'an-object-that-does-not-exist', (e, stream) => {
-        if (e) {
-          if (e.code === 'NoSuchKey') return done();
-          console.error('Unexpected error code', e.code, typeof e.code, e);
-        };
-        stream.on('readable', () => {
-          done(new Error('Got readable event on non-existent object'));
-        });
-        stream.on('data', data => {
-          done(new Error('Got data event on non-existent object'));
-        });
-        stream.on('error', () =>  {
-          done(new Error('Got error event on non-existent object (but falsy error argument)'));
-        });
-        stream.on('end', () => {
-          done(new Error('Got end event on non-existent object'));
-        })
+        if (stream) return done(new Error("on errors the stream object should not exist"))
+        if (!e) return done(new Error("expected an error object"))
+        if (e.code !== 'NoSuchKey') return done(new Error("expected NoSuchKey error"))
+        done();
       })
     })
 
