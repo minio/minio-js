@@ -359,6 +359,15 @@ describe('functional tests', function() {
       })
     })
 
+    step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName} non-existent object`, done => {
+      client.getObject(bucketName, 'an-object-that-does-not-exist', (e, stream) => {
+        if (stream) return done(new Error("on errors the stream object should not exist"))
+        if (!e) return done(new Error("expected an error object"))
+        if (e.code !== 'NoSuchKey') return done(new Error("expected NoSuchKey error"))
+        done()
+      })
+    })
+
     step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, offset:0, length:100*1024_`, done => {
       var hash = crypto.createHash('md5')
       var expectedHash = crypto.createHash('md5').update(_6mb.slice(0,100*1024)).digest('hex')
