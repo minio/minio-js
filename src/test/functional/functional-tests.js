@@ -364,7 +364,7 @@ describe('functional tests', function() {
         if (stream) return done(new Error("on errors the stream object should not exist"))
         if (!e) return done(new Error("expected an error object"))
         if (e.code !== 'NoSuchKey') return done(new Error("expected NoSuchKey error"))
-        done();
+        done()
       })
     })
 
