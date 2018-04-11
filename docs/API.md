@@ -10,7 +10,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-  	secure: true,
+    secure: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
@@ -23,8 +23,8 @@ var Minio = require('minio')
 
 var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
-	accessKey: 'YOUR-ACCESSKEYID',
-	secretKey: 'YOUR-SECRETACCESSKEY'
+    accessKey: 'YOUR-ACCESSKEYID',
+    secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
 | Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
@@ -991,8 +991,18 @@ minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function(er
 })
 ```
 
+## 6. HTTP request options
+### setRequestOptions(options)
 
-## 6. Explore Further
+Set the HTTP/HTTPS request options. Supported options are `agent` ([http.Agent()](https://nodejs.org/api/http.html#http_class_http_agent)) and tls related options ('agent', 'ca', 'cert', 'ciphers', 'clientCertEngine', 'crl', 'dhparam', 'ecdhCurve', 'honorCipherOrder', 'key', 'passphrase', 'pfx', 'rejectUnauthorized', 'secureOptions', 'secureProtocol', 'servername', 'sessionIdContext') documented [here](https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options)
+
+```js
+// Do not reject self signed certificates.
+minioClient.setRequestOptions({rejectUnauthorized: false})
+```
+
+
+## 7. Explore Further
 
 
 - [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)

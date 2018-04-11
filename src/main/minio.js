@@ -138,6 +138,16 @@ export class Client {
     // and the connection is https we use x-amz-content-sha256=UNSIGNED-PAYLOAD
     // header for signature calculation.
     this.enableSHA256 = !this.anonymous && !params.secure
+
+    this.reqOptions = {}
+  }
+
+  // Sets the supported request options.
+  setRequestOptions(options) {
+    if (!isObject(options)) {
+      throw new TypeError('request options should be of type "object"')
+    }
+    this.reqOptions = _.pick(options, ['agent', 'ca', 'cert', 'ciphers', 'clientCertEngine', 'crl', 'dhparam', 'ecdhCurve', 'honorCipherOrder', 'key', 'passphrase', 'pfx', 'rejectUnauthorized', 'secureOptions', 'secureProtocol', 'servername', 'sessionIdContext'])
   }
 
   // returns *options* object that can be used with http.request()
@@ -207,6 +217,9 @@ export class Client {
 
     // Use the Minio agent with keep-alive
     reqOptions.agent = this.agent
+
+    // Use any request option specified in minioClient.setRequestOptions()
+    reqOptions = Object.assign({}, this.reqOptions, reqOptions)
 
     return reqOptions
   }
