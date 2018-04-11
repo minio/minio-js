@@ -112,7 +112,6 @@ export class Client {
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
-    this.agent = new transport.Agent({ keepAlive: true })
     this.transport = transport
     this.host = host
     this.port = port
@@ -214,9 +213,6 @@ export class Client {
       // have all header keys in lower case - to make signing easy
       _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
     }
-
-    // Use the Minio agent with keep-alive
-    reqOptions.agent = this.agent
 
     // Use any request option specified in minioClient.setRequestOptions()
     reqOptions = Object.assign({}, this.reqOptions, reqOptions)
