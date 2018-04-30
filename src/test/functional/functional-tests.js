@@ -651,8 +651,8 @@ describe('functional tests', function() {
       client.getBucketPolicy(bucketName, (err, response) => {
         if (err && err.code == 'NotImplemented') return done()
         if (err) return done(err)
-        if (response != policy) {
-          return done(new Error(`policy is incorrect (${response} != ${policy})`))
+        if (!response) {
+          return done(new Error(`policy is empty`))
         }
         done()
       })
