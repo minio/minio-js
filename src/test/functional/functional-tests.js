@@ -636,7 +636,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe.only('bucket policy', () => {
+  describe('bucket policy', () => {
     let policy = `{"Version":"2012-10-17","Statement":[{"Action":["s3:GetBucketLocation","s3:ListBucket"],"Effect":"Allow","Principal":{"AWS":["*"]},"Resource":["arn:aws:s3:::${bucketName}"],"Sid":""},{"Action":["s3:GetObject"],"Effect":"Allow","Principal":{"AWS":["*"]},"Resource":["arn:aws:s3:::${bucketName}/*"],"Sid":""}]}`
 
     step(`setBucketPolicy(bucketName, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, done => {
@@ -1005,7 +1005,7 @@ describe('functional tests', function() {
       step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, events: s3:ObjectCreated:*_`, done => {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectCreated:*'])
         let records = 0
-        let notImplemented = false
+        let pollerError = null
         poller.on('notification', record => {
           records++
 
@@ -1014,14 +1014,17 @@ describe('functional tests', function() {
           assert.equal(record.s3.object.key, objectName)
         })
         poller.on('error', error => {
-          if (error.code != 'NotImplemented') {
-            done(error)
-          } else {
-            notImplemented = true
-          }
+          pollerError = error
         })
         setTimeout(() => { // Give it some time for the notification to be setup.
-          if (notImplemented) return done()
+          if (pollerError) {
+            if (pollerError.code != 'NotImplemented') {
+              done(pollerError)
+            } else {
+              done()
+            }
+            return
+          }
           client.putObject(bucketName, objectName, 'stringdata', (err) => {
             if (err) return done(err)
             setTimeout(() => { // Give it some time to get the notification.
