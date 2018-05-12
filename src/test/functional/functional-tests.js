@@ -1034,9 +1034,9 @@ describe('functional tests', function() {
                 if (!records) return done(new Error('notification not received'))
                 done()
               })
-            }, 5 * 1000)
+            }, 10 * 1000)
           })
-        }, 3*1000)
+        }, 10*1000)
       })
  
       // This test is very similar to that above, except it does not include
