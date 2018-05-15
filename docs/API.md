@@ -57,8 +57,8 @@ __Parameters__
 |---|---|---|
 | `endPoint`  |  _string_ | endPoint is a host name or an IP address. |
 | `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
-|`secure`    | _bool_    |If set to true, https is used instead of http. Default is true. |
-|`accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
+|`secure`    | _bool_    |If set to true, https is used instead of http. Default is true.|
+|`accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account.|
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
 |`region`    | _string_  |Set this value to override region cache. (Optional)|
 |`transport`    | _string_  |Set this value to pass in a custom transport. (Optional)|
