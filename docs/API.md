@@ -61,7 +61,7 @@ __Parameters__
 |`accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
 |`region`    | _string_  |Set this value to override region cache. (Optional)|
-|`transport`    | _string_  |Set this value to to pass in a custom transport. (Optional)|
+|`transport`    | _string_  |Set this value to pass in a custom transport. (Optional)|
 |`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)|
 
 
