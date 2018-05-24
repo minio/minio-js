@@ -37,6 +37,7 @@ var s3Client = new Minio.Client({
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
+|     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
   
 
@@ -614,6 +615,53 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   }
   console.log('Removed the object')
 })
+```
+
+<a name="removeObjects"></a>
+### removeObjects(bucketName, objectsList[, callback])
+
+Remove all objects in the objectsList.
+
+__Parameters__
+
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  |
+| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
+
+
+__Example__
+
+
+```js
+
+var objectsList = []
+
+// List all object paths in bucket my-bucketname.
+var objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
+
+objectsStream.on('data', function(obj) {
+  objectsList.push(obj.name);
+})
+
+objectsStream.on('error', function(e) {
+  console.log(e);
+})
+
+objectsStream.on('end', function() {
+
+  s3Client.removeObjects('my-bucketname',objectsList, function(e) {
+    if (e) {
+        return console.log('Unable to remove Objects ',e)
+    }
+    console.log('Removed the objects successfully')
+  })
+
+})
+
+
 ```
 
 <a name="removeIncompleteUpload"></a>

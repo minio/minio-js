@@ -982,6 +982,65 @@ describe('functional tests', function() {
     return s
   }
 
+  describe('removeObjects', function() {
+    var listObjectPrefix = 'miniojsPrefix'
+    var listObjectsNum = 10
+    var objArray = []
+    var objectsList = []
+
+    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
+      _.times(listObjectsNum, i => objArray.push(`${listObjectPrefix}.${i}`))
+      objArray = objArray.sort()
+      async.mapLimit(
+        objArray,
+        20,
+        (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
+        done
+      )
+    })
+
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, done => {
+      client.listObjects(bucketName, listObjectPrefix, false)
+        .on('error', done)
+        .on('end', () => {
+          try {
+            client.removeObjects(bucketName, '',function(e) {
+              if (e) {
+                done()
+              }
+            })
+          } catch (e) {
+            if (e.name === "InvalidArgumentError") {
+              done()
+            }
+          }
+        })
+        .on('data', data => {
+          objectsList.push(data.name)
+        })
+    })
+
+    objectsList = []
+
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, done => {
+      client.listObjects(bucketName, listObjectPrefix, false)
+        .on('error', done)
+        .on('end', () => {
+          client.removeObjects(bucketName, objectsList,function(e) {
+            if (e) {
+              done(e)
+            }
+            done()
+          })
+        })
+        .on('data', data => {
+          objectsList.push(data.name)
+        })
+    })
+
+  })
+
+
   describe('bucket notifications', () => {
     describe('#listenBucketNotification', () => {
       before(function() {
