@@ -32,13 +32,13 @@ var s3Client = new Minio.Client({
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | 
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-  
+
 
 
 ## 1.  Constructor
@@ -433,7 +433,7 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
 })
 ```
 <a name="putObject"></a>
-### putObject(bucketName, objectName, stream, size, contentType[, callback])
+### putObject(bucketName, objectName, stream, size, metaData[, callback])
 
 Uploads an object from a stream/Buffer.
 
@@ -449,7 +449,7 @@ __Parameters__
 | `objectName`  |_string_   | Name of the object.  |
 | `stream`  | _Stream_  |Readable stream.   |
 |`size`   | _number_  | Size of the object (optional).  |
-|`contentType`   | _string_  | Content-Type of the object (optional, default `application/octet-stream`).  |
+|`metaData`   | _Javascript Object_  | metaData of the object (optional).  |
 | `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
 
 
@@ -481,7 +481,7 @@ __Parameters__
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 |`string or Buffer`   | _Stream_ or _Buffer_  |Readable stream.   |
-| `contentType`  | _string_   | Content-Type of the object (optional, default `application/octet-stream`).  |
+| `metaData`  | _Javascript Object_   | metaData of the object (optional).  |
 | `callback(err, etag)`  | _function_  |Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.   |
 
 
@@ -495,7 +495,7 @@ minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
 })
 ```
 <a name="fPutObject"></a>
-### fPutObject(bucketName, objectName, filePath, contentType[, callback])
+### fPutObject(bucketName, objectName, filePath, metaData[, callback])
 
 Uploads contents from a file to objectName.
 
@@ -507,7 +507,7 @@ __Parameters__
 | `bucketName`  | _string_  | Name of the bucket.  |
 |`objectName`   |_string_   | Name of the object.  |
 | `filePath`  | _string_  | Path of the file to be uploaded.  |
-| `contentType`  | _string_  | Content-Type of the object.  |
+| `metaData`  | _Javascript Object_  | Metadata of the object.  |
 | `callback(err, etag)`  |  _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -517,7 +517,13 @@ The maximum size of a single object is limited to 5TB. fPutObject transparently 
 
 ```js
 var file = '/tmp/40mbfile'
-minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
+var metaData = {
+  'Content-Type': 'text/html',
+  'Content-Language': 123,
+  'X-Amz-Meta-Testing': 1234,
+  'example': 5678
+}
+minioClient.fPutObject('mybucket', '40mbfile', file, metaData, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
 ```
@@ -525,7 +531,7 @@ minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream',
 <a name="copyObject"></a>
 ### copyObject(bucketName, objectName, sourceObject, conditions[, callback])
 
-Copy a source object into a new object in the specied bucket.
+Copy a source object into a new object in the specified bucket.
 
 __Parameters__
 
@@ -573,7 +579,7 @@ __Parameters__
 |---|---|---|
 | `stat.size`  | _number_  | size of the object.  |
 | `stat.etag`  | _string_  | etag of the object.  |
-| `stat.contentType`  | _string_  | Content-Type of the object.|
+| `stat.metaData`  | _Javascript Object_  | metadata of the object.|
 | `stat.lastModified`  | _Date_  | Last Modified time stamp.|
 
 
