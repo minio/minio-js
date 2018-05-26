@@ -8,7 +8,8 @@
     "test": "gulp test",
     "prepublish": "gulp test",
     "functional": "gulp functional-test",
-    "browserify": "gulp browserify"
+    "browserify": "gulp browserify",
+    "prepare": "npm run compile"
   },
   "repository": {
     "type": "git",
