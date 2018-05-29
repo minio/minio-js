@@ -1634,6 +1634,9 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    if (!isObject(metaData)) {
+      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
+    }
     var method = 'POST'
     let headers = Object.assign({}, metaData)
     var query = 'uploads'
@@ -1913,7 +1916,7 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      let headers = Object.assign({}, {'Content-Length': length}, metaData)
+      let headers = Object.assign({}, metaData, {'Content-Length': length})
 
       if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},

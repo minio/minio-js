@@ -59,7 +59,7 @@ export default class ObjectUploader extends Transform {
   _transform(chunk, encoding, callback) {
     this.emptyStream = false
     let method = 'PUT'
-    let headers = Object.assign({}, {'Content-Length': chunk.length}, this.metaData)
+    let headers = Object.assign({}, this.metaData, {'Content-Length': chunk.length})
     let md5digest = ''
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
@@ -206,7 +206,7 @@ export default class ObjectUploader extends Transform {
   _flush(callback) {
     if (this.emptyStream) {
       let method = 'PUT'
-      let headers = Object.assign({}, {'Content-Length': 0}, this.metaData)
+      let headers = Object.assign({}, this.metaData, {'Content-Length': 0})
       let options = {
         method, headers,
         query: '',

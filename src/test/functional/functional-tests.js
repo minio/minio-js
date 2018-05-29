@@ -447,6 +447,9 @@ describe('functional tests', function() {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
         if (Object.keys(stat.metaData).length !== Object.keys(metaData).length) return done(new Error('content-type mismatch'))
+        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
+        assert.equal(stat.metaData['Testing'], metaData['Testing'])
+        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
         etag = stat.etag
         modifiedDate = stat.modifiedDate
         done()
@@ -526,7 +529,7 @@ describe('functional tests', function() {
 
   describe('listIncompleteUploads removeIncompleteUpload', () => {
     step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, metaData:${metaData}`, done => {
-      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, 'application/octet-stream', done)
+      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, metaData, done)
     })
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_6mbObjectName}, recursive: true_`, function(done) {
       // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
