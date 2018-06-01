@@ -20,7 +20,7 @@ import * as querystring from 'querystring'
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
-  constructor(client, bucketName, objectName, partSize, contentType, callback) {
+  constructor(client, bucketName, objectName, partSize, metaData, callback) {
     super()
     this.emptyStream = true
     this.client = client
@@ -28,9 +28,8 @@ export default class ObjectUploader extends Transform {
     this.objectName = objectName
     // The size of each multipart, chunked by BlockStream2.
     this.partSize = partSize
-
-    // This contentType for the object.
-    this.contentType = contentType
+    // This is the metadata for the object.
+    this.metaData = metaData
 
     // Call like: callback(error, etag).
     this.callback = callback
@@ -60,11 +59,7 @@ export default class ObjectUploader extends Transform {
   _transform(chunk, encoding, callback) {
     this.emptyStream = false
     let method = 'PUT'
-    let headers = {
-      'Content-Length': chunk.length,
-      'Content-Type': this.contentType
-    }
-
+    let headers = Object.assign({}, this.metaData, {'Content-Length': chunk.length})
     let md5digest = ''
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
@@ -97,6 +92,7 @@ export default class ObjectUploader extends Transform {
         response.on('data', () => {})
 
         // Give the etag back, we're done!
+
         process.nextTick(() => {
           this.callback(null, etag)
         })
@@ -122,7 +118,7 @@ export default class ObjectUploader extends Transform {
 
         // If no upload ID exists, initiate a new one.
         if (!id) {
-          this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.contentType, (err, id) => {
+          this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData, (err, id) => {
             if (err) return callback(err)
 
             this.id = id
@@ -210,10 +206,7 @@ export default class ObjectUploader extends Transform {
   _flush(callback) {
     if (this.emptyStream) {
       let method = 'PUT'
-      let headers = {
-        'Content-Length': 0,
-        'Content-Type': this.contentType
-      }
+      let headers = Object.assign({}, this.metaData, {'Content-Length': 0})
       let options = {
         method, headers,
         query: '',

@@ -290,3 +290,49 @@ export function readableStream(data) {
   s.push(null)
   return s
 }
+// Function prepends metadata with the appropriate prefix if it is not already on
+export function prependXAMZMeta(metaData) {
+  var newMetadata = Object.assign({}, metaData)
+  for (var key in metaData) {
+    if(!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
+      newMetadata["X-Amz-Meta-" + key ] = newMetadata[key]
+      delete newMetadata[key]
+    }
+  }
+  return newMetadata
+}
+
+// Checks if it is a valid header according to the AmazonS3 API
+export function isAmzHeader(key) {
+  var temp = key.toLowerCase()
+  return temp.startsWith("x-amz-meta-") || temp === "x-amz-acl" || temp.startsWith("x-amz-server-side-encryption-") || temp === "x-amz-server-side-encryption"
+}
+//Checks if it is a supported Header
+export function isSupportedHeader(key) {
+  var supported_headers = [
+    'content-type',
+    'cache-control',
+    'content-encoding',
+    'content-disposition',
+    'content-language',
+    'x-amz-website-redirect-location']
+  return (supported_headers.indexOf(key.toLowerCase()) > -1)
+}
+//Checks if it is a storage header
+export function isStorageclassHeader(key) {
+  return key.toLowerCase() === "x-amz-storage-class"
+}
+
+export function extractMetadata(metaData) {
+  var newMetadata = {}
+  for (var key in metaData) {
+    if(isSupportedHeader(key) || isStorageclassHeader(key) || isAmzHeader(key)) {
+      if(key.toLowerCase().startsWith("x-amz-meta-")) {
+        newMetadata[key.slice(11,key.length)] = metaData[key]
+      } else {
+        newMetadata[key] = metaData[key]
+      }
+    }
+  }
+  return newMetadata
+}

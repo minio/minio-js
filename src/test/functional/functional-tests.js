@@ -94,7 +94,12 @@ describe('functional tests', function() {
   var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : (new Buffer(5 * 1024 * 1024)).fill(0)
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
-  var customContentType = 'application/octet-stream'
+  var metaData = {
+    'Content-Type': 'text/html',
+    'Content-Language': 123,
+    'X-Amz-Meta-Testing': 1234,
+    'randomstuff': 5678
+  }
 
   var tmpDir = os.tmpdir()
 
@@ -216,8 +221,8 @@ describe('functional tests', function() {
     })
   })
   describe('tests for putObject getObject removeObject with multipath', function() {
-    step(`putObject(bucketName, objectName, stream, contentType)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}, stream:100Kib_`, done => {
-      client.putObject(bucketName, _MultiPath100kbObjectBufferName, _100kb, '')
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}, stream:100Kib_`, done => {
+      client.putObject(bucketName, _MultiPath100kbObjectBufferName, _100kb)
         .then(() => done())
         .catch(done)
     })
@@ -243,21 +248,21 @@ describe('functional tests', function() {
 
   })
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
-    
+
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
-    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
+    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _100kb)
-      client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload, '', done)
+      client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload,done)
     })
 
-    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}, contentType:${customContentType}_`, done => {
+    step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}, metaData:${metaData}_`, done => {
       var stream = readableStream(_100kb)
-      client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, customContentType, done)
+      client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, metaData, done)
     })
 
-    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}_`, done => {
+    step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}_`, done => {
       var stream = readableStream(_100kb)
-      client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, '', done)
+      client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, done)
     })
 
     step(`getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
@@ -290,8 +295,8 @@ describe('functional tests', function() {
       })
     })
 
-    step(`putObject(bucketName, objectName, stream, contentType)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_`, done => {
-      client.putObject(bucketName, _100kbObjectBufferName, _100kb, '')
+    step(`putObject(bucketName, objectName, stream, metaData)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_, metaData:{}`, done => {
+      client.putObject(bucketName, _100kbObjectBufferName, _100kb, {})
         .then(() => done())
         .catch(done)
     })
@@ -426,8 +431,8 @@ describe('functional tests', function() {
   describe('tests for copyObject statObject', function() {
     var etag
     var modifiedDate
-    step(`putObject(bucketName, objectName, stream, contentType, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream: 100kb, contentType: custom/content-type_`, done => {
-      client.putObject(bucketName, _100kbObjectName, _100kb, 'custom/content-type', done)
+    step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream: 100kb, metaData:${metaData}_`, done => {
+      client.putObject(bucketName, _100kbObjectName, _100kb, metaData, done)
     })
 
     step(`copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}_`, done => {
@@ -441,13 +446,16 @@ describe('functional tests', function() {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
-        if (stat.contentType !== 'custom/content-type') return done(new Error('content-type mismatch'))
+        if (Object.keys(stat.metaData).length !== Object.keys(metaData).length) return done(new Error('content-type mismatch'))
+        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
+        assert.equal(stat.metaData['Testing'], metaData['Testing'])
+        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
         etag = stat.etag
         modifiedDate = stat.modifiedDate
         done()
       })
     })
-    
+
     step(`copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:ExceptIncorrectEtag_`, done => {
       var conds = new minio.CopyConditions()
       conds.setMatchETagExcept('TestEtag')
@@ -509,7 +517,6 @@ describe('functional tests', function() {
       client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
-        if (stat.contentType !== 'custom/content-type') return done(new Error('content-type mismatch'))
         done()
       })
     })
@@ -519,10 +526,10 @@ describe('functional tests', function() {
     })
 
   })
-  
+
   describe('listIncompleteUploads removeIncompleteUpload', () => {
-    step(`initiateNewMultipartUpload(bucketName, objectName, contentType, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, contentType:application/octet-stream_`, done => {
-      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, 'application/octet-stream', done)
+    step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, metaData:${metaData}`, done => {
+      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, metaData, done)
     })
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_6mbObjectName}, recursive: true_`, function(done) {
       // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
@@ -571,12 +578,12 @@ describe('functional tests', function() {
     var tmpFileUpload = `${tmpDir}/${_6mbObjectName}`
     var tmpFileDownload = `${tmpDir}/${_6mbObjectName}.download`
 
-    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
+    step(`fPutObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _6mb)
-      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, '', done)
+      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, done)
     })
 
-    step(`fPutObject(bucketName, objectName, filePath, contentType, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}, contentType: ${customContentType}_`, done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, customContentType, done))
+    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}, metaData: ${metaData}_`, done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, metaData, done))
     step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileDownload}_`, done => {
       client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload)
         .then(() => {
@@ -594,8 +601,8 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step(`fPutObject(bucketName, objectName, filePath, contentType)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
-      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, '')
+    step(`fPutObject(bucketName, objectName, filePath, metaData)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
+      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload)
         .then(() => done())
         .catch(done)
     })
@@ -614,9 +621,9 @@ describe('functional tests', function() {
   })
   describe('fGetObject-resume', () => {
     var localFile = `${tmpDir}/${_5mbObjectName}`
-    step(`putObject(bucketName, objectName, stream, contentType, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
+    step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
       var stream = readableStream(_5mb)
-      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, '', done)
+      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, {}, done)
     })
     step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`, done => {
       var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio`
@@ -901,13 +908,13 @@ describe('functional tests', function() {
     var listArray = []
     var listPrefixArray = []
 
-    step(`putObject(bucketName, objectName, stream, size, contentType, callback)_bucketName:${bucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
+    step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
       _.times(listObjectsNum, i => objArray.push(`${listObjectPrefix}.${i}`))
       objArray = objArray.sort()
       async.mapLimit(
         objArray,
         20,
-        (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
+        (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, {}, cb),
         done
       )
     })
@@ -928,7 +935,7 @@ describe('functional tests', function() {
       try {
         client.listObjects("", "", true)
           .on('end', () => {
-            return done(new Error(`listObjects should throw exception when empty bucketname is passed`))               
+            return done(new Error(`listObjects should throw exception when empty bucketname is passed`))
           })
       } catch (e) {
         if (e.name == 'InvalidBucketNameError') {
@@ -973,7 +980,7 @@ describe('functional tests', function() {
       )
     })
   })
-  
+
   function readableStream(data) {
     var s = new stream.Readable()
     s._read = () => {}
@@ -1038,7 +1045,7 @@ describe('functional tests', function() {
           })
         }, 10*1000)
       })
- 
+
       // This test is very similar to that above, except it does not include
       // Minio.ObjectCreatedAll in the config. Thus, no events should be emitted.
       step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, events:s3:ObjectRemoved:*`, done => {

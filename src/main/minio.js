@@ -30,12 +30,12 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 
-import { isValidPrefix, isValidEndpoint, isValidBucketName,
+import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  probeContentType, makeDateLong, promisify } from './helpers.js'
+  makeDateLong, promisify } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -857,9 +857,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: file path of the file to be uploaded
-  // * `contentType` _string_: content type of the object
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  fPutObject(bucketName, objectName, filePath, contentType, callback) {
+  fPutObject(bucketName, objectName, filePath, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -870,21 +870,16 @@ export class Client {
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
     }
-
-    if (isFunction(contentType)) {
-      callback = contentType
-      contentType = '' // Set contentType empty if no contentType provided.
+    if (isFunction(metaData)) {
+      callback = metaData
+      metaData = {} // Set metaData empty if no metaData provided.
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('contentType should be of type "object"')
     }
 
-    if (!isString(contentType)) {
-      throw new TypeError('contentType should be of type "string"')
-    }
-
-    // For contentType if empty probe using file extension.
-    if (contentType.trim() === '') {
-      contentType = probeContentType(filePath)
-    }
-
+    //Updates metaData to have the correct prefix if needed
+    metaData = prependXAMZMeta(metaData)
     var size
     var partSize
 
@@ -898,7 +893,7 @@ export class Client {
         if (size < this.minimumPartSize) {
           // simple PUT request, no multipart
           var multipart = false
-          var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+          var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
           var hash = transformers.getHashSummer(this.enableSHA256)
           var start = 0
           var end = size - 1
@@ -924,12 +919,12 @@ export class Client {
         // if there was a previous incomplete upload, fetch all its uploaded parts info
         if (uploadId) return this.listParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
         // there was no previous upload, initiate a new one
-        this.initiateNewMultipartUpload(bucketName, objectName, '', (e, uploadId) => cb(e, uploadId, []))
+        this.initiateNewMultipartUpload(bucketName, objectName, metaData, (e, uploadId) => cb(e, uploadId, []))
       },
       (uploadId, etags, cb) => {
         partSize = this.calculatePartSize(size)
         var multipart = true
-        var uploader = this.getUploader(bucketName, objectName, contentType, multipart)
+        var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
 
         // convert array to object to make things easy
         var parts = etags.reduce(function(acc, item) {
@@ -1008,7 +1003,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  putObject(bucketName, objectName, stream, size, contentType, callback) {
+  putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1016,21 +1011,23 @@ export class Client {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    // We'll need to shift arguments to the left because of size and contentType.
+    // We'll need to shift arguments to the left because of size and metaData.
     if (isFunction(size)) {
       callback = size
-      contentType = ''
-    } else if (isFunction(contentType)) {
-      callback = contentType
-      contentType = ''
+      metaData = {}
+    } else if (isFunction(metaData)) {
+      callback = metaData
+      metaData = {}
     }
 
-    // We'll need to shift arguments to the left because of contentType
+    // We'll need to shift arguments to the left because of metaData
     // and size being optional.
-    if (isString(size)) {
-      contentType = size
+    if (isObject(size)) {
+      metaData = size
     }
 
+    //Ensures Metadata has appropriate prefix for A3 API
+    metaData = prependXAMZMeta(metaData)
     if (typeof stream === 'string' || stream instanceof Buffer) {
       // Adapts the non-stream interface into a stream.
       size = stream.length
@@ -1061,8 +1058,7 @@ export class Client {
 
     // This is a Writable stream that can be written to in order to upload
     // to the specified bucket and object automatically.
-    let uploader = new ObjectUploader(this, bucketName, objectName, size, contentType, callback)
-
+    let uploader = new ObjectUploader(this, bucketName, objectName, size, metaData, callback)
     // stream => chunker => uploader
     stream.pipe(chunker).pipe(uploader)
   }
@@ -1366,7 +1362,7 @@ export class Client {
   // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
-  //   * `stat.contentType` _string_: Content-Type of the object
+  //   * `stat.metaData` _string_: MetaData of the object
   //   * `stat.lastModified` _Date_: modified time stamp
   statObject(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1389,7 +1385,7 @@ export class Client {
 
       var result = {
         size: +response.headers['content-length'],
-        contentType: response.headers['content-type'],
+        metaData: extractMetadata(response.headers),
         lastModified: new Date(response.headers['last-modified'])
       }
       var etag = response.headers.etag
@@ -1631,18 +1627,18 @@ export class Client {
   // Calls implemented below are related to multipart.
 
   // Initiate a new multipart upload.
-  initiateNewMultipartUpload(bucketName, objectName, contentType, cb) {
+  initiateNewMultipartUpload(bucketName, objectName, metaData, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isString(contentType)) {
-      throw new TypeError('contentType should be of type "string"')
+    if (!isObject(metaData)) {
+      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
     }
     var method = 'POST'
-    var headers = {'Content-Type': contentType}
+    let headers = Object.assign({}, metaData)
     var query = 'uploads'
     this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
@@ -1865,21 +1861,18 @@ export class Client {
   // Returns a function that can be used for uploading objects.
   // If multipart === true, it returns function that is used to upload
   // a part of the multipart.
-  getUploader(bucketName, objectName, contentType, multipart) {
+  getUploader(bucketName, objectName, metaData, multipart) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isString(contentType)) {
-      throw new TypeError('contentType should be of type "string"')
-    }
     if (!isBoolean(multipart)) {
       throw new TypeError('multipart should be of type "boolean"')
     }
-    if (contentType === '') {
-      contentType = 'application/octet-stream'
+    if (!isObject(metaData)) {
+      throw new TypeError('metadata should be of type "object"')
     }
 
     var validate = (stream, length, sha256sum, md5sum, cb) => {
@@ -1923,10 +1916,8 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      var headers = {
-        'Content-Length': length,
-        'Content-Type': contentType
-      }
+      let headers = Object.assign({}, metaData, {'Content-Length': length})
+
       if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},
                              stream, sha256sum, 200, '', true, (e, response) => {
