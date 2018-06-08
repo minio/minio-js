@@ -1417,6 +1417,61 @@ export class Client {
     this.makeRequest({method, bucketName, objectName}, '', 204, '', false, cb)
   }
 
+  // Remove all the objects residing in the objectsList.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectsList` _array_: array of objects
+  removeObjects(bucketName, objectsList, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isArray(objectsList)) {
+      throw new errors.InvalidArgumentError('objectsList should be a list')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const maxEntries = 1000
+    const query = 'delete'
+    const method = 'POST'
+
+    let result = objectsList.reduce((result, entry) => {
+      result.list.push(entry)
+      if (result.list.length === maxEntries) {
+        result.listOfList.push(result.list)
+        result.list = []
+      }
+      return result
+    }, {listOfList: [], list:[]})
+
+    if (result.list.length > 0) {
+      result.listOfList.push(result.list)
+    }
+
+    async.eachSeries(result.listOfList, (list, callback) => {
+      var deleteObjects={"Delete":[{"Quiet": true}]}
+
+      list.forEach(function(value){
+        deleteObjects["Delete"].push({"Object": [{"Key": value}]})
+      })
+
+      let payload = Xml(deleteObjects)
+
+      var headers = {}
+      var md5digest = Crypto.createHash('md5').update(payload).digest()
+
+      headers['Content-MD5'] = md5digest.toString('base64')
+
+      this.makeRequest({ method, bucketName, query, headers}, payload, 200, '', false, (e) => {
+        if (e) return callback(e)
+        callback(null)
+      })
+    }, cb)
+  }
+     
+
   // Get the policy on a bucket or an object prefix.
   //
   // __Arguments__
