@@ -2071,6 +2071,7 @@ Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObject = promisify(Client.prototype.removeObject)
+Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
 Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
