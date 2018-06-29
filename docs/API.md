@@ -10,7 +10,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-    secure: true,
+    useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
@@ -45,11 +45,11 @@ var s3Client = new Minio.Client({
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
-###  new Minio.Client ({endPoint, port, secure, accessKey, secretKey})
+###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})
 
 |     |
 | ---- |
-|``new Minio.Client ({endPoint, port, secure, accessKey, secretKey})``|
+|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})``|
 |Initializes a new client object.|
 
 __Parameters__
@@ -58,7 +58,7 @@ __Parameters__
 |---|---|---|
 | `endPoint`  |  _string_ | endPoint is a host name or an IP address. |
 | `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
-|`secure`    | _bool_    |If set to true, https is used instead of http. Default is true. |
+|`useSSL`    | _bool_    |If set to true, https is used instead of http. Default is true. |
 |`accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
 |`secretKey`  |  _string_   | secretKey is the password to your account.|
 |`region`    | _string_  |Set this value to override region cache. (Optional)|
@@ -76,7 +76,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-    secure: true,
+    useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });

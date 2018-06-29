@@ -23,7 +23,7 @@ var Minio = require('minio');
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   port: 9000,
-  secure: false,
+  useSSL: false,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 });

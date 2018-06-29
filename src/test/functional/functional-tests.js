@@ -54,11 +54,11 @@ describe('functional tests', function() {
   playConfig.secretKey = process.env['SECRET_KEY'] || 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 
   // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
-  // Otherwise default to secure.
+  // Otherwise default useSSL as true.
   if (process.env['ENABLE_HTTPS'] !== undefined) {
-    playConfig.secure = (process.env['ENABLE_HTTPS'] == '1')
+    playConfig.useSSL = (process.env['ENABLE_HTTPS'] == '1')
   } else {
-    playConfig.secure = true
+    playConfig.useSSL = true
   }
 
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be

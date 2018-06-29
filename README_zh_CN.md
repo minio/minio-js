@@ -33,7 +33,7 @@ npm install -g
 |port| TCP/IP端口号。可选值，如果是使用HTTP的话，默认值是`80`；如果使用HTTPS的话，默认值是`443`。|
 | accessKey | Access key是唯一标识你的账户的用户ID。  |
 | secretKey	| Secret key是你账户的密码。   |
-|secure |true代表使用HTTPS |
+|useSSL |true代表使用HTTPS |
 
 
 ```js
@@ -42,7 +42,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-    secure: true,
+    useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
@@ -64,7 +64,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-    secure: true,
+    useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
