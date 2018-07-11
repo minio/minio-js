@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-require('source-map-support').install()
-
 import fs from 'fs'
 import Crypto from 'crypto'
 import Http from 'http'
