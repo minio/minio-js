@@ -873,7 +873,7 @@ export class Client {
       metaData = {} // Set metaData empty if no metaData provided.
     }
     if (!isObject(metaData)) {
-      throw new TypeError('contentType should be of type "object"')
+      throw new TypeError('metaData should be of type "object"')
     }
 
     //Updates metaData to have the correct prefix if needed
