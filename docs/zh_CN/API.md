@@ -10,7 +10,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-  	secure: true,
+  	useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });
@@ -44,11 +44,11 @@ var s3Client = new Minio.Client({
 ## 1.  构造函数
 
 <a name="MinioClient_endpoint"></a>
-###  new Minio.Client ({endPoint, port, secure, accessKey, secretKey})
+###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})
 
 |     |
 | ---- |
-|``new Minio.Client ({endPoint, port, secure, accessKey, secretKey})``|
+|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})``|
 |初使化一个新的client对象。|
 
 __参数__
@@ -59,7 +59,7 @@ __参数__
 | `port` | _number_  | TCP/IP端口号。可选，默认值是，如果是http,则默认80端口，如果是https,则默认是443端口。 |
 | `accessKey`   | _string_   |accessKey类似于用户ID，用于唯一标识你的账户。 |
 |`secretKey`  |  _string_   | secretKey是你账户的密码。|
-|`secure`    | _bool_    |如果是true，则用的是https而不是http,默认值是true。 |
+|`useSSL`    | _bool_    |如果是true，则用的是https而不是http,默认值是true。 |
 |`region`    | _string_  |设置该值以覆盖自动发现存储桶region。（可选）|
 
 
@@ -73,7 +73,7 @@ var Minio = require('minio')
 var minioClient = new Minio.Client({
     endPoint: 'play.minio.io',
     port: 9000,
-    secure: true,
+    useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
     secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
 });

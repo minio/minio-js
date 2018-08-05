@@ -51,8 +51,9 @@ var Package = require('../../package.json')
 
 export class Client {
   constructor(params) {
+    if (params.secure) throw new Error('"secure" option deprecated, "useSSL" should be used instead')
     // Default values if not specified.
-    if (typeof params.secure === 'undefined') params.secure = true
+    if (typeof params.useSSL === 'undefined') params.useSSL = true
     if (!params.port) params.port = 0
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
@@ -61,8 +62,8 @@ export class Client {
     if (!isValidPort(params.port)) {
       throw new errors.InvalidArgumentError(`Invalid port : ${params.port}`)
     }
-    if (!isBoolean(params.secure)) {
-      throw new errors.InvalidArgumentError(`Invalid secure flag type : ${params.secure}, expected to be of type "boolean"`)
+    if (!isBoolean(params.useSSL)) {
+      throw new errors.InvalidArgumentError(`Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`)
     }
 
     // Validate region only if its set.
@@ -78,7 +79,7 @@ export class Client {
     var transport
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
-    if (params.secure === false) {
+    if (params.useSSL === false) {
       transport = Http
       protocol = 'http:'
       if (port === 0) {
@@ -134,7 +135,7 @@ export class Client {
     // SHA256 is enabled only for authenticated http requests. If the request is authenticated
     // and the connection is https we use x-amz-content-sha256=UNSIGNED-PAYLOAD
     // header for signature calculation.
-    this.enableSHA256 = !this.anonymous && !params.secure
+    this.enableSHA256 = !this.anonymous && !params.useSSL
 
     this.reqOptions = {}
   }

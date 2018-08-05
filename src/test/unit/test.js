@@ -116,7 +116,7 @@ describe('Client', function() {
     port: 9000,
     accessKey: 'accesskey',
     secretKey: 'secretkey',
-    secure: false
+    useSSL: false
   })
   describe('new client', () => {
     it('should work with https', () => {
@@ -133,7 +133,7 @@ describe('Client', function() {
         port: 9000,
         accessKey: 'accesskey',
         secretKey: 'secretkey',
-        secure: false
+        useSSL: false
       })
       assert.equal(client.port, 9000)
     })
@@ -142,7 +142,7 @@ describe('Client', function() {
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
-        secure: false
+        useSSL: false
       })
       assert.equal(client.port, 80)
     })
@@ -207,7 +207,7 @@ describe('Client', function() {
           var client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
-            secure: false
+            useSSL: false
           })
           client.presignedGetObject('bucket', 'object', 1000, function() {})
         } catch (e) {
@@ -228,7 +228,7 @@ describe('Client', function() {
           var client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
-            secure: false
+            useSSL: false
           })
           client.presignedPutObject('bucket', 'object', 1000, function() {})
         } catch (e) {
