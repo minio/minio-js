@@ -59,7 +59,7 @@
     "nock": "^2.12.0",
     "rewire": "^2.3.3",
     "source-map-support": "^0.4.12",
-    "superagent": "^1.8.5"
+    "superagent": "^3.7.0"
   },
   "keywords": [
     "api",
