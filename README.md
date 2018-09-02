@@ -128,6 +128,7 @@ The full API Reference is available here.
 ### API Reference : Object Operations
 
 * [`getObject`](https://docs.minio.io/docs/javascript-client-api-reference#getObject)
+* [`objectExists`](https://docs.minio.io/docs/javascript-client-api-reference#objectExists)
 * [`putObject`](https://docs.minio.io/docs/javascript-client-api-reference#putObject)
 * [`copyObject`](https://docs.minio.io/docs/javascript-client-api-reference#copyObject)
 * [`statObject`](https://docs.minio.io/docs/javascript-client-api-reference#statObject)
@@ -172,6 +173,7 @@ The full API Reference is available here.
 #### Full Examples : Object Operations
 * [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
 * [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+* [object-exists.js](https://github.com/minio/minio-js/blob/master/examples/object-exists.js)
 * [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
 * [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)

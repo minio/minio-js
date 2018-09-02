@@ -776,6 +776,35 @@ export class Client {
     ], rename)
   }
 
+  // To check if an object already exists.
+  //
+  // __Arguments__
+  // * `bucketName` _string_ : name of the bucket
+  // * `objectName` _string_ : name of the object
+  // * `callback(err,exists)` _function_ : callback is called with boolean `exists`. `err` is `null` if the check succeeds
+  objectExists(bucketName, objectName, cb) {
+	if (!isValidBucketName(bucketName)) {
+	  throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+	}
+	if (!isValidObjectName(objectName)) {
+	  throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+	}
+	if (!isFunction(cb)) {
+	  throw new TypeError('callback should be of type "function"')
+	}
+
+	var method = 'HEAD'
+	this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
+		if (err) {
+          if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+          return cb(err)
+        }
+        cb(null, true)
+	})
+  }
+
+
+
   // Callback is called with readable stream of the object content.
   //
   // __Arguments__
@@ -2065,6 +2094,7 @@ Client.prototype.removeBucket = promisify(Client.prototype.removeBucket)
 Client.prototype.getObject = promisify(Client.prototype.getObject)
 Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
 Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
+Client.prototype.objectExists = promisify(Client.prototype.objectExists)
 Client.prototype.putObject = promisify(Client.prototype.putObject)
 Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)

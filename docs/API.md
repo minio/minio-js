@@ -39,6 +39,7 @@ var s3Client = new Minio.Client({
 |     |  [`removeObject`](#removeObject)    |
 |     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+|  | [`objectExists`](#objectExists)  |
 
 
 
@@ -433,6 +434,36 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
   console.log('success')
 })
 ```
+
+<a name="objectExists"></a>
+### objectExists(bucketName, objectName, callback)
+
+Checks if an object exists.
+
+
+__Parameters__
+
+
+| Param  | Type  | Description  |
+|---|---|---|
+| `bucketName`  |  _string_ | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether both `bucketName` and `objectName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
+
+__Example__
+
+
+```js
+minioClient.objectExists('mybucket', 'photo.jpg', function(err, exists) {
+  if (err) {
+    return console.log(err)
+  }
+  if (exists) {
+    return console.log('Object exists.')
+  }
+})
+```
+
 <a name="putObject"></a>
 ### putObject(bucketName, objectName, stream, size, metaData[, callback])
 
