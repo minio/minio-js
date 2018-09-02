@@ -522,6 +522,44 @@ describe('Client', function() {
       })
     })
 
+	describe('#objectExists(bucket, object, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.objectExists(null, 'hello', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.objectExists('', 'hello', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on invalid bucket name', (done) => {
+        try {
+          client.objectExists('  \n  \t  ', 'hello', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null object', (done) => {
+        try {
+          client.objectExists('hello', null, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty object', (done) => {
+        try {
+          client.objectExists('hello', '', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
     describe('#removeObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
@@ -599,4 +637,3 @@ describe('Client', function() {
     })
   })
 })
-
