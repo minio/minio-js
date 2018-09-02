@@ -783,24 +783,24 @@ export class Client {
   // * `objectName` _string_ : name of the object
   // * `callback(err,exists)` _function_ : callback is called with boolean `exists`. `err` is `null` if the check succeeds
   objectExists(bucketName, objectName, cb) {
-	if (!isValidBucketName(bucketName)) {
-	  throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-	}
-	if (!isValidObjectName(objectName)) {
-	  throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-	}
-	if (!isFunction(cb)) {
-	  throw new TypeError('callback should be of type "function"')
-	}
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
 
-	var method = 'HEAD'
-	this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
-		if (err) {
-          if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
-          return cb(err)
-        }
-        cb(null, true)
-	})
+    var method = 'HEAD'
+    this.makeRequest({method, bucketName, objectName}, '', 200, '', false, err => {
+      if (err) {
+        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+        return cb(err)
+      }
+      cb(null, true)
+    })
   }
 
 

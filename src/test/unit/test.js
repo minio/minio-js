@@ -522,7 +522,7 @@ describe('Client', function() {
       })
     })
 
-	describe('#objectExists(bucket, object, callback)', () => {
+    describe('#objectExists(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
           client.objectExists(null, 'hello', function() {})

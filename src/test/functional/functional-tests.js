@@ -247,7 +247,7 @@ describe('functional tests', function() {
     })
 
   })
-  describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
+  describe('tests for putObject copyObject getObject getPartialObject statObject objectExists removeObject', function() {
 
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
     step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
@@ -418,12 +418,29 @@ describe('functional tests', function() {
         .catch(done)
     })
 
+    step(`objectExists(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
+      client.objectExists(bucketName, _100kbObjectName)
+        .then(exists => {
+          if (exists) return done()
+          done(new Error("objectExists returns false"))
+        })
+        .catch(done)
+    })
+
     step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       client.removeObject(bucketName, _100kbObjectName)
         .then(function() {
           async.map([_100kbObjectBufferName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
         })
         .catch(done)
+    })
+
+    step(`objectExists(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
+      client.objectExists(bucketName, _100kbObjectName, (err,exists) => {
+        if (err) return done(err)
+        if (!exists) return done()
+        done(new Error("objectExists returns true"))
+      })
     })
 
   })
