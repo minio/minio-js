@@ -199,6 +199,32 @@ describe('Client', function() {
         done()
       }
     })
+    it('should fail when secure param is passed', (done) => {
+      try {
+        new Minio.Client({
+          endPoint: 'localhost',
+          secure: false,
+          port: 9000,
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
+        })
+      } catch (e) {
+        done()
+      }
+    })
+    it('should fail when secure param is passed', (done) => {
+      try {
+        new Minio.Client({
+          endPoint: 'localhost',
+          secure: true,
+          port: 9000,
+          accessKey: 'accesskey',
+          secretKey: 'secretkey'
+        })
+      } catch (e) {
+        done()
+      }
+    })
   })
   describe('Presigned URL', () => {
     describe('presigned-get', () => {
