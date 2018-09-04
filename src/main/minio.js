@@ -51,7 +51,7 @@ var Package = require('../../package.json')
 
 export class Client {
   constructor(params) {
-    if (params.secure) throw new Error('"secure" option deprecated, "useSSL" should be used instead')
+    if (typeof params.secure !== 'undefined') throw new Error('"secure" option deprecated, "useSSL" should be used instead')
     // Default values if not specified.
     if (typeof params.useSSL === 'undefined') params.useSSL = true
     if (!params.port) params.port = 0
