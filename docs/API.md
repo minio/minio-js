@@ -1034,13 +1034,13 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket. |
-| `bucketPolicy` | _string_ | bucket policy. |
+| `bucketPolicy` | _object_ | bucket policy. |
 | `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
 // Set the bucket policy of `my-bucketname`
-minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function(err) {
+minioClient.setBucketPolicy('my-bucketname', policy, function(err) {
   if (err) throw err
 
   console.log('Bucket policy set')
