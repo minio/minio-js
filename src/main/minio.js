@@ -31,7 +31,7 @@ import _ from 'lodash'
 import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-  isString, isObject, isArray, pipesetup,
+  isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
   makeDateLong, promisify } from './helpers.js'
 
@@ -1537,18 +1537,25 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `reqParams` _object_: request parameters (optional)
-  presignedUrl(method, bucketName, objectName, expires, reqParams, cb) {
+  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
+  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
+    }
+    if (isFunction(requestDate)) {
+      cb = requestDate
+      requestDate = new Date()
     }
     if (isFunction(reqParams)) {
       cb = reqParams
       reqParams = {}
+      requestDate = new Date()
     }
     if (isFunction(expires)) {
       cb = expires
       reqParams = {}
       expires = 24 * 60 * 60 * 7 // 7 days in seconds
+      requestDate = new Date()
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
@@ -1556,10 +1563,12 @@ export class Client {
     if (!isObject(reqParams)) {
       throw new TypeError('reqParams should be of type "object"')
     }
+    if (!isValidDate(requestDate)) {
+      throw new TypeError('requestDate should be of type "Date" and valid')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var requestDate = new Date()
     var query = querystring.stringify(reqParams)
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
@@ -1588,7 +1597,8 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `respHeaders` _object_: response headers to override (optional)
-  presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
+  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
+  presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1602,7 +1612,7 @@ export class Client {
         throw new TypeError(`response header ${header} should be of type "string"`)
       }
     })
-    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, cb)
+    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
