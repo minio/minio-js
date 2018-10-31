@@ -751,6 +751,31 @@ describe('functional tests', function() {
       })
     })
 
+    step(`presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:GET, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:86400, requestDate:StartOfDay_`, done => {
+      var requestDate = new Date()
+      requestDate.setHours(0,0,0,0)
+      client.presignedUrl('GET', bucketName, _1byteObjectName, 86400, requestDate, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'GET'
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+          var error = null
+          response.on('error', e => done(e))
+          response.on('end', () => done(error))
+          response.on('data', (data) => {
+            if (data.toString() !== _1byte.toString()) {
+              error = new Error('content mismatch')
+            }
+          })
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
+    })
+
     step(`presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
       client.presignedGetObject(bucketName, _1byteObjectName, (e, presignedUrl) => {
         if (e) return done(e)
@@ -817,6 +842,31 @@ describe('functional tests', function() {
           }
           response.on('data', () => {})
           done()
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
+    })
+
+    step(`presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:86400, requestDate:StartOfDay_`, done => {
+      var requestDate = new Date()
+      requestDate.setHours(0,0,0,0)
+      client.presignedGetObject(bucketName, _1byteObjectName, 86400, {}, requestDate, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'GET'
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+          var error = null
+          response.on('error', e => done(e))
+          response.on('end', () => done(error))
+          response.on('data', (data) => {
+            if (data.toString() !== _1byte.toString()) {
+              error = new Error('content mismatch')
+            }
+          })
         })
         request.on('error', e => done(e))
         request.end()
