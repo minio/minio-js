@@ -15,7 +15,7 @@
  */
 
  // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
- // are dummy values, please replace them with original values.
+ // are dummy values, please replace them with original values. 
 
 var Minio = require('minio')
 
