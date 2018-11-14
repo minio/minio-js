@@ -2072,6 +2072,7 @@ Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObject = promisify(Client.prototype.removeObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
+Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
 Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
 Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostPolicy)
