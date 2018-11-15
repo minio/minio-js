@@ -235,14 +235,14 @@ describe('Client', function() {
             port: 9000,
             useSSL: false
           })
-          client.presignedGetObject('bucket', 'object', 1000, function() {})
+          client.presignedGetObject('bucket', 'object', 1000, '', function() {})
         } catch (e) {
           done()
         }
       })
       it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          client.presignedGetObject('bucket', 'object', '0', function() {})
+          client.presignedGetObject('bucket', 'object', '0', '', function() {})
         } catch (e) {
           done()
         }

@@ -1590,10 +1590,10 @@ export class Client {
   // * `respHeaders` _object_: response headers to override (optional)
   presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ${bucketName}')
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+      throw new errors.InvalidObjectNameError('Invalid object name: ${objectName}')
     }
     var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
                             'response-content-disposition', 'response-content-encoding']
