@@ -1189,11 +1189,11 @@ export class Client {
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `obj.name` _string_: name of the object
-  //   * `obj.prefix` _string_: name of the object prefix
-  //   * `obj.size` _number_: size of the object
-  //   * `obj.etag` _string_: etag of the object
-  //   * `obj.lastModified` _Date_: modified time stamp
+  // * `obj.name` _string_: name of the object
+  // * `obj.prefix` _string_: name of the object prefix
+  // * `obj.size` _number_: size of the object
+  // * `obj.etag` _string_: etag of the object
+  // * `obj.lastModified` _Date_: modified time stamp
   listObjects(bucketName, prefix, recursive) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
@@ -1238,8 +1238,17 @@ export class Client {
     return readStream
   }
 
-  // list a batch of objects using S3 ListObjects v2
-  listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys) {
+  // listObjectsV2Query - (List Objects V2) - List some or all (up to 1000) of the objects in a bucket.
+  //
+  // You can use the request parameters as selection criteria to return a subset of the objects in a bucket.
+  // request parameters :-
+  // * `bucketName` _string_: name of the bucket
+  // * `prefix` _string_: Limits the response to keys that begin with the specified prefix.
+  // * `continuation-token` _string_: Used to continue iterating over a set of objects.
+  // * `delimiter` _string_: A delimiter is a character you use to group keys.
+  // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
+  // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
+  listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1254,6 +1263,9 @@ export class Client {
     }
     if (!isNumber(maxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
+    }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
     }
     var queries = []
 
@@ -1273,13 +1285,18 @@ export class Client {
       delimiter = uriEscape(delimiter)
       queries.push(`delimiter=${delimiter}`)
     }
+    // Set start-after
+    if (startAfter) {
+      startAfter = uriEscape(startAfter)
+      queries.push(`start-after=${startAfter}`)
+    }
     // no need to escape maxKeys
     if (maxKeys) {
       if (maxKeys >= 1000) {
         maxKeys = 1000
       }
       queries.push(`max-keys=${maxKeys}`)
-    }
+    }    
     queries.sort()
     var query = ''
     if (queries.length > 0) {
@@ -1301,6 +1318,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
   // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  // * `startAfter` _string_: Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -1309,9 +1327,10 @@ export class Client {
   //   * `obj.size` _number_: size of the object
   //   * `obj.etag` _string_: etag of the object
   //   * `obj.lastModified` _Date_: modified time stamp
-  listObjectsV2(bucketName, prefix, recursive) {
+  listObjectsV2(bucketName, prefix, recursive, startAfter) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
+    if (startAfter === undefined) startAfter = ''
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1323,6 +1342,9 @@ export class Client {
     }
     if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
+    }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
@@ -1338,7 +1360,7 @@ export class Client {
       }
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
-      this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000)
+      this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
         .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           if (result.isTruncated) {

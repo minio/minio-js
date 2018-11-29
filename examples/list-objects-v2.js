@@ -25,7 +25,7 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 // List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjectsV2('my-bucketname', '', true)
+var objectsStream = s3Client.listObjectsV2('my-bucketname', '', true,'')
 objectsStream.on('data', function(obj) {
   console.log(obj)
 })

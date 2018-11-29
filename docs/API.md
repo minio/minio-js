@@ -247,7 +247,7 @@ stream.on('error', function(err) { console.log(err) } )
 ```
 
 <a name="listObjectsV2"></a>
-### listObjectsV2(bucketName, prefix, recursive)
+### listObjectsV2(bucketName, prefix, recursive, startAfter)
 
 Lists all objects in a bucket using S3 listing objects V2 API
 
@@ -259,6 +259,7 @@ __Parameters__
 | `bucketName` | _string_ | Name of the bucket. |
 | `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
+| `startAfter`  | _string_  |  Specifies the object name to start after when listing objects in a bucket. (optional, default `''`). |
 
 
 __Return Value__
@@ -282,7 +283,7 @@ __Example__
 
 
 ```js
-var stream = minioClient.listObjectsV2('mybucket','', true)
+var stream = minioClient.listObjectsV2('mybucket','', true,'')
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
