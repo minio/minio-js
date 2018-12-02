@@ -556,7 +556,8 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', 200, 'us-east-1', true, (e, response) => {
+    var region = this.region != null ? this.region : 'us-east-1';
+    this.makeRequest({method}, '', 200, region, true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
