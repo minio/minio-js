@@ -958,9 +958,9 @@ describe('functional tests', function() {
         })
     })
 
-    step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:true_`, done => {
+    step(`listObjectsV2(bucketName, prefix, recursive, startAfter)_bucketName:${bucketName}, recursive:true_`, done => {
       listArray = []
-      client.listObjectsV2(bucketName, '', true)
+      client.listObjectsV2(bucketName, '', true,'')
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
