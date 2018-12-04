@@ -703,7 +703,7 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 Presigned URLs are generated for temporary download/upload access to private objects.
 
 <a name="presignedUrl"></a>
-### presignedUrl(httpMethod, bucketName, objectName, expiry[, reqParams, cb])
+### presignedUrl(httpMethod, bucketName, objectName[, expiry, reqParams, requestDate, cb])
 
 Generates a presigned URL for the provided HTTP method, 'httpMethod'. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
@@ -716,8 +716,9 @@ __Parameters__
 |---|---|---|
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
-|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
-|`reqParams`  | _object_ | request parameters. |
+|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
+|`reqParams`  | _object_ | request parameters. (optional) |
+|`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
@@ -748,7 +749,7 @@ minioClient.presignedUrl('GET', 'mybucket', '', 1000, {'prefix': 'data', 'max-ke
 ```
 
 <a name="presignedGetObject"></a>
-### presignedGetObject(bucketName, objectName, expiry[, cb])
+### presignedGetObject(bucketName, objectName[, expiry, respHeaders, requestDate, cb])
 
 Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
@@ -761,7 +762,9 @@ __Parameters__
 |---|---|---|
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
-|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
+|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
+|`respHeaders`  | _object_ | response headers to override (optional) |
+|`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 

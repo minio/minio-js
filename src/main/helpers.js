@@ -244,6 +244,11 @@ export function isArray(arg) {
   return Array.isArray(arg)
 }
 
+// check if arg is a valid date
+export function isValidDate(arg) {
+  return arg instanceof Date && !isNaN(arg)
+}
+
 // Create a Date string with format:
 // 'YYYYMMDDTHHmmss' + Z
 export function makeDateLong(date) {

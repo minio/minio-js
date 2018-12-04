@@ -23,7 +23,7 @@ script:
 - gulp lint
 
 before_install:
-- npm i -g yarn
+- npm i -g yarn@1.9.4
 
 install:
 - yarn
