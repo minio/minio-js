@@ -1000,7 +1000,7 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
+  // * `string or Buffer` _string_ or _Buffer_: string or buffer
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
