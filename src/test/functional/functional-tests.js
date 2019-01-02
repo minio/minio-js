@@ -446,7 +446,6 @@ describe('functional tests', function() {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
-        if (Object.keys(stat.metaData).length !== Object.keys(metaData).length) return done(new Error('content-type mismatch'))
         assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
         assert.equal(stat.metaData['Testing'], metaData['Testing'])
         assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
