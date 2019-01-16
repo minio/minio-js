@@ -2002,7 +2002,7 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      let headers = Object.assign({}, metaData, {'Content-Length': length})
+      let headers = Object.assign({}, {'Content-Length': length})
 
       if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},
