@@ -2002,7 +2002,7 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      let headers = {'Content-Length': length};
+      let headers = {'Content-Length': length}
 
       if (!multipart) {
         headers = Object.assign({}, metaData, headers)
