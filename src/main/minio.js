@@ -1144,20 +1144,17 @@ export class Client {
     if (!isNumber(maxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
     }
+
     var queries = []
     // escape every value in query string, except maxKeys
-    if (prefix) {
-      prefix = uriEscape(prefix)
-      queries.push(`prefix=${prefix}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (marker) {
       marker = uriEscape(marker)
       queries.push(`marker=${marker}`)
     }
-    if (delimiter) {
-      delimiter = uriEscape(delimiter)
-      queries.push(`delimiter=${delimiter}`)
-    }
+
     // no need to escape maxKeys
     if (maxKeys) {
       if (maxKeys >= 1000) {
@@ -1273,17 +1270,12 @@ export class Client {
     queries.push(`list-type=2`)
 
     // escape every value in query string, except maxKeys
-    if (prefix) {
-      prefix = uriEscape(prefix)
-      queries.push(`prefix=${prefix}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (continuationToken) {
       continuationToken = uriEscape(continuationToken)
       queries.push(`continuation-token=${continuationToken}`)
-    }
-    if (delimiter) {
-      delimiter = uriEscape(delimiter)
-      queries.push(`delimiter=${delimiter}`)
     }
     // Set start-after
     if (startAfter) {
@@ -1296,7 +1288,7 @@ export class Client {
         maxKeys = 1000
       }
       queries.push(`max-keys=${maxKeys}`)
-    }    
+    }
     queries.sort()
     var query = ''
     if (queries.length > 0) {
@@ -1491,7 +1483,7 @@ export class Client {
       })
     }, cb)
   }
-     
+
 
   // Get the policy on a bucket or an object prefix.
   //
@@ -1878,9 +1870,9 @@ export class Client {
       throw new TypeError('delimiter should be of type "string"')
     }
     var queries = []
-    if (prefix) {
-      queries.push(`prefix=${uriEscape(prefix)}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (keyMarker) {
       keyMarker = uriEscape(keyMarker)
       queries.push(`key-marker=${keyMarker}`)
@@ -1888,9 +1880,7 @@ export class Client {
     if (uploadIdMarker) {
       queries.push(`upload-id-marker=${uploadIdMarker}`)
     }
-    if (delimiter) {
-      queries.push(`delimiter=${uriEscape(delimiter)}`)
-    }
+
     var maxUploads = 1000
     queries.push(`max-uploads=${maxUploads}`)
     queries.sort()
