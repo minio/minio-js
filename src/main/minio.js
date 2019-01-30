@@ -1619,6 +1619,13 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    
+    if (isFunction(respHeaders)) {
+      cb = respHeaders
+      respHeaders = {}
+      requestDate = new Date()
+    }
+
     var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
                             'response-content-disposition', 'response-content-encoding']
     validRespHeaders.forEach(header => {
@@ -2098,6 +2105,7 @@ Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObject = promisify(Client.prototype.removeObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
+Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
 Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
 Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostPolicy)
