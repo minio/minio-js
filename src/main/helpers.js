@@ -50,7 +50,7 @@ export function promisify(fn) {
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
 export function uriEscape(string) {
   return string.split('').reduce((acc, elem) => {
-    let buf = new Buffer(elem)
+    let buf = Buffer.from(elem)
     if (buf.length === 1) {
       // length 1 indicates that elem is not a unicode character.
       // Check if it is an unreserved characer.

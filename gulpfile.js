@@ -47,11 +47,12 @@ gulp.task('test', ['compile', 'test:compile'], function() {
   gulp.src('dist/test/**/*.js', {
     read: false
   })
-    .pipe(mocha({
+  .pipe(mocha({
       reporter: 'spec',
       ui: 'bdd',
     }))
-    .once('error', () => {
+    .once('error', (err) => {
+      console.log(err)
 			process.exit(1);
 		})
 		.once('end', () => {
@@ -87,7 +88,7 @@ gulp.task('functional-test', ['compile'], function() {
 function compile(src, name, dest, cb) {
   gulp.src(src)
     .pipe(sourcemaps.init())
-    .pipe(babel())
+    .pipe(babel({  presets: ['env'], plugins: [['transform-runtime', { "polyfill": false }]] }))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(dest))
     .on('end', function() {

@@ -74,10 +74,10 @@ describe('functional tests', function() {
   var objectName = uuid.v4()
 
   var _1byteObjectName = 'datafile-1-b'
-  var _1byte = dataDir ? fs.readFileSync(dataDir + '/' + _1byteObjectName) : (new Buffer(1)).fill(0)
+  var _1byte = dataDir ? fs.readFileSync(dataDir + '/' + _1byteObjectName) : Buffer.alloc(1).fill(0)
 
   var _100kbObjectName = 'datafile-100-kB'
-  var _100kb = dataDir ? fs.readFileSync(dataDir + '/' + _100kbObjectName) : (new Buffer(100 * 1024)).fill(0)
+  var _100kb = dataDir ? fs.readFileSync(dataDir + '/' + _100kbObjectName) : Buffer.alloc(100 * 1024).fill(0)
   var _100kbObjectNameCopy = _100kbObjectName + '-copy'
 
   var _100kbObjectBufferName = `${_100kbObjectName}.buffer`
@@ -86,12 +86,12 @@ describe('functional tests', function() {
   var _100kb1kboffsetmd5 = crypto.createHash('md5').update(_100kb.slice(1024)).digest('hex')
 
   var _6mbObjectName = 'datafile-6-MB'
-  var _6mb = dataDir ? fs.readFileSync(dataDir + '/' + _6mbObjectName) : (new Buffer(6 * 1024 * 1024)).fill(0)
+  var _6mb = dataDir ? fs.readFileSync(dataDir + '/' + _6mbObjectName) : Buffer.alloc(6 * 1024 * 1024).fill(0)
   var _6mbmd5 = crypto.createHash('md5').update(_6mb).digest('hex')
   var _6mbObjectNameCopy = _6mbObjectName + '-copy'
 
   var _5mbObjectName = 'datafile-5-MB'
-  var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : (new Buffer(5 * 1024 * 1024)).fill(0)
+  var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : Buffer.alloc(5 * 1024 * 1024).fill(0)
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   var metaData = {
@@ -884,7 +884,7 @@ describe('functional tests', function() {
         if (e) return done(e)
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
-        req.attach('file', new Buffer([_1byte]), 'test')
+        req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function(e) {
           if (e) return done(e)
           done()

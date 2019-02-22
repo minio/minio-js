@@ -1,7 +1,7 @@
 /*
  * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 Minio, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -21,6 +21,7 @@ import Nock from 'nock'
 import Stream from 'stream'
 import * as Minio from '../../../dist/main/minio'
 import { isValidEndpoint, isValidIP, makeDateLong, makeDateShort } from '../../../dist/main/helpers'
+import { iamCredentialsHandler } from '../../../dist/main/iam-credentials-handler'
 
 var Package = require('../../../package.json')
 
@@ -225,6 +226,53 @@ describe('Client', function() {
         done()
       }
     })
+    it('should work when useIAM param is passed with AWS endpoint', () => {
+      new Minio.Client({
+        endPoint: 's3.amazonaws.com',
+        useIAM: true
+      })
+    })    
+    it('should fail when useIAM param is passed', (done) => {
+      try {
+        new Minio.Client({
+          endPoint: 'localhost',
+          useIAM: true
+        })
+      } catch (e) {
+        done()
+      }
+    })
+    it('should sync its credentials when `isIAM` is set', (done) => {
+      const credentials = {
+        AccessKeyId: 'AccessKeyId',
+        SecretAccessKey: 'SecretAccessKey',
+        Expiration: '2019-02-22T11:38:21Z',
+        Token: "Token"
+      }
+
+      Nock("http://169.254.169.254")
+        .persist()
+        .get("/latest/meta-data/iam/security-credentials/")
+        .reply(200, "foo-iam-role")
+
+      Nock("http://169.254.169.254")
+        .persist()
+        .get("/latest/meta-data/iam/security-credentials/foo-iam-role")
+        .reply(200, credentials)    
+
+      const iamClient = new Minio.Client({
+        endPoint: "s3.amazonaws.com",
+        useIAM: true
+      })
+
+      iamClient.getObject('foo', 'hello', function() {
+        assert.equal(iamClient.accessKey, credentials.AccessKeyId)
+        assert.equal(iamClient.secretKey, credentials.SecretAccessKey)
+        assert.equal(iamClient.sessionToken, credentials.Token)
+        done()
+      })
+
+    })
   })
   describe('Presigned URL', () => {
     describe('presigned-get', () => {
@@ -277,7 +325,7 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
+      assert.equal(`Minio (${process.platform} ${process.arch}) minio-js/${Package.version}`,
                    client.userAgent)
     })
     it('should set user agent', () => {
@@ -287,7 +335,7 @@ describe('Client', function() {
         secretKey: 'secretkey'
       })
       client.setAppInfo('test', '3.2.1')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
+      assert.equal(`Minio (${process.platform} ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should set user agent without comments', () => {
@@ -297,7 +345,7 @@ describe('Client', function() {
         secretKey: 'secretkey'
       })
       client.setAppInfo('test', '3.2.1')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
+      assert.equal(`Minio (${process.platform} ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should not set user agent without name', (done) => {
@@ -347,6 +395,40 @@ describe('Client', function() {
       } catch (e) {
         done()
       }
+    })
+  })
+
+  describe('iamCredentialHandler', () => {
+    const credentials = {
+      AccessKeyId: 'AccessKeyId',
+      SecretAccessKey: 'SecretAccessKey',
+      Expiration: '2019-02-22T11:38:21Z',
+      Token: "Token"
+    }
+
+    beforeEach(() => {
+      Nock("http://169.254.169.254")
+        .get("/latest/meta-data/iam/security-credentials/")
+        .reply(200, "foo-iam-role")
+
+      Nock("http://169.254.169.254")
+        .get("/latest/meta-data/iam/security-credentials/foo-iam-role")
+        .reply(200, credentials)    
+    })
+
+    afterEach(() => {
+      Nock.cleanAll()
+    })
+
+    describe('#credentials', () => {
+      it('should retrieve the credentials', () => {
+        return iamCredentialsHandler.credentials()
+          .then(resp => {
+            assert.equal(resp.accessKey, credentials.AccessKeyId)
+            assert.equal(resp.secretKey, credentials.SecretAccessKey)
+            assert.equal(resp.sessionToken, credentials.Token)
+          })
+      })
     })
   })
 

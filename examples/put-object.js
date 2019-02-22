@@ -41,8 +41,8 @@ var fileStat = Fs.stat(file, function(e, stat) {
   })
 })
 
-// Upload a buffer
-var buf = new Buffer(10)
+// Upload a buffer (Buffer is deprecated #see https://nodejs.org/en/docs/guides/buffer-constructor-deprecation/)
+var buf = Buffer.alloc(10);
 buf.fill('a')
 s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function(e) {
   if (e) {

@@ -1,7 +1,7 @@
 /*
  * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 Minio, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -47,6 +47,8 @@ import { getS3Endpoint } from './s3-endpoints.js'
 
 import { NotificationConfig, NotificationPoller } from './notification'
 
+import { iamCredentialsHandler } from "./iam-credentials-handler"
+
 var Package = require('../../package.json')
 
 export class Client {
@@ -71,6 +73,11 @@ export class Client {
       if (!isString(params.region)) {
         throw new errors.InvalidArgumentError(`Invalid region : ${params.region}`)
       }
+    }
+
+    // Validate endPoint if using role-based credentials for s3 buckets.
+    if (params.useIAM && !isAmazonEndpoint(params.endPoint)) {
+      throw new errors.InvalidArgumentError(`Invalid endPoint: ${params.endPoint}, "useIAM" only works for AWS endpoints`)
     }
 
     var host = params.endPoint.toLowerCase()
@@ -105,9 +112,9 @@ export class Client {
     // User Agent should always following the below style.
     // Please open an issue to discuss any new changes here.
     //
-    //       Minio (OS; ARCH) LIB/VER APP/VER
+    //       Minio (OS ARCH) LIB/VER APP/VER
     //
-    var libraryComments = `(${process.platform}; ${process.arch})`
+    var libraryComments = `(${process.platform} ${process.arch})`
     var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
@@ -138,6 +145,11 @@ export class Client {
     this.enableSHA256 = !this.anonymous && !params.useSSL
 
     this.reqOptions = {}
+
+    // if `useIAM` flag is set, sync with ec2 iam role credentials before making actual request.
+    // makeRequestStream will be used directly instead of makeRequest in case the payload
+    // is available as a stream. for ex. putObject.
+    this.makeRequestStream = params.useIAM ? this._makeRequestStreamAsync.bind(this) : this._makeRequestStream.bind(this)
   }
 
   // Sets the supported request options.
@@ -223,7 +235,7 @@ export class Client {
   //
   // Generates User-Agent in the following style.
   //
-  //       Minio (OS; ARCH) LIB/VER APP/VER
+  //       Minio (OS ARCH) LIB/VER APP/VER
   //
   // __Arguments__
   // * `appName` _string_ - Application name.
@@ -343,9 +355,29 @@ export class Client {
     this.makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb)
   }
 
+  // Sync and retrieve ec2 role credentials and update the keys before actually creating the 
+  // RequestStream. This function is called if `useIAM` flag is set.
+  _makeRequestStreamAsync(options, stream, sha256sum, statusCode, region, returnResponse, cb) {
+    const sync = (credentials) => {
+      if (!credentials) {
+        throw new Error(`Unable to get EC2 iam role credentials.`)
+      }
+      // update credentials
+      this.accessKey = credentials.accessKey
+      this.secretKey = credentials.secretKey
+      this.sessionToken = credentials.sessionToken
+      // actually make the request
+      this._makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb)
+    }
+
+    return iamCredentialsHandler.credentials().then(sync)
+
+  }  
+
+  // Actual implementation for markRequestStream:
   // makeRequestStream will be used directly instead of makeRequest in case the payload
-  // is available as a stream. for ex. putObject
-  makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb) {
+  // is available as a stream. for ex. putObject.
+  _makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
@@ -951,7 +983,7 @@ export class Client {
             // verify md5sum of each part
             pipesetup(fs.createReadStream(filePath, options), hash)
               .on('data', data => {
-                var md5sumHex = (new Buffer(data.md5sum, 'base64')).toString('hex')
+                var md5sumHex = (Buffer.from(data.md5sum, 'base64')).toString('hex')
                 if (part && (md5sumHex === part.etag)) {
                   //md5 matches, chunk already uploaded
                   partsDone.push({part: partNumber, etag: part.etag})
@@ -1504,7 +1536,7 @@ export class Client {
     this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
 
-      let policy = new Buffer('')
+      let policy = Buffer.from('')
       pipesetup(response, transformers.getConcater())
         .on('data', data => policy = data)
         .on('error', cb)
@@ -1692,7 +1724,7 @@ export class Client {
       postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.accessKey + "/" + getScope(region, date)])
       postPolicy.formData['x-amz-credential'] = this.accessKey + "/" + getScope(region, date)
 
-      var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
+      var policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
 
       postPolicy.formData.policy = policyBase64
 
