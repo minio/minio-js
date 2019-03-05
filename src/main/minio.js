@@ -31,7 +31,7 @@ import _ from 'lodash'
 import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-  isString, isObject, isArray, pipesetup,
+  isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
   makeDateLong, promisify } from './helpers.js'
 
@@ -1001,7 +1001,7 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `string or Buffer` _Stream_ or _Buffer_: Readable stream
+  // * `string or Buffer` _string_ or _Buffer_: string or buffer
   // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
   putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
@@ -1145,20 +1145,17 @@ export class Client {
     if (!isNumber(maxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
     }
+
     var queries = []
     // escape every value in query string, except maxKeys
-    if (prefix) {
-      prefix = uriEscape(prefix)
-      queries.push(`prefix=${prefix}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (marker) {
       marker = uriEscape(marker)
       queries.push(`marker=${marker}`)
     }
-    if (delimiter) {
-      delimiter = uriEscape(delimiter)
-      queries.push(`delimiter=${delimiter}`)
-    }
+
     // no need to escape maxKeys
     if (maxKeys) {
       if (maxKeys >= 1000) {
@@ -1190,11 +1187,11 @@ export class Client {
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `obj.name` _string_: name of the object
-  //   * `obj.prefix` _string_: name of the object prefix
-  //   * `obj.size` _number_: size of the object
-  //   * `obj.etag` _string_: etag of the object
-  //   * `obj.lastModified` _Date_: modified time stamp
+  // * `obj.name` _string_: name of the object
+  // * `obj.prefix` _string_: name of the object prefix
+  // * `obj.size` _number_: size of the object
+  // * `obj.etag` _string_: etag of the object
+  // * `obj.lastModified` _Date_: modified time stamp
   listObjects(bucketName, prefix, recursive) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
@@ -1239,8 +1236,17 @@ export class Client {
     return readStream
   }
 
-  // list a batch of objects using S3 ListObjects v2
-  listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys) {
+  // listObjectsV2Query - (List Objects V2) - List some or all (up to 1000) of the objects in a bucket.
+  //
+  // You can use the request parameters as selection criteria to return a subset of the objects in a bucket.
+  // request parameters :-
+  // * `bucketName` _string_: name of the bucket
+  // * `prefix` _string_: Limits the response to keys that begin with the specified prefix.
+  // * `continuation-token` _string_: Used to continue iterating over a set of objects.
+  // * `delimiter` _string_: A delimiter is a character you use to group keys.
+  // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
+  // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
+  listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1256,23 +1262,26 @@ export class Client {
     if (!isNumber(maxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
     }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
+    }
     var queries = []
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
 
     // escape every value in query string, except maxKeys
-    if (prefix) {
-      prefix = uriEscape(prefix)
-      queries.push(`prefix=${prefix}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (continuationToken) {
       continuationToken = uriEscape(continuationToken)
       queries.push(`continuation-token=${continuationToken}`)
     }
-    if (delimiter) {
-      delimiter = uriEscape(delimiter)
-      queries.push(`delimiter=${delimiter}`)
+    // Set start-after
+    if (startAfter) {
+      startAfter = uriEscape(startAfter)
+      queries.push(`start-after=${startAfter}`)
     }
     // no need to escape maxKeys
     if (maxKeys) {
@@ -1302,6 +1311,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
   // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  // * `startAfter` _string_: Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -1310,9 +1320,10 @@ export class Client {
   //   * `obj.size` _number_: size of the object
   //   * `obj.etag` _string_: etag of the object
   //   * `obj.lastModified` _Date_: modified time stamp
-  listObjectsV2(bucketName, prefix, recursive) {
+  listObjectsV2(bucketName, prefix, recursive, startAfter) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
+    if (startAfter === undefined) startAfter = ''
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1324,6 +1335,9 @@ export class Client {
     }
     if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
+    }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
@@ -1339,7 +1353,7 @@ export class Client {
       }
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
-      this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000)
+      this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
         .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           if (result.isTruncated) {
@@ -1470,7 +1484,7 @@ export class Client {
       })
     }, cb)
   }
-     
+
 
   // Get the policy on a bucket or an object prefix.
   //
@@ -1538,18 +1552,25 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `reqParams` _object_: request parameters (optional)
-  presignedUrl(method, bucketName, objectName, expires, reqParams, cb) {
+  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
+  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
+    }
+    if (isFunction(requestDate)) {
+      cb = requestDate
+      requestDate = new Date()
     }
     if (isFunction(reqParams)) {
       cb = reqParams
       reqParams = {}
+      requestDate = new Date()
     }
     if (isFunction(expires)) {
       cb = expires
       reqParams = {}
       expires = 24 * 60 * 60 * 7 // 7 days in seconds
+      requestDate = new Date()
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
@@ -1557,10 +1578,12 @@ export class Client {
     if (!isObject(reqParams)) {
       throw new TypeError('reqParams should be of type "object"')
     }
+    if (!isValidDate(requestDate)) {
+      throw new TypeError('requestDate should be of type "Date" and valid')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var requestDate = new Date()
     var query = querystring.stringify(reqParams)
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
@@ -1589,13 +1612,21 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `respHeaders` _object_: response headers to override (optional)
-  presignedGetObject(bucketName, objectName, expires, respHeaders, cb) {
+  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
+  presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    
+    if (isFunction(respHeaders)) {
+      cb = respHeaders
+      respHeaders = {}
+      requestDate = new Date()
+    }
+
     var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
                             'response-content-disposition', 'response-content-encoding']
     validRespHeaders.forEach(header => {
@@ -1603,7 +1634,7 @@ export class Client {
         throw new TypeError(`response header ${header} should be of type "string"`)
       }
     })
-    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, cb)
+    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -1847,9 +1878,9 @@ export class Client {
       throw new TypeError('delimiter should be of type "string"')
     }
     var queries = []
-    if (prefix) {
-      queries.push(`prefix=${uriEscape(prefix)}`)
-    }
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
     if (keyMarker) {
       keyMarker = uriEscape(keyMarker)
       queries.push(`key-marker=${keyMarker}`)
@@ -1857,9 +1888,7 @@ export class Client {
     if (uploadIdMarker) {
       queries.push(`upload-id-marker=${uploadIdMarker}`)
     }
-    if (delimiter) {
-      queries.push(`delimiter=${uriEscape(delimiter)}`)
-    }
+
     var maxUploads = 1000
     queries.push(`max-uploads=${maxUploads}`)
     queries.sort()
@@ -1971,7 +2000,11 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      let headers = Object.assign({}, metaData, {'Content-Length': length})
+      let headers = {'Content-Length': length}
+
+      if (!multipart) {
+        headers = Object.assign({}, metaData, headers)
+      }
 
       if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},
@@ -2073,6 +2106,7 @@ Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObject = promisify(Client.prototype.removeObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
+Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
 Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
 Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostPolicy)

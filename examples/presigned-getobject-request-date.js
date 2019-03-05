@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
- // dummy values, please replace them with original values.
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+ // are dummy values, please replace them with original values. 
 
 var Minio = require('minio')
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
+  useSSL: true // Default is true.
 })
-// List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjectsV2('my-bucketname', '', true,'')
-objectsStream.on('data', function(obj) {
-  console.log(obj)
-})
-objectsStream.on('error', function(e) {
-  console.log(e)
+
+// Presigned get object URL for my-objectname at my-bucketname, it expires in 7 days by default.
+var requestDate = new Date('2017-01-01');
+var presignedUrl = s3Client.presignedGetObject('my-bucketname', 'my-objectname', 1000, {}, requestDate, function(e, presignedUrl) {
+  if (e) return console.log(e)
+  console.log(presignedUrl)
 })
