@@ -1065,4 +1065,4 @@ minioClient.setRequestOptions({rejectUnauthorized: false})
 ## 7. Explore Further
 
 
-- [Build your own Shopping App Example](https://docs.minio.io/docs/javascript-shopping-app)
+- [Build your own Shopping App Example](https://github.com/minio/minio-js-store-app)

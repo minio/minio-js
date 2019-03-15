@@ -192,7 +192,7 @@ mc ls play/europetrip/
 ## 了解更多
 * [完整文档](https://docs.minio.io)
 * [Minio JavaScript Client SDK API文档](https://docs.minio.io/docs/javascript-client-api-reference)
-* [创建属于你的购物APP-完整示例](https://docs.minio.io/docs/javascript-shopping-app)
+* [创建属于你的购物APP-完整示例](https://github.com/minio/minio-js-store-app)
 
 ## 贡献
 

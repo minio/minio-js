@@ -1002,4 +1002,4 @@ minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, func
 ## 6. 了解更多
 
 
-- [创建属于你的购物APP示例](https://docs.minio.io/docs/javascript-shopping-app)
+- [创建属于你的购物APP示例](https://github.com/minio/minio-js-store-app)

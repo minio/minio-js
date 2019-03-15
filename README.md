@@ -201,7 +201,7 @@ The full API Reference is available here.
 ## Explore Further
 * [Complete Documentation](https://docs.minio.io)
 * [Minio JavaScript Client SDK API Reference](https://docs.minio.io/docs/javascript-client-api-reference)
-* [Build your own Shopping App Example- Full Application Example ](https://docs.minio.io/docs/javascript-shopping-app)
+* [Build your own Shopping App Example- Full Application Example ](https://github.com/minio/minio-js-store-app)
 
 ## Contribute
 
