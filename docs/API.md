@@ -64,6 +64,7 @@ __Parameters__
 |`region`    | _string_  |Set this value to override region cache. (Optional)|
 |`transport`    | _string_  |Set this value to pass in a custom transport. (Optional)|
 |`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)|
+|`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional)|
 
 
 __Example__
