@@ -1015,7 +1015,7 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket |
-| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` is the [bucket policy](https://github.com/minio/minio/blob/master/docs/bucket/policy/README.md). If no callback is passed, a `Promise` is returned. |
+| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -1030,7 +1030,7 @@ minioClient.getBucketPolicy('my-bucketname', function(err, policy) {
 <a name="setBucketPolicy"></a>
 ### setBucketPolicy(bucketName, bucketPolicy[, callback])
 
-Set the bucket policy on the specified bucket. [bucketPolicy](https://github.com/minio/minio/blob/master/docs/bucket/policy/README.md) is detailed here.
+Set the bucket policy on the specified bucket. [bucketPolicy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html) is detailed here.
 
 __Parameters__
 
