@@ -1,7 +1,7 @@
 ### Setup your minio-js Github Repository
 Fork [minio-js upstream](https://github.com/minio/minio-js/fork) source repository to your own personal repository.
 
-Minio Javascript library uses gulp for its dependency management http://gulpjs.com/
+MinIO Javascript library uses gulp for its dependency management http://gulpjs.com/
 
 ```bash
 $ git clone https://github.com/$USER_ID/minio-js

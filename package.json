@@ -16,9 +16,9 @@
     "url": "git+https://github.com/minio/minio-js.git"
   },
   "author": {
-    "name": "Minio, Inc.",
+    "name": "MinIO, Inc.",
     "email": "",
-    "url": "https://minio.io"
+    "url": "https://min.io"
   },
   "engines": {
     "node": ">= 0.10.0"

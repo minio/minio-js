@@ -1,10 +1,10 @@
-# 适用于Amazon S3兼容云存储的Minio JavaScript Library [![Slack](https://slack.minio.io/slack?type=svg)](https://slack.minio.io)
+# 适用于Amazon S3兼容云存储的Minio JavaScript Library [![Slack](https://slack.min.io/slack?type=svg)](https://slack.min.io)
 
 [![NPM](https://nodei.co/npm/minio.png)](https://nodei.co/npm/minio/)
 
-Minio JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的对象存储服务。
+MinIO JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的对象存储服务。
 
-本快速入门指南将向您展示如何安装客户端SDK并执行示例JavaScript程序。有关API和示例的完整列表，请参阅[JavaScript客户端API参考](https://docs.minio.io/docs/javascript-client-api-reference)文档。
+本快速入门指南将向您展示如何安装客户端SDK并执行示例JavaScript程序。有关API和示例的完整列表，请参阅[JavaScript客户端API参考](https://docs.min.io/docs/javascript-client-api-reference)文档。
 
 本文假设你已经安装了[nodejs](http://nodejs.org/) 。
 
@@ -52,7 +52,7 @@ var minioClient = new Minio.Client({
 
 本示例连接到一个对象存储服务，创建一个存储桶并上传一个文件到存储桶中。
 
-我们在本示例中使用运行在 [https://play.minio.io:9000](https://play.minio.io:9000) 上的Minio服务，你可以用这个服务来开发和测试。示例中的访问凭据是公开的。
+我们在本示例中使用运行在 [https://play.min.io:9000](https://play.min.io:9000) 上的Minio服务，你可以用这个服务来开发和测试。示例中的访问凭据是公开的。
 
 #### file-uploader.js
 
@@ -104,49 +104,49 @@ mc ls play/europetrip/
 ## API文档
 
 完整的API文档在这里。
-* [完整API文档](https://docs.minio.io/docs/javascript-client-api-reference)
+* [完整API文档](https://docs.min.io/docs/javascript-client-api-reference)
 
 ### API文档 : 操作存储桶
 
-* [`makeBucket`](https://docs.minio.io/docs/javascript-client-api-reference#makeBucket)
-* [`listBuckets`](https://docs.minio.io/docs/javascript-client-api-reference#listBuckets)
-* [`bucketExists`](https://docs.minio.io/docs/javascript-client-api-reference#bucketExists)
-* [`removeBucket`](https://docs.minio.io/docs/javascript-client-api-reference#removeBucket)
-* [`listObjects`](https://docs.minio.io/docs/javascript-client-api-reference#listObjects)
-* [`listObjectsV2`](https://docs.minio.io/docs/javascript-client-api-reference#listObjectsV2)
-* [`listIncompleteUploads`](https://docs.minio.io/docs/javascript-client-api-reference#listIncompleteUploads)
+* [`makeBucket`](https://docs.min.io/docs/javascript-client-api-reference#makeBucket)
+* [`listBuckets`](https://docs.min.io/docs/javascript-client-api-reference#listBuckets)
+* [`bucketExists`](https://docs.min.io/docs/javascript-client-api-reference#bucketExists)
+* [`removeBucket`](https://docs.min.io/docs/javascript-client-api-reference#removeBucket)
+* [`listObjects`](https://docs.min.io/docs/javascript-client-api-reference#listObjects)
+* [`listObjectsV2`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2)
+* [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
 
 ### API文档 : 操作文件对象
 
-* [`fPutObject`](https://docs.minio.io/docs/javascript-client-api-reference#fPutObject)
-* [`fGetObject`](https://docs.minio.io/docs/javascript-client-api-reference#fGetObject)
+* [`fPutObject`](https://docs.min.io/docs/javascript-client-api-reference#fPutObject)
+* [`fGetObject`](https://docs.min.io/docs/javascript-client-api-reference#fGetObject)
 
 ### API文档 : 操作对象
 
-* [`getObject`](https://docs.minio.io/docs/javascript-client-api-reference#getObject)
-* [`putObject`](https://docs.minio.io/docs/javascript-client-api-reference#putObject)
-* [`copyObject`](https://docs.minio.io/docs/javascript-client-api-reference#copyObject)
-* [`statObject`](https://docs.minio.io/docs/javascript-client-api-reference#statObject)
-* [`removeObject`](https://docs.minio.io/docs/javascript-client-api-reference#removeObject)
-* [`removeIncompleteUpload`](https://docs.minio.io/docs/javascript-client-api-reference#removeIncompleteUpload)
+* [`getObject`](https://docs.min.io/docs/javascript-client-api-reference#getObject)
+* [`putObject`](https://docs.min.io/docs/javascript-client-api-reference#putObject)
+* [`copyObject`](https://docs.min.io/docs/javascript-client-api-reference#copyObject)
+* [`statObject`](https://docs.min.io/docs/javascript-client-api-reference#statObject)
+* [`removeObject`](https://docs.min.io/docs/javascript-client-api-reference#removeObject)
+* [`removeIncompleteUpload`](https://docs.min.io/docs/javascript-client-api-reference#removeIncompleteUpload)
 
 ### API文档 :  Presigned操作
 
-* [`presignedGetObject`](https://docs.minio.io/docs/javascript-client-api-reference#presignedGetObject)
-* [`presignedPutObject`](https://docs.minio.io/docs/javascript-client-api-reference#presignedPutObject)
-* [`presignedPostPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#presignedPostPolicy)
+* [`presignedGetObject`](https://docs.min.io/docs/javascript-client-api-reference#presignedGetObject)
+* [`presignedPutObject`](https://docs.min.io/docs/javascript-client-api-reference#presignedPutObject)
+* [`presignedPostPolicy`](https://docs.min.io/docs/javascript-client-api-reference#presignedPostPolicy)
 
 ### API文档 : 存储桶通知
 
-* [`getBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#getBucketNotification)
-* [`setBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#setBucketNotification)
-* [`removeAllBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#removeAllBucketNotification)
-* [`listenBucketNotification`](https://docs.minio.io/docs/javascript-client-api-reference#listenBucketNotification) (Minio Extension)
+* [`getBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#getBucketNotification)
+* [`setBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#setBucketNotification)
+* [`removeAllBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#removeAllBucketNotification)
+* [`listenBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#listenBucketNotification) (MinIO Extension)
 
 ### API文档 : 存储桶策略
 
-* [`getBucketPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#getBucketPolicy)
-* [`setBucketPolicy`](https://docs.minio.io/docs/javascript-client-api-reference#setBucketPolicy)
+* [`getBucketPolicy`](https://docs.min.io/docs/javascript-client-api-reference#getBucketPolicy)
+* [`setBucketPolicy`](https://docs.min.io/docs/javascript-client-api-reference#setBucketPolicy)
 
 
 ## 完整示例
@@ -183,15 +183,15 @@ mc ls play/europetrip/
 * [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
 * [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
 * [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
-* [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (Minio Extension)
+* [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (MinIO Extension)
 
 #### 完整示例 : 存储桶策略
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
 * [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
 
 ## 了解更多
-* [完整文档](https://docs.minio.io)
-* [Minio JavaScript Client SDK API文档](https://docs.minio.io/docs/javascript-client-api-reference)
+* [完整文档](https://docs.min.io)
+* [MinIO JavaScript Client SDK API文档](https://docs.min.io/docs/javascript-client-api-reference)
 * [创建属于你的购物APP-完整示例](https://github.com/minio/minio-js-store-app)
 
 ## 贡献

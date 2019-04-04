@@ -1,5 +1,5 @@
 /*
- * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 Minio, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -531,7 +531,7 @@ describe('functional tests', function() {
       client.initiateNewMultipartUpload(bucketName, _6mbObjectName, metaData, done)
     })
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_6mbObjectName}, recursive: true_`, function(done) {
-      // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
+      // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       if (!client.host.includes('s3.amazonaws.com')) {
         this.skip()
@@ -549,7 +549,7 @@ describe('functional tests', function() {
         })
     })
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function(done) {
-      // Minio's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
+      // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       if (!client.host.includes('s3.amazonaws.com')) {
         this.skip()
@@ -1100,7 +1100,7 @@ describe('functional tests', function() {
   describe('bucket notifications', () => {
     describe('#listenBucketNotification', () => {
       before(function() {
-        // listenBucketNotification only works on Minio, so skip if
+        // listenBucketNotification only works on MinIO, so skip if
         // the host is Amazon.
         if (client.host.includes('s3.amazonaws.com')) {
           this.skip()

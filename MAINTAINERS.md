@@ -1,5 +1,5 @@
 # For maintainers only
-Minio JS SDK uses [npm4+](https://www.npmjs.org/) build system.
+MinIO JS SDK uses [npm4+](https://www.npmjs.org/) build system.
 
 ## Responsibilities
 Go through [Maintainer Responsibility Guide](https://gist.github.com/abperiasamy/f4d9b31d3186bbd26522).
@@ -40,7 +40,7 @@ $ npm publish
 ```
 
 ### Tag
-Tag and sign your release commit, additionally this step requires you to have access to Minio's trusted private key.
+Tag and sign your release commit, additionally this step requires you to have access to MinIO's trusted private key.
 ```
 $ export GNUPGHOME=/media/${USER}/minio/trusted
 $ git tag -s 3.2.1

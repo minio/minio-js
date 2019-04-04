@@ -1,7 +1,7 @@
 ### 设置你的minio-js Github仓库
 Fork [minio-js upstream](https://github.com/minio/minio-js/fork) 源码仓库到你的个人仓库。
 
-Minio Javascript使用[gulp](http://gulpjs.com/)来管理它的依赖。
+MinIO Javascript使用[gulp](http://gulpjs.com/)来管理它的依赖。
 
 ```bash
 $ git clone https://github.com/$USER_ID/minio-js

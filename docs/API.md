@@ -1,8 +1,8 @@
-# JavaScript Client API Reference [![Slack](https://slack.minio.io/slack?type=svg)](https://slack.minio.io)
+# JavaScript Client API Reference [![Slack](https://slack.min.io/slack?type=svg)](https://slack.min.io)
 
-## Initialize Minio Client object.
+## Initialize MinIO Client object.
 
-## Minio
+## MinIO
 
 ```js
 var Minio = require('minio')
@@ -68,7 +68,7 @@ __Parameters__
 
 __Example__
 
-## Create client for Minio
+## Create client for MinIO
 
 ```js
 var Minio = require('minio')
@@ -975,7 +975,7 @@ minioClient.removeAllBucketNotification('my-bucketname', function(e) {
 
 Listen for notifications on a bucket. Additionally one can provider
 filters for prefix, suffix and events. There is no prior set bucket notification
-needed to use this API. This is an Minio extension API where unique identifiers
+needed to use this API. This is an MinIO extension API where unique identifiers
 are regitered and unregistered by the server automatically based on incoming requests.
 
 Returns an `EventEmitter`, which will emit a `notification` event carrying the record.
