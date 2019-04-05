@@ -1,5 +1,5 @@
 /*
- * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 Minio, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,10 +105,10 @@ export class Client {
     // User Agent should always following the below style.
     // Please open an issue to discuss any new changes here.
     //
-    //       Minio (OS; ARCH) LIB/VER APP/VER
+    //       MinIO (OS; ARCH) LIB/VER APP/VER
     //
     var libraryComments = `(${process.platform}; ${process.arch})`
-    var libraryAgent = `Minio ${libraryComments} minio-js/${Package.version}`
+    var libraryAgent = `MinIO ${libraryComments} minio-js/${Package.version}`
     // User agent block ends.
 
     this.transport = transport
@@ -223,7 +223,7 @@ export class Client {
   //
   // Generates User-Agent in the following style.
   //
-  //       Minio (OS; ARCH) LIB/VER APP/VER
+  //       MinIO (OS; ARCH) LIB/VER APP/VER
   //
   // __Arguments__
   // * `appName` _string_ - Application name.

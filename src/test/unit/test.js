@@ -1,5 +1,5 @@
 /*
- * Minio Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 Minio, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,7 +277,7 @@ describe('Client', function() {
         accessKey: 'accesskey',
         secretKey: 'secretkey'
       })
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
+      assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
                    client.userAgent)
     })
     it('should set user agent', () => {
@@ -287,7 +287,7 @@ describe('Client', function() {
         secretKey: 'secretkey'
       })
       client.setAppInfo('test', '3.2.1')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
+      assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should set user agent without comments', () => {
@@ -297,7 +297,7 @@ describe('Client', function() {
         secretKey: 'secretkey'
       })
       client.setAppInfo('test', '3.2.1')
-      assert.equal(`Minio (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
+      assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
                    client.userAgent)
     })
     it('should not set user agent without name', (done) => {

@@ -1,8 +1,8 @@
-# JavaScript Client API参考文档 [![Slack](https://slack.minio.io/slack?type=svg)](https://slack.minio.io)
+# JavaScript Client API参考文档 [![Slack](https://slack.min.io/slack?type=svg)](https://slack.min.io)
 
 ## 初使化Minio Client object.
 
-## Minio
+## MinIO
 
 ```js
 var Minio = require('minio')
