@@ -625,16 +625,21 @@ describe('functional tests', function() {
       client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, {}, done)
     })
     step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`, done => {
-      var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio`
-      // create a partial file
-      fs.writeFileSync(tmpFile, _100kb)
-      client.fGetObject(bucketName, _5mbObjectName, localFile)
-        .then(() => {
-          var md5sum = crypto.createHash('md5').update(fs.readFileSync(localFile)).digest('hex')
-          if (md5sum === _5mbmd5) return done()
-          return done(new Error('md5sum mismatch'))
-        })
-        .catch(done)
+      client.statObject(bucketName, _5mbObjectName, (err, stat) => {
+        if (err) return done(new Error('failed to stat object'))
+        var bufPart = new Buffer(_100kb.length);
+        _5mb.copy(bufPart, 0, 0, _100kb.length);
+        var tmpFile = `${tmpDir}/${_5mbObjectName}.${stat.etag}.part.minio`
+        // create a partial file
+        fs.writeFileSync(tmpFile, bufPart)
+        client.fGetObject(bucketName, _5mbObjectName, localFile)
+          .then(() => {
+            var md5sum = crypto.createHash('md5').update(fs.readFileSync(localFile)).digest('hex')
+            if (md5sum === _5mbmd5) return done()
+            return done(new Error('md5sum mismatch'))
+          })
+          .catch(done)
+      })
     })
     step(`removeObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}_`, done => {
       fs.unlinkSync(localFile)
