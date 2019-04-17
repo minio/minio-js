@@ -26,9 +26,15 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
+var metaData = {
+  'Content-Type': 'application/octet-stream',
+  'X-Amz-Meta-Testing': 1234,
+  'example': 5678
+}
+
 // Put a file in bucket my-bucketname.
 var file = 'my-testfile'
-s3Client.fPutObject('my-bucketname', 'my-objectname', file, 'application/octet-stream', function(e) {
+s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function(e) {
   if (e) {
     return console.log(e)
   }

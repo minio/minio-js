@@ -295,6 +295,24 @@ export function readableStream(data) {
   s.push(null)
   return s
 }
+
+// Process metadata to insert appropriate value to `content-type` attribute
+export function insertContentType(metaData, filePath) {
+  // first convert case sensitive `content-type` attributes to lowercase
+  var newMetadata = Object.assign({}, metaData)
+  for (var key in newMetadata) {
+    if (key.toLowerCase() === 'content-type') {
+      newMetadata['content-type'] = newMetadata[key]
+      delete newMetadata[key]
+    }
+  }
+  // if `content-type` attribute not present in metadata, infer from extension
+  if (!newMetadata.hasOwnProperty('content-type')) {
+    newMetadata['content-type'] = probeContentType(filePath)
+  }
+  return newMetadata
+}
+
 // Function prepends metadata with the appropriate prefix if it is not already on
 export function prependXAMZMeta(metaData) {
   var newMetadata = Object.assign({}, metaData)
