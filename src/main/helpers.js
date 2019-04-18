@@ -305,6 +305,7 @@ export function insertContentType(metaData, filePath) {
   for (var key in newMetadata) {
     if (key.toLowerCase() === 'content-type') {
       found = true
+      break
     }
   }
   // if `content-type` attribute not present in metadata, infer from extension
