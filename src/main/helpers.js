@@ -300,14 +300,15 @@ export function readableStream(data) {
 export function insertContentType(metaData, filePath) {
   // first convert case sensitive `content-type` attributes to lowercase
   var newMetadata = Object.assign({}, metaData)
+  // check if content-type attribute present in metadata
+  var found = false
   for (var key in newMetadata) {
     if (key.toLowerCase() === 'content-type') {
-      newMetadata['content-type'] = newMetadata[key]
-      delete newMetadata[key]
+      found = true
     }
   }
   // if `content-type` attribute not present in metadata, infer from extension
-  if (!newMetadata.hasOwnProperty('content-type')) {
+  if (!found) {
     newMetadata['content-type'] = probeContentType(filePath)
   }
   return newMetadata
