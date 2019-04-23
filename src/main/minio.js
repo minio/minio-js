@@ -878,7 +878,7 @@ export class Client {
     }
 
     // Inserts correct `content-type` attribute based on metaData and filePath
-    metaData = insertContentType(metaData, filePath)
+    insertContentType(metaData, filePath)
 
     //Updates metaData to have the correct prefix if needed
     metaData = prependXAMZMeta(metaData)
