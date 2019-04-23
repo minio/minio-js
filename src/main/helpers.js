@@ -295,6 +295,21 @@ export function readableStream(data) {
   s.push(null)
   return s
 }
+
+// Process metadata to insert appropriate value to `content-type` attribute
+export function insertContentType(metaData, filePath) {
+  // check if content-type attribute present in metaData
+  for (var key in metaData) {
+    if (key.toLowerCase() === 'content-type') {
+      return metaData
+    }
+  }
+  // if `content-type` attribute is not present in metadata,
+  // then infer it from the extension in filePath
+  metaData['content-type'] = probeContentType(filePath)
+  return metaData
+}
+
 // Function prepends metadata with the appropriate prefix if it is not already on
 export function prependXAMZMeta(metaData) {
   var newMetadata = Object.assign({}, metaData)

@@ -255,6 +255,53 @@ describe('functional tests', function() {
       client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload,done)
     })
 
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
+      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
+        if (e) return done(e)
+        // As metadata is not provided and there is no file extension,
+        // we default to 'application/octet-stream' as per `probeContentType` function
+        if (stat.metaData && stat.metaData['content-type'] !== 'application/octet-stream') {
+          return done(new Error('content-type mismatch'))
+        }
+        done()
+      })
+    })
+
+    var tmpFileUploadWithExt = `${tmpDir}/${_100kbObjectName}.txt`
+    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUploadWithExt}, metaData:${metaData}_`, done => {
+      fs.writeFileSync(tmpFileUploadWithExt, _100kb)
+      client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, metaData, done)
+    })
+
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
+      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
+        if (e) return done(e)
+        // As metadata is provided, even though we have an extension,
+        // the `content-type` should be equal what was declared on the metadata
+        if (stat.metaData && stat.metaData['content-type'] !== 'text/html') {
+          return done(new Error('content-type mismatch'))
+        } else if (!stat.metaData) {
+          return done(new Error('no metadata present'))
+        }
+        done()
+      })
+    })
+
+    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUploadWithExt}_`, done => {
+      fs.writeFileSync(tmpFileUploadWithExt, _100kb)
+      client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, done)
+    })
+
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
+      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
+        if (e) return done(e)
+        // As metadata is not provided but we have a file extension,
+        // we need to infer `content-type` from the file extension
+        if (stat.metaData && stat.metaData['content-type'] !== 'text/plain') return done(new Error('content-type mismatch'))
+        done()
+      })
+    })
+
     step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}, metaData:${metaData}_`, done => {
       var stream = readableStream(_100kb)
       client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, metaData, done)

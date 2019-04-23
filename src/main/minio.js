@@ -33,7 +33,7 @@ import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isVal
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  makeDateLong, promisify } from './helpers.js'
+  insertContentType, makeDateLong, promisify } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -876,6 +876,9 @@ export class Client {
     if (!isObject(metaData)) {
       throw new TypeError('metaData should be of type "object"')
     }
+
+    // Inserts correct `content-type` attribute based on metaData and filePath
+    insertContentType(metaData, filePath)
 
     //Updates metaData to have the correct prefix if needed
     metaData = prependXAMZMeta(metaData)
