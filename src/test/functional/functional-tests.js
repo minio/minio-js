@@ -624,10 +624,10 @@ describe('functional tests', function() {
     step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
       var stream = readableStream(_5mb)
       client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, {})
-      .then((resp) => {
-        etag = resp
-        done()
-      })
+        .then((resp) => {
+          etag = resp
+          done()
+        })
         .catch(done)
     })
     step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`, done => {
