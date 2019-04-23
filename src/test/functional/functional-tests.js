@@ -620,14 +620,22 @@ describe('functional tests', function() {
   })
   describe('fGetObject-resume', () => {
     var localFile = `${tmpDir}/${_5mbObjectName}`
+    var etag = ''
     step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
       var stream = readableStream(_5mb)
-      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, {}, done)
+      client.putObject(bucketName, _5mbObjectName, stream, _5mb.length, {})
+        .then((resp) => {
+          etag = resp
+          done()
+        })
+        .catch(done)
     })
     step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`, done => {
-      var tmpFile = `${tmpDir}/${_5mbObjectName}.${_5mbmd5}.part.minio`
+      var bufPart = new Buffer(_100kb.length)
+      _5mb.copy(bufPart, 0, 0, _100kb.length)
+      var tmpFile = `${tmpDir}/${_5mbObjectName}.${etag}.part.minio`
       // create a partial file
-      fs.writeFileSync(tmpFile, _100kb)
+      fs.writeFileSync(tmpFile, bufPart)
       client.fGetObject(bucketName, _5mbObjectName, localFile)
         .then(() => {
           var md5sum = crypto.createHash('md5').update(fs.readFileSync(localFile)).digest('hex')
