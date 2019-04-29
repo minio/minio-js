@@ -96,7 +96,7 @@ describe('functional tests', function() {
 
   var metaData = {
     'Content-Type': 'text/html',
-    'Content-Language': 'en',
+    'Content-Language': 123,
     'X-Amz-Meta-Testing': 1234,
     'randomstuff': 5678
   }
