@@ -137,6 +137,7 @@ The full API Reference is available here.
 * [`copyObject`](https://docs.min.io/docs/javascript-client-api-reference#copyObject)
 * [`statObject`](https://docs.min.io/docs/javascript-client-api-reference#statObject)
 * [`removeObject`](https://docs.min.io/docs/javascript-client-api-reference#removeObject)
+* [`removeObjects`](https://docs.min.io/docs/javascript-client-api-reference#removeObjects)
 * [`removeIncompleteUpload`](https://docs.min.io/docs/javascript-client-api-reference#removeIncompleteUpload)
 
 ### API Reference : Presigned Operations
