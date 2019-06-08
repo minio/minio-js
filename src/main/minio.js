@@ -129,7 +129,18 @@ export class Client {
       this.region = params.region
     }
 
-    this.minimumPartSize = 5*1024*1024
+    this.partSize = 64*1024*1024
+    if (params.partSize) {
+      this.partSize = params.partSize
+      this.overRidePartSize = true
+    }
+    if (this.partSize < 5*1024*1024) {
+      throw new errors.InvalidArgumentError(`Part size should be greater than 5MB`)
+    }
+    if (this.partSize > 5*1024*1024*1024) {
+      throw new errors.InvalidArgumentError(`Part size should be less than 5GB`)
+    }
+
     this.maximumPartSize = 5*1024*1024*1024
     this.maxObjectSize = 5*1024*1024*1024*1024
     // SHA256 is enabled only for authenticated http requests. If the request is authenticated
@@ -244,10 +255,7 @@ export class Client {
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
 
-  // partSize will be atleast minimumPartSize or a multiple of minimumPartSize
-  // for size <= 50GiB partSize is always 5MiB (10000*5MiB = 50GiB)
-  // for size > 50GiB partSize will be a multiple of 5MiB
-  // for size = 5TiB partSize will be 525MiB
+  // Calculate part size given the object size. Part size will be atleast this.partSize
   calculatePartSize(size) {
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
@@ -255,9 +263,18 @@ export class Client {
     if (size > this.maxObjectSize) {
       throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
     }
-    var partSize = Math.ceil(size/10000)
-    partSize = Math.ceil(partSize/this.minimumPartSize) * this.minimumPartSize
-    return partSize
+    if (this.overRidePartSize) {
+      return this.partSize
+    }
+    var partSize = this.partSize
+    for (;;) { 			// while(true) {...} throws linting error.
+      // If partSize is big enough to accomodate the object size, then use it.
+      if ((partSize * 10000) > size) {
+        return partSize
+      }
+      // Try part sizes as 64MB, 80MB, 96MB etc.
+      partSize += 16*1024*1024
+    }
   }
 
   // log the request, response, error
@@ -892,7 +909,7 @@ export class Client {
         if (size > this.maxObjectSize) {
           return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
         }
-        if (size < this.minimumPartSize) {
+        if (size <= this.partSize) {
           // simple PUT request, no multipart
           var multipart = false
           var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
@@ -1053,7 +1070,7 @@ export class Client {
 
     size = this.calculatePartSize(size)
 
-    // s3 requires that all non-end chunks be at least `this.minimumPartSize`,
+    // s3 requires that all non-end chunks be at least `this.partSize`,
     // so we chunk the stream until we hit either that size or the end before
     // we flush it to s3.
     let chunker = BlockStream2({size, zeroPadding: false})

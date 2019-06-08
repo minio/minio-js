@@ -61,6 +61,9 @@ __参数__
 |`secretKey`  |  _string_   | secretKey是你账户的密码。|
 |`useSSL`    | _bool_    |如果是true，则用的是https而不是http,默认值是true。 |
 |`region`    | _string_  |设置该值以覆盖自动发现存储桶region。（可选）|
+|`transport`    | _string_  |Set this value to pass in a custom transport. (Optional) - To be translated |
+|`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional) - To be translated|
+|`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional) - To be translated|
 
 
 __示例__

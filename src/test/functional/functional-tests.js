@@ -66,6 +66,7 @@ describe('functional tests', function() {
   var dataDir = process.env['MINT_DATA_DIR']
 
   var client = new minio.Client(playConfig)
+  var clientMultipartTest = new minio.Client(Object.assign({partSize: 5*1024*1024}, playConfig))
   var usEastConfig = playConfig
   usEastConfig.region = 'us-east-1'
   var clientUsEastRegion = new minio.Client(usEastConfig)
@@ -248,7 +249,6 @@ describe('functional tests', function() {
 
   })
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
-
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
     step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _100kb)
@@ -408,6 +408,36 @@ describe('functional tests', function() {
           if (hash.digest('hex') === _6mbmd5) return done()
           done(new Error('content mismatch'))
         })
+      })
+    })
+
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_ - ensure non-multipart upload`, done => {
+      client.statObject(bucketName, _6mbObjectName, (e, stat) => {
+        if (e) return done(e)
+        var etagstrs = stat.etag.split("-")
+        if (etagstrs.length != 1) {
+          return done(new Error('etag should indicate that multipart upload was not used'))
+        }
+        done()
+      })
+    })
+
+    step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_ - do multipart upload`, done => {
+      var stream = readableStream(_6mb)
+      clientMultipartTest.putObject(bucketName, _6mbObjectName, stream, done)
+    })
+
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_ - ensure multipart upload with 2 parts`, done => {
+      client.statObject(bucketName, _6mbObjectName, (e, stat) => {
+        if (e) return done(e)
+        var etagstrs = stat.etag.split("-")
+        if (etagstrs.length != 2) {
+          return done(new Error('etag should indicate that multipart upload was used'))
+        }
+        if (etagstrs[1] != "2") {
+          return done(new Error('etag should indicate that two parts were used for upload'))
+        }
+        done()
       })
     })
 
