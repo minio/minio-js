@@ -879,18 +879,18 @@ __示例__
 
 ```js
 // Create a new notification object
-var bucketNotification = new Notify.BucketNotification();
+var bucketNotification = new Minio.NotificationConfig();
 
-// Setup a new topic configuration
-var arn = Notify.newARN('aws', 'sns', 'us-west-2', '408065449417', 'TestTopic')
-var topic = new Notify.TopicConfig(arn)
-topic.addFilterSuffix('.jpg')
-topic.addFilterPrefix('myphotos/')
-topic.addEvent(Notify.ObjectReducedRedundancyLostObject)
-topic.addEvent(Notify.ObjectCreatedAll)
+// Setup a new Queue configuration
+var arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
+var queue = new Minio.QueueConfig(arn)
+queue.addFilterSuffix('.jpg')
+queue.addFilterPrefix('myphotos/')
+queue.addEvent(Minio.ObjectReducedRedundancyLostObject)
+queue.addEvent(Minio.ObjectCreatedAll)
 
-// Add the topic to the overall notification object
-bucketNotification.addTopicConfiguration(topic)
+// Add the queue to the overall notification object
+bucketNotification.add(queue)
 
 minioClient.setBucketNotification('mybucket', bucketNotification, function(err) {
   if (err) return console.log(err)
