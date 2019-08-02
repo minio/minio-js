@@ -8,7 +8,7 @@
     "test": "gulp test",
     "lint": "gulp lint",
     "prepublishOnly": "gulp test",
-    "functional": "gulp functional-test",
+    "functional": "gulp functionalTest",
     "browserify": "gulp browserify",
     "prepare": "npm run compile"
   },
@@ -22,7 +22,7 @@
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 4"
   },
   "license": "Apache-2.0",
   "bugs": {
