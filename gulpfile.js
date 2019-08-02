@@ -52,13 +52,11 @@ exports.browserify = gulp.series(compile, () => {
 exports.test = gulp.series(testCompile, () => {
   return gulp.src('dist/test/**/*.js', {
     read: false
-  })
-    .pipe(mocha({
-      reporter: 'spec',
-      ui: 'bdd',
-    }))
-    .once('error', () => process.exit(1))
-    .once('end', () => process.exit())
+  }).pipe(mocha({
+    exit: true,
+    reporter: 'spec',
+    ui: 'bdd',
+  }))
 })
 
 exports.lint = () => {
@@ -71,17 +69,11 @@ exports.lint = () => {
 exports.functionalTest = gulp.series(testCompile, () => {
   return gulp.src('dist/test/functional/*.js', {
     read: false
-  })
-    .pipe(mocha({
-      reporter: 'spec',
-      ui: 'bdd',
-    }))
-    .once('error', () => {
-      process.exit(1)
-    })
-    .once('end', () => {
-      process.exit()
-    })
+  }).pipe(mocha({
+    exit: true,
+    reporter: 'spec',
+    ui: 'bdd',
+  }))
 })
 
 exports.compile = compile
