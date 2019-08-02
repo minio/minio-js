@@ -971,7 +971,7 @@ export class Client {
             // verify md5sum of each part
             pipesetup(fs.createReadStream(filePath, options), hash)
               .on('data', data => {
-                var md5sumHex = (new Buffer(data.md5sum, 'base64')).toString('hex')
+                var md5sumHex = (Buffer.from(data.md5sum, 'base64')).toString('hex')
                 if (part && (md5sumHex === part.etag)) {
                   //md5 matches, chunk already uploaded
                   partsDone.push({part: partNumber, etag: part.etag})
@@ -1073,7 +1073,7 @@ export class Client {
     // s3 requires that all non-end chunks be at least `this.partSize`,
     // so we chunk the stream until we hit either that size or the end before
     // we flush it to s3.
-    let chunker = BlockStream2({size, zeroPadding: false})
+    let chunker = new BlockStream2({size, zeroPadding: false})
 
     // This is a Writable stream that can be written to in order to upload
     // to the specified bucket and object automatically.
@@ -1524,7 +1524,7 @@ export class Client {
     this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
 
-      let policy = new Buffer('')
+      let policy = Buffer.from('')
       pipesetup(response, transformers.getConcater())
         .on('data', data => policy = data)
         .on('error', cb)
@@ -1712,7 +1712,7 @@ export class Client {
       postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.accessKey + "/" + getScope(region, date)])
       postPolicy.formData['x-amz-credential'] = this.accessKey + "/" + getScope(region, date)
 
-      var policyBase64 = new Buffer(JSON.stringify(postPolicy.policy)).toString('base64')
+      var policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
 
       postPolicy.formData.policy = policyBase64
 
