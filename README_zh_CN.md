@@ -40,7 +40,7 @@ npm install -g
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
@@ -52,7 +52,7 @@ var minioClient = new Minio.Client({
 
 本示例连接到一个对象存储服务，创建一个存储桶并上传一个文件到存储桶中。
 
-我们在本示例中使用运行在 [https://play.min.io:9000](https://play.min.io:9000) 上的Minio服务，你可以用这个服务来开发和测试。示例中的访问凭据是公开的。
+我们在本示例中使用运行在 [https://play.min.io](https://play.min.io) 上的Minio服务，你可以用这个服务来开发和测试。示例中的访问凭据是公开的。
 
 #### file-uploader.js
 
@@ -62,7 +62,7 @@ var Minio = require('minio')
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
