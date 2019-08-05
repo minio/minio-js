@@ -41,13 +41,13 @@ require('source-map-support').install()
 describe('functional tests', function() {
   this.timeout(30 * 60 * 1000)
   var playConfig = {}
-  // If credentials aren't given, default to play.minio.io.
+  // If credentials aren't given, default to play.min.io.
   if (process.env['SERVER_ENDPOINT']) {
     var res = process.env['SERVER_ENDPOINT'].split(":")
     playConfig.endPoint = res[0]
     playConfig.port = parseInt(res[1])
   } else {
-    playConfig.endPoint = 'play.minio.io'
+    playConfig.endPoint = 'play.min.io'
     playConfig.port = 9000
   }
   playConfig.accessKey = process.env['ACCESS_KEY'] || 'Q3AM3UQ867SPQQA43P2F'

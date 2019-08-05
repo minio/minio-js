@@ -8,7 +8,7 @@
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
@@ -75,7 +75,7 @@ __Example__
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',

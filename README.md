@@ -48,7 +48,7 @@ You need five items in order to connect to MinIO object storage server.
 var Minio = require('minio')
 
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
@@ -60,7 +60,7 @@ var minioClient = new Minio.Client({
 
 This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket.
 
-We will use the MinIO server running at [https://play.min.io:9000](https://play.min.io:9000) in this example. Feel free to use this service for testing and development. Access credentials shown in this example are open to the public.
+We will use the MinIO server running at [https://play.min.io](https://play.min.io) in this example. Feel free to use this service for testing and development. Access credentials shown in this example are open to the public.
 
 #### file-uploader.js
 
@@ -70,7 +70,7 @@ var Minio = require('minio')
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
 var minioClient = new Minio.Client({
-    endPoint: 'play.minio.io',
+    endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
     accessKey: 'Q3AM3UQ867SPQQA43P2F',
