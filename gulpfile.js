@@ -14,83 +14,68 @@
  * limitations under the License.
  */
 
-var babel = require('gulp-babel')
-var gulp = require('gulp')
-var sourcemaps = require('gulp-sourcemaps')
-var notify = require('gulp-notify');
+const babel = require('gulp-babel')
+const gulp = require('gulp')
+const sourcemaps = require('gulp-sourcemaps')
 
-var fs = require("fs");
-var browserify = require("browserify");
-var mocha = require('gulp-mocha')
-var eslint = require('gulp-eslint')
+const fs = require('fs')
+const browserify = require('browserify')
+const mocha = require('gulp-mocha')
+const eslint = require('gulp-eslint')
 
-gulp.task('browserify', ['compile'], function() {
-  browserify("./dist/main/minio.js", {
+const compileJS = (src, dest) => {
+  return gulp.src(src)
+    .pipe(sourcemaps.init())
+    .pipe(babel({
+      presets: [['@babel/env', {
+        targets: { node: 4 }
+      }]]
+    }))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(dest))
+}
+
+const compile = () => compileJS('src/main/**/*.js', 'dist/main')
+const testCompile = gulp.series(compile, () => {
+  return compileJS('src/test/**/*.js', 'dist/test')
+})
+
+exports.browserify = gulp.series(compile, () => {
+  return browserify('./dist/main/minio.js', {
     standalone: 'MinIO'
   })
     .bundle()
-    .on("error", function (err) { console.log("Error : " + err.message); })
-    .pipe(fs.createWriteStream("./dist/main/minio-browser.js"));
+    .on('error', (err) => console.log('Error : ' + err.message))
+    .pipe(fs.createWriteStream('./dist/main/minio-browser.js'))
 })
 
-gulp.task('default', ['test', 'browserify'], function() {})
-
-gulp.task('compile', function(cb) {
-  compile('src/main/**/*.js', 'minio.js', 'dist/main', cb)
-})
-
-gulp.task('test:compile', ['compile'], function(cb) {
-  compile('src/test/**/*.js', 'minio-test.js', 'dist/test', cb)
-})
-
-gulp.task('test', ['compile', 'test:compile'], function() {
-  gulp.src('dist/test/**/*.js', {
+exports.test = gulp.series(testCompile, () => {
+  return gulp.src('dist/test/**/*.js', {
     read: false
-  })
-    .pipe(mocha({
-      reporter: 'spec',
-      ui: 'bdd',
-    }))
-    .once('error', () => {
-			process.exit(1);
-		})
-		.once('end', () => {
-			process.exit();
-		})
+  }).pipe(mocha({
+    exit: true,
+    reporter: 'spec',
+    ui: 'bdd',
+  }))
 })
 
-gulp.task('lint', function() {
-  gulp.src('src/**/*.js')
+exports.lint = () => {
+  return gulp.src(['src/**/*.js', 'gulpfile.js'])
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.failAfterError())
-})
-
-gulp.task('functional-test', ['compile'], function() {
-  compile('src/test/functional/*.js', 'functional', 'dist/test/functional/', function() {
-    gulp.src('dist/test/functional/*.js', {
-      read: false
-    })
-      .pipe(mocha({
-        reporter: 'spec',
-        ui: 'bdd',
-      }))
-      .once('error', () => {
-        process.exit(1);
-      })
-      .once('end', () => {
-        process.exit();
-      })
-  })
-})
-
-function compile(src, name, dest, cb) {
-  gulp.src(src)
-    .pipe(sourcemaps.init())
-    .pipe(babel())
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(dest))
-    .on('end', function() {
-      cb()
-    })
 }
+
+exports.functionalTest = gulp.series(testCompile, () => {
+  return gulp.src('dist/test/functional/*.js', {
+    read: false
+  }).pipe(mocha({
+    exit: true,
+    reporter: 'spec',
+    ui: 'bdd',
+  }))
+})
+
+exports.compile = compile
+exports.testCompile = testCompile
+exports.default = gulp.series(exports.test, exports.browserify)

@@ -8,4 +8,12 @@ node_modules
 
 /src/
 /dist/test/
+/examples/
+/docs/
 
+.eslintrc.yml                   
+.travis.yml
+appveyor.yml
+CONTRIBUTING.md
+gulpfile.js
+*.js.map

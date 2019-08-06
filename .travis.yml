@@ -14,9 +14,9 @@ env:
 - ARCH=i686
 
 node_js:
-- '6'
-- '5'
-- '4'
+- '12'
+- '10'
+- '8'
 
 script:
 - gulp browserify
