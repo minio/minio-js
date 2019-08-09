@@ -956,7 +956,7 @@ export class Client {
         var partNumber = 1
         var uploadedSize = 0
         async.whilst(
-          () => uploadedSize < size,
+          cb => { cb(null, uploadedSize < size) },
           cb => {
             var part = parts[partNumber]
             var hash = transformers.getHashSummer(this.enableSHA256)
