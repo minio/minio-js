@@ -19,6 +19,7 @@ node_js:
 - '8'
 
 script:
+- gulp test
 - gulp browserify
 - gulp lint
 
