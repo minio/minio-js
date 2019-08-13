@@ -85,10 +85,10 @@ describe('functional tests', function() {
   var _100kbmd5 = crypto.createHash('md5').update(_100kb).digest('hex')
   var _100kb1kboffsetmd5 = crypto.createHash('md5').update(_100kb.slice(1024)).digest('hex')
 
-  var _6mbObjectName = 'datafile-6-MB'
-  var _6mb = dataDir ? fs.readFileSync(dataDir + '/' + _6mbObjectName) : Buffer.alloc(6 * 1024 * 1024, 0)
-  var _6mbmd5 = crypto.createHash('md5').update(_6mb).digest('hex')
-  var _6mbObjectNameCopy = _6mbObjectName + '-copy'
+  var _65mbObjectName = 'datafile-65-MB'
+  var _65mb = dataDir ? fs.readFileSync(dataDir + '/' + _65mbObjectName) : Buffer.alloc(65 * 1024 * 1024, 0)
+  var _65mbmd5 = crypto.createHash('md5').update(_65mb).digest('hex')
+  var _65mbObjectNameCopy = _65mbObjectName + '-copy'
 
   var _5mbObjectName = 'datafile-5-MB'
   var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : Buffer.alloc(5 * 1024 * 1024, 0)
@@ -392,19 +392,19 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
-      var stream = readableStream(_6mb)
-      client.putObject(bucketName, _6mbObjectName, stream, done)
+    step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
+      var stream = readableStream(_65mb)
+      client.putObject(bucketName, _65mbObjectName, stream, done)
     })
 
-    step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
+    step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
       var hash = crypto.createHash('md5')
-      client.getObject(bucketName, _6mbObjectName, (e, stream) => {
+      client.getObject(bucketName, _65mbObjectName, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
         stream.on('end', () => {
-          if (hash.digest('hex') === _6mbmd5) return done()
+          if (hash.digest('hex') === _65mbmd5) return done()
           done(new Error('content mismatch'))
         })
       })
@@ -419,10 +419,10 @@ describe('functional tests', function() {
       })
     })
 
-    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, offset:0, length:100*1024_`, done => {
+    step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, offset:0, length:100*1024_`, done => {
       var hash = crypto.createHash('md5')
-      var expectedHash = crypto.createHash('md5').update(_6mb.slice(0,100*1024)).digest('hex')
-      client.getPartialObject(bucketName, _6mbObjectName, 0, 100*1024, (e, stream) => {
+      var expectedHash = crypto.createHash('md5').update(_65mb.slice(0,100*1024)).digest('hex')
+      client.getPartialObject(bucketName, _65mbObjectName, 0, 100*1024, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
@@ -433,31 +433,31 @@ describe('functional tests', function() {
       })
     })
 
-    step(`copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_6mbObjectNameCopy}, srcObject:/${bucketName}/${_6mbObjectName}_`, done => {
-      client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName, (e) => {
+    step(`copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_65mbObjectNameCopy}, srcObject:/${bucketName}/${_65mbObjectName}_`, done => {
+      client.copyObject(bucketName, _65mbObjectNameCopy, "/" + bucketName + "/" + _65mbObjectName, (e) => {
         if (e) return done(e)
         done()
       })
     })
 
-    step(`copyObject(bucketName, objectName, srcObject)_bucketName:${bucketName}, objectName:${_6mbObjectNameCopy}, srcObject:/${bucketName}/${_6mbObjectName}_`, done => {
-      client.copyObject(bucketName, _6mbObjectNameCopy, "/" + bucketName + "/" + _6mbObjectName)
+    step(`copyObject(bucketName, objectName, srcObject)_bucketName:${bucketName}, objectName:${_65mbObjectNameCopy}, srcObject:/${bucketName}/${_65mbObjectName}_`, done => {
+      client.copyObject(bucketName, _65mbObjectNameCopy, "/" + bucketName + "/" + _65mbObjectName)
         .then(() => done())
         .catch(done)
     })
 
-    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
-      client.statObject(bucketName, _6mbObjectName, (e, stat) => {
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
+      client.statObject(bucketName, _65mbObjectName, (e, stat) => {
         if (e) return done(e)
-        if (stat.size !== _6mb.length) return done(new Error('size mismatch'))
+        if (stat.size !== _65mb.length) return done(new Error('size mismatch'))
         done()
       })
     })
 
-    step(`statObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
-      client.statObject(bucketName, _6mbObjectName)
+    step(`statObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
+      client.statObject(bucketName, _65mbObjectName)
         .then(stat => {
-          if (stat.size !== _6mb.length)
+          if (stat.size !== _65mb.length)
             return done(new Error('size mismatch'))
         })
         .then(() => done())
@@ -467,7 +467,7 @@ describe('functional tests', function() {
     step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       client.removeObject(bucketName, _100kbObjectName)
         .then(function() {
-          async.map([_100kbObjectBufferName, _6mbObjectName, _6mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
+          async.map([_100kbObjectBufferName, _65mbObjectName, _65mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
         })
         .catch(done)
     })
@@ -573,10 +573,10 @@ describe('functional tests', function() {
   })
 
   describe('listIncompleteUploads removeIncompleteUpload', () => {
-    step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_6mbObjectName}, metaData:${metaData}`, done => {
-      client.initiateNewMultipartUpload(bucketName, _6mbObjectName, metaData, done)
+    step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, metaData:${metaData}`, done => {
+      client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData, done)
     })
-    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_6mbObjectName}, recursive: true_`, function(done) {
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`, function(done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       if (!client.host.includes('s3.amazonaws.com')) {
@@ -584,14 +584,14 @@ describe('functional tests', function() {
       }
 
       var found = false
-      client.listIncompleteUploads(bucketName, _6mbObjectName, true)
+      client.listIncompleteUploads(bucketName, _65mbObjectName, true)
         .on('error', e => done(e))
         .on('data', data => {
-          if (data.key === _6mbObjectName) found = true
+          if (data.key === _65mbObjectName) found = true
         })
         .on('end', () => {
           if (found) return done()
-          done(new Error(`${_6mbObjectName} not found during listIncompleteUploads`))
+          done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
         })
     })
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function(done) {
@@ -605,63 +605,63 @@ describe('functional tests', function() {
       client.listIncompleteUploads(bucketName, "", true)
         .on('error', e => done(e))
         .on('data', data => {
-          if (data.key === _6mbObjectName) found = true
+          if (data.key === _65mbObjectName) found = true
         })
         .on('end', () => {
           if (found) return done()
-          done(new Error(`${_6mbObjectName} not found during listIncompleteUploads`))
+          done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
         })
     })
-    step(`removeIncompleteUploads(bucketName, prefix)_bucketName:${bucketName}, prefix:${_6mbObjectName}_`, done => {
-      client.removeIncompleteUpload(bucketName, _6mbObjectName)
+    step(`removeIncompleteUploads(bucketName, prefix)_bucketName:${bucketName}, prefix:${_65mbObjectName}_`, done => {
+      client.removeIncompleteUpload(bucketName, _65mbObjectName)
         .then(done)
         .catch(done)
     })
   })
 
   describe('fPutObject fGetObject', function() {
-    var tmpFileUpload = `${tmpDir}/${_6mbObjectName}`
-    var tmpFileDownload = `${tmpDir}/${_6mbObjectName}.download`
+    var tmpFileUpload = `${tmpDir}/${_65mbObjectName}`
+    var tmpFileDownload = `${tmpDir}/${_65mbObjectName}.download`
 
-    step(`fPutObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
-      fs.writeFileSync(tmpFileUpload, _6mb)
-      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, done)
+    step(`fPutObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}_`, done => {
+      fs.writeFileSync(tmpFileUpload, _65mb)
+      client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, done)
     })
 
-    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}, metaData: ${metaData}_`, done => client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload, metaData, done))
-    step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileDownload}_`, done => {
-      client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload)
+    step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}, metaData: ${metaData}_`, done => client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, metaData, done))
+    step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileDownload}_`, done => {
+      client.fGetObject(bucketName, _65mbObjectName, tmpFileDownload)
         .then(() => {
           var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
-          if (md5sum === _6mbmd5) return done()
+          if (md5sum === _65mbmd5) return done()
           return done(new Error('md5sum mismatch'))
         })
         .catch(done)
     })
 
-    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, done => {
+    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
       fs.unlinkSync(tmpFileDownload)
-      client.removeObject(bucketName, _6mbObjectName)
+      client.removeObject(bucketName, _65mbObjectName)
         .then(() => done())
         .catch(done)
     })
 
-    step(`fPutObject(bucketName, objectName, filePath, metaData)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileUpload}_`, done => {
-      client.fPutObject(bucketName, _6mbObjectName, tmpFileUpload)
+    step(`fPutObject(bucketName, objectName, filePath, metaData)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}_`, done => {
+      client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload)
         .then(() => done())
         .catch(done)
     })
 
-    step(`fGetObject(bucketName, objectName, filePath)_bucketName:${bucketName}, objectName:${_6mbObjectName}, filePath:${tmpFileDownload}_`, done => {
-      client.fGetObject(bucketName, _6mbObjectName, tmpFileDownload)
+    step(`fGetObject(bucketName, objectName, filePath)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileDownload}_`, done => {
+      client.fGetObject(bucketName, _65mbObjectName, tmpFileDownload)
         .then(() => done())
         .catch(done)
     })
 
-    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_6mbObjectName}_`, (done) => {
+    step(`removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
       fs.unlinkSync(tmpFileUpload)
       fs.unlinkSync(tmpFileDownload)
-      client.removeObject(bucketName, _6mbObjectName, done)
+      client.removeObject(bucketName, _65mbObjectName, done)
     })
   })
   describe('fGetObject-resume', () => {
