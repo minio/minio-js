@@ -16,6 +16,8 @@
 
 import stream from 'stream'
 import mime from 'mime-types'
+import querystring from 'querystring'
+import _ from 'lodash'
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -310,9 +312,12 @@ export function insertContentType(metaData, filePath) {
   return metaData
 }
 
-// Function prepends metadata with the appropriate prefix if it is not already on
-export function prependXAMZMeta(metaData) {
+// Function normalizes the metadata
+export function cleanMetadata(metaData) {  
+  // Prepends metadata with the appropriate prefix if it is not already on
   var newMetadata = Object.assign({}, metaData)
+  // URL escape the values  
+  _.map(metaData, (v, k) => (!isSupportedHeader(key) && !isStorageclassHeader(key)) ? metaData[k] = querystring.escape(v): metaData[k] = v)  
   for (var key in metaData) {
     if(!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
       newMetadata["X-Amz-Meta-" + key ] = newMetadata[key]

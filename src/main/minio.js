@@ -28,7 +28,7 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 
-import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
+import { extractMetadata, cleanMetadata, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
@@ -897,8 +897,8 @@ export class Client {
     // Inserts correct `content-type` attribute based on metaData and filePath
     insertContentType(metaData, filePath)
 
-    //Updates metaData to have the correct prefix if needed
-    metaData = prependXAMZMeta(metaData)
+    // Normalizes the metaData
+    metaData = cleanMetadata(metaData)
     var size
     var partSize
 
@@ -1045,8 +1045,8 @@ export class Client {
       metaData = size
     }
 
-    //Ensures Metadata has appropriate prefix for A3 API
-    metaData = prependXAMZMeta(metaData)
+    // Normalizes the metaData
+    metaData = cleanMetadata(metaData)
     if (typeof stream === 'string' || stream instanceof Buffer) {
       // Adapts the non-stream interface into a stream.
       size = stream.length
