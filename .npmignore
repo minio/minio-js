@@ -11,7 +11,7 @@ node_modules
 /examples/
 /docs/
 
-.eslintrc.yml                   
+.eslintrc.js                   
 .travis.yml
 appveyor.yml
 CONTRIBUTING.md
