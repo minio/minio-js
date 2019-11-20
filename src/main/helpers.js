@@ -306,8 +306,9 @@ export function insertContentType(metaData, filePath) {
   }
   // if `content-type` attribute is not present in metadata,
   // then infer it from the extension in filePath
-  metaData['content-type'] = probeContentType(filePath)
-  return metaData
+  var newMetadata = Object.assign({}, metaData)
+  newMetadata['content-type'] = probeContentType(filePath)
+  return newMetadata
 }
 
 // Function prepends metadata with the appropriate prefix if it is not already on
