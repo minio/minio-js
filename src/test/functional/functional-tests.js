@@ -65,6 +65,10 @@ describe('functional tests', function() {
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
 
+  // set the partSize to ensure multipart upload chunk size.
+  // if not set, putObject with stream data and undefined length will use about 500Mb chunkSize (5Tb/10000).
+  playConfig.partSize = 64 * 1024 * 1024
+
   var client = new minio.Client(playConfig)
   var usEastConfig = playConfig
   usEastConfig.region = 'us-east-1'
@@ -93,6 +97,10 @@ describe('functional tests', function() {
   var _5mbObjectName = 'datafile-5-MB'
   var _5mb = dataDir ? fs.readFileSync(dataDir + '/' + _5mbObjectName) : Buffer.alloc(5 * 1024 * 1024, 0)
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
+
+  // create new http agent to check requests release sockets
+  var httpAgent = (playConfig.useSSL ? https : http).Agent({ keepAlive: true })
+  client.setRequestOptions({ agent: httpAgent })
 
   var metaData = {
     'Content-Type': 'text/html',
@@ -394,7 +402,12 @@ describe('functional tests', function() {
 
     step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
       var stream = readableStream(_65mb)
-      client.putObject(bucketName, _65mbObjectName, stream, done)
+      client.putObject(bucketName, _65mbObjectName, stream, () => {
+        setTimeout(() => {
+          if (Object.values(httpAgent.sockets).length === 0) return done()
+          done(new Error('http request did not release network socket'))
+        }, 0)
+      })
     })
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
@@ -625,7 +638,12 @@ describe('functional tests', function() {
 
     step(`fPutObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _65mb)
-      client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, done)
+      client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, () => {
+        setTimeout(() => {
+          if (Object.values(httpAgent.sockets).length === 0) return done()
+          done(new Error('http request did not release network socket'))
+        }, 0)
+      })
     })
 
     step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}, metaData: ${metaData}_`, done => client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, metaData, done))
