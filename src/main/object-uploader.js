@@ -198,6 +198,9 @@ export default class ObjectUploader extends Transform {
 
       this.etags.push({part: partNumber, etag})
 
+      // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+      response.on('data', () => {})
+
       // We're ready for the next chunk.
       callback()
     })
