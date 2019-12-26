@@ -247,7 +247,7 @@ export class Client {
       throw new errors.InvalidArgumentError('Input appName cannot be empty.')
     }
     if (!isString(appVersion)) {
-      throw new TypeError(`Invalid appName: ${appVersion}`)
+      throw new TypeError(`Invalid appVersion: ${appVersion}`)
     }
     if (appVersion.trim() === '') {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
