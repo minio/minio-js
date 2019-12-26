@@ -1,0 +1,29 @@
+module.exports = {
+  'env': {
+    'node': true,
+    'mocha': true,
+    'es6': true
+  },
+  'extends': 'eslint:recommended',
+  'parserOptions': {
+    'sourceType': 'module'
+  },
+  'rules': {
+    'indent': [
+      'error',
+      2,
+      {
+        'FunctionDeclaration': { 'parameters': 'first' },
+        'FunctionExpression': { 'parameters': 'first' },
+        'CallExpression': { 'arguments': 'first' },
+        'ArrayExpression': 'first',
+        'ObjectExpression': 'first'
+      }
+    ],
+    'linebreak-style': [
+      'error',
+      (process.platform === 'win32' ? 'windows' : 'unix') // all windows platforms are denoted by win32
+    ],
+    'semi': ['error', 'never']
+  }
+}
