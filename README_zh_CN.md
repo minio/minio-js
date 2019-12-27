@@ -179,7 +179,7 @@ mc ls play/europetrip/
 * [presigned-putobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
 * [presigned-postpolicy.js](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
 
-####完整示例 : 存储桶通知
+#### 完整示例 : 存储桶通知
 * [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
 * [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
 * [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
