@@ -181,7 +181,7 @@ export function parseInitiateMultipart(xml) {
   var result = transform(xml, {
     uploadId: 'InitiateMultipartUploadResult/UploadId'
   })
-  if (result.UploadId) return result.UploadId
+  if (result.uploadId) return result.uploadId
   throw new errors.InvalidXMLError('UploadId missing in XML')
 }
 
