@@ -186,33 +186,20 @@ export function parseInitiateMultipart(xml) {
 
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
-  // var template = {
-  //   location: '',
-  //   bucket: '',
-  //   key: '',
-  //   etag: ''
-  // }
-
-  // var result = transform(xml, template)
-  // return result 
-
-  var xmlobj = parseXml(xml)
-  if (xmlobj.Location) {
-    var location = xmlobj.Location[0]
-    var bucket = xmlobj.Bucket[0]
-    var key = xmlobj.Key[0]
-    var etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-      .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-
-    return {location, bucket, key, etag}
+  var template = {
+    errCode: 'Error/Code',
+    errMessage: 'Error/Message',
+    location: 'CompleteMultipartUploadOutput/Location',
+    bucket: 'CompleteMultipartUploadOutput/Bucket',
+    key: 'CompleteMultipartUploadOutput/Key',
+    etag: "translate(CompleteMultipartUploadOutput/ETag, '\"', '')"
   }
-  // Complete Multipart can return XML Error after a 200 OK response
-  if (xmlobj.Code && xmlobj.Message) {
-    var errCode = xmlobj.Code[0]
-    var errMessage = xmlobj.Message[0]
-    return {errCode, errMessage}
+
+  var result = transform(xml, template)
+  if (result.errCode && result.errMessage) {
+    return _.pick(result, ['errCode', 'errMessage'])
   }
+  return result 
 }
 
 // parse XML response for list objects in a bucket
