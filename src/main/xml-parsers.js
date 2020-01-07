@@ -14,31 +14,9 @@
  * limitations under the License.
  */
 
-import xml2js from 'xml2js'
 import transform from 'camaro'
 import _ from 'lodash'
 import * as errors from './errors.js'
-
-var options = {  // options passed to xml2js parser
-  explicitRoot: false,    // return the root node in the resulting object?
-  ignoreAttrs: true,     // ignore attributes, only create text nodes
-}
-
-var parseXml = (xml) => {
-  var result = null
-  var error = null
-
-  var parser = new xml2js.Parser(options)
-  parser.parseString(xml, function (e, r) {
-    error = e
-    result = r
-  })
-
-  if (error) {
-    throw new Error('XML parse error')
-  }
-  return result
-}
 
 // Parse XML and return information as Javascript types
 
@@ -155,24 +133,20 @@ export function parseBucketRegion(xml) {
 
 // parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml) {
-  var xmlobj = parseXml(xml)
-  var result = {
-    isTruncated: false,
-    parts: [],
-    marker: undefined
+  var template = {
+    isTruncated: 'boolean(ListPartsOutput/IsTruncated = "true")',
+    parts: ['ListPartsOutput/Part', {
+      part: 'PartNumber',
+      lastModified: 'LastModified',
+      etag: "translate(ETag, '\"', '')"
+    }],
+    marker: 'ListPartsOutput/NextPartNumberMarker'
   }
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
-  if (xmlobj.NextPartNumberMarker) result.marker = +xmlobj.NextPartNumberMarker[0]
-  if (xmlobj.Part) {
-    xmlobj.Part.forEach(p => {
-      var part = +p.PartNumber[0]
-      var lastModified = new Date(p.LastModified[0])
-      var etag = p.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      result.parts.push({part, lastModified, etag})
-    })
-  }
+  var result = transform(xml, template)
+  if (!result.marker) delete result.marker
+  _.forEach(result.parts, p => {
+    if (p.lastModified) p.lastModified = new Date(p.lastModified)
+  })
   return result
 }
 
