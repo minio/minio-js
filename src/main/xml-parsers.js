@@ -149,7 +149,8 @@ export function parseBucketNotification(xml) {
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml) {
-  return parseXml(xml)
+  var result = transform(xml, { region: 'LocationConstraint'})
+  return result.region
 }
 
 // parse XML response for list parts of an in progress multipart upload
@@ -176,9 +177,11 @@ export function parseListParts(xml) {
 }
 
 // parse XML response when a new multipart upload is initiated
-export function parseInitiateMultipart(xml) {  
-  var xmlobj = parseXml(xml)
-  if (xmlobj.UploadId) return xmlobj.UploadId[0]
+export function parseInitiateMultipart(xml) {
+  var result = transform(xml, {
+    uploadId: 'InitiateMultipartUploadResult/UploadId'
+  })
+  if (result.UploadId) return result.UploadId
   throw new errors.InvalidXMLError('UploadId missing in XML')
 }
 
