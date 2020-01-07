@@ -90,18 +90,13 @@ export function parseListMultipart(xml) {
       prefix: '.'
     }],
     isTruncated: 'boolean(ListMultipartUploadsOutput/IsTruncated = "true")',
-    nextKeyMarker: 'NextKeyMarker',
-    nextUploadIdMarker: 'NextUploadIdMarker',
+    nextKeyMarker: 'ListMultipartUploadsOutput/NextKeyMarker',
+    nextUploadIdMarker: 'ListMultipartUploadsOutput/NextUploadIdMarker',
   }
-
   var result = transform(xml, template)
   // backward compat
-  if (!result.nextKeyMarker) {
-    delete result.nextKeyMarker
-  }
-  if (!result.nextUploadIdMarker) {
-    delete result.nextUploadIdMarker
-  }
+  if (!result.nextKeyMarker) delete result.nextKeyMarker
+  if (!result.nextUploadIdMarker) delete result.nextUploadIdMarker
   return result
 }
 
