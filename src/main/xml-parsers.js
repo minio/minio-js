@@ -23,14 +23,14 @@ import * as errors from './errors.js'
 // parse error XML response
 export function parseError(xml, headerInfo) {
   var template = {
-    code: "Error/Code",
-    message: "Error/Message",
-    key: "Error/Key",
-    bucketname: "Error/BucketName",
-    resource: "Error/Resource",
-    region: "Error/Region",
-    requestid: "Error/RequestId",
-    hostid: "Error/HostId"
+    code: 'Error/Code',
+    message: 'Error/Message',
+    key: 'Error/Key',
+    bucketname: 'Error/BucketName',
+    resource: 'Error/Resource',
+    region: 'Error/Region',
+    requestid: 'Error/RequestId',
+    hostid: 'Error/HostId'
   }
   var xmlError = transform(xml, template)
   var e = new errors.S3Error(xmlError.message)
@@ -181,10 +181,10 @@ export function parseCompleteMultipart(xml) {
 export function parseListObjects(xml) {
   var template = {
     objects: ['ListBucketResult/Contents', {
-      name: "Key",
-      lastModified: "LastModified",
+      name: 'Key',
+      lastModified: 'LastModified',
       etag: "translate(ETag, '\"', '')",
-      size: "number(Size)"
+      size: 'number(Size)'
     }],
     isTruncated: 'boolean(ListBucketResult/IsTruncated = "true")',
     nextMarker: 'ListBucketResult/NextMarker'
@@ -207,10 +207,10 @@ export function parseListObjects(xml) {
 export function parseListObjectsV2(xml) {
   var template = {
     objects: ['ListBucketResult/Contents', {
-      name: "Key",
-      lastModified: "LastModified",
+      name: 'Key',
+      lastModified: 'LastModified',
       etag: "translate(ETag, '\"', '')",
-      size: "number(Size)"
+      size: 'number(Size)'
     }],
     isTruncated: 'boolean(ListBucketResult/IsTruncated = "true")',
     nextContinuationToken: 'ListBucketResult/nextContinuationToken'
