@@ -80,25 +80,28 @@ export function parseCopyObject(xml) {
 
 // parse XML response for listing in-progress multipart uploads
 export function parseListMultipart(xml) {
-  var result = {
-    uploads: [],
-    prefixes: [],
-    isTruncated: false
+  var template = {
+    uploads: ['ListMultipartUploadsOutput/Upload', {
+      key: 'Key',
+      uploadId: 'UploadId',
+      initiated: 'Initiated',
+    }],
+    prefixes: ['ListMultipartUploadsOutput/CommonPrefixes/Prefix', {
+      prefix: '.'
+    }],
+    isTruncated: 'boolean(ListMultipartUploadsOutput/IsTruncated = "true")',
+    nextKeyMarker: 'NextKeyMarker',
+    nextUploadIdMarker: 'NextUploadIdMarker',
   }
-  var xmlobj =  parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
-  if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker[0]
-  if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
-  if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
-    result.prefixes.push({prefix: prefix[0]})
-  })
-  if (xmlobj.Upload) xmlobj.Upload.forEach(upload => {
-    result.uploads.push({
-      key: upload.Key[0],
-      uploadId: upload.UploadId[0],
-      initiated: new Date(upload.Initiated[0])
-    })
-  })
+
+  var result = transform(xml, template)
+  // backward compat
+  if (!result.nextKeyMarker) {
+    delete result.nextKeyMarker
+  }
+  if (!result.nextUploadIdMarker) {
+    delete result.nextUploadIdMarker
+  }
   return result
 }
 
