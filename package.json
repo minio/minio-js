@@ -33,6 +33,7 @@
   "dependencies": {
     "async": "^3.1.0",
     "block-stream2": "^2.0.0",
+    "camaro": "^3.0.19",
     "es6-error": "^4.1.1",
     "json-stream": "^1.0.0",
     "lodash": "^4.14.2",

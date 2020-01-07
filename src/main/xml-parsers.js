@@ -15,6 +15,7 @@
  */
 
 import xml2js from 'xml2js'
+import transform from 'camaro'
 import _ from 'lodash'
 import * as errors from './errors.js'
 
@@ -43,17 +44,18 @@ var parseXml = (xml) => {
 
 // parse error XML response
 export function parseError(xml, headerInfo) {
-  var xmlError = {}
-  var xmlobj = parseXml(xml)
-  var message
-  _.each(xmlobj, (n, key) => {
-    if (key === 'Message') {
-      message = xmlobj[key][0]
-      return
-    }
-    xmlError[key.toLowerCase()] = xmlobj[key][0]
-  })
-  var e = new errors.S3Error(message)
+  var template = {
+    code: "Error/Code",
+    message: "Error/Message",
+    key: "Error/Key",
+    bucketname: "Error/BucketName",
+    resource: "Error/Resource",
+    region: "Error/Region",
+    requestid: "Error/RequestId",
+    hostid: "Error/HostId"
+  }
+  var xmlError = transform(xml, template)
+  var e = new errors.S3Error(xmlError.message)
   _.each(xmlError, (value, key) => {
     e[key] = value
   })
@@ -65,16 +67,14 @@ export function parseError(xml, headerInfo) {
 
 // parse XML response for copy object
 export function parseCopyObject(xml) {
-  var result = {
-    etag: "",
-    lastModified: ""
+  var template = {
+    etag: "translate(CopyObjectResult/ETag, '\"', '')",
+    lastModified: 'CopyObjectResult/LastModified'
   }
-  var xmlobj = parseXml(xml)
-  if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-    .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-    .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-  if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified[0])
-
+  var result = transform(xml, template)
+  if (result.lastModified) {
+    result.lastModified = new Date(result.lastModified)
+  }
   return result
 }
 
@@ -104,18 +104,19 @@ export function parseListMultipart(xml) {
 
 // parse XML response to list all the owned buckets
 export function parseListBucket(xml) {
-  var result = []
-  var xmlobj = parseXml(xml)
-  if (xmlobj.Buckets) {
-    if (xmlobj.Buckets[0].Bucket) {
-      xmlobj.Buckets[0].Bucket.forEach(bucket => {
-        var name = bucket.Name[0]
-        var creationDate = new Date(bucket.CreationDate[0])
-        result.push({name, creationDate})
-      })
-    }
+  var template = {
+    buckets: ['ListAllMyBucketsResult/Buckets/Bucket', {
+      name: 'Name',
+      creationDate: 'CreationDate'
+    }]
   }
-  return result
+  var result = transform(xml, template)
+  _.forEach(result.buckets, (b) => {
+    if (b.creationDate) {
+      b.creationDate = new Date(b.creationDate)
+    }
+  })
+  return result.buckets
 }
 
 // parse XML response for bucket notification
@@ -180,7 +181,7 @@ export function parseBucketNotification(xml) {
       result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter})
     })
   }
-
+  
   return result
 }
 
@@ -213,7 +214,7 @@ export function parseListParts(xml) {
 }
 
 // parse XML response when a new multipart upload is initiated
-export function parseInitiateMultipart(xml) {
+export function parseInitiateMultipart(xml) {  
   var xmlobj = parseXml(xml)
   if (xmlobj.UploadId) return xmlobj.UploadId[0]
   throw new errors.InvalidXMLError('UploadId missing in XML')
@@ -221,6 +222,16 @@ export function parseInitiateMultipart(xml) {
 
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
+  // var template = {
+  //   location: '',
+  //   bucket: '',
+  //   key: '',
+  //   etag: ''
+  // }
+
+  // var result = transform(xml, template)
+  // return result 
+
   var xmlobj = parseXml(xml)
   if (xmlobj.Location) {
     var location = xmlobj.Location[0]
@@ -242,65 +253,99 @@ export function parseCompleteMultipart(xml) {
 
 // parse XML response for list objects in a bucket
 export function parseListObjects(xml) {
-  var result = {
-    objects: [],
-    isTruncated: false
+  var template = {
+    objects: ['ListBucketResult/Contents', {
+      name: "Key",
+      lastModified: "LastModified",
+      etag: "translate(ETag, '\"', '')",
+      size: "number(Size)"
+    }],
+    isTruncated: 'boolean(ListBucketResult/IsTruncated = "true")',
+    nextMarker: 'ListBucketResult/NextMarker'
   }
-  var nextMarker
-  var xmlobj = parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
-  if (xmlobj.Contents) {
-    xmlobj.Contents.forEach(content => {
-      var name = content.Key[0]
-      var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      var size = +content.Size[0]
-      result.objects.push({name, lastModified, etag, size})
-      nextMarker = name
-    })
+  var result = transform(xml, template)
+  // backward compatible: only add nextMarker prop if exists
+  if (!result.isTruncated) {
+    delete result.nextMarker
   }
-  if (xmlobj.CommonPrefixes) {
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
-      var size = 0
-      result.objects.push({prefix, size})
-    })
-  }
-  if (result.isTruncated) {
-    result.nextMarker = xmlobj.NextMarker ? xmlobj.NextMarker[0]: nextMarker
-  }
+
+  // var result = {
+  //   objects: [],
+  //   isTruncated: false
+  // }
+  // var nextMarker
+  // var xmlobj = parseXml(xml)
+  // if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  // if (xmlobj.Contents) {
+  //   xmlobj.Contents.forEach(content => {
+  //     var name = content.Key[0]
+  //     var lastModified = new Date(content.LastModified[0])
+  //     var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+  //       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+  //       .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+  //     var size = +content.Size[0]
+  //     result.objects.push({name, lastModified, etag, size})
+  //     nextMarker = name
+  //   })
+  // }
+  // if (xmlobj.CommonPrefixes) {
+  //   xmlobj.CommonPrefixes.forEach(commonPrefix => {
+  //     var prefix = commonPrefix.Prefix[0]
+  //     var size = 0
+  //     result.objects.push({prefix, size})
+  //   })
+  // }
+  // if (result.isTruncated) {
+  //   result.nextMarker = xmlobj.NextMarker ? xmlobj.NextMarker[0]: nextMarker
+  // }
   return result
 }
 
 // parse XML response for list objects v2 in a bucket
 export function parseListObjectsV2(xml) {
-  var result = {
-    objects: [],
-    isTruncated: false
+  var template = {
+    objects: ['ListBucketResult/Contents', {
+      name: "Key",
+      lastModified: "LastModified",
+      etag: "translate(ETag, '\"', '')",
+      size: "number(Size)"
+    }],
+    isTruncated: 'boolean(ListBucketResult/IsTruncated = "true")',
+    nextContinuationToken: 'ListBucketResult/nextContinuationToken'
   }
-  var xmlobj = parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
-  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
-  if (xmlobj.Contents) {
-    xmlobj.Contents.forEach(content => {
-      var name = content.Key[0]
-      var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      var size = +content.Size[0]
-      result.objects.push({name, lastModified, etag, size})
-    })
+  var result = transform(xml, template)
+  // backward compatible: only add nextContinuationToken if exists
+  if (!result.nextContinuationToken) {
+    delete result.nextContinuationToken
   }
-  if (xmlobj.CommonPrefixes) {
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
-      var size = 0
-      result.objects.push({prefix, size})
-    })
-  }
+
+  // var result = {
+  //   objects: [],
+  //   isTruncated: false
+  // }
+  // var xmlobj = parseXml(xml)
+  // if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  // if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
+
+  // if (xmlobj.Contents) {
+  //   xmlobj.Contents.forEach(content => {
+  //     var name = content.Key[0]
+  //     var lastModified = new Date(content.LastModified[0])
+  //     var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+  //       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+  //       .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+  //     var size = +content.Size[0]
+  //     result.objects.push({name, lastModified, etag, size})
+  //   })
+  // }
+  // if (xmlobj.CommonPrefixes) {
+  //   xmlobj.CommonPrefixes.forEach(commonPrefix => {
+  //     var prefix = commonPrefix.Prefix[0]
+  //     var size = 0
+  //     result.objects.push({prefix, size})
+  //   })
+  // }
+  
   return result
 }
