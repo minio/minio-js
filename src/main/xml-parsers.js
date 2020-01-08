@@ -34,12 +34,7 @@ export function parseError(xml, headerInfo) {
   }
   var xmlError = transform(xml, template)
   var e = new errors.S3Error(xmlError.message)
-  _.each(xmlError, (value, key) => {
-    e[key] = value
-  })
-  _.each(headerInfo, (value, key) => {
-    e[key] = value
-  })
+  Object.assign(e, xmlError, headerInfo)
   return e
 }
 
