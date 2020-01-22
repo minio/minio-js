@@ -45,11 +45,11 @@ var s3Client = new Minio.Client({
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
-###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})
+###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey, region, transport, sessionToken, partSize})
 
 |     |
 | ---- |
-|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})``|
+|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey, region, transport, sessionToken, partSize})``|
 |Initializes a new client object.|
 
 __Parameters__
