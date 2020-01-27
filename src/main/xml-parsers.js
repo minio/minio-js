@@ -304,3 +304,36 @@ export function parseListObjectsV2(xml) {
   }
   return result
 }
+
+// parse XML response for list objects v2 with metadata in a bucket
+export function parseListObjectsV2WithMetadata(xml) {
+  var result = {
+    objects: [],
+    isTruncated: false
+  }
+  var xmlobj = parseXml(xml)
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
+
+  if (xmlobj.Contents) {
+    xmlobj.Contents.forEach(content => {
+      var name = content.Key[0]
+      var lastModified = new Date(content.LastModified[0])
+      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+      var size = +content.Size[0]
+      var metadata = content.UserMetadata[0];
+      result.objects.push({name, lastModified, etag, size, metadata})
+    })
+  }
+  if (xmlobj.CommonPrefixes) {
+    xmlobj.CommonPrefixes.forEach(commonPrefix => {
+      var prefix = commonPrefix.Prefix[0]
+      var size = 0
+      result.objects.push({prefix, size})
+    })
+  }
+  return result
+}
+

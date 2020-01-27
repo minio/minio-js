@@ -188,6 +188,11 @@ export function getListObjectsV2Transformer() {
   return getConcater(xmlParsers.parseListObjectsV2)
 }
 
+// Parses listObjects with metadata response.
+export function getListObjectsV2WithMetadataTransformer() {
+  return getConcater(xmlParsers.parseListObjectsV2WithMetadata)
+}
+
 // Parses completeMultipartUpload response.
 export function getCompleteMultipartTransformer() {
   return getConcater(xmlParsers.parseCompleteMultipart)
