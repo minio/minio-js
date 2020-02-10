@@ -327,7 +327,7 @@ __Example__
 
 
 ```js
-var stream = minioClient.extentions.listObjectsV2('mybucket','', true,'')
+var stream = minioClient.extensions.listObjectsV2('mybucket','', true,'')
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
