@@ -1,5 +1,8 @@
 import Stream from 'stream'
+
 import * as transformers from './transformers'
+
+import * as errors from './errors.js'
 
 import { isValidPrefix, isValidBucketName, uriEscape,
   isBoolean, isNumber, isString,
@@ -9,7 +12,7 @@ export default class extensions {
 
   constructor(client)
   {
-    this.client = client;
+    this.client = client
   }
 
   // List the objects in the bucket using S3 ListObjects V2 With Metadata
