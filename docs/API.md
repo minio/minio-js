@@ -45,11 +45,11 @@ var s3Client = new Minio.Client({
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
-###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})
+###  new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey, region, transport, sessionToken, partSize})
 
 |     |
 | ---- |
-|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey})``|
+|``new Minio.Client ({endPoint, port, useSSL, accessKey, secretKey, region, transport, sessionToken, partSize})``|
 |Initializes a new client object.|
 
 __Parameters__
@@ -156,7 +156,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName, callback)
+#### bucketExists(bucketName[, callback])
 
 Checks if a bucket exists.
 
@@ -167,7 +167,7 @@ __Parameters__
 | Param  | Type  | Description  |
 |---|---|---|
 | `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. |
+| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -458,7 +458,7 @@ __Parameters__
 
 __Example__
 
-The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
+The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
 var Fs = require('fs')
@@ -516,7 +516,7 @@ __Parameters__
 __Example__
 
 
-The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 5MiB in multiple parts. This allows failed uploads to resume safely by only uploading the missing parts. Uploaded data is carefully verified using MD5SUM signatures.
+The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
 var file = '/tmp/40mbfile'
