@@ -123,6 +123,7 @@ The full API Reference is available here.
 * [`removeBucket`](https://docs.min.io/docs/javascript-client-api-reference#removeBucket)
 * [`listObjects`](https://docs.min.io/docs/javascript-client-api-reference#listObjects)
 * [`listObjectsV2`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2)
+* [`listObjectsV2WithMetadata`] (Extension)
 * [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
 
 ### API Reference : File Object Operations
@@ -166,6 +167,7 @@ The full API Reference is available here.
 * [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
 * [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
+* [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
 * [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.js)
