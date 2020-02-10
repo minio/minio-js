@@ -5,7 +5,7 @@ import { isValidPrefix, isValidBucketName, uriEscape,
   isBoolean, isNumber, isString,
   pipesetup } from './helpers.js'
   
-export default class extension {
+export default class extensions {
 
   constructor(client)
   {

@@ -47,7 +47,7 @@ import { getS3Endpoint } from './s3-endpoints.js'
 
 import { NotificationConfig, NotificationPoller } from './notification'
 
-import extension from './extension';
+import extensions from './extensions';
 
 var Package = require('../../package.json')
 
@@ -2109,12 +2109,12 @@ export class Client {
     return listener
   }
 
-  get extension() {
-    if(!this.clientExtension)
+  get extensions() {
+    if(!this.clientExtensions)
     {
-      this.clientExtension = new extension(this);
+      this.clientExtensions = new extensions(this);
     }
-    return this.clientExtension;
+    return this.clientExtensions;
   }
 }
 
