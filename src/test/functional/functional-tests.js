@@ -1094,7 +1094,7 @@ describe('functional tests', function() {
 
     step(`listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter)_bucketName:${bucketName}, recursive:true_`, done => {
       listArray = []
-      client.listObjectsV2WithMetadata(bucketName, '', true,'')
+      client.extension.listObjectsV2WithMetadata(bucketName, '', true,'')
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
