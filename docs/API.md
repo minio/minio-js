@@ -289,6 +289,48 @@ stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
 
+<a name="listObjectsV2WithMetadata"></a>
+### listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter)
+
+Lists all objects and their metadata in a bucket using S3 listing objects V2 API
+
+__Parameters__
+
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
+| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
+| `startAfter`  | _string_  |  Specifies the object name to start after when listing objects in a bucket. (optional, default `''`). |
+
+
+__Return Value__
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `stream` | _Stream_ | Stream emitting the objects in the bucket. |
+
+The object is of the format:
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `obj.name` | _string_ | name of the object. |
+| `obj.prefix` | _string_ | name of the object prefix. |
+| `obj.size` | _number_ | size of the object. |
+| `obj.etag` | _string_ |etag of the object. |
+| `obj.lastModified` | _Date_ | modified time stamp. |
+| `obj.metadata` | _object_ | metadata of the object. |
+
+
+__Example__
+
+
+```js
+var stream = minioClient.extentions.listObjectsV2('mybucket','', true,'')
+stream.on('data', function(obj) { console.log(obj) } )
+stream.on('error', function(err) { console.log(err) } )
+```
 
 <a name="listIncompleteUploads"></a>
 ### listIncompleteUploads(bucketName, prefix, recursive)
