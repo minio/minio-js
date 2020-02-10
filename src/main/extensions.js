@@ -46,6 +46,7 @@ export default class extensions {
   //   * `obj.size` _number_: size of the object
   //   * `obj.etag` _string_: etag of the object
   //   * `obj.lastModified` _Date_: modified time stamp
+  //   * `obj.metadata` _object_: metadata of the object
 
   listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter) {
     if (prefix === undefined) prefix = ''
