@@ -123,7 +123,7 @@ The full API Reference is available here.
 * [`removeBucket`](https://docs.min.io/docs/javascript-client-api-reference#removeBucket)
 * [`listObjects`](https://docs.min.io/docs/javascript-client-api-reference#listObjects)
 * [`listObjectsV2`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2)
-* [`listObjectsV2WithMetadata`] (Extension)
+* `listObjectsV2WithMetadata` (Extension)
 * [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
 
 ### API Reference : File Object Operations
