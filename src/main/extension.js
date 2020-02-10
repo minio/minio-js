@@ -5,7 +5,6 @@ import { isValidPrefix, isValidBucketName, uriEscape,
   isBoolean, isNumber, isString,
   pipesetup } from './helpers.js'
   
-
 export default class extension {
 
   constructor(client)
@@ -87,7 +86,7 @@ export default class extension {
   // * `delimiter` _string_: A delimiter is a character you use to group keys.
   // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
   // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
-  
+
   listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)

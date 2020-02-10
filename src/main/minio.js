@@ -2118,7 +2118,6 @@ export class Client {
   }
 }
 
-
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
 Client.prototype.listBuckets = promisify(Client.prototype.listBuckets)
