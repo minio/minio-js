@@ -1639,7 +1639,7 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    
+
     if (isFunction(respHeaders)) {
       cb = respHeaders
       respHeaders = {}
@@ -1711,6 +1711,10 @@ export class Client {
 
       postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.accessKey + "/" + getScope(region, date)])
       postPolicy.formData['x-amz-credential'] = this.accessKey + "/" + getScope(region, date)
+
+      if (this.sessionToken) {
+        postPolicy.policy.conditions.push(['eq', '$x-amz-security-token', this.sessionToken])
+      }
 
       var policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
 
