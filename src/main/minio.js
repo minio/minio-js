@@ -47,6 +47,8 @@ import { getS3Endpoint } from './s3-endpoints.js'
 
 import { NotificationConfig, NotificationPoller } from './notification'
 
+import extensions from './extensions'
+
 var Package = require('../../package.json')
 
 export class Client {
@@ -1323,7 +1325,6 @@ export class Client {
     return transformer
   }
 
-
   // List the objects in the bucket using S3 ListObjects V2
   //
   // __Arguments__
@@ -2110,6 +2111,14 @@ export class Client {
     listener.start()
 
     return listener
+  }
+
+  get extensions() {
+    if(!this.clientExtensions)
+    {
+      this.clientExtensions = new extensions(this)
+    }
+    return this.clientExtensions
   }
 }
 
