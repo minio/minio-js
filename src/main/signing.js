@@ -220,7 +220,7 @@ export function signV4(request, accessKey, secretKey, region, requestDate) {
 }
 
 // returns a presigned URL string
-export function presignSignatureV4(request, accessKey, secretKey, region, requestDate, expires) {
+export function presignSignatureV4(request, accessKey, secretKey, sessionToken, region, requestDate, expires) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -262,8 +262,6 @@ export function presignSignatureV4(request, accessKey, secretKey, region, reques
   requestQuery.push(`X-Amz-Date=${iso8601Date}`)
   requestQuery.push(`X-Amz-Expires=${expires}`)
   requestQuery.push(`X-Amz-SignedHeaders=${uriEscape(signedHeaders.join(';').toLowerCase())}`)
-
-  var sessionToken = request.headers['x-amz-security-token']
   if (sessionToken) {
     requestQuery.push(`X-Amz-Security-Token=${sessionToken}`)
   }
