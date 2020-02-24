@@ -1617,7 +1617,7 @@ export class Client {
                                                query})
       try {
         url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
-                                 region, requestDate, expires)
+                                 this.sessionToken, region, requestDate, expires)
       } catch (pe) {
         return cb(pe)
       }
