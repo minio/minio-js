@@ -323,7 +323,12 @@ export function parseListObjectsV2WithMetadata(xml) {
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       var size = +content.Size[0]
-      var metadata = content.UserMetadata[0]
+      var metadata
+      if (content.UserMetadata != null) {
+        metadata = content.UserMetadata[0]
+      } else {
+        metadata = null
+      }
       result.objects.push({name, lastModified, etag, size, metadata})
     })
   }
