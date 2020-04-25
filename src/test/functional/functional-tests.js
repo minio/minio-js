@@ -1179,6 +1179,19 @@ describe('functional tests', function() {
         })
     })
 
+    // Non latin characters
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:fileΩ, stream:1b`, done => {
+      client.putObject(bucketName, 'fileΩ', _1byte)
+        .then(() => done())
+        .catch(done)
+    })
+    
+    step(`removeObjects with non latin charactes`, done => {
+      client.removeObjects(bucketName, ['fileΩ'])
+        .then(() => done())
+        .catch(done)
+    })
+
   })
 
 
