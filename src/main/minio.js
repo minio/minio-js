@@ -869,6 +869,63 @@ export class Client {
     this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, '', true, cb)
   }
 
+  // Callback is called with readable stream of the object selected content.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `sqlExpression` _string_: sql expression to run on the object
+  // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
+  selectObjectContent(bucketName, objectName, sqlExpression, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    var headers = {}
+    var expectedStatus = 200
+    var method = 'POST'
+    var query = `select&select-type=2`
+    var body = {
+      "SelectObjectContentRequest": [
+        {
+          "Expression": sqlExpression
+        },
+        {
+          "ExpressionType": "SQL"
+        },
+        {
+          "InputSerialization": [
+            {
+              "Parquet": {}
+            }
+          ]
+        },
+        {
+          "OutputSerialization": [
+            {
+              "JSON": [
+                {
+                  "RecordDelimiter": "\n"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+    var payload = Xml(body)
+    var md5digest = Crypto.createHash('md5').update(payload).digest()
+
+    headers['Content-MD5'] = md5digest.toString('base64')
+    this.makeRequest({method, bucketName, objectName, headers, query}, payload, expectedStatus, '', true, cb)
+  }
+
   // Uploads the object using contents from a file
   //
   // __Arguments__
@@ -2137,6 +2194,7 @@ Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObject = promisify(Client.prototype.removeObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
+Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
