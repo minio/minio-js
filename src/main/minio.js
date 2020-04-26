@@ -876,7 +876,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `sqlExpression` _string_: sql expression to run on the object
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  selectObjectContent(bucketName, objectName, sqlExpression, cb) {
+  selectObjectContent(bucketName, objectName, sqlExpression, inputSerialization, outputSerialization, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -885,6 +885,12 @@ export class Client {
     }
     if (!isString(sqlExpression)) {
       throw new TypeError('sqlExpression should be of type "string"')
+    }
+    if (!isObject(sqlExpression)) {
+      throw new TypeError('inputSerialization should be of type "object"')
+    }
+    if (!isObject(sqlExpression)) {
+      throw new TypeError('outputSerialization should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -903,22 +909,10 @@ export class Client {
           "ExpressionType": "SQL"
         },
         {
-          "InputSerialization": [
-            {
-              "Parquet": {}
-            }
-          ]
+          "InputSerialization": [inputSerialization]
         },
         {
-          "OutputSerialization": [
-            {
-              "JSON": [
-                {
-                  "RecordDelimiter": "\n"
-                }
-              ]
-            }
-          ]
+          "OutputSerialization": [outputSerialization]
         }
       ]
     }

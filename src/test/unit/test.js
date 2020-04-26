@@ -392,35 +392,56 @@ describe('Client', function() {
     describe('#selectObjectContent(bucket, object, sqlExpression, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.selectObjectContent(null, 'hello', '', function() {})
+          client.selectObjectContent(null, 'hello', '', {}, {}, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.selectObjectContent('', 'hello', '', function() {})
+          client.selectObjectContent('', 'hello', '', {}, {}, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.selectObjectContent('  \n  \t  ', 'hello', '', function() {})
+          client.selectObjectContent('  \n  \t  ', 'hello', '', {}, {}, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on null object', (done) => {
         try {
-          client.selectObjectContent('hello', null, '', function() {})
+          client.selectObjectContent('hello', null, '', {}, {}, function() {})
         } catch (e) {
           done()
         }
       })
       it('should fail on empty object', (done) => {
         try {
-          client.selectObjectContent('hello', '', '', function() {})
+          client.selectObjectContent('hello', '', '', {}, {}, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null inputSerialization', (done) => {
+        try {
+          client.selectObjectContent('hello', 'hello', '', null, {}, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null outputSerialization', (done) => {
+        try {
+          client.selectObjectContent('hello', 'hello', '', {}, null, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null sqlExpression', (done) => {
+        try {
+          client.selectObjectContent('hello', 'hello', null, {}, {}, function() {})
         } catch (e) {
           done()
         }
@@ -497,13 +518,6 @@ describe('Client', function() {
         it('should fail on empty object', (done) => {
           try {
             client.putObject('hello', '', null, 1, '', function() {})
-          } catch (e) {
-            done()
-          }
-        })
-        it('should fail on null sqlExpression', (done) => {
-          try {
-            client.putObject('hello', 'hello', null, 1, null, function() {})
           } catch (e) {
             done()
           }
