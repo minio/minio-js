@@ -886,10 +886,10 @@ export class Client {
     if (!isString(sqlExpression)) {
       throw new TypeError('sqlExpression should be of type "string"')
     }
-    if (!isObject(sqlExpression)) {
+    if (!isObject(inputSerialization)) {
       throw new TypeError('inputSerialization should be of type "object"')
     }
-    if (!isObject(sqlExpression)) {
+    if (!isObject(outputSerialization)) {
       throw new TypeError('outputSerialization should be of type "object"')
     }
     if (!isFunction(cb)) {
