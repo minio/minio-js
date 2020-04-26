@@ -883,6 +883,9 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    if (!isString(sqlExpression)) {
+      throw new TypeError('sqlExpression should be of type "string"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
