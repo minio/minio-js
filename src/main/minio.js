@@ -27,6 +27,7 @@ import querystring from 'querystring'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
+import util from 'util'
 
 import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
@@ -1483,6 +1484,8 @@ export class Client {
     if (result.list.length > 0) {
       result.listOfList.push(result.list)
     }
+    
+    const encoder = new util.TextEncoder()
 
     async.eachSeries(result.listOfList, (list, callback) => {
       var deleteObjects={"Delete":[{"Quiet": true}]}
@@ -1492,6 +1495,7 @@ export class Client {
       })
 
       let payload = Xml(deleteObjects)
+      payload = encoder.encode(payload)
 
       var headers = {}
       var md5digest = Crypto.createHash('md5').update(payload).digest()
