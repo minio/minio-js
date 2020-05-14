@@ -1019,7 +1019,7 @@ minioClient.removeAllBucketNotification('my-bucketname', function(e) {
 Listen for notifications on a bucket. Additionally one can provider
 filters for prefix, suffix and events. There is no prior set bucket notification
 needed to use this API. This is an MinIO extension API where unique identifiers
-are regitered and unregistered by the server automatically based on incoming requests.
+are registered and unregistered by the server automatically based on incoming requests.
 
 Returns an `EventEmitter`, which will emit a `notification` event carrying the record.
 
