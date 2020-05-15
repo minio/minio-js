@@ -84,9 +84,17 @@ export function getScope(region, date) {
   return `${makeDateShort(date)}/${region}/s3/aws4_request`
 }
 
+export function isAliyunOSSEndpoint(host) {
+  return host.endsWith('aliyuncs.com')
+}
+
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
-export function isAmazonEndpoint(endpoint) {
-  return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
+export function isAmazonEndpoint(host) {
+  return host === 's3.amazonaws.com' || host === 's3.cn-north-1.amazonaws.com.cn'
+}
+
+export function isGoogleEndpoint(host) {
+  return host === 'storage.googleapis.com'
 }
 
 // isVirtualHostStyle - verify if bucket name is support with virtual
@@ -94,11 +102,11 @@ export function isAmazonEndpoint(endpoint) {
 // style if the protocol is 'https:', this is due to SSL wildcard
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
-export function isVirtualHostStyle(endpoint, protocol, bucket) {
+export function isVirtualHostStyle(host, protocol, bucket) {
   if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
-  return isAmazonEndpoint(endpoint)
+  return isAmazonEndpoint(host) || isGoogleEndpoint(host) || isAliyunOSSEndpoint(host)
 }
 
 var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/
