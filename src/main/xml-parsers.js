@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-import xml2js from 'xml2js'
+import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
 
-var options = {  // options passed to xml2js parser
-  explicitRoot: false,    // return the root node in the resulting object?
-  ignoreAttrs: true,     // ignore attributes, only create text nodes
-}
-
 var parseXml = (xml) => {
   var result = null
-  var error = null
-
-  var parser = new xml2js.Parser(options)
-  parser.parseString(xml, function (e, r) {
-    error = e
-    result = r
-  })
-
-  if (error) {
-    throw new Error('XML parse error')
+  result = fxp.parse(xml)
+  if (result.Error) {
+    throw result.Error
   }
+
   return result
 }
 
@@ -43,20 +32,17 @@ var parseXml = (xml) => {
 
 // parse error XML response
 export function parseError(xml, headerInfo) {
-  var xmlError = {}
-  var xmlobj = parseXml(xml)
-  var message
-  _.each(xmlobj, (n, key) => {
-    if (key === 'Message') {
-      message = xmlobj[key][0]
-      return
-    }
-    xmlError[key.toLowerCase()] = xmlobj[key][0]
+  var xmlErr = {}
+  var xmlObj = fxp.parse(xml)
+  if (xmlObj['Error']) {
+    xmlErr =  xmlObj['Error']
+  }
+
+  var e = new errors.S3Error()
+  _.each(xmlErr, (value, key) => {
+    e[key.toLowerCase()] = value
   })
-  var e = new errors.S3Error(message)
-  _.each(xmlError, (value, key) => {
-    e[key] = value
-  })
+
   _.each(headerInfo, (value, key) => {
     e[key] = value
   })
@@ -69,11 +55,16 @@ export function parseCopyObject(xml) {
     etag: "",
     lastModified: ""
   }
+
   var xmlobj = parseXml(xml)
-  if (xmlobj.ETag) result.etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+  if (!xmlobj.CopyObjectResult) {
+    throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
+  }
+  xmlobj = xmlobj.CopyObjectResult
+  if (xmlobj.ETag) result.etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
     .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
     .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-  if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified[0])
+  if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified)
 
   return result
 }
@@ -86,15 +77,19 @@ export function parseListMultipart(xml) {
     isTruncated: false
   }
   var xmlobj =  parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
-  if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker[0]
+  if (!xmlobj.ListMultipartUploadsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
+  }
+  xmlobj = xmlobj.ListMultipartUploadsResult
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
+  if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker
   if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
   if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
     result.prefixes.push({prefix: prefix[0]})
   })
-  if (xmlobj.Upload) xmlobj.Upload.forEach(upload => {
+  if (xmlobj.Upload) (upload => {
     result.uploads.push({
-      key: upload.Key[0],
+      key: upload.Key,
       uploadId: upload.UploadId[0],
       initiated: new Date(upload.Initiated[0])
     })
@@ -106,11 +101,17 @@ export function parseListMultipart(xml) {
 export function parseListBucket(xml) {
   var result = []
   var xmlobj = parseXml(xml)
-  if (xmlobj.Buckets) {
-    if (xmlobj.Buckets[0].Bucket) {
-      xmlobj.Buckets[0].Bucket.forEach(bucket => {
-        var name = bucket.Name[0]
-        var creationDate = new Date(bucket.CreationDate[0])
+
+  if (!xmlobj.ListAllMyBucketsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
+  }
+  var allMyBuckets = xmlobj.ListAllMyBucketsResult
+
+  if (allMyBuckets.Buckets) {
+    if (allMyBuckets.Buckets.Bucket) {
+      allMyBuckets.Buckets.Bucket.forEach(bucket => {
+        var name = bucket.Name
+        var creationDate = new Date(bucket.CreationDate)
         result.push({name, creationDate})
       })
     }
@@ -149,7 +150,6 @@ export function parseBucketNotification(xml) {
   }
 
   var xmlobj = parseXml(xml)
-
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
     xmlobj.TopicConfiguration.forEach(config => {
@@ -186,7 +186,8 @@ export function parseBucketNotification(xml) {
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml) {
-  return parseXml(xml)
+  // return region information
+  return parseXml(xml).LocationConstraint
 }
 
 // parse XML response for list parts of an in progress multipart upload
@@ -197,13 +198,13 @@ export function parseListParts(xml) {
     parts: [],
     marker: undefined
   }
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
   if (xmlobj.NextPartNumberMarker) result.marker = +xmlobj.NextPartNumberMarker[0]
   if (xmlobj.Part) {
     xmlobj.Part.forEach(p => {
       var part = +p.PartNumber[0]
-      var lastModified = new Date(p.LastModified[0])
-      var etag = p.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+      var lastModified = new Date(p.LastModified)
+      var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
       result.parts.push({part, lastModified, etag})
@@ -214,19 +215,19 @@ export function parseListParts(xml) {
 
 // parse XML response when a new multipart upload is initiated
 export function parseInitiateMultipart(xml) {
-  var xmlobj = parseXml(xml)
-  if (xmlobj.UploadId) return xmlobj.UploadId[0]
-  throw new errors.InvalidXMLError('UploadId missing in XML')
+  var xmlobj = parseXml(xml).InitiateMultipartUploadResult
+  if (xmlobj.UploadId) return xmlobj.UploadId
+  throw new errors.InvalidXMLError('Missing tag: "UploadId"')
 }
 
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
-  var xmlobj = parseXml(xml)
+  var xmlobj = parseXml(xml).CompleteMultipartUploadResult
   if (xmlobj.Location) {
     var location = xmlobj.Location[0]
     var bucket = xmlobj.Bucket[0]
-    var key = xmlobj.Key[0]
-    var etag = xmlobj.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+    var key = xmlobj.Key
+    var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
       .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
 
@@ -248,15 +249,20 @@ export function parseListObjects(xml) {
   }
   var nextMarker
   var xmlobj = parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+
+  if (!xmlobj.ListBucketResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  }
+  xmlobj = xmlobj.ListBucketResult
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') xmlobj.isTruncated = true
   if (xmlobj.Contents) {
     xmlobj.Contents.forEach(content => {
-      var name = content.Key[0]
-      var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+      var name = content.Key
+      var lastModified = new Date(content.LastModified)
+      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      var size = +content.Size[0]
+      var size = +content.Size
       result.objects.push({name, lastModified, etag, size})
       nextMarker = name
     })
@@ -281,17 +287,21 @@ export function parseListObjectsV2(xml) {
     isTruncated: false
   }
   var xmlobj = parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (!xmlobj.ListBucketResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  }
+  xmlobj = xmlobj.ListBucketResult
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
     xmlobj.Contents.forEach(content => {
-      var name = content.Key[0]
-      var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+      var name = content.Key
+      var lastModified = new Date(content.LastModified)
+      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      var size = +content.Size[0]
+      var size = +content.Size
       result.objects.push({name, lastModified, etag, size})
     })
   }
@@ -312,17 +322,21 @@ export function parseListObjectsV2WithMetadata(xml) {
     isTruncated: false
   }
   var xmlobj = parseXml(xml)
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated[0] === 'true') result.isTruncated = true
+  if (!xmlobj.ListBucketResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  }
+  xmlobj = xmlobj.ListBucketResult
+  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
     xmlobj.Contents.forEach(content => {
-      var name = content.Key[0]
-      var lastModified = new Date(content.LastModified[0])
-      var etag = content.ETag[0].replace(/^"/g, '').replace(/"$/g, '')
+      var name = content.Key
+      var lastModified = new Date(content.LastModified)
+      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
-      var size = +content.Size[0]
+      var size = +content.Size
       var metadata
       if (content.UserMetadata != null) {
         metadata = content.UserMetadata[0]
