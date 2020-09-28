@@ -1068,6 +1068,7 @@ describe('functional tests', function() {
     })
 
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, done => {
+      listArray = []
       client.listObjects(bucketName, '', false)
         .on('error', done)
         .on('end', () => {

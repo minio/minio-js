@@ -34,8 +34,8 @@ var parseXml = (xml) => {
 export function parseError(xml, headerInfo) {
   var xmlErr = {}
   var xmlObj = fxp.parse(xml)
-  if (xmlObj['Error']) {
-    xmlErr =  xmlObj['Error']
+  if (xmlObj.Error) {
+    xmlErr =  xmlObj.Error
   }
 
   var e = new errors.S3Error()
@@ -63,7 +63,7 @@ export function parseCopyObject(xml) {
   xmlobj = xmlobj.CopyObjectResult
   if (xmlobj.ETag) result.etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
     .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-    .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+    .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified)
 
   return result
@@ -76,7 +76,9 @@ export function parseListMultipart(xml) {
     prefixes: [],
     isTruncated: false
   }
-  var xmlobj =  parseXml(xml)
+
+  var xmlobj = parseXml(xml)
+
   if (!xmlobj.ListMultipartUploadsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
   }
@@ -87,13 +89,20 @@ export function parseListMultipart(xml) {
   if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
     result.prefixes.push({prefix: prefix[0]})
   })
-  if (xmlobj.Upload) (upload => {
-    result.uploads.push({
-      key: upload.Key,
-      uploadId: upload.UploadId[0],
-      initiated: new Date(upload.Initiated[0])
+  if (xmlobj.Upload) {
+    if (!Array.isArray(xmlobj.Upload)) {
+      xmlobj.Upload = Array(xmlobj.Upload)
+    }
+    xmlobj.Upload.forEach(upload => {
+      var key = upload.Key
+      var uploadId = upload.UploadId
+      var initiator = {id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName}
+      var owner = {id: upload.Owner.ID, displayName: upload.Owner.DisplayName}
+      var storageClass = upload.StorageClass
+      var initiated = new Date(upload.Initiated)
+      result.uploads.push({key, uploadId, initiator, owner, storageClass, initiated})
     })
-  })
+  }
   return result
 }
 
@@ -105,11 +114,14 @@ export function parseListBucket(xml) {
   if (!xmlobj.ListAllMyBucketsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
   }
-  var allMyBuckets = xmlobj.ListAllMyBucketsResult
+  xmlobj = xmlobj.ListAllMyBucketsResult
 
-  if (allMyBuckets.Buckets) {
-    if (allMyBuckets.Buckets.Bucket) {
-      allMyBuckets.Buckets.Bucket.forEach(bucket => {
+  if (xmlobj.Buckets) {
+    if (xmlobj.Buckets.Bucket) {
+      if (!Array.isArray(xmlobj.Buckets.Bucket)) {
+        xmlobj.Buckets.Bucket = Array(xmlobj.Buckets.Bucket)
+      }
+      xmlobj.Buckets.Bucket.forEach(bucket => {
         var name = bucket.Name
         var creationDate = new Date(bucket.CreationDate)
         result.push({name, creationDate})
@@ -206,7 +218,7 @@ export function parseListParts(xml) {
       var lastModified = new Date(p.LastModified)
       var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
       result.parts.push({part, lastModified, etag})
     })
   }
@@ -229,7 +241,7 @@ export function parseCompleteMultipart(xml) {
     var key = xmlobj.Key
     var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+      .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
 
     return {location, bucket, key, etag}
   }
@@ -261,7 +273,7 @@ export function parseListObjects(xml) {
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
       var size = +content.Size
       result.objects.push({name, lastModified, etag, size})
       nextMarker = name
@@ -300,7 +312,7 @@ export function parseListObjectsV2(xml) {
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
       var size = +content.Size
       result.objects.push({name, lastModified, etag, size})
     })
@@ -335,7 +347,7 @@ export function parseListObjectsV2WithMetadata(xml) {
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/^&#34;$/g, '')
+        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
       var size = +content.Size
       var metadata
       if (content.UserMetadata != null) {
