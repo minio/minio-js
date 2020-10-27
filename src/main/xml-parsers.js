@@ -268,6 +268,9 @@ export function parseListObjects(xml) {
   xmlobj = xmlobj.ListBucketResult
   if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') xmlobj.isTruncated = true
   if (xmlobj.Contents) {
+    if (!Array.isArray(xmlobj.Contents)) {
+      xmlobj.Contents = Array(xmlobj.Contents)
+    }
     xmlobj.Contents.forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
@@ -307,6 +310,9 @@ export function parseListObjectsV2(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
+    if (!Array.isArray(xmlobj.Contents)) {
+      xmlobj.Contents = Array(xmlobj.Contents)
+    }
     xmlobj.Contents.forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
@@ -342,6 +348,9 @@ export function parseListObjectsV2WithMetadata(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
+    if (!Array.isArray(xmlobj.Contents)) {
+      xmlobj.Contents = Array(xmlobj.Contents)
+    }
     xmlobj.Contents.forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
