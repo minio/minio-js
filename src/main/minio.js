@@ -21,7 +21,7 @@ import Https from 'https'
 import Stream from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
-import xml2js from 'xml2js'
+import fxp from 'fast-xml-parser'
 import async from 'async'
 import querystring from 'querystring'
 import mkdirp from 'mkdirp'
@@ -2066,7 +2066,7 @@ export class Client {
     }
     var method = 'PUT'
     var query = 'notification'
-    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
+    var builder = new fxp.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
     var payload = builder.buildObject(config)
     this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
