@@ -123,6 +123,13 @@ export class Client {
     this.sessionToken = params.sessionToken
     this.userAgent = `${libraryAgent}`
 
+    // Default path style is true
+    if (params.pathStyle === undefined) {
+      this.pathStyle = true
+    } else {
+      this.pathStyle = params.pathStyle
+    }
+
     if (!this.accessKey) this.accessKey = ''
     if (!this.secretKey) this.secretKey = ''
     this.anonymous = !this.accessKey || !this.secretKey
@@ -178,9 +185,7 @@ export class Client {
     // Verify if virtual host supported.
     var virtualHostStyle
     if (bucketName) {
-      virtualHostStyle = isVirtualHostStyle(this.host,
-                                            this.protocol,
-                                            bucketName)
+      virtualHostStyle = isVirtualHostStyle(this.host, this.protocol, bucketName, this.pathStyle)
     }
 
     if (this.port) reqOptions.port = this.port
@@ -489,7 +494,8 @@ export class Client {
     //   the error XML also provides Region of the bucket. To validate
     //   this region is proper we retry the same request with the newly
     //   obtained region.
-    var pathStyle = typeof window === 'undefined'
+    var pathStyle = this.pathStyle && typeof window === 'undefined'
+
     this.makeRequest({method, bucketName, query, pathStyle}, '', 200, 'us-east-1', true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
