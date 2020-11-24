@@ -65,7 +65,7 @@ __Parameters__
 |`transport`    | _string_  |Set this value to pass in a custom transport. (Optional)|
 |`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)|
 |`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional)|
-
+|`pathStyle`    | _bool_  |Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional)|
 
 __Example__
 
@@ -96,6 +96,20 @@ var s3Client = new Minio.Client({
 })
 ```
 
+## Ali OSS 
+
+```js
+var Minio = require('minio')
+
+var s3Client = new Minio.Client({
+    endPoint:  'oss-cn-hangzhou.aliyuncs.com',
+    accessKey: 'YOUR-ACCESSKEYID',
+    secretKey: 'YOUR-SECRETACCESSKEY',
+    bucket: 'YOUR-BUCKET',
+    pathStyle: false,
+    region: 'oss-cn-hangzhou'
+})
+```
 
 ## 2. Bucket operations
 <a name="makeBucket"></a>

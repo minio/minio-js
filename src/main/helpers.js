@@ -94,11 +94,11 @@ export function isAmazonEndpoint(endpoint) {
 // style if the protocol is 'https:', this is due to SSL wildcard
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
-export function isVirtualHostStyle(endpoint, protocol, bucket) {
+export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
   if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
-  return isAmazonEndpoint(endpoint)
+  return isAmazonEndpoint(endpoint) || !pathStyle
 }
 
 var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/

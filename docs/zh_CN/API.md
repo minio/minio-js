@@ -23,10 +23,11 @@ var Minio = require('minio')
 
 var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
-	accessKey: 'YOUR-ACCESSKEYID',
-	secretKey: 'YOUR-SECRETACCESSKEY'
+    accessKey: 'YOUR-ACCESSKEYID',
+    secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
+
 | 操作存储桶       | 操作对象      | Presigned操作 | 存储桶策略/通知  |
 | ------------- |-------------| -----| ----- |
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
@@ -64,7 +65,7 @@ __参数__
 |`transport`    | _string_  |Set this value to pass in a custom transport. (Optional) - To be translated |
 |`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional) - To be translated|
 |`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional) - To be translated|
-
+| `pathStyle`    | _bool_   | 对于非 AWS 的 Endpoint，设置该值以覆盖默认访问方式 (path)。默认值为 true。（可选） |
 
 __示例__
 
@@ -95,6 +96,20 @@ var s3Client = new Minio.Client({
 })
 ```
 
+## Ali OSS 
+
+```js
+var Minio = require('minio')
+
+var s3Client = new Minio.Client({
+    endPoint:  'oss-cn-hangzhou.aliyuncs.com',
+    accessKey: 'YOUR-ACCESSKEYID',
+    secretKey: 'YOUR-SECRETACCESSKEY',
+    bucket: 'YOUR-BUCKET',
+    pathStyle: false,
+    region: 'oss-cn-hangzhou'
+})
+```
 
 ## 2. 操作存储桶
 <a name="makeBucket"></a>
