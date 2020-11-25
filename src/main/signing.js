@@ -49,7 +49,9 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
     throw new TypeError('hashedPayload should be of type "string"')
   }
   var headersArray = signedHeaders.reduce((acc, i) => {
-    acc.push(`${i.toLowerCase()}:${headers[i]}`)
+    // Trim spaces from the value (required by V4 spec)
+    var val = `${headers[i]}`.replace(/ +/g, " ")
+    acc.push(`${i.toLowerCase()}:${val}`)
     return acc
   }, [])
 
