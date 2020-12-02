@@ -86,9 +86,16 @@ export function parseListMultipart(xml) {
   if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
   if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker
   if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
-  if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
-    result.prefixes.push({prefix: prefix[0]})
-  })
+
+  if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
+    xmlobj.CommonPrefixes.forEach(prefix => {
+      result.prefixes.push({prefix: prefix[0]})
+    })
+  }
+
   if (xmlobj.Upload) {
     if (!Array.isArray(xmlobj.Upload)) {
       xmlobj.Upload = Array(xmlobj.Upload)
@@ -282,7 +289,11 @@ export function parseListObjects(xml) {
       nextMarker = name
     })
   }
+
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
       var prefix = commonPrefix.Prefix[0]
       var size = 0
@@ -324,6 +335,9 @@ export function parseListObjectsV2(xml) {
     })
   }
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
       var prefix = commonPrefix.Prefix[0]
       var size = 0
@@ -367,7 +381,11 @@ export function parseListObjectsV2WithMetadata(xml) {
       result.objects.push({name, lastModified, etag, size, metadata})
     })
   }
+
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
       var prefix = commonPrefix.Prefix[0]
       var size = 0
@@ -376,4 +394,3 @@ export function parseListObjectsV2WithMetadata(xml) {
   }
   return result
 }
-
