@@ -28,6 +28,16 @@ var parseXml = (xml) => {
   return result
 }
 
+// toArray returns a single element array with param being the element,
+// if param is just a string, and returns 'param' back if it is an array
+// So, it makes sure param is always an array
+var toArray = (param) => {
+  if (!Array.isArray(param)) {
+    return Array(param)
+  }
+  return param
+}
+
 // Parse XML and return information as Javascript types
 
 // parse error XML response
@@ -88,19 +98,13 @@ export function parseListMultipart(xml) {
   if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
 
   if (xmlobj.CommonPrefixes) {
-    if (!Array.isArray(xmlobj.CommonPrefixes)) {
-      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
-    }
-    xmlobj.CommonPrefixes.forEach(prefix => {
-      result.prefixes.push({prefix: prefix[0]})
+    toArray(xmlobj.CommonPrefixes).forEach(prefix => {
+      result.prefixes.push({prefix: toArray(prefix)[0]})
     })
   }
 
   if (xmlobj.Upload) {
-    if (!Array.isArray(xmlobj.Upload)) {
-      xmlobj.Upload = Array(xmlobj.Upload)
-    }
-    xmlobj.Upload.forEach(upload => {
+    toArray(xmlobj.Upload).forEach(upload => {
       var key = upload.Key
       var uploadId = upload.UploadId
       var initiator = {id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName}
@@ -125,10 +129,7 @@ export function parseListBucket(xml) {
 
   if (xmlobj.Buckets) {
     if (xmlobj.Buckets.Bucket) {
-      if (!Array.isArray(xmlobj.Buckets.Bucket)) {
-        xmlobj.Buckets.Bucket = Array(xmlobj.Buckets.Bucket)
-      }
-      xmlobj.Buckets.Bucket.forEach(bucket => {
+      toArray(xmlobj.Buckets.Bucket).forEach(bucket => {
         var name = bucket.Name
         var creationDate = new Date(bucket.CreationDate)
         result.push({name, creationDate})
@@ -171,9 +172,9 @@ export function parseBucketNotification(xml) {
   var xmlobj = parseXml(xml)
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
-    xmlobj.TopicConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var Topic = config.Topic[0]
+    toArray(xmlobj.TopicConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var Topic = toArray(config.Topic)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.TopicConfiguration.push({ Id, Topic, Event, Filter})
@@ -181,9 +182,9 @@ export function parseBucketNotification(xml) {
   }
   // Parse all topic configurations in the xml
   if (xmlobj.QueueConfiguration) {
-    xmlobj.QueueConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var Queue = config.Queue[0]
+    toArray(xmlobj.QueueConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var Queue = toArray(config.Queue)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.QueueConfiguration.push({ Id, Queue, Event, Filter})
@@ -191,9 +192,9 @@ export function parseBucketNotification(xml) {
   }
   // Parse all QueueConfiguration arrays
   if (xmlobj.CloudFunctionConfiguration) {
-    xmlobj.CloudFunctionConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var CloudFunction = config.CloudFunction[0]
+    toArray(xmlobj.CloudFunctionConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var CloudFunction = toArray(config.CloudFunction)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter})
@@ -220,8 +221,8 @@ export function parseListParts(xml) {
   if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
   if (xmlobj.NextPartNumberMarker) result.marker = +xmlobj.NextPartNumberMarker[0]
   if (xmlobj.Part) {
-    xmlobj.Part.forEach(p => {
-      var part = +p.PartNumber[0]
+    toArray(xmlobj.Part).forEach(p => {
+      var part = + toArray(p.PartNumber)[0]
       var lastModified = new Date(p.LastModified)
       var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
@@ -243,8 +244,8 @@ export function parseInitiateMultipart(xml) {
 export function parseCompleteMultipart(xml) {
   var xmlobj = parseXml(xml).CompleteMultipartUploadResult
   if (xmlobj.Location) {
-    var location = xmlobj.Location[0]
-    var bucket = xmlobj.Bucket[0]
+    var location = toArray(xmlobj.Location)[0]
+    var bucket = toArray(xmlobj.Bucket)[0]
     var key = xmlobj.Key
     var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
@@ -254,8 +255,8 @@ export function parseCompleteMultipart(xml) {
   }
   // Complete Multipart can return XML Error after a 200 OK response
   if (xmlobj.Code && xmlobj.Message) {
-    var errCode = xmlobj.Code[0]
-    var errMessage = xmlobj.Message[0]
+    var errCode = toArray(xmlobj.Code)[0]
+    var errMessage = toArray(xmlobj.Message)[0]
     return {errCode, errMessage}
   }
 }
@@ -275,10 +276,7 @@ export function parseListObjects(xml) {
   xmlobj = xmlobj.ListBucketResult
   if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') xmlobj.isTruncated = true
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
-    xmlobj.Contents.forEach(content => {
+    toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
@@ -291,11 +289,8 @@ export function parseListObjects(xml) {
   }
 
   if (xmlobj.CommonPrefixes) {
-    if (!Array.isArray(xmlobj.CommonPrefixes)) {
-      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
-    }
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
@@ -321,10 +316,7 @@ export function parseListObjectsV2(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
-    xmlobj.Contents.forEach(content => {
+    toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
@@ -335,11 +327,8 @@ export function parseListObjectsV2(xml) {
     })
   }
   if (xmlobj.CommonPrefixes) {
-    if (!Array.isArray(xmlobj.CommonPrefixes)) {
-      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
-    }
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
@@ -362,10 +351,7 @@ export function parseListObjectsV2WithMetadata(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
 
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
-    xmlobj.Contents.forEach(content => {
+    toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
@@ -374,7 +360,7 @@ export function parseListObjectsV2WithMetadata(xml) {
       var size = +content.Size
       var metadata
       if (content.UserMetadata != null) {
-        metadata = content.UserMetadata[0]
+        metadata = toArray(content.UserMetadata)[0]
       } else {
         metadata = null
       }
@@ -383,11 +369,8 @@ export function parseListObjectsV2WithMetadata(xml) {
   }
 
   if (xmlobj.CommonPrefixes) {
-    if (!Array.isArray(xmlobj.CommonPrefixes)) {
-      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
-    }
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
