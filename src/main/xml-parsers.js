@@ -283,10 +283,12 @@ export function parseListObjects(xml) {
     })
   }
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
-      var size = 0
-      result.objects.push({prefix, size})
+      var prefix = commonPrefix.Prefix
+      result.objects.push({ name: prefix })
     })
   }
   if (result.isTruncated) {
@@ -324,10 +326,12 @@ export function parseListObjectsV2(xml) {
     })
   }
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
-      var size = 0
-      result.objects.push({prefix, size})
+      var prefix = commonPrefix.Prefix
+      result.objects.push({ name: prefix })
     })
   }
   return result
@@ -368,10 +372,12 @@ export function parseListObjectsV2WithMetadata(xml) {
     })
   }
   if (xmlobj.CommonPrefixes) {
+    if (!Array.isArray(xmlobj.CommonPrefixes)) {
+      xmlobj.CommonPrefixes = Array(xmlobj.CommonPrefixes)
+    }
     xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
-      var size = 0
-      result.objects.push({prefix, size})
+      var prefix = commonPrefix.Prefix
+      result.objects.push({ name: prefix })
     })
   }
   return result
