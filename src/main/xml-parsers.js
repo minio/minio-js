@@ -150,7 +150,7 @@ export function parseBucketNotification(xml) {
   var genEvents = function(events) {
     var result = []
     if (events) {
-      events.forEach(s3event => {
+      toArray(events).forEach(s3event => {
         result.push(s3event)
       })
     }
@@ -159,17 +159,25 @@ export function parseBucketNotification(xml) {
   // Parse all filter rules
   var genFilterRules = function(filters) {
     var result = []
-    if (filters && filters[0].S3Key && filters[0].S3Key[0].FilterRule) {
-      filters[0].S3Key[0].FilterRule.forEach(rule => {
-        var Name = rule.Name[0]
-        var Value = rule.Value[0]
-        result.push({Name, Value})
-      })
+    if (filters) {
+      filters = toArray(filters)
+      if (filters[0].S3Key) {
+        filters[0].S3Key = toArray(filters[0].S3Key)
+        if (filters[0].S3Key[0].FilterRule) {
+          toArray(filters[0].S3Key[0].FilterRule).forEach(rule => {
+            var Name = toArray(rule.Name)[0]
+            var Value = toArray(rule.Value)[0]
+            result.push({Name, Value})
+          })
+        }
+      }
     }
     return result
   }
 
   var xmlobj = parseXml(xml)
+  xmlobj = xmlobj.NotificationConfiguration
+
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
     toArray(xmlobj.TopicConfiguration).forEach(config => {
