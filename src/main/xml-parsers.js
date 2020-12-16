@@ -28,6 +28,16 @@ var parseXml = (xml) => {
   return result
 }
 
+// toArray returns a single element array with param being the element,
+// if param is just a string, and returns 'param' back if it is an array
+// So, it makes sure param is always an array
+var toArray = (param) => {
+  if (!Array.isArray(param)) {
+    return Array(param)
+  }
+  return param
+}
+
 // Parse XML and return information as Javascript types
 
 // parse error XML response
@@ -83,17 +93,18 @@ export function parseListMultipart(xml) {
     throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
   }
   xmlobj = xmlobj.ListMultipartUploadsResult
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
+  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
   if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker
-  if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.NextUploadIdMarker[0]
-  if (xmlobj.CommonPrefixes) xmlobj.CommonPrefixes.forEach(prefix => {
-    result.prefixes.push({prefix: prefix[0]})
-  })
+  if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+
+  if (xmlobj.CommonPrefixes) {
+    toArray(xmlobj.CommonPrefixes).forEach(prefix => {
+      result.prefixes.push({prefix: toArray(prefix)[0]})
+    })
+  }
+
   if (xmlobj.Upload) {
-    if (!Array.isArray(xmlobj.Upload)) {
-      xmlobj.Upload = Array(xmlobj.Upload)
-    }
-    xmlobj.Upload.forEach(upload => {
+    toArray(xmlobj.Upload).forEach(upload => {
       var key = upload.Key
       var uploadId = upload.UploadId
       var initiator = {id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName}
@@ -118,10 +129,7 @@ export function parseListBucket(xml) {
 
   if (xmlobj.Buckets) {
     if (xmlobj.Buckets.Bucket) {
-      if (!Array.isArray(xmlobj.Buckets.Bucket)) {
-        xmlobj.Buckets.Bucket = Array(xmlobj.Buckets.Bucket)
-      }
-      xmlobj.Buckets.Bucket.forEach(bucket => {
+      toArray(xmlobj.Buckets.Bucket).forEach(bucket => {
         var name = bucket.Name
         var creationDate = new Date(bucket.CreationDate)
         result.push({name, creationDate})
@@ -142,7 +150,7 @@ export function parseBucketNotification(xml) {
   var genEvents = function(events) {
     var result = []
     if (events) {
-      events.forEach(s3event => {
+      toArray(events).forEach(s3event => {
         result.push(s3event)
       })
     }
@@ -151,22 +159,30 @@ export function parseBucketNotification(xml) {
   // Parse all filter rules
   var genFilterRules = function(filters) {
     var result = []
-    if (filters && filters[0].S3Key && filters[0].S3Key[0].FilterRule) {
-      filters[0].S3Key[0].FilterRule.forEach(rule => {
-        var Name = rule.Name[0]
-        var Value = rule.Value[0]
-        result.push({Name, Value})
-      })
+    if (filters) {
+      filters = toArray(filters)
+      if (filters[0].S3Key) {
+        filters[0].S3Key = toArray(filters[0].S3Key)
+        if (filters[0].S3Key[0].FilterRule) {
+          toArray(filters[0].S3Key[0].FilterRule).forEach(rule => {
+            var Name = toArray(rule.Name)[0]
+            var Value = toArray(rule.Value)[0]
+            result.push({Name, Value})
+          })
+        }
+      }
     }
     return result
   }
 
   var xmlobj = parseXml(xml)
+  xmlobj = xmlobj.NotificationConfiguration
+
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
-    xmlobj.TopicConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var Topic = config.Topic[0]
+    toArray(xmlobj.TopicConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var Topic = toArray(config.Topic)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.TopicConfiguration.push({ Id, Topic, Event, Filter})
@@ -174,9 +190,9 @@ export function parseBucketNotification(xml) {
   }
   // Parse all topic configurations in the xml
   if (xmlobj.QueueConfiguration) {
-    xmlobj.QueueConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var Queue = config.Queue[0]
+    toArray(xmlobj.QueueConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var Queue = toArray(config.Queue)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.QueueConfiguration.push({ Id, Queue, Event, Filter})
@@ -184,9 +200,9 @@ export function parseBucketNotification(xml) {
   }
   // Parse all QueueConfiguration arrays
   if (xmlobj.CloudFunctionConfiguration) {
-    xmlobj.CloudFunctionConfiguration.forEach(config => {
-      var Id = config.Id[0]
-      var CloudFunction = config.CloudFunction[0]
+    toArray(xmlobj.CloudFunctionConfiguration).forEach(config => {
+      var Id = toArray(config.Id)[0]
+      var CloudFunction = toArray(config.CloudFunction)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
       result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter})
@@ -210,11 +226,15 @@ export function parseListParts(xml) {
     parts: [],
     marker: undefined
   }
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
-  if (xmlobj.NextPartNumberMarker) result.marker = +xmlobj.NextPartNumberMarker[0]
+  if (!xmlobj.ListPartsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')
+  }
+  xmlobj = xmlobj.ListPartsResult
+  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
+  if (xmlobj.NextPartNumberMarker) result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
   if (xmlobj.Part) {
-    xmlobj.Part.forEach(p => {
-      var part = +p.PartNumber[0]
+    toArray(xmlobj.Part).forEach(p => {
+      var part = + toArray(p.PartNumber)[0]
       var lastModified = new Date(p.LastModified)
       var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
@@ -227,7 +247,13 @@ export function parseListParts(xml) {
 
 // parse XML response when a new multipart upload is initiated
 export function parseInitiateMultipart(xml) {
-  var xmlobj = parseXml(xml).InitiateMultipartUploadResult
+  var xmlobj = parseXml(xml)
+
+  if (!xmlobj.InitiateMultipartUploadResult) {
+    throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
+  }
+  xmlobj = xmlobj.InitiateMultipartUploadResult
+
   if (xmlobj.UploadId) return xmlobj.UploadId
   throw new errors.InvalidXMLError('Missing tag: "UploadId"')
 }
@@ -236,8 +262,8 @@ export function parseInitiateMultipart(xml) {
 export function parseCompleteMultipart(xml) {
   var xmlobj = parseXml(xml).CompleteMultipartUploadResult
   if (xmlobj.Location) {
-    var location = xmlobj.Location[0]
-    var bucket = xmlobj.Bucket[0]
+    var location = toArray(xmlobj.Location)[0]
+    var bucket = toArray(xmlobj.Bucket)[0]
     var key = xmlobj.Key
     var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
       .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
@@ -247,8 +273,8 @@ export function parseCompleteMultipart(xml) {
   }
   // Complete Multipart can return XML Error after a 200 OK response
   if (xmlobj.Code && xmlobj.Message) {
-    var errCode = xmlobj.Code[0]
-    var errMessage = xmlobj.Message[0]
+    var errCode = toArray(xmlobj.Code)[0]
+    var errMessage = toArray(xmlobj.Message)[0]
     return {errCode, errMessage}
   }
 }
@@ -266,31 +292,29 @@ export function parseListObjects(xml) {
     throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
   }
   xmlobj = xmlobj.ListBucketResult
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') xmlobj.isTruncated = true
+  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
     xmlobj.Contents.forEach(content => {
-      var name = content.Key
-      var lastModified = new Date(content.LastModified)
-      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
+      var name = toArray(content.Key)[0]
+      var lastModified = new Date(toArray(content.LastModified)[0])
+      var etag = toArray(content.ETag)[0].replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
-      var size = +content.Size
+      var size = content.Size
       result.objects.push({name, lastModified, etag, size})
       nextMarker = name
     })
   }
+
   if (xmlobj.CommonPrefixes) {
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
   }
   if (result.isTruncated) {
-    result.nextMarker = xmlobj.NextMarker ? xmlobj.NextMarker[0]: nextMarker
+    result.nextMarker = xmlobj.NextMarker ? toArray(xmlobj.NextMarker)[0]: nextMarker
   }
   return result
 }
@@ -306,26 +330,22 @@ export function parseListObjectsV2(xml) {
     throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
   }
   xmlobj = xmlobj.ListBucketResult
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
-  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
-
+  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
+  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
-    xmlobj.Contents.forEach(content => {
+    toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
-      var size = +content.Size
+      var size = content.Size
       result.objects.push({name, lastModified, etag, size})
     })
   }
   if (xmlobj.CommonPrefixes) {
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
@@ -344,36 +364,33 @@ export function parseListObjectsV2WithMetadata(xml) {
     throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
   }
   xmlobj = xmlobj.ListBucketResult
-  if (xmlobj.IsTruncated && xmlobj.IsTruncated === 'true') result.isTruncated = true
-  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken[0]
+  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
+  if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken
 
   if (xmlobj.Contents) {
-    if (!Array.isArray(xmlobj.Contents)) {
-      xmlobj.Contents = Array(xmlobj.Contents)
-    }
-    xmlobj.Contents.forEach(content => {
+    toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
       var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
         .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
-      var size = +content.Size
+      var size = content.Size
       var metadata
       if (content.UserMetadata != null) {
-        metadata = content.UserMetadata[0]
+        metadata = toArray(content.UserMetadata)[0]
       } else {
         metadata = null
       }
       result.objects.push({name, lastModified, etag, size, metadata})
     })
   }
+
   if (xmlobj.CommonPrefixes) {
-    xmlobj.CommonPrefixes.forEach(commonPrefix => {
-      var prefix = commonPrefix.Prefix[0]
+    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
+      var prefix = toArray(commonPrefix.Prefix)[0]
       var size = 0
       result.objects.push({prefix, size})
     })
   }
   return result
 }
-
