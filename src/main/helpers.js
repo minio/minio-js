@@ -131,8 +131,8 @@ export function isValidDomain(host) {
   if (host[0] === '_' || host.substr(-1) === '_') {
     return false
   }
-  // Host cannot start or end with a '.'
-  if (host[0] === '.' || host.substr(-1) === '.') {
+  // Host cannot start with a '.'
+  if (host[0] === '.') {
     return false
   }
   var alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
