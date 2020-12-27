@@ -35,8 +35,8 @@ var s3Client = new Minio.Client({
 | [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
-| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
-|     |  [`removeObject`](#removeObject)    |
+| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) | | [`enableVersioning`](#enableVersioning) |
+|     |  [`removeObject`](#removeObject)    | | [`disableVersioning`](#disableVersioning)
 |     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 
@@ -233,6 +233,7 @@ __Parameters__
 | `bucketName` | _string_ | Name of the bucket. |
 | `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
+| `includeVersion` | _bool_ | `true` indicates to include object versions (optional, default `false`)
 
 
 __Return Value__
@@ -251,6 +252,8 @@ The object is of the format:
 | `obj.size` | _number_ | size of the object. |
 | `obj.etag` | _string_ |etag of the object. |
 | `obj.lastModified` | _Date_ | modified time stamp. |
+| `obj.versionId` | _string_ | version id of the object. |
+| `obj.isLatest` | _bool_ | `true` indicates this is latest version of the object. |
 
 __Example__
 
@@ -404,6 +407,7 @@ __Parameters__
 |---|---|---|
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
+|`versionId`  | _string_ | Version ID of the object (optional). |
 |`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -440,6 +444,7 @@ __Parameters__
 | `objectName`   | _string_  | Name of the object.  |
 | `offset`   | _number_  | `offset` of the object from where the stream will start.  |
 | `length`  | _number_  | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).  |
+| `versionId`  | _string_ | Version ID of the object (optional). |
 |`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -476,6 +481,7 @@ __Parameters__
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
+| `versionId` | _string_ | Version ID of the object (optional). |
 | `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 
@@ -509,8 +515,12 @@ __Parameters__
 | `stream`  | _Stream_  |Readable stream.   |
 |`size`   | _number_  | Size of the object (optional).  |
 |`metaData`   | _Javascript Object_  | metaData of the object (optional).  |
-| `callback(err, etag)` | _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
+| `callback(err, info)`  |  _function_ | Non-null `err` indicates error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `info.etag` | _string_ | etag of the object. |
+| `info.versionId` | _string_ | version id of the object. |
 
 __Example__
 
@@ -541,7 +551,14 @@ __Parameters__
 | `objectName`  |_string_   | Name of the object.  |
 |`string or Buffer`   | _Stream_ or _Buffer_  |Readable stream.   |
 | `metaData`  | _Javascript Object_   | metaData of the object (optional).  |
-| `callback(err, etag)`  | _function_  |Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.   |
+| `callback(err, info)`  |  _function_ | Non-null `err` indicates error, `info` _object_ is the uploaded object information. If no callback is passed, a `Promise` is returned. |
+
+The object is of the format:
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `info.etag` | _string_ | etag of the object. |
+| `info.versionId` | _string_ | version id of the object. |
 
 
 __Example__
@@ -564,10 +581,15 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
-|`objectName`   |_string_   | Name of the object.  |
+| `objectName`   |_string_   | Name of the object.  |
 | `filePath`  | _string_  | Path of the file to be uploaded.  |
 | `metaData`  | _Javascript Object_  | Metadata of the object.  |
-| `callback(err, etag)`  |  _function_ | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. If no callback is passed, a `Promise` is returned. |
+| `callback(err, info)`  |  _function_ | Non-null `err` indicates error, `info` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `info.etag` | _string_ | etag of the object. |
+| `info.versionId` | _string_ | version id of the object. |
 
 __Example__
 
@@ -630,6 +652,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
+| `versionId`   | _string_  | Version ID of the object (optional). |
 | `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
 
@@ -640,6 +663,8 @@ __Parameters__
 | `stat.etag`  | _string_  | etag of the object.  |
 | `stat.metaData`  | _Javascript Object_  | metadata of the object.|
 | `stat.lastModified`  | _Date_  | Last Modified time stamp.|
+| `stat.versionId`  | _string_  | version id of the object.|
+| `stat.isLatest`  | _bool_  | `true` indicates this is latest version of the object.|
 
 
 __Example__
@@ -665,7 +690,8 @@ __Parameters__
 | Param  |  Type | Description  |
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
-| objectName  |  _string_ | Name of the object.  |
+| `objectName`  |  _string_ | Name of the object.  |
+| `versionId`   | _string_  | Version ID of the object (optional). |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
@@ -692,11 +718,15 @@ __Parameters__
 | Param | Type | Description |
 | ---- | ---- | ---- |
 | `bucketName` | _string_ | Name of the bucket. |
-| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  |
+| `objectsList`  | _Array_  |  list of _string_ or _object_ in the bucket to be removed. Format for the _object_ is listed below. |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
 
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `key` | _string_ | name of the object. |
+| `versionId` | _string_ | version id of the object. |
 
-__Example__
+__Example 1__
 
 
 ```js
@@ -708,6 +738,38 @@ var objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
 
 objectsStream.on('data', function(obj) {
   objectsList.push(obj.name);
+})
+
+objectsStream.on('error', function(e) {
+  console.log(e);
+})
+
+objectsStream.on('end', function() {
+
+  s3Client.removeObjects('my-bucketname',objectsList, function(e) {
+    if (e) {
+        return console.log('Unable to remove Objects ',e)
+    }
+    console.log('Removed the objects successfully')
+  })
+
+})
+
+
+```
+
+__Example 2__
+
+
+```js
+
+var objectsList = []
+
+// List all object paths in bucket my-bucketname.
+var objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true, true)
+
+objectsStream.on('data', function(obj) {
+  objectsList.push({key: obj.name, versionId: obj.versionId});
 })
 
 objectsStream.on('error', function(e) {
@@ -776,6 +838,7 @@ __Parameters__
 |`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
 |`reqParams`  | _object_ | request parameters. (optional) |
 |`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
+|`versionId`  | _string_ | Version ID of the oject. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
@@ -822,6 +885,7 @@ __Parameters__
 |`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
 |`respHeaders`  | _object_ | response headers to override (optional) |
 |`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
+|`versionId`  | _string_ | Version ID of the oject. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
@@ -1105,6 +1169,48 @@ minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function(er
   if (err) throw err
 
   console.log('Bucket policy set')
+})
+```
+
+<a name="enableVersioning"></a>
+### enableVersioning(bucketName, [, callback])
+
+Enables versioning on the specified bucket.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket. |
+| `callback(err)`  | _function_  | Callback function is called with non `null` 
+
+```js
+// Enable bucket versioning for `my-bucketname`
+minioClient.enableVersioning('my-bucketname', function(err) {
+  if (err) throw err
+
+  console.log('Bucket versioning enabled')
+})
+```
+
+<a name="disableVersioning"></a>
+### disableVersioning(bucketName, [, callback])
+
+Disables versioning on the specified bucket.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  | _string_  | Name of the bucket. |
+| `callback(err)`  | _function_  | Callback function is called with non `null` 
+
+```js
+// Enable bucket versioning for `my-bucketname`
+minioClient.disableVersioning('my-bucketname', function(err) {
+  if (err) throw err
+
+  console.log('Bucket versioning disabled')
 })
 ```
 

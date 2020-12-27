@@ -213,3 +213,8 @@ export function getNotificationTransformer() {
   // This will parse and return each object.
   return new JSONParser()
 }
+
+// Parses versioning config
+export function getVersioningConfiguration() {
+  return getConcater(xmlParsers.parseVersioningConfiguration)
+}

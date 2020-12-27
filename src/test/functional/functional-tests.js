@@ -1275,6 +1275,253 @@ describe('functional tests', function() {
           }, 11 * 1000)
         })
       })
+
+      step(`removeAllBucketNotification`, done => client.removeAllBucketNotification(bucketName).then(done).catch(done))
+    })
+  })
+
+  describe('bucket versioning', () => {
+    var objArray = []
+    var objectsList = []
+    var tmpFileUpload = `${tmpDir}/${_1byteObjectName}`
+    var tmpFileDownload = `${tmpDir}/${_1byteObjectName}.download`
+
+    // check original bucket versioning config
+    step(`getBucketVersioning(bucketName)_bucketName:${bucketName}_`, done => {
+      client.getBucketVersioning(bucketName)
+        .then(config => {
+          if (config.status === '') return done()
+          return done(new Error('Unexpected status for getBucketVersioning'))
+        })
+        .catch(done)
+    })
+
+    // enable versioning
+    step(`enableVersioning(bucketName)_bucketName:${bucketName}_`, done => {
+      client.enableVersioning(bucketName)
+        .then(() => done())
+        .catch(done)
+    })
+
+    // check if versioning is enabled
+    step(`getBucketVersioning(bucketName)_bucketName:${bucketName}_`, done => {
+      client.getBucketVersioning(bucketName)
+        .then(config => {
+          if (config.status === 'Enabled') return done()
+          return done(new Error('Unexpected status for getBucketVersioning'))
+        })
+        .catch(done)
+    })
+
+    // upload the 100kb as the 1st version of the _1byteObjectName name
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${_1byteObjectName}, stream:100kb`, done => {
+      client.putObject(bucketName, _1byteObjectName, _100kb)
+        .then(info => {
+          if (!info.versionId) return done(new Error(`Unexpected versionId in putObject`))
+          objArray.push(info)
+          done()
+        })
+        .catch(done)
+    })
+
+    // modify the _1byteObjectName with the fPutObject method. This is the 2nd version
+    step(`fPutObject(bucketName, objectName, filePath, metaData)_bucketName:${bucketName}, objectName:${_1byteObjectName}, filePath:${tmpFileUpload}_`, done => {
+      fs.writeFileSync(tmpFileUpload, _1byte)
+      client.fPutObject(bucketName, _1byteObjectName, tmpFileUpload)
+        .then(info => {
+          if (!info.versionId) return done(new Error(`Unexpected versionId in putObject`))
+          objArray.push(info)
+          fs.unlinkSync(tmpFileUpload)
+          done()
+        })
+        .catch(err => {
+          fs.unlinkSync(tmpFileUpload)
+          done(err)
+        })
+    })
+
+    // regression test of statObject (should show 1 file _1byteObjectName)
+    step(`statObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
+      client.statObject(bucketName, _1byteObjectName)
+        .then(stat => {
+          if (stat.versionId && stat.versionId === _.last(objArray).versionId) return done()
+          return done(new Error('Unexpected version id in listing objects'))
+        })
+        .catch(done)
+    })
+
+    // statObject with the 1st version
+    step(`statObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}, versionId_`, done => {
+      var versionId = _.first(objArray).versionId
+      client.statObject(bucketName, _1byteObjectName, versionId)
+        .then(stat => {
+          if (stat.versionId && stat.versionId === versionId) return done()
+          return done(new Error('Unexpected version id in listing objects'))
+        })
+        .catch(done)
+    })
+
+    // getObject with the 1st version (hash should match)
+    step(`getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_1byteObjectName}, versionId_`, done => {
+      var hash = crypto.createHash('md5')
+      var versionId = _.first(objArray).versionId
+      client.getObject(bucketName, _1byteObjectName, versionId, (e, stream) => {
+        if (e) return done(e)
+        stream.on('data', data => hash.update(data))
+        stream.on('error', done)
+        stream.on('end', () => {
+          if (hash.digest('hex') === _100kbmd5) return done()
+          done(new Error('content mismatch'))
+        })
+      })
+    })
+
+    // fGetObject with the 1st version (hash should match)
+    step(`fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_1byteObjectName}, filePath:${tmpFileDownload}, versionId_`, done => {
+      var versionId = _.first(objArray).versionId
+      client.fGetObject(bucketName, _1byteObjectName, tmpFileDownload, versionId)
+        .then(() => {
+          var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
+          if (md5sum === _100kbmd5) return done()
+          fs.unlinkSync(tmpFileUpload)
+          return done(new Error('md5sum mismatch'))
+        })
+        .catch(err => {
+          fs.unlinkSync(tmpFileUpload)
+          done(err)
+        })
+    })
+
+    // presignedGetObject with the 1st version (hash should match)
+    step(`presignedGetObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000, respHeaders:{}, requestDate:new Date(), versionId_`, done => {
+      var hash = crypto.createHash('md5')
+      var versionId = _.first(objArray).versionId
+      client.presignedGetObject(bucketName, _1byteObjectName, 1000, {}, new Date(), versionId)
+        .then(presignedUrl => {
+          var transport = http
+          var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+          options.method = 'GET'
+          if (options.protocol === 'https:') transport = https
+          var request = transport.request(options, (response) => {
+            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            response.on('error', done)
+            response.on('end', () => {
+              if (hash.digest('hex') === _100kbmd5) return done()
+              done(new Error('content mismatch'))
+            })
+            response.on('data', data => hash.update(data))
+          })
+          request.on('error', done)
+          request.end()
+        })
+        .catch(done)
+    })
+
+    // presignedUrl with the 1st version (hash should match)
+    step(`presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:GET, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000, respHeaders:{}, requestDate:new Date(), versionId_`, done => {
+      var hash = crypto.createHash('md5')
+      var versionId = _.first(objArray).versionId
+      client.presignedUrl('GET', bucketName, _1byteObjectName, 1000, {}, new Date(), versionId)
+        .then(presignedUrl => {
+          var transport = http
+          var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+          options.method = 'GET'
+          if (options.protocol === 'https:') transport = https
+          var request = transport.request(options, (response) => {
+            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            response.on('error', done)
+            response.on('end', () => {
+              if (hash.digest('hex') === _100kbmd5) return done()
+              done(new Error('content mismatch'))
+            })
+            response.on('data', data => hash.update(data))
+          })
+          request.on('error', done)
+          request.end()
+        })
+        .catch(done)
+    })
+
+    // regression listObject should show 1 object
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, done => {
+      objectsList = []
+      client.listObjects(bucketName, '', false)
+        .on('error', done)
+        .on('end', () => {
+          if (objectsList.length === 1) return done()
+          return done(new Error(`listObjects lists ${objectsList.length} objects, expected 1`))
+        })
+        .on('data', data => {
+          objectsList.push(data)
+        })
+    })
+
+    // listObjects should show all versions (i.e. 2)
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false, includeVersion:true_`, done => {
+      objectsList = []
+      client.listObjects(bucketName, '', false, true)
+        .on('error', done)
+        .on('end', () => {
+          if (objectsList.length === objArray.length) return done()
+          return done(new Error(`listObjects lists ${objectsList.length} objects, expected ${objArray.length}`))
+        })
+        .on('data', data => {
+          objectsList.push(data)
+        })
+    })
+
+    // remove the object
+    step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
+      client.removeObject(bucketName, _1byteObjectName)
+        .then(() => done())
+        .catch(done)
+    })
+
+    // listObject should show all version (i.e. 3 total)
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false, includeVersion:true_`, done => {
+      objectsList = []
+      client.listObjects(bucketName, '', false, true)
+        .on('error', done)
+        .on('end', () => {
+          if (objectsList.length === 3) return done()
+          return done(new Error(`listObjects lists ${objectsList.length} objects, expected ${objArray.length}`))
+        })
+        .on('data', data => {
+          objectsList.push(data)
+        })
+    })
+
+    // remove the 1st version of the object
+    step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}, versionId_`, done => {
+      const { name, versionId } = _.first(objectsList)
+      client.removeObject(bucketName, name, versionId)
+        .then(done)
+        .catch(done)
+    })
+
+    // remove all version with removeObjects
+    step(`removeObjects(bucketName, objectsList)_bucketName:${bucketName}, objectsList:Array_`, done => {
+      const deleteList = objectsList.map(x => ({key: x.name, versionId: x.versionId}))
+      client.removeObjects(bucketName, deleteList)
+        .then(done)
+        .catch(done)
+    })
+
+    // disabled versioning
+    step(`disableVersioning(bucketName)_bucketName:${bucketName}_`, done => {
+      client.disableVersioning(bucketName)
+        .then(() => done())
+        .catch(done)
+    })
+
+    // check if versioning is suspended
+    step(`getBucketVersioning(bucketName)_bucketName:${bucketName}_`, done => {
+      client.getBucketVersioning(bucketName)
+        .then(config => {
+          if (config.status === 'Suspended') return done()
+          return done(new Error('Unexpected status for getBucketVersioning'))
+        })
+        .catch(done)
     })
   })
 })

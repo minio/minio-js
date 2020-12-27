@@ -21,7 +21,7 @@ import Https from 'https'
 import Stream from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
-import xml2js from 'xml2js'
+import fxp from 'fast-xml-parser'
 import async from 'async'
 import querystring from 'querystring'
 import mkdirp from 'mkdirp'
@@ -741,9 +741,11 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: path to which the object data will be written to
+  // * `versionId` _string_: version id of the object (optional)
   // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, cb) {
+  fGetObject(bucketName, objectName, filePath, versionId, cb) {
     // Input validation.
+    if (versionId === undefined) versionId = ''
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -752,6 +754,14 @@ export class Client {
     }
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
+    }
+    // We'll need to shift arguments to the left because of opts.
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
+    }
+    if (!isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -769,7 +779,7 @@ export class Client {
     }
 
     async.waterfall([
-      cb => this.statObject(bucketName, objectName, cb),
+      cb => this.statObject(bucketName, objectName, versionId, cb),
       (result, cb) => {
         objStat = result
         // Create any missing top level directories.
@@ -786,7 +796,7 @@ export class Client {
             offset = stats.size
             partFileStream = fs.createWriteStream(partFile, {flags: 'a'})
           }
-          this.getPartialObject(bucketName, objectName, offset, 0, cb)
+          this.getPartialObject(bucketName, objectName, offset, 0, versionId, cb)
         })
       },
       (downloadStream, cb) => {
@@ -807,18 +817,27 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `versionId` _string_: version id of the object (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucketName, objectName, cb) {
+  getObject(bucketName, objectName, versionId, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    // We'll need to shift arguments to the left because of opts.
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
+    }
+    if (!isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.getPartialObject(bucketName, objectName, 0, 0, cb)
+    this.getPartialObject(bucketName, objectName, 0, 0, versionId, cb)
   }
 
   // Callback is called with readable stream of the partial object content.
@@ -828,11 +847,17 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `offset` _number_: offset of the object from where the stream will start
   // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
+  // * `versionId` _string_: version id of the object (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucketName, objectName, offset, length, cb) {
+  getPartialObject(bucketName, objectName, offset, length, versionId, cb) {
+    if (versionId === undefined) versionId = ''
     if (isFunction(length)) {
       cb = length
       length = 0
+    }
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
     }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -845,6 +870,9 @@ export class Client {
     }
     if (!isNumber(length)) {
       throw new TypeError('length should be of type "number"')
+    }
+    if (!isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -873,7 +901,8 @@ export class Client {
       expectedStatus = 206
     }
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, '', true, cb)
+    var query = versionId ? querystring.stringify({ versionId }) : null
+    this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatus, '', true, cb)
   }
 
   // Uploads the object using contents from a file
@@ -883,7 +912,9 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: file path of the file to be uploaded
   // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  // * `callback(err, info)` _function_: `err` is not `null` in case of error, `info` contains the object information:
+  //   * `info.etag` _string_: etag of the object
+  //   * `info.versionId` _string_: version id of the object
   fPutObject(bucketName, objectName, filePath, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -933,8 +964,8 @@ export class Client {
               var md5sum = data.md5sum
               var sha256sum = data.sha256sum
               var stream = fs.createReadStream(filePath, options)
-              uploader(stream, size, sha256sum, md5sum, (err, etag) => {
-                callback(err, etag)
+              uploader(stream, size, sha256sum, md5sum, (err, info) => {
+                callback(err, info)
                 cb(true)
               })
             })
@@ -991,9 +1022,9 @@ export class Client {
                 // part is not uploaded yet, or md5 mismatch
                 var stream = fs.createReadStream(filePath, options)
                 uploader(uploadId, partNumber, stream, length,
-                         data.sha256sum, data.md5sum, (e, etag) => {
+                         data.sha256sum, data.md5sum, (e, info) => {
                            if (e) return cb(e)
-                           partsDone.push({part: partNumber, etag})
+                           partsDone.push({part: partNumber, etag: info.etag})
                            partNumber++
                            uploadedSize += length
                            return cb()
@@ -1030,7 +1061,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `string or Buffer` _string_ or _Buffer_: string or buffer
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  // * `callback(err, info)` _function_: `err` is not `null` in case of error, `info` contains the object information:
+  //   * `info.etag` _string_: etag of the object
+  //   * `info.versionId` _string_: version id of the object  
   putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1157,7 +1190,7 @@ export class Client {
   }
 
   // list a batch of objects
-  listObjectsQuery(bucketName, prefix, marker, delimiter, maxKeys) {
+  listObjectsQuery(bucketName, prefix, marker, delimiter, maxKeys, includeVersion, versionIdMarker) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1173,15 +1206,33 @@ export class Client {
     if (!isNumber(maxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
     }
+    if (!isBoolean(includeVersion)) {
+      throw new TypeError('includeVersion should be of type "boolean"')
+    }
+    if (!isString(versionIdMarker)) {
+      throw new TypeError('versionIdMarker should be of type "string"')
+    }
 
     var queries = []
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
     queries.push(`delimiter=${uriEscape(delimiter)}`)
 
+    if (includeVersion) {
+      queries.push(`versions`)
+    }
+    if (versionIdMarker) {
+      versionIdMarker = uriEscape(versionIdMarker)
+      queries.push(`version-id-marker=${versionIdMarker}`)
+    }
+
     if (marker) {
       marker = uriEscape(marker)
-      queries.push(`marker=${marker}`)
+      if (includeVersion) {
+        queries.push(`key-marker=${marker}`)
+      } else {
+        queries.push(`marker=${marker}`)
+      }
     }
 
     // no need to escape maxKeys
@@ -1212,6 +1263,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
   // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  // * `includeVersion` _bool_: `true` indicates to include object versions (optional, default `false`)
   //
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
@@ -1220,9 +1272,12 @@ export class Client {
   // * `obj.size` _number_: size of the object
   // * `obj.etag` _string_: etag of the object
   // * `obj.lastModified` _Date_: modified time stamp
-  listObjects(bucketName, prefix, recursive) {
+  // * `obj.versionId` _string_: version id of the object
+  // * `obj.isLatest` _bool_: `true` indicates this is latest version of the object
+  listObjects(bucketName, prefix, recursive, includeVersion) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
+    if (includeVersion === undefined) includeVersion = false
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1235,9 +1290,13 @@ export class Client {
     if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
+    if (!isBoolean(includeVersion)) {
+      throw new TypeError('includeVersion should be of type "boolean"')
+    }
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
     var marker = ''
+    var versionIdMarker = ''
     var objects = []
     var ended = false
     var readStream = Stream.Readable({objectMode: true})
@@ -1249,11 +1308,12 @@ export class Client {
       }
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
-      this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000)
+      this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000, includeVersion, versionIdMarker)
         .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           if (result.isTruncated) {
             marker = result.nextMarker
+            versionIdMarker = result.versionIdMarker
           } else {
             ended = true
           }
@@ -1400,24 +1460,37 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `versionId` _string_: version id of the object (optional)
   // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.metaData` _string_: MetaData of the object
   //   * `stat.lastModified` _Date_: modified time stamp
-  statObject(bucketName, objectName, cb) {
+  //   * `stat.versionId` _string_: version id of the object
+  //   * `stat.isLatest` _bool_: `true` indicates this is latest version of the object  
+  statObject(bucketName, objectName, versionId, cb) {
+    if (versionId === undefined) versionId = ''
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    // We'll need to shift arguments to the left because of opts.
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
+    }
+    if (!isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
+    var query = versionId ? querystring.stringify({ versionId }) : null
+    this.makeRequest({method, bucketName, objectName, query}, '', 200, '', true, (e, response) => {
       if (e) return cb(e)
 
       // We drain the socket so that the connection gets closed. Note that this
@@ -1434,6 +1507,11 @@ export class Client {
         etag = etag.replace(/^"/, '').replace(/"$/, '')
         result.etag = etag
       }
+
+      var versionId = response.headers['x-amz-version-id']
+      if (versionId) {
+        result.versionId = versionId
+      }
       cb(null, result)
     })
   }
@@ -1443,19 +1521,32 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `versionId` _string_: versionId of the object (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucketName, objectName, cb) {
+  removeObject(bucketName, objectName, versionId, cb) {
+    if (versionId === undefined) versionId = ''
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+
+    // We'll need to shift arguments to the left because of versionId.
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
+    }
+
+    if (!isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName, objectName}, '', 204, '', false, cb)
+    var query = versionId ? querystring.stringify({ versionId }) : null
+    this.makeRequest({method, bucketName, objectName, query}, '', 204, '', false, cb)
   }
 
   // Remove all the objects residing in the objectsList.
@@ -1478,29 +1569,32 @@ export class Client {
     const query = 'delete'
     const method = 'POST'
 
-    let result = objectsList.reduce((result, entry) => {
-      result.list.push(entry)
-      if (result.list.length === maxEntries) {
-        result.listOfList.push(result.list)
-        result.list = []
-      }
-      return result
-    }, {listOfList: [], list:[]})
-
-    if (result.list.length > 0) {
-      result.listOfList.push(result.list)
+    // split into list with max length of maxEntries
+    let listOfList = [], i = 0
+    while (i < objectsList.length) {
+      listOfList.push(objectsList.slice(i, i += maxEntries))
     }
     
     const encoder = new util.TextEncoder()
+    const builder = new fxp.j2xParser()
 
-    async.eachSeries(result.listOfList, (list, callback) => {
-      var deleteObjects={"Delete":[{"Quiet": true}]}
+    async.eachSeries(listOfList, (list, callback) => {
+      let deleteObjects={ "Delete": { "Quiet": true, "Object": [] } }
 
       list.forEach(function(value){
-        deleteObjects["Delete"].push({"Object": [{"Key": value}]})
+        if (isString(value)) {
+          deleteObjects.Delete.Object.push({"Key": value})
+        } else {
+          const { key, versionId } = value
+          const objectIdentifier = {Key: key}
+          if (versionId) {
+            objectIdentifier.VersionId = versionId
+          }
+          deleteObjects.Delete.Object.push(objectIdentifier)
+        }
       })
 
-      let payload = Xml(deleteObjects)
+      let payload = builder.parse(deleteObjects)
       payload = encoder.encode(payload)
 
       var headers = {}
@@ -1583,24 +1677,32 @@ export class Client {
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `reqParams` _object_: request parameters (optional)
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
-  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
+  // * `versionId` _string_: versionId of the object (optional)
+  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, versionId, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
+    }
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
     }
     if (isFunction(requestDate)) {
       cb = requestDate
       requestDate = new Date()
+      versionId = ''
     }
     if (isFunction(reqParams)) {
       cb = reqParams
       reqParams = {}
       requestDate = new Date()
+      versionId = ''
     }
     if (isFunction(expires)) {
       cb = expires
       reqParams = {}
       expires = 24 * 60 * 60 * 7 // 7 days in seconds
       requestDate = new Date()
+      versionId = ''
     }
     if (!isNumber(expires)) {
       throw new TypeError('expires should be of type "number"')
@@ -1611,10 +1713,14 @@ export class Client {
     if (!isValidDate(requestDate)) {
       throw new TypeError('requestDate should be of type "Date" and valid')
     }
+    if (versionId && !isString(versionId)) {
+      throw new TypeError('versionId should be of type "string"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var query = querystring.stringify(reqParams)
+    var params = Object.assign({}, reqParams, { versionId })
+    var query = querystring.stringify(params)
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
@@ -1643,7 +1749,8 @@ export class Client {
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `respHeaders` _object_: response headers to override (optional)
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
-  presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
+  // * `versionId` _string_: versionId of the object (optional)
+  presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, versionId, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1654,7 +1761,11 @@ export class Client {
     if (isFunction(respHeaders)) {
       cb = respHeaders
       respHeaders = {}
-      requestDate = new Date()
+      requestDate = new Date()      
+    }
+    if (isFunction(versionId)) {
+      cb = versionId
+      versionId = ''
     }
 
     var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
@@ -1664,7 +1775,7 @@ export class Client {
         throw new TypeError(`response header ${header} should be of type "string"`)
       }
     })
-    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, cb)
+    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, versionId, cb)
   }
 
   // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
@@ -2044,13 +2155,17 @@ export class Client {
       this.makeRequestStream({method, bucketName, objectName, query, headers},
                              stream, sha256sum, 200, '', true, (e, response) => {
                                if (e) return cb(e)
-                               var etag = response.headers.etag
-                               if (etag) {
-                                 etag = etag.replace(/^"/, '').replace(/"$/, '')
+                               var result = { etag: response.headers.etag }
+                               if (result.etag) {
+                                 result.etag = result.etag.replace(/^"/, '').replace(/"$/, '')
+                               }
+                               var versionId = response.headers['x-amz-version-id']
+                               if (versionId) {
+                                 result.versionId = versionId
                                }
                                // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
                                response.on('data', () => {})
-                               cb(null, etag)
+                               cb(null, result)
                              })
     }
     if (multipart) {
@@ -2072,8 +2187,8 @@ export class Client {
     }
     var method = 'PUT'
     var query = 'notification'
-    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
-    var payload = builder.buildObject(config)
+    var builder = new fxp.j2xParser()
+    var payload = builder.parse({ NotificationConfiguration: config })
     this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
 
@@ -2130,6 +2245,55 @@ export class Client {
     }
     return this.clientExtensions
   }
+
+  // Enable object versioning in given bucket
+  enableVersioning(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'PUT'
+    var query = 'versioning'
+    var builder = new fxp.j2xParser()
+    var payload = builder.parse({ VersioningConfiguration: { Status: "Enabled" } })
+    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+  }
+
+  // Disable object versioning in given bucket
+  disableVersioning(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    var method = 'PUT'
+    var query = 'versioning'
+    var builder = new fxp.j2xParser()
+    var payload = builder.parse({ VersioningConfiguration: { Status: "Suspended" } })
+    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+  }
+
+  getBucketVersioning(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    var method = 'GET'
+    var query = 'versioning'
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+      var transformer = transformers.getVersioningConfiguration()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', data => cb(null, data))
+    })
+  }
 }
 
 // Promisify various public-facing APIs on the Client module.
@@ -2158,6 +2322,9 @@ Client.prototype.removeAllBucketNotification = promisify(Client.prototype.remove
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
+Client.prototype.enableVersioning = promisify(Client.prototype.enableVersioning)
+Client.prototype.disableVersioning = promisify(Client.prototype.disableVersioning)
+Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersioning)
 
 
 export class CopyConditions {

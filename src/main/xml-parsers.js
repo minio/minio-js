@@ -71,9 +71,7 @@ export function parseCopyObject(xml) {
     throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
   }
   xmlobj = xmlobj.CopyObjectResult
-  if (xmlobj.ETag) result.etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
-    .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-    .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+  if (xmlobj.ETag) result.etag = trimEtag(xmlobj.ETag)
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified)
 
   return result
@@ -236,9 +234,7 @@ export function parseListParts(xml) {
     toArray(xmlobj.Part).forEach(p => {
       var part = + toArray(p.PartNumber)[0]
       var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = trimEtag(p.ETag)
       result.parts.push({part, lastModified, etag})
     })
   }
@@ -265,9 +261,7 @@ export function parseCompleteMultipart(xml) {
     var location = toArray(xmlobj.Location)[0]
     var bucket = toArray(xmlobj.Bucket)[0]
     var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
-      .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+    var etag = trimEtag(xmlobj.ETag)
 
     return {location, bucket, key, etag}
   }
@@ -285,26 +279,56 @@ export function parseListObjects(xml) {
     objects: [],
     isTruncated: false
   }
-  var nextMarker
+  var nextMarker, nextKeyMarker
   var xmlobj = parseXml(xml)
 
-  if (!xmlobj.ListBucketResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
-  }
-  xmlobj = xmlobj.ListBucketResult
-  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
-  if (xmlobj.Contents) {
-    toArray(xmlobj.Contents).forEach(content => {
+  if (xmlobj.ListBucketResult && xmlobj.ListBucketResult.IsTruncated) result.isTruncated = xmlobj.ListBucketResult.IsTruncated
+  if (xmlobj.ListVersionsResult && xmlobj.ListVersionsResult.IsTruncated) result.isTruncated = xmlobj.ListVersionsResult.IsTruncated
+
+  if (xmlobj.ListBucketResult && xmlobj.ListBucketResult.Contents) {
+    toArray(xmlobj.ListBucketResult.Contents).forEach(content => {
       var name = toArray(content.Key)[0]
       var lastModified = new Date(toArray(content.LastModified)[0])
-      var etag = toArray(content.ETag)[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = trimEtag(toArray(content.ETag)[0])
       var size = content.Size
       result.objects.push({name, lastModified, etag, size})
-      nextMarker = name
+      if (!nextMarker) {
+        nextMarker = name
+      }
     })
   }
+
+  if (xmlobj.ListVersionsResult && xmlobj.ListVersionsResult.Version) {
+    toArray(xmlobj.ListVersionsResult.Version).forEach(content => {
+      var name = toArray(content.Key)[0]
+      var lastModified = new Date(toArray(content.LastModified)[0])
+      var etag = trimEtag(toArray(content.ETag)[0])
+      var size = content.Size
+      var versionId = content.VersionId
+      var isLatest = content.IsLatest
+      result.objects.push({name, lastModified, etag, size, versionId, isLatest})
+    })
+  }
+  
+  if (xmlobj.ListVersionsResult && xmlobj.ListVersionsResult.DeleteMarker) {
+    toArray(xmlobj.ListVersionsResult.DeleteMarker).forEach(content => {
+      var name = toArray(content.Key)[0]
+      var lastModified = new Date(toArray(content.LastModified)[0])
+      var etag = trimEtag(toArray(content.ETag)[0])
+      var size = content.Size
+      var versionId = content.VersionId
+      var isLatest = content.IsLatest
+      result.objects.push({name, lastModified, etag, size, versionId, isLatest})
+    })
+  }
+
+  if (xmlobj.ListVersionsResult && xmlobj.ListVersionsResult.NextKeyMarker) {
+    nextKeyMarker = xmlobj.ListVersionsResult.NextKeyMarker
+  }
+  if (xmlobj.ListVersionsResult && xmlobj.ListVersionsResult.NextVersionIdMarker) {
+    result.versionIdMarker = xmlobj.ListVersionsResult.NextVersionIdMarker
+  }
+
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
@@ -314,7 +338,7 @@ export function parseListObjects(xml) {
     })
   }
   if (result.isTruncated) {
-    result.nextMarker = xmlobj.NextMarker ? toArray(xmlobj.NextMarker)[0]: nextMarker
+    result.nextMarker = nextKeyMarker || nextMarker
   }
   return result
 }
@@ -336,9 +360,7 @@ export function parseListObjectsV2(xml) {
     toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
-      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = trimEtag(content.ETag)
       var size = content.Size
       result.objects.push({name, lastModified, etag, size})
     })
@@ -371,9 +393,7 @@ export function parseListObjectsV2WithMetadata(xml) {
     toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
-      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = trimEtag(content.ETag)
       var size = content.Size
       var metadata
       if (content.UserMetadata != null) {
@@ -393,4 +413,29 @@ export function parseListObjectsV2WithMetadata(xml) {
     })
   }
   return result
+}
+
+export function parseVersioningConfiguration(xml) {
+  var result = {
+    status: '',
+  }
+
+  var xmlobj = parseXml(xml).VersioningConfiguration
+  
+  if (xmlobj && xmlobj.Status) {
+    result.status = xmlobj.Status
+  }
+  if (xmlobj && xmlobj.MfaDelete) {
+    result.mfaDelete = xmlobj.MfaDelete
+  }
+
+  return result
+}
+
+
+// trims quotes from eTag
+function trimEtag(etag) {
+  return etag.replace(/^"/g, '').replace(/"$/g, '')
+    .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
+    .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
 }
