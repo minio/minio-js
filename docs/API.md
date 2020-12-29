@@ -616,29 +616,59 @@ Copy a source object into a new object in the specified bucket.
 
 __Parameters__
 
-
 | Param  |  Type | Description  |
 |---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-|`objectName`   |_string_   | Name of the object.  |
-| `sourceObject`  | _string_  | Path of the file to be copied.  |
-| `conditions`  | _CopyConditions_  | Conditions to be satisfied before allowing object copy.  |
-| `callback(err, {etag, lastModified})`  |  _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
+| `src` | _CopySrcOptions_  | Argument describing the source object. |
+| `dst` | _CopyDestOptions_ | Argument describing the destination object. |
+| `callback(err, {etag, lastModified, versionId})` | _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ and `versionId` _string_ are the etag, the last modified date and version ID of the object newly copied. If no callback is passed, a `Promise` is returned. |
 
-__Example__
+__Example 1__
 
 ```js
-var conds = new Minio.CopyConditions()
-conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
-minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function(e, data) {
+var src = new Minio.CopySrcOptions()
+src.bucketName = 'mybucket'
+src.objectName = 'srcobject'
+
+var dst = new Minio.CopyDestOptions()
+dst.bucketName = 'mybucket'
+dst.objectName = 'newobject'
+
+minioClient.copyObject(src, dst, function(e, data) {
   if (e) {
     return console.log(e)
   }
   console.log("Successfully copied the object:")
   console.log("etag = " + data.etag + ", lastModified = " + data.lastModified)
+  if (data.versionId) {
+    console.log("versionId = " + data.versionId)
+  }
 })
 ```
 
+__Example 2__
+
+```js
+var src = new Minio.CopySrcOptions()
+src.bucketName = 'mybucket'
+src.objectName = 'srcobject'
+src.matchETag = 'bd891862ea3e22c93ed53a098218791d'
+src.versionID = '3d789c31-b8f9-44ef-8fec-6b441e8e0587'
+
+var dst = new Minio.CopyDestOptions()
+dst.bucketName = 'mybucket'
+dst.objectName = 'newobject'
+
+minioClient.copyObject(src, dst, function(e, data) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Successfully copied the object:")
+  console.log("etag = " + data.etag + ", lastModified = " + data.lastModified)
+  if (data.versionId) {
+    console.log("versionId = " + data.versionId)
+  }
+})
+```
 
 <a name="statObject"></a>
 ### statObject(bucketName, objectName[, callback])

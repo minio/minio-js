@@ -1470,6 +1470,31 @@ describe('functional tests', function() {
         })
     })
 
+    // copy the 1st version of the object with new name
+    step(`copyObject`, done => {
+      const original = _.last(objectsList)
+      const src = new minio.CopySrcOptions()
+      src.bucketName = bucketName
+      src.objectName = _1byteObjectName
+      src.versionId = original.versionId // this should be the 100kb object
+
+      const dst = new minio.CopyDestOptions()
+      dst.bucketName = bucketName
+      dst.objectName = _1byteObjectName + '_copy'
+      dst.metaData = metaData
+      dst.replaceMetadata = true
+
+      client.copyObject(src, dst).then(info => { 
+        if (!info.versionId) return done(new Error(`Unexpected versionId in copyObject`))
+        objArray.push(info)
+        return client.statObject(dst.bucketName, dst.objectName)
+      }).then(stats => {
+        if (stats.etag !== original.etag) return done(new Error(`copyObject etag mismatch`))
+        if (stats.metaData['content-type'] !== metaData['Content-Type']) return done(new Error(`copyObject metadata mismatch`))
+        done()
+      }).catch(done)
+    })
+
     // remove the object
     step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`, done => {
       client.removeObject(bucketName, _1byteObjectName)
@@ -1477,13 +1502,13 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    // listObject should show all version (i.e. 3 total)
+    // listObject should show all version (i.e. 4 total)
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false, includeVersion:true_`, done => {
       objectsList = []
       client.listObjects(bucketName, '', false, true)
         .on('error', done)
         .on('end', () => {
-          if (objectsList.length === 3) return done()
+          if (objectsList.length === 4) return done()
           return done(new Error(`listObjects lists ${objectsList.length} objects, expected ${objArray.length}`))
         })
         .on('data', data => {
@@ -1499,7 +1524,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    // remove all version with removeObjects
+    // remove all objects and version with removeObjects
     step(`removeObjects(bucketName, objectsList)_bucketName:${bucketName}, objectsList:Array_`, done => {
       const deleteList = objectsList.map(x => ({key: x.name, versionId: x.versionId}))
       client.removeObjects(bucketName, deleteList)

@@ -1125,14 +1125,25 @@ export class Client {
   }
 
   // Copy the object.
+  // This is just for backwards compatibility with the old `copyObjectLegacy`. See `copyObjectNext` for the new implementation
+  copyObject() {
+    if(arguments.length > 2) {
+      if (arguments[0] instanceof CopySrcOptions) {
+        return this.copyObjectNext(...arguments)
+      }
+    }
+    return this.copyObjectLegacy(...arguments)
+  }
+
+  // Copy the object.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `srcObject` _string_: path of the source object to be copied
   // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
-  // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
-  copyObject(arg1, arg2, arg3, arg4, arg5) {
+  // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copie
+  copyObjectLegacy(arg1, arg2, arg3, arg4, arg5) {
     var bucketName = arg1
     var objectName = arg2
     var srcObject = arg3
@@ -1186,6 +1197,43 @@ export class Client {
       pipesetup(response, transformer)
         .on('error', e => cb(e))
         .on('data', data => cb(null, data))
+    })
+  }
+
+  // Copy the object.
+  //
+  // __Arguments__
+  // * `src` _CopySrcOptions_: argument describing the source object
+  // * `dst` _CopyDestOptions_: argument describing the destination object
+  // * `callback(err, {etag, lastModified, versionId})` _function_: non null `err` indicates error, `etag` _string_, `listModifed` _Date_ and `versionId` _string_ are respectively the etag, the last modified date and the version ID of the newly copie
+  copyObjectNext(src, dst, cb) {
+    if (!(src instanceof CopySrcOptions)) {
+      throw new TypeError('src should be of type "CopySrcOptions"')
+    }
+    if (!(dst instanceof CopyDestOptions)) {
+      throw new TypeError('dst should be of type "CopyDestOptions"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('cb should be of type "function"')
+    }
+
+    src.validate()
+    dst.validate()
+
+    const method = 'PUT'
+    const headers = Object.assign({}, src.getHeaders(), dst.getHeaders())
+    let {bucketName, objectName} = dst
+
+    this.makeRequest({method, bucketName, objectName, headers}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+      const transformer = transformers.getCopyObjectTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', data => {
+          let versionId = response.headers['x-amz-version-id']
+          if (versionId) data.versionId = versionId
+          cb(null, data)
+        })
     })
   }
 
@@ -2356,6 +2404,102 @@ export class CopyConditions {
   setMatchETagExcept(etag) {
     this.matchETagExcept = etag
   }
+}
+
+export class CopySrcOptions {
+  constructor() {
+    this.bucketName = ""
+    this.objectName = ""
+    this.versionId = ""
+    this.modified = ""
+    this.unmodified = ""
+    this.matchETag = ""
+    this.matchETagExcept = ""
+  }
+
+  validate() {
+    if (!isValidBucketName(this.bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${this.bucketName}`)
+    }
+    if (!isValidObjectName(this.objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${this.objectName}`)
+    }
+    if (!isString(this.versionId)) {
+      throw new TypeError('versionId should be of type "string"')
+    }
+    if (this.modified && !(this.modified instanceof Date)) {
+      throw new TypeError('modified must be of type Date')
+    }
+    if (this.unmodified && !(this.unmodified instanceof Date)) {
+      throw new TypeError('unmodified must be of type Date')
+    }
+    if (!isString(this.matchETag)) {
+      throw new TypeError('matchETag should be of type "string"')
+    }
+    if (!isString(this.matchETagExcept)) {
+      throw new TypeError('matchETagExcept should be of type "string"')
+    }
+  }
+
+  getHeaders() {
+    const headers = {}
+    headers['x-amz-copy-source'] = encodeURIComponent(`${this.bucketName}/${this.objectName}`)
+    if (this.versionId) {
+      headers['x-amz-copy-source'] = encodeURIComponent(`${this.bucketName}/${this.objectName}`) + `?versionId=${encodeURIComponent(this.versionId)}`
+    }
+
+    if (this.matchETag) {
+      headers['x-amz-copy-source-if-match'] = this.matchETag
+    }
+    if (this.matchEtagExcept) {
+      headers['x-amz-copy-source-if-none-match'] = this.matchETagExcept
+    }
+    if (this.modified) {
+      headers['x-amz-copy-source-if-modified-since'] = this.modified
+    }
+    if (this.unmodified) {
+      headers['x-amz-copy-source-if-unmodified-since'] = this.unmodified
+    }
+    return headers
+  }  
+}
+
+export class CopyDestOptions {
+  constructor() {
+    this.bucketName = ""
+    this.objectName = ""
+    this.metaData = {}
+    this.replaceMetadata = false
+  }
+
+  validate() {
+    if (!isValidBucketName(this.bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${this.bucketName}`)
+    }
+    if (!isValidObjectName(this.objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${this.objectName}`)
+    }
+    if (!isObject(this.metaData)) {
+      throw new TypeError('metadata should be of type "object"')
+    }
+    if (!isBoolean(this.replaceMetadata)) {
+      throw new TypeError('replaceMetadata should be of type "boolean"')
+    }
+  }
+
+  getHeaders() {
+    const replaceDirective = "REPLACE"
+    let headers = {}
+    if (this.replaceMetadata) {
+      headers['x-amz-metadata-directive'] = replaceDirective
+      
+      //Ensures Metadata has appropriate prefix for A3 API
+      const metaData = prependXAMZMeta(this.metaData)
+      headers = Object.assign(metaData, headers)
+    }
+    return headers
+  }
+  
 }
 
 // Build PostPolicy object that can be signed by presignedPostPolicy
