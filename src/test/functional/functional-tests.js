@@ -1286,8 +1286,8 @@ describe('functional tests', function() {
       })
     })
     step("Enable versioning  on a bucket",done=>{
-      client.putBucketVersioning(bucketName,{Status:"Enabled"},(err, data)=>{
-          done()
+      client.putBucketVersioning(bucketName,{Status:"Enabled"},()=>{
+        done()
       })
     })
 
@@ -1298,7 +1298,7 @@ describe('functional tests', function() {
     })
       
     step("Check if versioning is Suspended on a bucket",done=>{
-      client.getBucketVersioning(bucketName,(err, data)=>{
+      client.getBucketVersioning(bucketName,()=>{
         done()
       })
     })
