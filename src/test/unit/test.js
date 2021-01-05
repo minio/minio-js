@@ -624,5 +624,55 @@ describe('Client', function() {
       })
     })
   })
+
+  describe('Bucket Versioning APIs', ()=>{
+    describe('getBucketVersioning(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getBucketVersioning(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getBucketVersioning('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('putBucketVersioning(bucket, versionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.putBucketVersioning(null, {},function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.putBucketVersioning('', {},function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on empty versionConfig', (done) => {
+        try {
+          client.putBucketVersioning('', null,function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+  })
+    
 })
 
