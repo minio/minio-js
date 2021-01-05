@@ -28,8 +28,6 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
-import debug from 'debug'
-const log = debug('minio-js')
 
 let minio
 
@@ -258,7 +256,7 @@ describe('functional tests', function() {
     })
 
   })
-  describe.skip('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
+  describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
     step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _100kb)
@@ -635,7 +633,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe.skip('fPutObject fGetObject', function() {
+  describe('fPutObject fGetObject', function() {
     var tmpFileUpload = `${tmpDir}/${_65mbObjectName}`
     var tmpFileDownload = `${tmpDir}/${_65mbObjectName}.download`
 
@@ -685,7 +683,7 @@ describe('functional tests', function() {
       client.removeObject(bucketName, _65mbObjectName, done)
     })
   })
-  describe.skip('fGetObject-resume', () => {
+  describe('fGetObject-resume', () => {
     var localFile = `${tmpDir}/${_5mbObjectName}`
     var etag = ''
     step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_5mbObjectName}, stream:5mb_`, done => {
@@ -1289,9 +1287,7 @@ describe('functional tests', function() {
     })
     step("Enable versioning  on a bucket",done=>{
       client.putBucketVersioning(bucketName,{Status:"Enabled"},(err, data)=>{
-
-        log("::Enable Response:",data)
-        done()
+          done()
       })
     })
 
@@ -1303,7 +1299,6 @@ describe('functional tests', function() {
       
     step("Check if versioning is Suspended on a bucket",done=>{
       client.getBucketVersioning(bucketName,(err, data)=>{
-        log("::Suspended Response:",data)
         done()
       })
     })
