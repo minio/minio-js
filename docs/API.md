@@ -36,8 +36,8 @@ var s3Client = new Minio.Client({
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
-|     |  [`removeObject`](#removeObject)    |
-|     |  [`removeObjects`](#removeObjects)    |
+| [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
+| [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 
 
@@ -387,6 +387,54 @@ Stream.on('end', function() {
 })
 Stream.on('error', function(err) {
   console.log(err)
+})
+```
+
+<a name="getBucketVersioning"></a>
+### getBucketVersioning(bucketName)
+
+Get Versioning state of a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+
+__Example__
+```js
+minioClient.getBucketVersioning('bucketname', function (err,res){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="setBucketVersioning"></a>
+### setBucketVersioning(bucketName, versioningConfig, callback)
+
+Set Versioning state on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `versioningConfig`  | _object_  |  Versioning Configuration e.g: `{Status:"Enabled"}` |
+|`callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object which contains `Status` as either `Enabled` or `Suspended` if versioning is enabled on a bucket at any point of time. If no callback is passed, a `Promise` is returned. |
+
+__Example__
+```js
+var versioningConfig = {Status:"Enabled"}
+minioClient.setBucketVersioning('bucketname',versioningConfig, function (err,res){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
 })
 ```
 

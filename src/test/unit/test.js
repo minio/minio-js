@@ -645,10 +645,10 @@ describe('Client', function() {
       })
     })
 
-    describe('putBucketVersioning(bucket, versionConfig, callback)', () => {
+    describe('setBucketVersioning(bucket, versionConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.putBucketVersioning(null, {},function () {
+          client.setBucketVersioning(null, {},function () {
           })
         } catch (e) {
           done()
@@ -656,7 +656,7 @@ describe('Client', function() {
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.putBucketVersioning('', {},function () {
+          client.setBucketVersioning('', {},function () {
           })
         } catch (e) {
           done()
@@ -665,7 +665,7 @@ describe('Client', function() {
 
       it('should fail on empty versionConfig', (done) => {
         try {
-          client.putBucketVersioning('', null,function () {
+          client.setBucketVersioning('', null,function () {
           })
         } catch (e) {
           done()

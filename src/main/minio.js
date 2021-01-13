@@ -2137,7 +2137,7 @@ export class Client {
       if (e) return cb(e)
 
       let versionConfig = Buffer.from('')
-      pipesetup(response, transformers.getBucketVersioningTransformer())
+      pipesetup(response, transformers.bucketVersioningTrasnformer())
         .on('data', data => {
           versionConfig = data
         })
@@ -2148,7 +2148,7 @@ export class Client {
     })
   }
 
-  putBucketVersioning(bucketName,versionConfig, cb) {
+  setBucketVersioning(bucketName,versionConfig, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2168,7 +2168,7 @@ export class Client {
     this.makeRequest({method, bucketName, query}, payload, 200, '', true, (e, response) => {
       if (e) return cb(e)
 
-      pipesetup(response, transformers.getBucketVersioningTransformer())
+      pipesetup(response, transformers.bucketVersioningTrasnformer())
         .on('data', data => {
           versionInfo = data
         })
@@ -2215,7 +2215,7 @@ Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
-Client.prototype.putBucketVersioning=promisify((Client.prototype.putBucketVersioning))
+Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
 
 export class CopyConditions {
   constructor() {

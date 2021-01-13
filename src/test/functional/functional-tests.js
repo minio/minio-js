@@ -1286,13 +1286,13 @@ describe('functional tests', function() {
       })
     })
     step("Enable versioning  on a bucket",done=>{
-      client.putBucketVersioning(bucketName,{Status:"Enabled"},()=>{
+      client.setBucketVersioning(bucketName,{Status:"Enabled"},()=>{
         done()
       })
     })
 
     step("Suspend versioning  on a bucket",done=>{
-      client.putBucketVersioning(bucketName,{Status:"Suspended"},()=>{
+      client.setBucketVersioning(bucketName,{Status:"Suspended"},()=>{
         done()
       })
     })

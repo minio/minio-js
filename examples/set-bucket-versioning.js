@@ -1,3 +1,4 @@
+
 /*
  * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016-2019 MinIO, Inc.
  *
@@ -25,10 +26,11 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
+var versioningStateConfig = {Status:"Enabled"}
 
-s3Client.getBucketVersioning('my-bucketname', function (err,res){
-  if (err) {
-    return console.log(err)
+s3Client.setBucketVersioning("my-bucket", versioningStateConfig, function (error,res){
+  if (error) {
+    return console.log(error)
   }
   console.log(res)
   console.log("Success")

@@ -214,6 +214,6 @@ export function getNotificationTransformer() {
   return new JSONParser()
 }
 
-export function  getBucketVersioningTransformer(){
+export function  bucketVersioningTrasnformer(){
   return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
