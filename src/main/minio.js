@@ -2137,7 +2137,7 @@ export class Client {
       if (e) return cb(e)
 
       let versionConfig = Buffer.from('')
-      pipesetup(response, transformers.bucketVersioningTrasnformer())
+      pipesetup(response, transformers.bucketVersioningTransformer())
         .on('data', data => {
           versionConfig = data
         })
@@ -2168,7 +2168,7 @@ export class Client {
     this.makeRequest({method, bucketName, query}, payload, 200, '', true, (e, response) => {
       if (e) return cb(e)
 
-      pipesetup(response, transformers.bucketVersioningTrasnformer())
+      pipesetup(response, transformers.bucketVersioningTransformer())
         .on('data', data => {
           versionInfo = data
         })

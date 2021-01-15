@@ -396,7 +396,6 @@ export function parseListObjectsV2WithMetadata(xml) {
 }
 
 export function parseBucketVersioningConfig(xml){
-  var xmlobj = parseXml(xml)
-  var result = xmlobj.VersioningConfiguration
-  return  result
+  var xmlObj = parseXml(xml)
+  return xmlObj.VersioningConfiguration
 }
