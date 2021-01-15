@@ -426,16 +426,15 @@ __Parameters__
 | ---| ---|---|
 | `bucketname`  | _string_  |  Name of the bucket. |
 | `versioningConfig`  | _object_  |  Versioning Configuration e.g: `{Status:"Enabled"}` |
-|`callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object which contains `Status` as either `Enabled` or `Suspended` if versioning is enabled on a bucket at any point of time. If no callback is passed, a `Promise` is returned. |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
 
 __Example__
 ```js
 var versioningConfig = {Status:"Enabled"}
-minioClient.setBucketVersioning('bucketname',versioningConfig, function (err,res){
+minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
   if (err) {
     return console.log(err)
   }
-  console.log(res)
   console.log("Success")
 })
 ```

@@ -28,10 +28,9 @@ var s3Client = new Minio.Client({
 
 var versioningStateConfig = {Status:"Enabled"}
 
-s3Client.setBucketVersioning("my-bucket", versioningStateConfig, function (error,res){
+s3Client.setBucketVersioning("my-bucket", versioningStateConfig, function (error){
   if (error) {
     return console.log(error)
   }
-  console.log(res)
   console.log("Success")
 })

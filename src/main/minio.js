@@ -2164,19 +2164,7 @@ export class Client {
     var builder = new xml2js.Builder({rootName:'VersioningConfiguration', renderOpts:{'pretty':false}, headless:true})
     var payload = builder.buildObject(versionConfig)
 
-    var versionInfo = Buffer.from('')
-    this.makeRequest({method, bucketName, query}, payload, 200, '', true, (e, response) => {
-      if (e) return cb(e)
-
-      pipesetup(response, transformers.bucketVersioningTransformer())
-        .on('data', data => {
-          versionInfo = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, versionInfo.toString())
-        })
-    })
+    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
 
   get extensions() {
