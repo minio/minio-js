@@ -29,12 +29,14 @@ import path from 'path'
 import _ from 'lodash'
 import util from 'util'
 
-import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
+import {
+  extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify } from './helpers.js'
+  insertContentType, makeDateLong, promisify, getVersionId
+} from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -1405,19 +1407,26 @@ export class Client {
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.metaData` _string_: MetaData of the object
   //   * `stat.lastModified` _Date_: modified time stamp
-  statObject(bucketName, objectName, cb) {
+  statObject(bucketName, objectName, statOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    //backward compatibility
+    if (isFunction(statOpts)) {
+      cb = statOpts
+      statOpts={}
+    }
+
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
+    var query = querystring.stringify(statOpts)
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query},'' ,200, '', true, (e, response) => {
       if (e) return cb(e)
 
       // We drain the socket so that the connection gets closed. Note that this
@@ -1434,6 +1443,9 @@ export class Client {
         etag = etag.replace(/^"/, '').replace(/"$/, '')
         result.etag = etag
       }
+
+      result.versionId= getVersionId(response.headers)
+
       cb(null, result)
     })
   }
