@@ -666,6 +666,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
+| removeOpts  |  _object_ | object containing delete options e.g versionId of the object.  |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
@@ -678,6 +679,17 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
     return console.log('Unable to remove object', err)
   }
   console.log('Removed the object')
+})
+```
+
+or to remove a specified **version** of an object on a **versioning enabled** bucket.
+
+```js
+minioClient.removeObject('mybucket', 'photo.jpg',{versionId:"089a5b47-ec2e-405f-b6bc-bb7a8cc3511c"} ,function(err) {
+  if (err) {
+    return console.log('Unable to remove object', err)
+  }
+  console.log('Removed the object version')
 })
 ```
 

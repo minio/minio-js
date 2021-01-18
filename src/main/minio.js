@@ -1443,19 +1443,34 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `removeOpts` _object_: object containing delete options e.g versionId of the object
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucketName, objectName, cb) {
+  removeObject(bucketName, objectName, removeOpts={} , cb) {
+
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    //backward compatibility
+    if (isFunction(removeOpts)) {
+      cb = removeOpts
+      removeOpts = {}
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var method = 'DELETE'
-    this.makeRequest({method, bucketName, objectName}, '', 204, '', false, cb)
+
+    const method = 'DELETE'
+    const query = querystring.stringify( removeOpts )
+
+    let requestOptions = {method, bucketName,objectName}
+    if(query){
+      requestOptions['query']=query
+    }
+
+    this.makeRequest(requestOptions, '', 204, '', false, cb)
   }
 
   // Remove all the objects residing in the objectsList.

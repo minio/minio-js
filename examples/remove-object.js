@@ -15,8 +15,8 @@
  */
 
 
-  // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
-  // my-objectname are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
+// my-objectname are dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
@@ -27,6 +27,14 @@ var s3Client = new Minio.Client({
 })
 // Remove an object name my-objectname.
 s3Client.removeObject('my-bucketname', 'my-objectname', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})
+
+// Remove an object name my-objectname and versionId.
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"089a5b47-ec2e-405f-b6bc-bb7a8cc3511c"}, function(e) {
   if (e) {
     return console.log(e)
   }
