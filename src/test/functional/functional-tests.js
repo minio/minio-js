@@ -28,7 +28,6 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
-
 let minio
 
 try {
@@ -1187,7 +1186,7 @@ describe('functional tests', function() {
         .then(() => done())
         .catch(done)
     })
-    
+
     step(`removeObjects with non latin charactes`, done => {
       client.removeObjects(bucketName, ['fileΩ'])
         .then(() => done())
@@ -1281,27 +1280,35 @@ describe('functional tests', function() {
 
   describe('Bucket Versioning API', ()=>{
     step("Check if versioning is enabled on a bucket",done=>{
-      client.getBucketVersioning(bucketName,()=>{
+      client.getBucketVersioning(bucketName,(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
         done()
       })
     })
     step("Enable versioning  on a bucket",done=>{
-      client.setBucketVersioning(bucketName,{Status:"Enabled"},()=>{
+      client.setBucketVersioning(bucketName,{Status:"Enabled"},(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
         done()
       })
     })
 
     step("Suspend versioning  on a bucket",done=>{
-      client.setBucketVersioning(bucketName,{Status:"Suspended"},()=>{
+      client.setBucketVersioning(bucketName,{Status:"Suspended"},(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
         done()
       })
     })
-      
+
     step("Check if versioning is Suspended on a bucket",done=>{
-      client.getBucketVersioning(bucketName,()=>{
+      client.getBucketVersioning(bucketName,(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
         done()
       })
     })
-      
+
   })
 })
