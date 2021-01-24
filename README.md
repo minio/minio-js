@@ -125,6 +125,8 @@ The full API Reference is available here.
 * [`listObjectsV2`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2)
 * [`listObjectsV2WithMetadata`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2WithMetadata) (Extension)
 * [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
+* [`getBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#getBucketVersioning)
+* [`setBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#setBucketVersioning)
 
 ### API Reference : File Object Operations
 
@@ -172,6 +174,8 @@ The full API Reference is available here.
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.js)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
+* [get-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
+* [set-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
 
 #### Full Examples : File Object Operations
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)

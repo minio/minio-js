@@ -2123,6 +2123,50 @@ export class Client {
     return listener
   }
 
+  getBucketVersioning(bucketName,cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    var method = 'GET'
+    var query = "versioning"
+
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let versionConfig = Buffer.from('')
+      pipesetup(response, transformers.bucketVersioningTransformer())
+        .on('data', data => {
+          versionConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, versionConfig)
+        })
+    })
+  }
+
+  setBucketVersioning(bucketName,versionConfig, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if(!Object.keys(versionConfig).length){
+      throw new errors.InvalidArgumentError('versionConfig should be of type "object"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    var method = 'PUT'
+    var query = "versioning"
+    var builder = new xml2js.Builder({rootName:'VersioningConfiguration', renderOpts:{'pretty':false}, headless:true})
+    var payload = builder.buildObject(versionConfig)
+
+    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2158,7 +2202,8 @@ Client.prototype.removeAllBucketNotification = promisify(Client.prototype.remove
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-
+Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
+Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
 
 export class CopyConditions {
   constructor() {
