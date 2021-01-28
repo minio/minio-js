@@ -679,6 +679,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
+| `statOpts`  | _object_  | Stat options object like `{versionId:''}`  |
 | `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
 
@@ -687,6 +688,7 @@ __Parameters__
 |---|---|---|
 | `stat.size`  | _number_  | size of the object.  |
 | `stat.etag`  | _string_  | etag of the object.  |
+| `stat.versionId`  | _string_  | version of the object.  |
 | `stat.metaData`  | _Javascript Object_  | metadata of the object.|
 | `stat.lastModified`  | _Date_  | Last Modified time stamp.|
 
@@ -696,6 +698,18 @@ __Example__
 
 ```js
 minioClient.statObject('mybucket', 'photo.jpg', function(err, stat) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log(stat)
+})
+```
+
+__Example stat on a version of an object__
+
+
+```js
+minioClient.statObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function(err, stat) {
   if (err) {
     return console.log(err)
   }
@@ -715,6 +729,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
+| removeOpts  |  _object_ | remove options e.g versionId.  |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
@@ -723,6 +738,17 @@ __Example__
 
 ```js
 minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
+  if (err) {
+    return console.log('Unable to remove object', err)
+  }
+  console.log('Removed the object')
+})
+```
+__Example delete a specific version of an oject__
+
+
+```js
+minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function(err) {
   if (err) {
     return console.log('Unable to remove object', err)
   }

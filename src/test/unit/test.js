@@ -546,6 +546,29 @@ describe('Client', function() {
           done()
         }
       })
+
+      it('should fail on incompatible argument type (number) for removeOpts object', (done) => {
+        try {
+          client.statObject('hello', 'testStatOpts', 1, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on incompatible argument type (null) for removeOpts object', (done) => {
+        try {
+          client.statObject('hello', 'testStatOpts', null, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on incompatible argument type (sting) for removeOpts object', (done) => {
+        try {
+          client.statObject('hello', 'testStatOpts', '  ', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+        
     })
 
     describe('#removeObject(bucket, object, callback)', () => {
@@ -580,6 +603,22 @@ describe('Client', function() {
       it('should fail on empty object', (done) => {
         try {
           client.removeObject('hello', '', function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      //Versioning related options as removeOpts
+      it('should fail on empty (null) removeOpts object', (done) => {
+        try {
+          client.removeObject('hello', 'testRemoveOpts',null, function() {})
+        } catch (e) {
+          done()
+        }
+      })
+      
+      it('should fail on empty (string) removeOpts', (done) => {
+        try {
+          client.removeObject('hello', 'testRemoveOpts','', function() {})
         } catch (e) {
           done()
         }

@@ -1311,4 +1311,54 @@ describe('functional tests', function() {
     })
 
   })
+
+  describe('Versioning tests on a buckets', function () {
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versioned_100kbObjectName = 'datafile-versioned-100-kB'
+    const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+    describe('Versioning Steps test', function () {
+      let versionId
+
+      step("Enable Versioning on Bucket ",(done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+          .then(() => done())
+          .catch(done)
+      })
+
+      step(`statObject(bucketName, objectName, statOpts) :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        client.statObject(versionedBucketName, versioned_100kbObjectName, {}, (e, res)=>{
+          versionId = res.versionId
+          done()
+        })
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts) :${bucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId:versionId}, ()=>{
+          done()
+        })
+      })
+
+      step("Suspend Bucket Version", (done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+    })
+  })
 })
