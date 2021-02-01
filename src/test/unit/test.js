@@ -547,21 +547,21 @@ describe('Client', function() {
         }
       })
 
-      it('should fail on incompatible argument type (number) for removeOpts object', (done) => {
+      it('should fail on incompatible argument type (number) for statOpts object', (done) => {
         try {
           client.statObject('hello', 'testStatOpts', 1, function() {})
         } catch (e) {
           done()
         }
       })
-      it('should fail on incompatible argument type (null) for removeOpts object', (done) => {
+      it('should fail on incompatible argument type (null) for statOpts object', (done) => {
         try {
           client.statObject('hello', 'testStatOpts', null, function() {})
         } catch (e) {
           done()
         }
       })
-      it('should fail on incompatible argument type (sting) for removeOpts object', (done) => {
+      it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
         try {
           client.statObject('hello', 'testStatOpts', '  ', function() {})
         } catch (e) {

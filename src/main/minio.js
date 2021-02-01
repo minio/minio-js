@@ -1436,18 +1436,17 @@ export class Client {
       // is not expensive as the socket will not have any data.
       response.on('data', ()=>{})
 
-      var result = {
+      const result = {
         size: +response.headers['content-length'],
         metaData: extractMetadata(response.headers),
-        lastModified: new Date(response.headers['last-modified'])
+        lastModified: new Date(response.headers['last-modified']),
+        versionId:getVersionId(response.headers)
       }
       var etag = response.headers.etag
       if (etag) {
         etag = etag.replace(/^"/, '').replace(/"$/, '')
         result.etag = etag
       }
-
-      result.versionId= getVersionId(response.headers)
 
       cb(null, result)
     })
