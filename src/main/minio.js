@@ -741,8 +741,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: path to which the object data will be written to
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
   // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, cb) {
+  fGetObject(bucketName, objectName, filePath, metaData, cb) {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -752,6 +753,13 @@ export class Client {
     }
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
+    }
+    if (isFunction(metaData)) {
+      cb = metaData
+      metaData = {} // Set metaData empty if no metaData provided.
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -786,7 +794,7 @@ export class Client {
             offset = stats.size
             partFileStream = fs.createWriteStream(partFile, {flags: 'a'})
           }
-          this.getPartialObject(bucketName, objectName, offset, 0, cb)
+          this.getPartialObject(bucketName, objectName, offset, 0, metaData, cb)
         })
       },
       (downloadStream, cb) => {
@@ -807,18 +815,26 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucketName, objectName, cb) {
+  getObject(bucketName, objectName, metaData, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    if (isFunction(metaData)) {
+      cb = metaData
+      metaData = {} // Set metaData empty if no metaData provided.
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.getPartialObject(bucketName, objectName, 0, 0, cb)
+    this.getPartialObject(bucketName, objectName, 0, 0, metaData, cb)
   }
 
   // Callback is called with readable stream of the partial object content.
@@ -828,8 +844,9 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `offset` _number_: offset of the object from where the stream will start
   // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucketName, objectName, offset, length, cb) {
+  getPartialObject(bucketName, objectName, offset, length, metaData, cb) {
     if (isFunction(length)) {
       cb = length
       length = 0
@@ -845,6 +862,13 @@ export class Client {
     }
     if (!isNumber(length)) {
       throw new TypeError('length should be of type "number"')
+    }
+    if (isFunction(metaData)) {
+      cb = metaData
+      metaData = {} // Set metaData empty if no metaData provided.
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -863,7 +887,10 @@ export class Client {
       }
     }
 
-    var headers = {}
+    //Updates metaData to have the correct prefix if needed
+    metaData = prependXAMZMeta(metaData)
+
+    let headers = Object.assign({}, metaData)
     if (range !== '') {
       headers.range = range
     }
