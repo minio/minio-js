@@ -442,17 +442,18 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
 ## 3.  Object operations
 
 <a name="getObject"></a>
-### getObject(bucketName, objectName[, callback])
+### getObject(bucketName, objectName, metaData[, callback])
 
 Downloads an object as a stream.
 
-__Parameters__
+__Parameters__, metaData
 
 
 | Param  |  Type | Description  |
 |---|---|---|
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
+|`metaData`  | _Javascript Object_  | Metadata of the object.  |
 |`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -476,7 +477,7 @@ minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
 })
 ```
 <a name="getPartialObject"></a>
-### getPartialObject(bucketName, objectName, offset, length[, callback])
+### getPartialObject(bucketName, objectName, offset, length, metaData[, callback])
 
 Downloads the specified range bytes of an object as a stream.
 
@@ -489,6 +490,7 @@ __Parameters__
 | `objectName`   | _string_  | Name of the object.  |
 | `offset`   | _number_  | `offset` of the object from where the stream will start.  |
 | `length`  | _number_  | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).  |
+| `metaData`  | _Javascript Object_  | Metadata of the object.  |
 |`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -514,7 +516,7 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, data
 ```
 
 <a name="fGetObject"></a>
-### fGetObject(bucketName, objectName, filePath[, callback])
+### fGetObject(bucketName, objectName, filePath, metaData[, callback])
 
 Downloads and saves the object as a file in the local filesystem.
 
@@ -525,6 +527,7 @@ __Parameters__
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
+| `metaData`  | _Javascript Object_  | Metadata of the object.  |
 | `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 
