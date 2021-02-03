@@ -718,7 +718,7 @@ minioClient.statObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function
 ```
 
 <a name="removeObject"></a>
-### removeObject(bucketName, objectName[, callback])
+### removeObject(bucketName, objectName,removeOpts[, callback])
 
 Removes an object.
 
