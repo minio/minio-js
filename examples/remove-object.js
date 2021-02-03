@@ -33,8 +33,8 @@ s3Client.removeObject('my-bucketname', 'my-objectname', function(e) {
   console.log("Success")
 })
 
-// Remove an object name my-objectname and versionId.
-s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"089a5b47-ec2e-405f-b6bc-bb7a8cc3511c"}, function(e) {
+// Remove an object with name 'my-objectname' and a versionId.
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-uuid"}, function(e) {
   if (e) {
     return console.log(e)
   }

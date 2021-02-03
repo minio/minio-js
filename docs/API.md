@@ -668,7 +668,7 @@ minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, fu
 
 
 <a name="statObject"></a>
-### statObject(bucketName, objectName[, callback])
+### statObject(bucketName, objectName, statOpts[, callback])
 
 Gets metadata of an object.
 
@@ -679,10 +679,10 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
-| `statOpts`  | _object_  | Stat options object like `{versionId:''}`  |
+| `statOpts`  | _object_  | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
 | `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
-
+__Return Type__
 
 | Param  |  Type | Description  |
 |---|---|---|
@@ -729,7 +729,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
-| removeOpts  |  _object_ | remove options e.g versionId.  |
+| removeOpts  |  _object_ | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional)|
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
