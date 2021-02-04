@@ -682,7 +682,7 @@ __Parameters__
 | `statOpts`  | _object_  | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
 | `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
-__Return Type__
+__Return Value__
 
 | Param  |  Type | Description  |
 |---|---|---|
@@ -718,7 +718,7 @@ minioClient.statObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function
 ```
 
 <a name="removeObject"></a>
-### removeObject(bucketName, objectName,removeOpts[, callback])
+### removeObject(bucketName, objectName, removeOpts[, callback])
 
 Removes an object.
 
