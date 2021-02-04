@@ -1279,34 +1279,41 @@ describe('functional tests', function() {
   })
 
   describe('Bucket Versioning API', ()=>{
-    step("Check if versioning is enabled on a bucket",done=>{
-      client.getBucketVersioning(bucketName,(err)=>{
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
-        done()
-      })
-    })
-    step("Enable versioning  on a bucket",done=>{
-      client.setBucketVersioning(bucketName,{Status:"Enabled"},(err)=>{
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
-        done()
-      })
-    })
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
 
-    step("Suspend versioning  on a bucket",done=>{
-      client.setBucketVersioning(bucketName,{Status:"Suspended"},(err)=>{
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
-        done()
+    describe('Versioning Steps test', function () {
+      step("Check if versioning is enabled on a bucket", done => {
+        client.getBucketVersioning(versionedBucketName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
       })
-    })
+      step("Enable versioning  on a bucket", done => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
 
-    step("Check if versioning is Suspended on a bucket",done=>{
-      client.getBucketVersioning(bucketName,(err)=>{
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
-        done()
+      step("Suspend versioning  on a bucket", done => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Suspended"}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step("Check if versioning is Suspended on a bucket", done => {
+        client.getBucketVersioning(versionedBucketName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
       })
     })
 
