@@ -357,3 +357,9 @@ export function extractMetadata(metaData) {
   }
   return newMetadata
 }
+
+
+export function getVersionId(headers={}){
+  const versionIdValue = headers["x-amz-version-id"]
+  return  versionIdValue || null
+}

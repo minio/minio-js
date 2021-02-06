@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2020 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 
 
-  // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
-  // my-objectname are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
+// my-objectname are dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
@@ -27,6 +27,14 @@ var s3Client = new Minio.Client({
 })
 // Remove an object name my-objectname.
 s3Client.removeObject('my-bucketname', 'my-objectname', function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})
+
+// Remove an object with name 'my-objectname' and a versionId.
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-uuid"}, function(e) {
   if (e) {
     return console.log(e)
   }

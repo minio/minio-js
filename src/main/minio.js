@@ -29,12 +29,14 @@ import path from 'path'
 import _ from 'lodash'
 import util from 'util'
 
-import { extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
+import {
+  extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify } from './helpers.js'
+  insertContentType, makeDateLong, promisify, getVersionId
+} from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
 
@@ -1400,40 +1402,54 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
   // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
   //   * `stat.size` _number_: size of the object
   //   * `stat.etag` _string_: etag of the object
   //   * `stat.metaData` _string_: MetaData of the object
   //   * `stat.lastModified` _Date_: modified time stamp
-  statObject(bucketName, objectName, cb) {
+  //   * `stat.versionId` _string_: version id of the object if available
+  statObject(bucketName, objectName, statOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    //backward compatibility
+    if (isFunction(statOpts)) {
+      cb = statOpts
+      statOpts={}
+    }
+
+    if(!isObject(statOpts)){
+      throw new errors.InvalidArgumentError('statOpts should be of type "object"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
+    var query = querystring.stringify(statOpts)
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query},'' ,200, '', true, (e, response) => {
       if (e) return cb(e)
 
       // We drain the socket so that the connection gets closed. Note that this
       // is not expensive as the socket will not have any data.
       response.on('data', ()=>{})
 
-      var result = {
+      const result = {
         size: +response.headers['content-length'],
         metaData: extractMetadata(response.headers),
-        lastModified: new Date(response.headers['last-modified'])
+        lastModified: new Date(response.headers['last-modified']),
+        versionId:getVersionId(response.headers)
       }
       var etag = response.headers.etag
       if (etag) {
         etag = etag.replace(/^"/, '').replace(/"$/, '')
         result.etag = etag
       }
+
       cb(null, result)
     })
   }
@@ -1443,19 +1459,36 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucketName, objectName, cb) {
+  removeObject(bucketName, objectName, removeOpts={} , cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    //backward compatibility
+    if (isFunction(removeOpts)) {
+      cb = removeOpts
+      removeOpts={}
+    }
+    
+    if(!isObject(removeOpts)){
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var method = 'DELETE'
-    this.makeRequest({method, bucketName, objectName}, '', 204, '', false, cb)
+    const method = 'DELETE'
+    const query = querystring.stringify( removeOpts )
+
+    let requestOptions = {method, bucketName,objectName}
+    if(query){
+      requestOptions['query']=query
+    }
+
+    this.makeRequest(requestOptions, '', 204, '', false, cb)
   }
 
   // Remove all the objects residing in the objectsList.
