@@ -363,3 +363,7 @@ export function getVersionId(headers={}){
   const versionIdValue = headers["x-amz-version-id"]
   return  versionIdValue || null
 }
+
+export function sanitizeETag(etag=''){
+  return etag.replace(/^"/g, '').replace(/"$/g, '').replace(/^&quot;/g, '').replace(/&quot;$/g, '').replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+}

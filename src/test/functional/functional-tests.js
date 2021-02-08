@@ -35,6 +35,16 @@ try {
 } catch (err) {
   minio = require('minio')
 }
+let minIOHelpers
+try {
+  minIOHelpers = require('../../../dist/main/helpers')
+} catch (err) {
+  minIOHelpers = require('helpers')
+}
+
+const {
+  getVersionId
+} =minIOHelpers
 
 require('source-map-support').install()
 
@@ -1355,6 +1365,77 @@ describe('functional tests', function() {
       step(`removeObject(bucketName, objectName, removeOpts) :${bucketName}, objectName:${versioned_100kbObjectName}`, done => {
         client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId:versionId}, ()=>{
           done()
+        })
+      })
+
+      step("Suspend Bucket Version", (done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+    })
+  })
+  describe('Versioning tests on a buckets: getObject, getPartialObject, putObject, removeObject with versionId support', function () {
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versioned_100kbObjectName = 'datafile-versioned-100-kB'
+    const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+    describe('Versioning Test for  getObject, getPartialObject, putObject, removeObject with versionId support', function () {
+      let versionId=null
+      step("Enable Versioning on Bucket ",(done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+          .then((res={}) => {
+            if(res.versionId){
+              versionId = res.versionId
+              done()
+            }else{
+              done(new Error('versionId not found in putObject response'))
+            }
+          })
+          .catch(done)
+      })
+
+      step(`getObject(bucketName, objectName, getOpts) :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        client.getObject(versionedBucketName, versioned_100kbObjectName, {versionId:versionId}, function (e, dataStream) {
+          const objVersion = getVersionId(dataStream.headers)
+          if(objVersion){
+            done()
+          }else{
+            done(new Error('versionId not found in getObject response'))
+          }
+        })
+      })
+
+      step(`getPartialObject(bucketName, objectName, offset, length, getOpts) :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        client.getPartialObject(versionedBucketName, versioned_100kbObjectName, 10, 30, {versionId:versionId}, function (e, dataStream) {
+          const objVersion = getVersionId(dataStream.headers)
+          if(objVersion){
+            done()
+          }else{
+            done(new Error('versionId not found in getPartialObject response'))
+          }
+        })
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts:{versionId:${versionId}) :${bucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        client.removeObject(versionedBucketName, versioned_100kbObjectName,  {versionId:versionId}, ()=>{
+          done()
+
         })
       })
 

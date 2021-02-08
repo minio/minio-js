@@ -35,7 +35,7 @@ import {
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify, getVersionId
+  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -743,8 +743,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: path to which the object data will be written to
+  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, cb) {
+  fGetObject(bucketName, objectName, filePath, getOpts={}, cb) {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -755,6 +756,12 @@ export class Client {
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
     }
+    // Backward Compatibility
+    if (isFunction(getOpts)) {
+      cb = getOpts
+      getOpts = {}
+    }
+
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
@@ -788,7 +795,7 @@ export class Client {
             offset = stats.size
             partFileStream = fs.createWriteStream(partFile, {flags: 'a'})
           }
-          this.getPartialObject(bucketName, objectName, offset, 0, cb)
+          this.getPartialObject(bucketName, objectName, offset, 0, getOpts, cb)
         })
       },
       (downloadStream, cb) => {
@@ -809,18 +816,25 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucketName, objectName, cb) {
+  getObject(bucketName, objectName, getOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+    // Backward Compatibility
+    if (isFunction(getOpts)) {
+      cb = getOpts
+      getOpts = {}
+    }
+
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    this.getPartialObject(bucketName, objectName, 0, 0, cb)
+    this.getPartialObject(bucketName, objectName, 0, 0, getOpts, cb)
   }
 
   // Callback is called with readable stream of the partial object content.
@@ -830,8 +844,9 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `offset` _number_: offset of the object from where the stream will start
   // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
+  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucketName, objectName, offset, length, cb) {
+  getPartialObject(bucketName, objectName, offset, length, getOpts={}, cb) {
     if (isFunction(length)) {
       cb = length
       length = 0
@@ -848,6 +863,12 @@ export class Client {
     if (!isNumber(length)) {
       throw new TypeError('length should be of type "number"')
     }
+    // Backward Compatibility
+    if (isFunction(getOpts)) {
+      cb = getOpts
+      getOpts = {}
+    }
+
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
@@ -875,7 +896,9 @@ export class Client {
       expectedStatus = 206
     }
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, headers}, '', expectedStatus, '', true, cb)
+
+    var query = querystring.stringify(getOpts)
+    this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatus, '', true, cb)
   }
 
   // Uploads the object using contents from a file
@@ -885,7 +908,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: file path of the file to be uploaded
   // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which containes versionId sting and etag string.
   fPutObject(bucketName, objectName, filePath, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -935,8 +958,8 @@ export class Client {
               var md5sum = data.md5sum
               var sha256sum = data.sha256sum
               var stream = fs.createReadStream(filePath, options)
-              uploader(stream, size, sha256sum, md5sum, (err, etag) => {
-                callback(err, etag)
+              uploader(stream, size, sha256sum, md5sum, (err, objInfo) => {
+                callback(err, objInfo)
                 cb(true)
               })
             })
@@ -993,9 +1016,9 @@ export class Client {
                 // part is not uploaded yet, or md5 mismatch
                 var stream = fs.createReadStream(filePath, options)
                 uploader(uploadId, partNumber, stream, length,
-                         data.sha256sum, data.md5sum, (e, etag) => {
+                         data.sha256sum, data.md5sum, (e, objInfo) => {
                            if (e) return cb(e)
-                           partsDone.push({part: partNumber, etag})
+                           partsDone.push({part: partNumber, etag: objInfo.etag})
                            partNumber++
                            uploadedSize += length
                            return cb()
@@ -1032,7 +1055,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `string or Buffer` _string_ or _Buffer_: string or buffer
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  // * `callback(err, objInfo)` _function_: `err` is `null` in case of success and `info` will have the following object details:
+  //   * `etag` _string_: etag of the object
+  //   * `versionId` _string_: versionId of the object
   putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1442,12 +1467,8 @@ export class Client {
         size: +response.headers['content-length'],
         metaData: extractMetadata(response.headers),
         lastModified: new Date(response.headers['last-modified']),
-        versionId:getVersionId(response.headers)
-      }
-      var etag = response.headers.etag
-      if (etag) {
-        etag = etag.replace(/^"/, '').replace(/"$/, '')
-        result.etag = etag
+        versionId:getVersionId(response.headers),
+        etag:sanitizeETag(response.headers.etag)
       }
 
       cb(null, result)
@@ -1473,7 +1494,7 @@ export class Client {
       cb = removeOpts
       removeOpts={}
     }
-    
+
     if(!isObject(removeOpts)){
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
@@ -2077,13 +2098,13 @@ export class Client {
       this.makeRequestStream({method, bucketName, objectName, query, headers},
                              stream, sha256sum, 200, '', true, (e, response) => {
                                if (e) return cb(e)
-                               var etag = response.headers.etag
-                               if (etag) {
-                                 etag = etag.replace(/^"/, '').replace(/"$/, '')
+                               const result = {
+                                 etag: sanitizeETag(response.headers.etag),
+                                 versionId:getVersionId(response.headers)
                                }
                                // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
                                response.on('data', () => {})
-                               cb(null, etag)
+                               cb(null, result)
                              })
     }
     if (multipart) {

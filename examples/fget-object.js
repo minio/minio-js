@@ -25,7 +25,6 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var size = 0
 // Get a full object.
 s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', function(e) {
   if (e) {

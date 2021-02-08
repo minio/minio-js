@@ -17,6 +17,7 @@
 import { Transform } from 'stream'
 import Crypto from 'crypto'
 import * as querystring from 'querystring'
+import { getVersionId, sanitizeETag } from "./helpers"
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
@@ -31,7 +32,7 @@ export default class ObjectUploader extends Transform {
     // This is the metadata for the object.
     this.metaData = metaData
 
-    // Call like: callback(error, etag).
+    // Call like: callback(error, {etag, versionId}).
     this.callback = callback
 
     // We need to keep track of what number chunk/part we're on. This increments
@@ -82,19 +83,17 @@ export default class ObjectUploader extends Transform {
 
       this.client.makeRequest(options, chunk, 200, '', true, (err, response) => {
         if (err) return callback(err)
-
-        let etag = response.headers.etag
-        if (etag) {
-          etag = etag.replace(/^"/, '').replace(/"$/, '')
+        let result = {
+          etag: sanitizeETag(response.headers.etag),
+          versionId :getVersionId(response.headers)
         }
-
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
         response.on('data', () => {})
 
         // Give the etag back, we're done!
 
         process.nextTick(() => {
-          this.callback(null, etag)
+          this.callback(null, result)
         })
 
         // Because we're sure the stream has ended, allow it to flush and end.
@@ -220,9 +219,9 @@ export default class ObjectUploader extends Transform {
       this.client.makeRequest(options, '', 200, '', true, (err, response) => {
         if (err) return callback(err)
 
-        let etag = response.headers.etag
-        if (etag) {
-          etag = etag.replace(/^"/, '').replace(/"$/, '')
+        let result = {
+          etag: sanitizeETag(response.headers.etag),
+          versionId: getVersionId(response.headers)
         }
 
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
@@ -230,7 +229,7 @@ export default class ObjectUploader extends Transform {
 
         // Give the etag back, we're done!
         process.nextTick(() => {
-          this.callback(null, etag)
+          this.callback(null, result)
         })
 
         // Because we're sure the stream has ended, allow it to flush and end.
