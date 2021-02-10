@@ -456,6 +456,12 @@ __Parameters__
 |`getOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 |`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
+__Return Value__
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `stream` | _Stream_ | Stream emitting the object content. |
+
 __Example__
 
 
@@ -515,6 +521,13 @@ __Parameters__
 | `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
 |`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
+
+__Return Value__
+
+| Param | Type | Description |
+| ---- | ---- | ---- |
+| `stream` | _Stream_ | Stream emitting the object content. |
+
 __Example__
 
 
@@ -570,10 +583,16 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
-| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
+| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
 | `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
+__Return Value__
+
+| Value  |  Type | Description  |
+|---|---|---|
+| `err` | _object_ | Error in case of any failures
+| `file` | _file_ | Streamed Output file at the specified `filePath`
 
 __Example__
 
@@ -587,6 +606,20 @@ minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) 
   console.log('success')
 })
 ```
+
+__Example__
+To Stream a specific object version into a file.
+
+```js
+minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg}', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log('success')
+})
+
+```
+
 <a name="putObject"></a>
 ### putObject(bucketName, objectName, stream, size, metaData[, callback])
 
@@ -606,6 +639,15 @@ __Parameters__
 | `size`   | _number_  | Size of the object (optional).  |
 | `metaData`   | _Javascript Object_  | metaData of the object (optional).  |
 | `callback(err, objInfo)` | _function_ | Non-null `err` indicates error, in case of Success,`objInfo` contains `etag` _string_ and `versionId` _string_ of the object. If no callback is passed, a `Promise` is returned. |
+
+
+__Return Value__
+
+| Value  |  Type | Description  |
+|---|---|---|
+| `err` | _object_ | Error in case of any failures
+| `objInfo.etag`  | _string_  | `etag` of an object  |
+| `objInfo.versionId`  | _string_  | `versionId` of an object (optional)  |
 
 
 __Example__
@@ -663,7 +705,17 @@ __Parameters__
 | `objectName`   |_string_   | Name of the object.  |
 | `filePath`  | _string_  | Path of the file to be uploaded.  |
 | `metaData`  | _Javascript Object_  | Metadata of the object.  |
-| `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which containes versionId sting and etag string.
+| `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which contains `versionId` string and `etag` string.
+
+__Return Value__
+
+| Value  |  Type | Description  |
+|---|---|---|
+| `err` | _object_ | Error in case of any failures
+| `objInfo.etag`  | _string_  | `etag` of an object  |
+| `objInfo.versionId`  | _string_  | `versionId` of an object (optional)  |
+
+
 __Example__
 
 

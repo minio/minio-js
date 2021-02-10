@@ -778,7 +778,7 @@ export class Client {
     }
 
     async.waterfall([
-      cb => this.statObject(bucketName, objectName, cb),
+      cb => this.statObject(bucketName, objectName, getOpts, cb),
       (result, cb) => {
         objStat = result
         // Create any missing top level directories.

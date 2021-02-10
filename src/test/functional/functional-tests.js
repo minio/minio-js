@@ -1378,7 +1378,8 @@ describe('functional tests', function() {
 
     })
   })
-  describe('Versioning tests on a buckets: getObject, getPartialObject, putObject, removeObject with versionId support', function () {
+
+  describe('Versioning tests on a buckets: getObject, fGetObject, getPartialObject, putObject, removeObject with versionId support', function () {
     //Isolate the bucket/object for easy debugging and tracking.
     const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
     const versioned_100kbObjectName = 'datafile-versioned-100-kB'
@@ -1420,6 +1421,15 @@ describe('functional tests', function() {
           }
         })
       })
+
+        
+      step(`fGetObject(bucketName, objectName, filePath, getOpts={})  :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        var tmpFileDownload = `${tmpDir}/${versioned_100kbObjectName}.download`
+        client.fGetObject(versionedBucketName, versioned_100kbObjectName, tmpFileDownload,{versionId:versionId}, function () {
+          done()
+        })
+      })
+        
 
       step(`getPartialObject(bucketName, objectName, offset, length, getOpts) :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
         client.getPartialObject(versionedBucketName, versioned_100kbObjectName, 10, 30, {versionId:versionId}, function (e, dataStream) {
