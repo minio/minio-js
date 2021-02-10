@@ -442,7 +442,7 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
 ## 3.  Object operations
 
 <a name="getObject"></a>
-### getObject(bucketName, objectName,getOpts[, callback])
+### getObject(bucketName, objectName, getOpts[, callback])
 
 Downloads an object as a stream.
 
@@ -453,7 +453,7 @@ __Parameters__
 |---|---|---|
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
-|`getOpts` | _object_ | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
+|`getOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 |`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -512,7 +512,7 @@ __Parameters__
 | `objectName`   | _string_  | Name of the object.  |
 | `offset`   | _number_  | `offset` of the object from where the stream will start.  |
 | `length`  | _number_  | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).  |
-| `getOpts` | _object_ | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
+| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
 |`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -570,7 +570,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_   | Name of the bucket.  |
 | `objectName`  |_string_   | Name of the object.  |
-| `getOpts` | _object_ | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
+| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
 | `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
 | `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
@@ -725,7 +725,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  | _string_  | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
-| `statOpts`  | _object_  | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional) |
+| `statOpts`  | _object_  | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 | `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
 __Return Value__
@@ -775,7 +775,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
-| removeOpts  |  _object_ | Version of the object in the form `{versionId:'xxxxx'}`. Default is `{}`. (optional)|
+| removeOpts  |  _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)|
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
