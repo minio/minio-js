@@ -28,6 +28,7 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
+import { getVersionId } from "../../../dist/main/helpers"
 let minio
 
 try {
@@ -35,16 +36,6 @@ try {
 } catch (err) {
   minio = require('minio')
 }
-let minIOHelpers
-try {
-  minIOHelpers = require('../../../dist/main/helpers')
-} catch (err) {
-  minIOHelpers = require('helpers')
-}
-
-const {
-  getVersionId
-} =minIOHelpers
 
 require('source-map-support').install()
 

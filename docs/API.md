@@ -611,7 +611,7 @@ __Example__
 To Stream a specific object version into a file.
 
 ```js
-minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg}', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
+minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
   if (e) {
     return console.log(e)
   }
@@ -662,8 +662,11 @@ var fileStat = Fs.stat(file, function(err, stats) {
   if (err) {
     return console.log(err)
   }
-  minioClient.putObject('mybucket', '40mbfile', fileStream, stats.size, function(err, etag) {
-    return console.log(err, etag) // err should be null
+  minioClient.putObject('mybucket', '40mbfile', fileStream, stats.size, function(err, objInfo) {
+      if(err) {
+          return console.log(err) // err should be null
+      }
+   console.log("Success", objInfo)
   })
 })
 ```
@@ -729,8 +732,11 @@ var metaData = {
   'X-Amz-Meta-Testing': 1234,
   'example': 5678
 }
-minioClient.fPutObject('mybucket', '40mbfile', file, metaData, function(err, etag) {
-  return console.log(err, etag) // err should be null
+minioClient.fPutObject('mybucket', '40mbfile', file, metaData, function(err, objInfo) {
+    if(err) {
+        return console.log(err)
+    }
+    console.log("Success", objInfo.etag, objInfo.versionId)
 })
 ```
 

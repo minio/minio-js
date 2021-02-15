@@ -908,7 +908,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `filePath` _string_: file path of the file to be uploaded
   // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which containes versionId sting and etag string.
+  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
   fPutObject(bucketName, objectName, filePath, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
