@@ -28,6 +28,7 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
+import { getVersionId } from "../../../dist/main/helpers"
 let minio
 
 try {
@@ -1331,7 +1332,7 @@ describe('functional tests', function() {
     describe('Versioning Steps test', function () {
       let versionId
 
-      step("Enable Versioning on Bucket ",(done)=>{
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,(done)=>{
         client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
@@ -1339,26 +1340,123 @@ describe('functional tests', function() {
         })
       })
 
-      step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+      step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
         client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
           .then(() => done())
           .catch(done)
       })
 
-      step(`statObject(bucketName, objectName, statOpts) :${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+      step(`statObject(bucketName, objectName, statOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
         client.statObject(versionedBucketName, versioned_100kbObjectName, {}, (e, res)=>{
           versionId = res.versionId
           done()
         })
       })
 
-      step(`removeObject(bucketName, objectName, removeOpts) :${bucketName}, objectName:${versioned_100kbObjectName}`, done => {
+      step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
         client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId:versionId}, ()=>{
           done()
         })
       })
 
-      step("Suspend Bucket Version", (done)=>{
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+    })
+  })
+
+  describe('Versioning tests on a buckets: getObject, fGetObject, getPartialObject, putObject, removeObject with versionId support', function () {
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versioned_100kbObjectName = 'datafile-versioned-100-kB'
+    const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+    describe('Versioning Test for  getObject, getPartialObject, putObject, removeObject with versionId support', function () {
+      let versionId=null
+      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${versionedBucketName},{Status:"Enabled"}`,(done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+          .then((res={}) => {
+            if(res.versionId){
+              versionId = res.versionId // In gateway mode versionId will not be returned.
+            }
+            done()
+          })
+          .catch(done)
+      })
+
+      step(`getObject(bucketName, objectName, getOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        if(versionId) {
+          client.getObject(versionedBucketName, versioned_100kbObjectName, {versionId: versionId}, function (e, dataStream) {
+            const objVersion = getVersionId(dataStream.headers)
+            if (objVersion) {
+              done()
+            } else {
+              done(new Error('versionId not found in getObject response'))
+            }
+          })
+        }else{
+          done()
+        }
+      })
+
+
+      step(`fGetObject(bucketName, objectName, filePath, getOpts={})_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        if(versionId) {
+          var tmpFileDownload = `${tmpDir}/${versioned_100kbObjectName}.download`
+          client.fGetObject(versionedBucketName, versioned_100kbObjectName, tmpFileDownload, {versionId: versionId}, function () {
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+
+      step(`getPartialObject(bucketName, objectName, offset, length, getOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
+        if(versionId) {
+          client.getPartialObject(versionedBucketName, versioned_100kbObjectName, 10, 30, {versionId: versionId}, function (e, dataStream) {
+            const objVersion = getVersionId(dataStream.headers)
+            if (objVersion) {
+              done()
+            } else {
+              done(new Error('versionId not found in getPartialObject response'))
+            }
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName},removeOpts:{versionId:${versionId}`, done => {
+        if(versionId) {
+          client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId: versionId}, () => {
+            done()
+          })
+        }else{
+          //In gateway mode, use regular delete to remove an object so that the bucket can be cleaned up.
+          client.removeObject(versionedBucketName, versioned_100kbObjectName, () => {
+            done()
+          })
+        }
+      })
+
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done)=>{
         client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)

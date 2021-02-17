@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
- // are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+// are dummy values, please replace them with original values.
 
 
 var Minio = require('minio')
@@ -40,5 +40,22 @@ s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096, function
   })
   dataStream.on('error', function(e) {
     console.log(e)
+  })
+})
+
+var versionedObjSize = 0
+// reads 30 bytes from the offset 10.
+s3Client.getPartialObject('mybucket', 'photo.jpg', 10, 30, {versionId:"my-versionId"},function(err, dataStream) {
+  if (err) {
+    return console.log(err)
+  }
+  dataStream.on('data', function(chunk) {
+    versionedObjSize += chunk.length
+  })
+  dataStream.on('end', function() {
+    console.log('End. Total size = ' + versionedObjSize)
+  })
+  dataStream.on('error', function(err) {
+    console.log(err)
   })
 })
