@@ -1184,7 +1184,7 @@ export class Client {
   }
 
   // list a batch of objects
-  listObjectsQuery(bucketName, prefix, marker, delimiter, maxKeys) {
+  listObjectsQuery(bucketName, prefix, marker, listQueryOpts={}) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1194,29 +1194,48 @@ export class Client {
     if (!isString(marker)) {
       throw new TypeError('marker should be of type "string"')
     }
-    if (!isString(delimiter)) {
+    let{
+      Delimiter,
+      MaxKeys,
+      IncludeVersion,
+    } = listQueryOpts
+
+    if (!isObject(listQueryOpts)) {
+      throw new TypeError('listQueryOpts should be of type "object"')
+    }
+
+   
+    if (!isString(Delimiter)) {
       throw new TypeError('delimiter should be of type "string"')
     }
-    if (!isNumber(maxKeys)) {
+    if (!isNumber(MaxKeys)) {
       throw new TypeError('maxKeys should be of type "number"')
     }
 
-    var queries = []
+    const queries = []
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
-    queries.push(`delimiter=${uriEscape(delimiter)}`)
+    queries.push(`delimiter=${uriEscape(Delimiter)}`)
+
+    if (IncludeVersion) {
+      queries.push(`versions`)
+    }
 
     if (marker) {
       marker = uriEscape(marker)
-      queries.push(`marker=${marker}`)
+      if (IncludeVersion) {
+        queries.push(`key-marker=${marker}`)
+      } else {
+        queries.push(`marker=${marker}`)
+      }
     }
 
     // no need to escape maxKeys
-    if (maxKeys) {
-      if (maxKeys >= 1000) {
-        maxKeys = 1000
+    if (MaxKeys) {
+      if (MaxKeys >= 1000) {
+        MaxKeys = 1000
       }
-      queries.push(`max-keys=${maxKeys}`)
+      queries.push(`max-keys=${MaxKeys}`)
     }
     queries.sort()
     var query = ''
@@ -1239,7 +1258,9 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
   // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
-  //
+  // * `listOpts _object_: query params to list object with below keys
+  // *    listOpts.MaxKeys _int_ maximum number of keys to return
+  // *    listOpts.IncludeVersion  _bool_ true|false to include versions.
   // __Return Value__
   // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
   // * `obj.name` _string_: name of the object
@@ -1247,7 +1268,8 @@ export class Client {
   // * `obj.size` _number_: size of the object
   // * `obj.etag` _string_: etag of the object
   // * `obj.lastModified` _Date_: modified time stamp
-  listObjects(bucketName, prefix, recursive) {
+  // * `obj.versionId` _string_: versionId of the object
+  listObjects(bucketName, prefix, recursive, listOpts={}) {
     if (prefix === undefined) prefix = ''
     if (recursive === undefined) recursive = false
     if (!isValidBucketName(bucketName)) {
@@ -1262,9 +1284,21 @@ export class Client {
     if (!isBoolean(recursive)) {
       throw new TypeError('recursive should be of type "boolean"')
     }
+    if (!isObject(listOpts)) {
+      throw new TypeError('listOpts should be of type "object"')
+    }
     // if recursive is false set delimiter to '/'
     var delimiter = recursive ? '' : '/'
+   
     var marker = ''
+    const maxKeys = listOpts.MaxKeys || 1000
+    const includeVersion=listOpts.IncludeVersion
+      
+    const listQueryOpts={
+      Delimiter:delimiter,
+      MaxKeys:maxKeys,
+      IncludeVersion:includeVersion,
+    }
     var objects = []
     var ended = false
     var readStream = Stream.Readable({objectMode: true})
@@ -1276,7 +1310,7 @@ export class Client {
       }
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
-      this.listObjectsQuery(bucketName, prefix, marker, delimiter, 1000)
+      this.listObjectsQuery(bucketName, prefix, marker, listQueryOpts)
         .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           if (result.isTruncated) {

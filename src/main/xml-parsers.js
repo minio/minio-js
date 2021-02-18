@@ -17,6 +17,7 @@
 import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
+import { sanitizeETag } from "./helpers"
 
 var parseXml = (xml) => {
   var result = null
@@ -279,32 +280,82 @@ export function parseCompleteMultipart(xml) {
   }
 }
 
+const formatObjInfo = content => {
+
+  let {
+    Key,
+    LastModified,
+    ETag,
+    Size,
+    VersionId,
+    IsLatest
+  } = content
+
+  const name = toArray(Key)[0]
+  const lastModified = new Date(toArray(LastModified)[0])
+  const etag = sanitizeETag(toArray(ETag)[0])
+
+  return {
+    name,
+    lastModified,
+    etag,
+    size:Size,
+    versionId:VersionId,
+    isLatest:IsLatest
+  }
+}
+
 // parse XML response for list objects in a bucket
 export function parseListObjects(xml) {
   var result = {
     objects: [],
     isTruncated: false
   }
-  var nextMarker
+  var nextMarker, nextVersionKeyMarker
   var xmlobj = parseXml(xml)
 
-  if (!xmlobj.ListBucketResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  const listBucketResult = xmlobj.ListBucketResult
+  const listVersionsResult=xmlobj.ListVersionsResult
+    
+  if (listBucketResult && listBucketResult.IsTruncated) {
+    result.isTruncated = listBucketResult.IsTruncated
   }
-  xmlobj = xmlobj.ListBucketResult
-  if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
-  if (xmlobj.Contents) {
-    toArray(xmlobj.Contents).forEach(content => {
-      var name = toArray(content.Key)[0]
-      var lastModified = new Date(toArray(content.LastModified)[0])
-      var etag = toArray(content.ETag)[0].replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
-      var size = content.Size
+  if (listVersionsResult && listVersionsResult.IsTruncated) {
+    result.isTruncated = listVersionsResult.IsTruncated
+  }
+
+  if (listBucketResult && listBucketResult.Contents) {
+    toArray(listBucketResult.Contents).forEach(content => {
+      const name = toArray(content.Key)[0]
+      const lastModified = new Date(toArray(content.LastModified)[0])
+      const etag = sanitizeETag(toArray(content.ETag)[0])
+      const size = content.Size
       result.objects.push({name, lastModified, etag, size})
-      nextMarker = name
+      if (!nextMarker) {
+        nextMarker = name
+      }
     })
   }
+
+  if (listVersionsResult && listVersionsResult.Version) {
+    toArray(listVersionsResult.Version).forEach(content => {
+      result.objects.push(formatObjInfo(content))
+    })
+  }
+
+  if (listVersionsResult && listVersionsResult.DeleteMarker) {
+    toArray(listVersionsResult.DeleteMarker).forEach(content => {
+      result.objects.push(formatObjInfo(content))
+    })
+  }
+
+  if (listVersionsResult && listVersionsResult.NextKeyMarker) {
+    nextVersionKeyMarker = listVersionsResult.NextKeyMarker
+  }
+  if (listVersionsResult && listVersionsResult.NextVersionIdMarker) {
+    result.versionIdMarker = listVersionsResult.NextVersionIdMarker
+  }
+
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
@@ -314,7 +365,7 @@ export function parseListObjects(xml) {
     })
   }
   if (result.isTruncated) {
-    result.nextMarker = xmlobj.NextMarker ? toArray(xmlobj.NextMarker)[0]: nextMarker
+    result.nextMarker = nextVersionKeyMarker || nextMarker
   }
   return result
 }
@@ -336,9 +387,7 @@ export function parseListObjectsV2(xml) {
     toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
-      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = sanitizeETag(content.ETag)
       var size = content.Size
       result.objects.push({name, lastModified, etag, size})
     })
@@ -371,9 +420,7 @@ export function parseListObjectsV2WithMetadata(xml) {
     toArray(xmlobj.Contents).forEach(content => {
       var name = content.Key
       var lastModified = new Date(content.LastModified)
-      var etag = content.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+      var etag = sanitizeETag(content.ETag)
       var size = content.Size
       var metadata
       if (content.UserMetadata != null) {

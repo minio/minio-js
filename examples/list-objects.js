@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
- // dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
@@ -30,5 +30,15 @@ objectsStream.on('data', function(obj) {
   console.log(obj)
 })
 objectsStream.on('error', function(e) {
+  console.log(e)
+})
+
+
+// List all object versions in bucket my-bucketname.
+var objectsStreamWithVersions = s3Client.listObjects('my-bucketname', '', true, {IncludeVersion:true})
+objectsStreamWithVersions.on('data', function(obj) {
+  console.log(obj)
+})
+objectsStreamWithVersions.on('error', function(e) {
   console.log(e)
 })
