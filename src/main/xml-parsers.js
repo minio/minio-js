@@ -311,15 +311,25 @@ export function parseListObjects(xml) {
     objects: [],
     isTruncated: false
   }
-  var nextMarker, nextVersionKeyMarker
-  var xmlobj = parseXml(xml)
+  let isTruncated = false
+  let nextMarker, nextVersionKeyMarker
+  const xmlobj = parseXml(xml)
+
+  const parseCommonPrefixesEntity = responseEntity => {
+    if(responseEntity){
+      toArray(responseEntity).forEach((commonPrefix) => {
+        const prefix = toArray(commonPrefix.Prefix)[0]
+        result.objects.push({prefix, size: 0})
+      })
+    }
+  }
 
   const listBucketResult = xmlobj.ListBucketResult
   const listVersionsResult=xmlobj.ListVersionsResult
 
   if(listBucketResult){
     if ( listBucketResult.IsTruncated) {
-      result.isTruncated = listBucketResult.IsTruncated
+      isTruncated = listBucketResult.IsTruncated
     }
     if (listBucketResult.Contents) {
       toArray(listBucketResult.Contents).forEach(content => {
@@ -333,11 +343,12 @@ export function parseListObjects(xml) {
         }
       })
     }
+    parseCommonPrefixesEntity(listBucketResult.CommonPrefixes)
   }
     
   if(listVersionsResult){
     if(listVersionsResult.IsTruncated){
-      result.isTruncated = listVersionsResult.IsTruncated
+      isTruncated = listVersionsResult.IsTruncated
     }
 
     if (listVersionsResult.Version) {
@@ -357,17 +368,11 @@ export function parseListObjects(xml) {
     if (listVersionsResult.NextVersionIdMarker) {
       result.versionIdMarker = listVersionsResult.NextVersionIdMarker
     }
-        
+    parseCommonPrefixesEntity(listVersionsResult.CommonPrefixes)
   }
 
-  if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
-      var prefix = toArray(commonPrefix.Prefix)[0]
-      var size = 0
-      result.objects.push({prefix, size})
-    })
-  }
-  if (result.isTruncated) {
+  if (isTruncated) {
+    result.isTruncated= isTruncated
     result.nextMarker = nextVersionKeyMarker || nextMarker
   }
   return result
