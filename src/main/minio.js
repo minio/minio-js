@@ -1203,7 +1203,6 @@ export class Client {
     if (!isObject(listQueryOpts)) {
       throw new TypeError('listQueryOpts should be of type "object"')
     }
-
    
     if (!isString(Delimiter)) {
       throw new TypeError('delimiter should be of type "string"')
@@ -1287,17 +1286,11 @@ export class Client {
     if (!isObject(listOpts)) {
       throw new TypeError('listOpts should be of type "object"')
     }
-    // if recursive is false set delimiter to '/'
-    var delimiter = recursive ? '' : '/'
-   
     var marker = ''
-    const maxKeys = listOpts.MaxKeys || 1000
-    const includeVersion=listOpts.IncludeVersion
-      
     const listQueryOpts={
-      Delimiter:delimiter,
-      MaxKeys:maxKeys,
-      IncludeVersion:includeVersion,
+      Delimiter:recursive ? '' : '/', // if recursive is false set delimiter to '/'
+      MaxKeys: listOpts.MaxKeys || 1000,
+      IncludeVersion:listOpts.IncludeVersion,
     }
     var objects = []
     var ended = false

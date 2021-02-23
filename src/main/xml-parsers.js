@@ -316,46 +316,49 @@ export function parseListObjects(xml) {
 
   const listBucketResult = xmlobj.ListBucketResult
   const listVersionsResult=xmlobj.ListVersionsResult
+
+  if(listBucketResult){
+    if ( listBucketResult.IsTruncated) {
+      result.isTruncated = listBucketResult.IsTruncated
+    }
+    if (listBucketResult.Contents) {
+      toArray(listBucketResult.Contents).forEach(content => {
+        const name = toArray(content.Key)[0]
+        const lastModified = new Date(toArray(content.LastModified)[0])
+        const etag = sanitizeETag(toArray(content.ETag)[0])
+        const size = content.Size
+        result.objects.push({name, lastModified, etag, size})
+        if (!nextMarker) {
+          nextMarker = name
+        }
+      })
+    }
+  }
     
-  if (listBucketResult && listBucketResult.IsTruncated) {
-    result.isTruncated = listBucketResult.IsTruncated
-  }
-  if (listVersionsResult && listVersionsResult.IsTruncated) {
-    result.isTruncated = listVersionsResult.IsTruncated
-  }
+  if(listVersionsResult){
+    if(listVersionsResult.IsTruncated){
+      result.isTruncated = listVersionsResult.IsTruncated
+    }
 
-  if (listBucketResult && listBucketResult.Contents) {
-    toArray(listBucketResult.Contents).forEach(content => {
-      const name = toArray(content.Key)[0]
-      const lastModified = new Date(toArray(content.LastModified)[0])
-      const etag = sanitizeETag(toArray(content.ETag)[0])
-      const size = content.Size
-      result.objects.push({name, lastModified, etag, size})
-      if (!nextMarker) {
-        nextMarker = name
-      }
-    })
-  }
+    if (listVersionsResult.Version) {
+      toArray(listVersionsResult.Version).forEach(content => {
+        result.objects.push(formatObjInfo(content))
+      })
+    }
+    if (listVersionsResult.DeleteMarker) {
+      toArray(listVersionsResult.DeleteMarker).forEach(content => {
+        result.objects.push(formatObjInfo(content))
+      })
+    }
 
-  if (listVersionsResult && listVersionsResult.Version) {
-    toArray(listVersionsResult.Version).forEach(content => {
-      result.objects.push(formatObjInfo(content))
-    })
+    if (listVersionsResult.NextKeyMarker) {
+      nextVersionKeyMarker = listVersionsResult.NextKeyMarker
+    }
+    if (listVersionsResult.NextVersionIdMarker) {
+      result.versionIdMarker = listVersionsResult.NextVersionIdMarker
+    }
+        
   }
-
-  if (listVersionsResult && listVersionsResult.DeleteMarker) {
-    toArray(listVersionsResult.DeleteMarker).forEach(content => {
-      result.objects.push(formatObjInfo(content))
-    })
-  }
-
-  if (listVersionsResult && listVersionsResult.NextKeyMarker) {
-    nextVersionKeyMarker = listVersionsResult.NextKeyMarker
-  }
-  if (listVersionsResult && listVersionsResult.NextVersionIdMarker) {
-    result.versionIdMarker = listVersionsResult.NextVersionIdMarker
-  }
-
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
