@@ -1307,7 +1307,7 @@ export class Client {
         .on('error', e => readStream.emit('error', e))
         .on('data', result => {
           if (result.isTruncated) {
-            marker = result.nextMarker
+            marker = result.nextMarker || result.versionIdMarker
           } else {
             ended = true
           }

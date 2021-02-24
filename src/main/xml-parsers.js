@@ -338,10 +338,11 @@ export function parseListObjects(xml) {
         const etag = sanitizeETag(toArray(content.ETag)[0])
         const size = content.Size
         result.objects.push({name, lastModified, etag, size})
-        if (!nextMarker) {
-          nextMarker = name
-        }
       })
+    }
+    
+    if( listBucketResult.NextMarker){
+      nextMarker = listBucketResult.NextMarker
     }
     parseCommonPrefixesEntity(listBucketResult.CommonPrefixes)
   }
