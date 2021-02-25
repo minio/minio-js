@@ -1205,10 +1205,10 @@ export class Client {
     }
    
     if (!isString(Delimiter)) {
-      throw new TypeError('delimiter should be of type "string"')
+      throw new TypeError('Delimiter should be of type "string"')
     }
     if (!isNumber(MaxKeys)) {
-      throw new TypeError('maxKeys should be of type "number"')
+      throw new TypeError('MaxKeys should be of type "number"')
     }
 
     const queries = []

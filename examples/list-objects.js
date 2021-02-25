@@ -50,8 +50,9 @@ function listPrefixesOfABucket(buckName) {
   var objectsStream=s3Client.listObjects(buckName, '', false , {})
   var counter = 0
   objectsStream.on('data', function (obj) {
-    console.dir(obj)
-    counter+=1
+    if(obj.prefix) {
+      counter += 1
+    }
   })
   objectsStream.on('end',()=>{
     console.log("Non Versioned Prefix Count:", counter)

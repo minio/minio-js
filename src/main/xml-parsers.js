@@ -372,8 +372,8 @@ export function parseListObjects(xml) {
     parseCommonPrefixesEntity(listVersionsResult.CommonPrefixes)
   }
 
+  result.isTruncated= isTruncated
   if (isTruncated) {
-    result.isTruncated= isTruncated
     result.nextMarker = nextVersionKeyMarker || nextMarker
   }
   return result
