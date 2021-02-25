@@ -1289,7 +1289,7 @@ export class Client {
     var marker = ''
     const listQueryOpts={
       Delimiter:recursive ? '' : '/', // if recursive is false set delimiter to '/'
-      MaxKeys: listOpts.MaxKeys || 1000,
+      MaxKeys: 1000,
       IncludeVersion:listOpts.IncludeVersion,
     }
     var objects = []

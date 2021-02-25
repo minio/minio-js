@@ -61,7 +61,7 @@ describe('functional tests', function() {
   } else {
     playConfig.useSSL = true
   }
-
+  
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
@@ -1466,7 +1466,6 @@ describe('functional tests', function() {
 
     })
   })
-    
 
   describe('Versioning Supported listObjects', function() {
     const  versionedBucketName = "minio-js-test-version-list" + uuid.v4()
@@ -1494,11 +1493,14 @@ describe('functional tests', function() {
 
     step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${versionedBucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
       if(isVersioningSupported) {
-        objVersionIdCounter.forEach((versionCounter, index)=>{
+        let count=1
+        objVersionIdCounter.forEach(()=>{
           client.putObject(versionedBucketName, objNameWithPrefix, readableStream(_1byte), _1byte.length, {}, (e,data)=>{
             objArray.push(data)
-            if(index+1 === objVersionIdCounter.length)
+            if(count === objVersionIdCounter.length) {
               done()
+            }
+            count +=1
           })
         })
       }else {
@@ -1539,33 +1541,16 @@ describe('functional tests', function() {
       }
     })
 
-    step(`listObjects(bucketName, prefix, recursive, listOpts)_bucketName:${versionedBucketName}, prefix: ${prefixName}, recursive:true_ ,{IncludeVersion: true, MaxKeys:2}`, done => {
-      if(isVersioningSupported) {
-        const maxKeysList=[]
-        client.listObjects(versionedBucketName, '', true, {IncludeVersion: true, MaxKeys: 2})
-          .on('error', done)
-          .on('end', () => {
-            if (maxKeysList.length === 2) return done()
-            return done(new Error(`listObjects lists ${maxKeysList.length} objects, expected ${2}`))
-          })
-          .on('data', data => {
-            maxKeysList.push(data)
-          })
-      } else {
-        done()
-      }
-    })
-
 
     step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}_Remove ${listObjectsNum} objects`, done => {
       if(isVersioningSupported) {
-        listPrefixArray.forEach((item, index)=>{
-          client.removeObject(versionedBucketName, objNameWithPrefix, {versionId: item.versionId}, (res)=>{
-            if(!res) {
-              if (index+1 === listPrefixArray.length) {
-                done()
-              }
+        let count=1
+        listPrefixArray.forEach((item)=>{
+          client.removeObject(versionedBucketName ,item.name, {versionId: item.versionId}, ()=>{
+            if (count === listPrefixArray.length) {
+              done()
             }
+            count +=1
           })
         })
       }else {

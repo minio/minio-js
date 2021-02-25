@@ -233,7 +233,7 @@ __Parameters__
 | `bucketName` | _string_ | Name of the bucket. |
 | `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-| `listOpts`  | _object_  | query params to list object which can have `{MaxKeys: _int_ , IncludeVersion: _bool_ }` (optional)|
+| `listOpts`  | _object_  | query params to list object which can have `{IncludeVersion: _bool_ }` (optional)|
 
 __Return Value__
 
@@ -267,15 +267,6 @@ To get Object versions
 
 ```js
 var stream = minioClient.listObjects('mybucket','', true, {IncludeVersion:true})
-stream.on('data', function(obj) { console.log(obj) } )
-stream.on('error', function(err) { console.log(err) } )
-```
-
-__Example2__
-To get Object versions along with MaxKeys
-
-```js
-var stream = minioClient.listObjects('mybucket','', true, {IncludeVersion:true, MaxKeys:3})
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
