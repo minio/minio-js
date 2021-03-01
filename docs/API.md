@@ -883,7 +883,7 @@ __Parameters__
 | Param | Type | Description |
 | ---- | ---- | ---- |
 | `bucketName` | _string_ | Name of the bucket. |
-| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  |
+| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{Key:"objectname",VersionId:"my-version-id"}] |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
 
 

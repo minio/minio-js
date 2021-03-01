@@ -1544,7 +1544,10 @@ export class Client {
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `objectsList` _array_: array of objects
+  // * `objectsList` _array_: array of objects of one of the following:
+  // *         List of Object names as array of strings which are object keys:  ['objectname1','objectname2']
+  // *         List of Object name and versionId as an object:  [{Key:"objectname",VersionId:"my-version-id"}]
+
   removeObjects(bucketName, objectsList, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1572,21 +1575,27 @@ export class Client {
     if (result.list.length > 0) {
       result.listOfList.push(result.list)
     }
-    
+
     const encoder = new util.TextEncoder()
 
     async.eachSeries(result.listOfList, (list, callback) => {
-      var deleteObjects={"Delete":[{"Quiet": true}]}
-
+      var deleteObjects={"Delete":[{Quiet:true}], }
       list.forEach(function(value){
-        deleteObjects["Delete"].push({"Object": [{"Key": value}]})
+        //Backward Compatibility
+        let entry
+        if(isObject(value)){
+          entry={"Object": [{"Key": value.Key,  "VersionId":value.VersionId}]}
+        }else{
+          entry={"Object": [{"Key": value}]}
+        }
+
+        deleteObjects["Delete"].push(entry)
       })
-
-      let payload = Xml(deleteObjects)
+      const builder = new xml2js.Builder({ headless: true })
+      let payload = builder.buildObject(deleteObjects)
       payload = encoder.encode(payload)
-
-      var headers = {}
-      var md5digest = Crypto.createHash('md5').update(payload).digest()
+      const headers = {}
+      const md5digest = Crypto.createHash('md5').update(payload).digest()
 
       headers['Content-MD5'] = md5digest.toString('base64')
 

@@ -18,7 +18,7 @@
 // replace them with original values.
 
 
-var Minio = require('minio');
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -26,7 +26,7 @@ var s3Client = new Minio.Client({
   useSSL: false,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
-});
+})
 
 var objectsList = []
 
@@ -34,11 +34,11 @@ var objectsList = []
 var objectsStream = s3Client.listObjects('my-bucketname', '', true)
 
 objectsStream.on('data', function(obj) {
-  objectsList.push(obj.name);
+  objectsList.push(obj.name)
 })
 
 objectsStream.on('error', function(e) {
-  console.log(e);
+  console.log(e)
 })
 
 objectsStream.on('end', function() {
@@ -51,3 +51,21 @@ objectsStream.on('end', function() {
   })
 
 })
+
+// Delete Multiple objects and respective versions.
+function removeObjectsMultipleVersions() {
+
+  const deleteList = [
+    {VersionId: '03ed08e1-34ff-4465-91ed-ba50c1e80f39', Key: 'out.json.gz'},
+    {VersionId: "35517ae1-18cb-4a21-9551-867f53a10cfe", Key:"test.pdf"},
+    {VersionId: "3053f564-9aea-4a59-88f0-7f25d6320a2c", Key:"test.pdf"}
+  ]
+
+  s3Client.removeObjects("my-bucket", deleteList,  function (e) {
+    if (e) {
+      return console.log(e)
+    }
+    console.log("Successfully deleted..")
+  })
+}
+removeObjectsMultipleVersions()
