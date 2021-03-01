@@ -17,7 +17,7 @@
 import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
-import { sanitizeETag } from "./helpers"
+import { sanitizeETag, isObject } from "./helpers"
 
 var parseXml = (xml) => {
   var result = null
@@ -280,7 +280,7 @@ export function parseCompleteMultipart(xml) {
   }
 }
 
-const formatObjInfo = content => {
+const formatObjInfo = (content, opts={}) => {
 
   let {
     Key,
@@ -290,6 +290,10 @@ const formatObjInfo = content => {
     VersionId,
     IsLatest
   } = content
+    
+  if(!isObject(opts)){
+    opts = {}
+  }
 
   const name = toArray(Key)[0]
   const lastModified = new Date(toArray(LastModified)[0])
@@ -301,7 +305,8 @@ const formatObjInfo = content => {
     etag,
     size:Size,
     versionId:VersionId,
-    isLatest:IsLatest
+    isLatest:IsLatest,
+    isDeleteMarker:opts.IsDeleteMarker ? opts.IsDeleteMarker: false
   }
 }
 
@@ -359,7 +364,7 @@ export function parseListObjects(xml) {
     }
     if (listVersionsResult.DeleteMarker) {
       toArray(listVersionsResult.DeleteMarker).forEach(content => {
-        result.objects.push(formatObjInfo(content))
+        result.objects.push(formatObjInfo(content, {IsDeleteMarker:true}))
       })
     }
 

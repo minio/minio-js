@@ -251,6 +251,7 @@ The object is of the format:
 | `obj.size` | _number_ | size of the object. |
 | `obj.etag` | _string_ | etag of the object. |
 | `obj.versionId` | _string_ | versionId of the object. |
+| `obj.isDeleteMarker` | _boolean_ | true if it is a delete marker. |
 | `obj.lastModified` | _Date_ | modified time stamp. |
 
 __Example__
