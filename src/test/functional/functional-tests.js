@@ -61,7 +61,7 @@ describe('functional tests', function() {
   } else {
     playConfig.useSSL = true
   }
-
+  
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
@@ -111,7 +111,15 @@ describe('functional tests', function() {
   }
 
   var tmpDir = os.tmpdir()
-
+    
+  function readableStream(data) {
+    var s = new stream.Readable()
+    s._read = () => {}
+    s.push(data)
+    s.push(null)
+    return s
+  }
+  
   var traceStream
 
   // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
@@ -1117,14 +1125,6 @@ describe('functional tests', function() {
     })
   })
 
-  function readableStream(data) {
-    var s = new stream.Readable()
-    s._read = () => {}
-    s.push(data)
-    s.push(null)
-    return s
-  }
-
   describe('removeObjects', function() {
     var listObjectPrefix = 'miniojsPrefix'
     var listObjectsNum = 10
@@ -1466,4 +1466,97 @@ describe('functional tests', function() {
 
     })
   })
+
+  describe('Versioning Supported listObjects', function() {
+    const  versionedBucketName = "minio-js-test-version-list" + uuid.v4()
+    const prefixName  = "Prefix1"
+    const versionedObjectName ="datafile-versioned-list-100-kB"
+    const objVersionIdCounter = [1,2,3,4,5]// This should track adding 5 versions of the same object.
+    let listObjectsNum = objVersionIdCounter.length
+    let objArray = []
+    let listPrefixArray = []
+    let isVersioningSupported=false
+
+    const objNameWithPrefix = `${prefixName}/${versionedObjectName}`
+
+    before((done) => client.makeBucket(versionedBucketName, '', ()=>{
+      client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
+        isVersioningSupported = true
+        done()
+      })
+
+    }))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+
+    step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${versionedBucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
+      if(isVersioningSupported) {
+        let count=1
+        objVersionIdCounter.forEach(()=>{
+          client.putObject(versionedBucketName, objNameWithPrefix, readableStream(_1byte), _1byte.length, {}, (e,data)=>{
+            objArray.push(data)
+            if(count === objVersionIdCounter.length) {
+              done()
+            }
+            count +=1
+          })
+        })
+      }else {
+        done()
+      }
+    })
+
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`, done => {
+      if(isVersioningSupported) {
+        client.listObjects(versionedBucketName, '', true, {IncludeVersion: true})
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(objArray.length, listPrefixArray.length)) return done()
+            return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
+          })
+          .on('data', data => {
+            listPrefixArray.push(data)
+          })
+      } else {
+        done()
+      }
+    })
+
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: ${prefixName}, recursive:true_`, done => {
+      if(isVersioningSupported) {
+        listPrefixArray=[]
+        client.listObjects(versionedBucketName, prefixName, true, {IncludeVersion: true})
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(objArray.length, listPrefixArray.length)) return done()
+            return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
+          })
+          .on('data', data => {
+            listPrefixArray.push(data)
+          })
+      } else {
+        done()
+      }
+    })
+
+
+    step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}_Remove ${listObjectsNum} objects`, done => {
+      if(isVersioningSupported) {
+        let count=1
+        listPrefixArray.forEach((item)=>{
+          client.removeObject(versionedBucketName ,item.name, {versionId: item.versionId}, ()=>{
+            if (count === listPrefixArray.length) {
+              done()
+            }
+            count +=1
+          })
+        })
+      }else {
+        done()
+      }
+    })
+  })
+    
 })

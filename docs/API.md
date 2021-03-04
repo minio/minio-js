@@ -221,7 +221,7 @@ minioClient.removeBucket('mybucket', function(err) {
 ```
 
 <a name="listObjects"></a>
-### listObjects(bucketName, prefix, recursive)
+### listObjects(bucketName, prefix, recursive [,listOpts])
 
 Lists all objects in a bucket.
 
@@ -233,7 +233,7 @@ __Parameters__
 | `bucketName` | _string_ | Name of the bucket. |
 | `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
 | `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-
+| `listOpts`  | _object_  | query params to list object which can have `{IncludeVersion: _bool_ }` (optional)|
 
 __Return Value__
 
@@ -249,7 +249,9 @@ The object is of the format:
 | `obj.name` | _string_ | name of the object. |
 | `obj.prefix` | _string_ | name of the object prefix. |
 | `obj.size` | _number_ | size of the object. |
-| `obj.etag` | _string_ |etag of the object. |
+| `obj.etag` | _string_ | etag of the object. |
+| `obj.versionId` | _string_ | versionId of the object. |
+| `obj.isDeleteMarker` | _boolean_ | true if it is a delete marker. |
 | `obj.lastModified` | _Date_ | modified time stamp. |
 
 __Example__
@@ -260,6 +262,16 @@ var stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
+
+__Example1__
+To get Object versions
+
+```js
+var stream = minioClient.listObjects('mybucket','', true, {IncludeVersion:true})
+stream.on('data', function(obj) { console.log(obj) } )
+stream.on('error', function(err) { console.log(err) } )
+```
+
 
 <a name="listObjectsV2"></a>
 ### listObjectsV2(bucketName, prefix, recursive, startAfter)
