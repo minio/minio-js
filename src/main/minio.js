@@ -676,7 +676,7 @@ export class Client {
     var method = 'HEAD'
     this.makeRequest({method, bucketName}, '', 200, '', false, err => {
       if (err) {
-        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(err, false)
         return cb(err)
       }
       cb(null, true)
