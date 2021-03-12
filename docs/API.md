@@ -1147,7 +1147,7 @@ __Parameters__
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
 |`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
-|`reqParams`  | _object_ | request parameters. (optional) |
+|`reqParams`  | _object_ | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}|
 |`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
@@ -1173,6 +1173,17 @@ __Example 2__
 // Lists objects in 'myBucket' with prefix 'data'.
 // Lists max 1000 of them.
 minioClient.presignedUrl('GET', 'mybucket', '', 1000, {'prefix': 'data', 'max-keys': 1000}, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
+```
+
+__Example 3__
+
+
+```js
+// Get Object with versionid
+minioClient.presignedUrl('GET', 'mybucket', '', 1000, {versionId: "10fa9946-3f64-4137-a58f-888065c0732e"}, function(err, presignedUrl) {
   if (err) return console.log(err)
   console.log(presignedUrl)
 })
