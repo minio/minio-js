@@ -61,7 +61,6 @@ describe('functional tests', function() {
   } else {
     playConfig.useSSL = true
   }
-  
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
@@ -1612,7 +1611,8 @@ describe('functional tests', function() {
               return done(new Error(`listObjects lists ${objVersionList.length} objects, expected ${2}`))
             })
             .on('data', data => {
-              objVersionList.push({Key:data.name,VersionId:data.versionId})
+              //Pass list object response as is to remove objects
+              objVersionList.push(data)
             })
         } else {
           done()

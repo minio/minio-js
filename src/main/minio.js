@@ -1546,7 +1546,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectsList` _array_: array of objects of one of the following:
   // *         List of Object names as array of strings which are object keys:  ['objectname1','objectname2']
-  // *         List of Object name and versionId as an object:  [{Key:"objectname",VersionId:"my-version-id"}]
+  // *         List of Object name and versionId as an object:  [{name:"objectname",versionId:"my-version-id"}]
 
   removeObjects(bucketName, objectsList, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1584,7 +1584,7 @@ export class Client {
         //Backward Compatibility
         let entry
         if(isObject(value)){
-          entry={"Object": [{"Key": value.Key,  "VersionId":value.VersionId}]}
+          entry={"Object": [{"Key": value.name,  "VersionId":value.versionId}]}
         }else{
           entry={"Object": [{"Key": value}]}
         }
