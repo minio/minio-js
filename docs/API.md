@@ -883,7 +883,7 @@ __Parameters__
 | Param | Type | Description |
 | ---- | ---- | ---- |
 | `bucketName` | _string_ | Name of the bucket. |
-| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{Key:"objectname",VersionId:"my-version-id"}] |
+| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{name:"my-obj-name",versionId:"my-version-id"}] |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
 
 
@@ -916,6 +916,34 @@ objectsStream.on('end', function() {
 
 })
 
+
+```
+
+__Example 1__
+
+With versioning Support 
+
+```js
+var objectsList=[]
+var bucket ="my-bucket"
+var prefix="my-prefix"
+var recursive=false
+
+var objectsStream = s3Client.listObjects(bucket, prefix, recursive, {IncludeVersion: true})
+  objectsStream.on('data', function (obj) {
+      objectsList.push(obj)
+  })
+  objectsStream.on('error', function (e) {
+    return console.log(e)
+  })
+  objectsStream.on('end', function () {
+    s3Client.removeObjects(bucket, objectsList, function (e) {
+      if (e) {
+        return console.log(e)
+      }
+      console.log("Success")
+    })
+  })
 
 ```
 
