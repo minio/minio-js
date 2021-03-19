@@ -29,7 +29,7 @@ var s3Client = new Minio.Client({
 })
 
 const objectsList = []
-const bucket = 'my-bucket'
+const bucketName = 'my-bucket'
 const prefix = 'my-prefix'
 const recursive = false
 
@@ -37,7 +37,7 @@ const recursive = false
 
 function removeObjects (bucketName, prefix, recursive, includeVersion) {
 // List all object paths in bucket
-  var objectsStream = s3Client.listObjects(bucket, prefix, recursive, {IncludeVersion: includeVersion})
+  var objectsStream = s3Client.listObjects(bucketName, prefix, recursive, {IncludeVersion: includeVersion})
 
   objectsStream.on('data', function (obj) {
     if (includeVersion) {
@@ -52,7 +52,7 @@ function removeObjects (bucketName, prefix, recursive, includeVersion) {
   })
 
   objectsStream.on('end', function () {
-    s3Client.removeObjects(bucket, objectsList, function (e) {
+    s3Client.removeObjects(bucketName, objectsList, function (e) {
       if (e) {
         return console.log(e)
       }
@@ -61,17 +61,17 @@ function removeObjects (bucketName, prefix, recursive, includeVersion) {
   })
 }
 
-removeObjects(bucket, prefix, recursive, true) // Versioned objects of a bucket to be deleted.
-removeObjects(bucket, prefix, recursive, false) // Normal objects of a bucket to be deleted.
+removeObjects(bucketName, prefix, recursive, true) // Versioned objects of a bucket to be deleted.
+removeObjects(bucketName, prefix, recursive, false) // Normal objects of a bucket to be deleted.
 
 
 // Delete Multiple objects and respective versions.
 function removeObjectsMultipleVersions() {
 
   const deleteList = [
-    {versionId: '03ed08e1-34ff-4465-91ed-ba50c1e80f39', name: 'out.json.gz'},
-    {versionId: "35517ae1-18cb-4a21-9551-867f53a10cfe", name:"test.pdf"},
-    {versionId: "3053f564-9aea-4a59-88f0-7f25d6320a2c", name:"test.pdf"}
+    {versionId: '03ed08e1-34ff-4465-91ed-ba50c1e80f39', name: 'prefix-1/out.json.gz'},
+    {versionId: "35517ae1-18cb-4a21-9551-867f53a10cfe", name:"dir1/dir2/test.pdf"},
+    {versionId: "3053f564-9aea-4a59-88f0-7f25d6320a2c", name:"dir1/dir2/test.pdf"}
   ]
 
   s3Client.removeObjects("my-bucket", deleteList,  function (e) {
