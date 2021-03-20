@@ -1816,6 +1816,7 @@ export class Client {
 
       if (this.sessionToken) {
         postPolicy.policy.conditions.push(['eq', '$x-amz-security-token', this.sessionToken])
+        postPolicy.formData['x-amz-security-token'] = this.sessionToken
       }
 
       var policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
