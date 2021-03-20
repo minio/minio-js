@@ -61,7 +61,6 @@ describe('functional tests', function() {
   } else {
     playConfig.useSSL = true
   }
-  
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
@@ -1556,6 +1555,87 @@ describe('functional tests', function() {
       }else {
         done()
       }
+    })
+  })
+
+  describe('Versioning tests on a bucket for Deletion of Multiple versions', function () {
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versioned_100kbObjectName = 'datafile-versioned-100-kB'
+    const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+
+    describe('Test for removal of multiple versions', function () {
+      let isVersioningSupported=false
+      const objVersionList=[]
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,(done)=>{
+        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          isVersioningSupported=true
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        if(isVersioningSupported) {
+          client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+
+      })
+      //Put two versions of the same object.
+      step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        //Put two versions of the same object.
+        if(isVersioningSupported) {
+          client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`, done => {
+        if(isVersioningSupported) {
+          client.listObjects(versionedBucketName, '', true, {IncludeVersion: true})
+            .on('error', done)
+            .on('end', () => {
+              if (_.isEqual(2, objVersionList.length)) return done()
+              return done(new Error(`listObjects lists ${objVersionList.length} objects, expected ${2}`))
+            })
+            .on('data', data => {
+              //Pass list object response as is to remove objects
+              objVersionList.push(data)
+            })
+        } else {
+          done()
+        }
+      })
+
+      step(`removeObjects(bucketName, objectList, removeOpts)_bucketName:${versionedBucketName}_Remove ${objVersionList.length} objects`, done => {
+        if(isVersioningSupported) {
+          let count=1
+          objVersionList.forEach(()=>{
+            //remove multiple versions of the object.
+            client.removeObjects(versionedBucketName, objVersionList, ()=>{
+              if (count === objVersionList.length) {
+                done()
+              }
+              count +=1
+            })
+          })
+        }else {
+          done()
+        }
+      })
+
     })
   })
     
