@@ -1660,7 +1660,6 @@ describe('functional tests', function() {
 
 
     function putPreSignedObject (bucketName, objectName, expires=1000, _incoming_obj,cb) {
-      // Using fPutObject API upload your file to the bucket europetrip.
       client.presignedPutObject(bucketName, objectName, expires, (e, presignedUrl) => {
         if (e) {
           cb && cb()
@@ -1731,7 +1730,6 @@ describe('functional tests', function() {
 
     step(`listObjects(bucketName, objectName, expires=1000, _incoming_obj,cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version 2`, done => {
       if(isVersioningSupported) {
-        // List all object paths in bucket .
         const objectsStream = client.listObjects(versionedBucketName, '', true,{IncludeVersion: true})
         objectsStream.on('data', function(obj) {
           objectsList.push({VersionId:obj.versionId, Key:obj.name})
@@ -1755,7 +1753,6 @@ describe('functional tests', function() {
 
     step(`presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, versionId, cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} first version`, done => {
       if(isVersioningSupported) {
-        //bucketName, objectName, expires, respHeaders, requestDate, versionId, cb
         client.presignedGetObject(versionedBucketName, versionedPresignObjName, 1000, {versionId: objectsList[1].VersionId},new Date(), (e, presignedUrl) => {
           if (e) {
             return done()
