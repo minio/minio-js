@@ -28,7 +28,7 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
-import { getVersionId } from "../../../dist/main/helpers"
+import { getVersionId, isObject } from "../../../dist/main/helpers"
 let minio
 
 try {
@@ -1637,6 +1637,174 @@ describe('functional tests', function() {
       })
 
     })
+  })
+
+  describe('Bucket Tags API', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  tagsBucketName = "minio-js-test-tags-" + uuid.v4()
+    before((done) => client.makeBucket(tagsBucketName, '', done))
+    after((done) => client.removeBucket(tagsBucketName, done))
+
+    describe('set, get and remove Tags on a bucket', function () {
+      step(`Set tags on a bucket_bucketName:${tagsBucketName}`, done => {
+        client.setBucketTagging(tagsBucketName, {'test-tag-key':'test-tag-value'}, (err) => {
+          if (err) return done(err)
+          done()
+        })
+      })
+      step(`Get tags on a bucket_bucketName:${tagsBucketName}`, done => {
+        client.getBucketTagging(tagsBucketName, (err, tagList) => {
+          if (err) return done(err)
+          if(isObject(tagList)) {
+            done()
+          }
+        })
+      })
+
+      step(`remove Tags on a bucket_bucketName:${tagsBucketName}`, done => {
+        client.removeBucketTagging(tagsBucketName, (err) => {
+          if (err) return done(err)
+          done()
+        })
+      })
+
+    })
+
+  })
+
+  describe('Object Tags API', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  tagsBucketName = "minio-js-test-tags-" + uuid.v4()
+    before((done) => client.makeBucket(tagsBucketName, '', done))
+    after((done) => client.removeBucket(tagsBucketName, done))
+
+
+    const tagObjName = 'datafile-tags-100-kB'
+    const tagObject = Buffer.alloc(100 * 1024, 0)
+
+
+    describe('set, get and remove Tags on an object', function () {
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${tagsBucketName}, objectName:${tagObjName}, stream:100Kib_`, done => {
+        client.putObject(tagsBucketName, tagObjName, tagObject)
+          .then(() => done())
+          .catch(done)
+      })
+
+      step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
+        client.putObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, (err) => {
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`getObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
+        client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
+          if (err) return done(err)
+          if(isObject(tagList)) {
+            done()
+          }
+        })
+      })
+
+      step(`removeObjectTagging on an object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
+        client.removeObjectTagging(tagsBucketName, tagObjName, (err) => {
+          if (err) return done()
+          done()
+        })
+      })
+      step(`removeObject object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
+        client.removeObject(tagsBucketName, tagObjName, () => {
+          done()
+        })
+      })
+    })
+
+  })
+
+  describe('Object Tags API with Versioning support', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    const  tagsVersionedBucketName = "minio-js-test-tags-version-" + uuid.v4()
+    before((done) => client.makeBucket(tagsVersionedBucketName, '', done))
+    after((done) => client.removeBucket(tagsVersionedBucketName, done))
+
+
+    const tagObjName = 'datafile-versioned-100-kB'
+    const tagObject = Buffer.alloc(100 * 1024, 0)
+    let isVersioningSupported=false
+    let versionId=null
+
+    describe('set, get and remove Tags on a versioned object', function () {
+
+      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${tagsVersionedBucketName},{Status:"Enabled"}`,(done)=>{
+        client.setBucketVersioning(tagsVersionedBucketName,{Status:"Enabled"},(err)=>{
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          isVersioningSupported=true
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName}, stream:100Kib_`, done => {
+        if(isVersioningSupported) {
+          client.putObject(tagsVersionedBucketName, tagObjName, tagObject)
+            .then((res={}) => {
+              if(res.versionId){
+                versionId = res.versionId // In gateway mode versionId will not be returned.
+              }
+              done()
+            })
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`Set tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
+        if(isVersioningSupported) {
+          client.putObjectTagging(tagsVersionedBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, {versionId:versionId}, (err) => {
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Get tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
+        if(isVersioningSupported) {
+          client.getObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err, tagList) => {
+            if (err) return done(err)
+            if(isObject(tagList)) {
+              done()
+            }
+          })}else{
+          done()
+        }
+      })
+
+      step(`remove Tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
+
+        if(isVersioningSupported) {
+          client.removeObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err) => {
+            if (err) return done()
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+      step(`remove Tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
+        if(isVersioningSupported) {
+          client.removeObject(tagsVersionedBucketName, tagObjName,  {versionId:versionId},() => {
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+    })
+
   })
 
   describe('Versioning Supported preSignedUrl Get, Put Tests', function() {

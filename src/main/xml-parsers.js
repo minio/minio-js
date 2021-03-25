@@ -18,8 +18,8 @@ import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
 import {
-  isObject, 
-  sanitizeETag, 
+  isObject,
+  sanitizeETag,
   RETENTION_VALIDITY_UNITS
 } from "./helpers"
 
@@ -463,6 +463,11 @@ export function parseListObjectsV2WithMetadata(xml) {
 export function parseBucketVersioningConfig(xml){
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
+}
+
+export function parseTagging(xml){
+  const xmlObj = parseXml(xml)
+  return xmlObj
 }
 
 

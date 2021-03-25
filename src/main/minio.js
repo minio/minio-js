@@ -2290,6 +2290,245 @@ export class Client {
     this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
 
+  /** To set Tags on a bucket or object based on the params
+     *  __Arguments__
+     * taggingParams _object_ Which contains the following properties
+     *  bucketName _string_,
+     *  objectName _string_ (Optional),
+     *  tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
+     *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
+     *  cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+     */
+  setTagging(taggingParams){
+
+    const { bucketName, objectName, tags, putOpts={}, cb} = taggingParams
+    const method = 'PUT'
+    let query ="tagging"
+
+    if(putOpts && putOpts.versionId){
+      query =`${query}&versionId=${putOpts.versionId}`
+    }
+    const tagsList=[]
+    for (const [key, value] of Object.entries(tags)) {
+      tagsList.push( { Key: key, Value: value} )
+    }
+    const taggingConfig = {
+      Tagging: {
+        TagSet: {
+          Tag: tagsList
+        }
+      }
+    }
+    const encoder = new util.TextEncoder()
+    const headers ={}
+    const builder = new xml2js.Builder({ headless:true,renderOpts:{'pretty':false},})
+    let payload = builder.buildObject(taggingConfig)
+    payload = encoder.encode(payload)
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+
+    const requestOptions = { method, bucketName, query, headers }
+
+    if(objectName){
+      requestOptions['objectName']=objectName
+    }
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest(requestOptions, payload, 200, '', false, cb)
+
+  }
+
+  /** Set Tags on a Bucket
+   * __Arguments__
+   * bucketName _string_
+   * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  setBucketTagging(bucketName,tags,cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if(!isObject(tags)){
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if(Object.keys(tags).length > 50){
+      throw new errors.InvalidArgumentError('maximum tags allowed is 50"')
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+
+    return this.setTagging({bucketName, tags, cb})
+  }
+
+  /** Set Tags on an Object
+   * __Arguments__
+   * bucketName _string_
+   * objectName _string_
+   *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
+   * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  putObjectTagging(bucketName, objectName, tags, putOpts={}, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+
+    if(isFunction(putOpts)){
+      cb=putOpts
+      putOpts={}
+    }
+
+    if(!isObject(tags)){
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if(Object.keys(tags).length > 50){
+      throw new errors.InvalidArgumentError('Maximum tags allowed is 50"')
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    return this.setTagging({bucketName, objectName, tags, putOpts, cb})
+  }
+
+  /** Remove Tags on an Bucket/Object based on params
+   * __Arguments__
+   * bucketName _string_
+   * objectName _string_ (optional)
+   * removeOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  removeTagging({bucketName, objectName, removeOpts, cb}){
+    const method = 'DELETE'
+    let query ="tagging"
+
+    if(removeOpts && Object.keys(removeOpts).length && removeOpts.versionId){
+      query =`${query}&versionId=${removeOpts.versionId}`
+    }
+    const requestOptions = { method, bucketName, objectName, query }
+
+    if(objectName){
+      requestOptions['objectName']=objectName
+    }
+    this.makeRequest(requestOptions, '', 200, '', true, cb)
+  }
+
+  /** Remove Tags associated with a bucket
+   *  __Arguments__
+   * bucketName _string_
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  removeBucketTagging(bucketName, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    return this.removeTagging({bucketName, cb})
+  }
+
+  /** Remove tags associated with an object
+   * __Arguments__
+   * bucketName _string_
+   * objectName _string_
+   * removeOpts _object_ (Optional) e.g. {VersionID:"my-object-version-id"}
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  removeObjectTagging(bucketName, objectName, removeOpts, cb){
+
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+    if(isFunction(removeOpts)){
+      cb=removeOpts
+      removeOpts={}
+    }
+    if(removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)){
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    return this.removeTagging({bucketName, objectName, removeOpts, cb})
+  }
+
+  /** Get Tags associated with a Bucket
+   *  __Arguments__
+   * bucketName _string_
+   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  getBucketTagging(bucketName, cb){
+    const method = 'GET'
+    const query ="tagging"
+    const requestOptions = { method, bucketName, query }
+
+    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+      var transformer = transformers.getTagsTransformer()
+      if (e) return cb(e)
+      let tagsList
+      pipesetup(response, transformer)
+        .on('data', result => tagsList = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, tagsList))
+    })
+  }
+
+  /** Get the tags associated with a bucket OR an object
+   * bucketName _string_
+   * objectName _string_ (Optional)
+   * getOpts _object_ (Optional) e.g {versionId:"my-object-version-id"}
+   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  getObjectTagging(bucketName, objectName, getOpts={}, cb=()=>false){
+    const method = 'GET'
+    let query ="tagging"
+
+    if(!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if(!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+    if(isFunction(getOpts)){
+      cb=getOpts
+      getOpts={}
+    }
+    if(!isObject(getOpts)){
+      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    if(getOpts && getOpts.versionId){
+      query =`${query}&versionId=${getOpts.versionId}`
+    }
+    const requestOptions = { method, bucketName, query }
+    if(objectName){
+      requestOptions['objectName']=objectName
+    }
+
+    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+      const transformer = transformers.getTagsTransformer()
+      if (e) return cb(e)
+      let tagsList
+      pipesetup(response, transformer)
+        .on('data', result => tagsList = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, tagsList))
+    })
+
+  }
+
   setObjectLockConfig(bucketName, lockConfigOpts={}, cb) {
 
     const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
@@ -2500,6 +2739,12 @@ Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
 Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
+Client.prototype.setBucketTagging=promisify((Client.prototype.setBucketTagging))
+Client.prototype.removeBucketTagging=promisify((Client.prototype.removeBucketTagging))
+Client.prototype.getBucketTagging=promisify((Client.prototype.getBucketTagging))
+Client.prototype.putObjectTagging=promisify((Client.prototype.putObjectTagging))
+Client.prototype.removeObjectTagging=promisify((Client.prototype.removeObjectTagging))
+Client.prototype.getObjectTagging=promisify((Client.prototype.getObjectTagging))
 Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
