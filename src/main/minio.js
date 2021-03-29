@@ -2413,6 +2413,7 @@ export class Client {
     if(objectName){
       requestOptions['objectName']=objectName
     }
+    // FIXME: This is a hack and it will be updated when server side is fixed to send the correct '204' status code
     this.makeRequest(requestOptions, '', 200, '', true, cb)
   }
 

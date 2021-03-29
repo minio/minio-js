@@ -28,7 +28,7 @@ const assert = chai.assert
 const superagent = require('superagent')
 const uuid = require("uuid")
 const step = require("mocha-steps").step
-import { getVersionId, isObject } from "../../../dist/main/helpers"
+import { getVersionId, isArray } from "../../../dist/main/helpers"
 let minio
 
 try {
@@ -1655,7 +1655,7 @@ describe('functional tests', function() {
       step(`Get tags on a bucket_bucketName:${tagsBucketName}`, done => {
         client.getBucketTagging(tagsBucketName, (err, tagList) => {
           if (err) return done(err)
-          if(isObject(tagList)) {
+          if(isArray(tagList)) {
             done()
           }
         })
@@ -1701,7 +1701,7 @@ describe('functional tests', function() {
       step(`getObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
         client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
           if (err) return done(err)
-          if(isObject(tagList)) {
+          if(isArray(tagList)) {
             done()
           }
         })
@@ -1775,7 +1775,7 @@ describe('functional tests', function() {
         if(isVersioningSupported) {
           client.getObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err, tagList) => {
             if (err) return done(err)
-            if(isObject(tagList)) {
+            if(isArray(tagList)) {
               done()
             }
           })}else{
