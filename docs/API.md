@@ -44,6 +44,13 @@ var s3Client = new Minio.Client({
 |    |  [`putObjectTagging`](#putObjectTagging)    |
 |    |  [`removeObjectTagging`](#removeObjectTagging)    |
 |    |  [`getObjectTagging`](#getObjectTagging)    |
+| [`setBucketLifecycle`] (#setBucketLifecycle)|   |
+| [`getBucketLifecycle`] (#getBucketLifecycle)|   |
+|  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+|  | [`putObjectRetention`](#putObjectRetention)  |
+|  | [`getObjectRetention`](#getObjectRetention)  |
+
+
 
 
 ## 1.  Constructor
@@ -530,6 +537,66 @@ minioClient.getBucketTagging('bucketname', function (err, tagsList){
     return console.log(err)
   }
   console.log("Success",tagsList)
+})
+```
+
+
+<a name="setBucketLifecycle"></a>
+### setBucketLifecycle(bucketName, lifecycleConfig, callback)
+
+Set Lifecycle Configuration on a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `lifecycleConfig`  | _object_  | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+const lifecycleConfig= {
+    Rule: [{
+        "ID": "Transition and Expiration Rule",
+        "Status": "Enabled",
+        "Filter": {
+            "Prefix":"",
+        },
+        "Expiration": {
+            "Days": "3650"
+        } 
+    }
+   ]
+}
+    
+minioClient.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="getBucketLifecycle"></a>
+### getBucketLifecycle(bucketName, callback)
+
+Get Lifecycle Configuration of a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. in case of error it is called with `error`|
+
+__Example__
+```js
+minioClient.getBucketLifecycle('bucketname', function (err, lifecycleConfig) {
+  if (err) {
+      return console.log(err)
+  }
+  console.log("Success", lifecycleConfig)
 })
 ```
 

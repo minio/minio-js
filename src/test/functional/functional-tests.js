@@ -1807,6 +1807,43 @@ describe('functional tests', function() {
 
   })
 
+  describe('Bucket Lifecycle API', ()=> {
+    const bucketName = "minio-js-test-lifecycle-" + uuid.v4()
+    before((done) => client.makeBucket(bucketName, '', done))
+    after((done) => client.removeBucket(bucketName, done))
+
+    describe('Set, Get Lifecycle config Tests', function () {
+      step(`Set lifecycle config on a bucket:_bucketName:${bucketName}`, done => {
+        const lifecycleConfig = {
+          Rule: [{
+            "ID": "Transition and Expiration Rule",
+            "Status": "Enabled",
+            "Filter": {
+              "Prefix":"",
+            },
+            "Expiration": {
+              "Days": "3650"
+            }
+          }]}
+        client.setBucketLifecycle(bucketName, lifecycleConfig, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step("Set lifecycle config of a bucket", done => {
+        client.getBucketLifecycle(bucketName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
+    })
+  })
+
+
   describe('Versioning Supported preSignedUrl Get, Put Tests', function() {
     /**
          * Test Steps

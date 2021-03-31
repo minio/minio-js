@@ -913,6 +913,49 @@ describe('Client', function() {
     })
   })
 
+
+  describe('setBucketLifecycle(bucket, lifecycleConfig, callback)', () => {
+    it('should fail on null bucket', (done) => {
+      try {
+        client.setBucketLifecycle(null, null,function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+    it('should fail on empty bucket', (done) => {
+      try {
+        client.setBucketLifecycle('', null,function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+  })
+
+  describe('getBucketLifecycle(bucket, callback)', () => {
+    it('should fail on null bucket', (done) => {
+      try {
+        client.getBucketLifecycle(null, function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+    it('should fail on empty bucket', (done) => {
+      try {
+        client.getBucketLifecycle('', function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+  })
+
   describe('Object Locking APIs', ()=> {
     describe('getObjectLockConfig(bucket, callback)', () => {
       it('should fail on null bucket', (done) => {

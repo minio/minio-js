@@ -222,6 +222,11 @@ export function getTagsTransformer() {
   return getConcater( xmlParsers.parseTagging)
 }
 
+export function  lifecycleTransformer(){
+  return getConcater(xmlParsers.parseLifecycleConfig)
+}
+
+
 export function  objectLockTransformer(){
   return getConcater(xmlParsers.parseObjectLockConfig)
 }

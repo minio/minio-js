@@ -480,6 +480,11 @@ export function parseTagging(xml){
   return result
 }
 
+export function parseLifecycleConfig(xml){
+  const xmlObj = parseXml(xml)
+  return xmlObj.LifecycleConfiguration
+}
+
 
 export function parseObjectLockConfig(xml){
   const xmlObj = parseXml(xml)
