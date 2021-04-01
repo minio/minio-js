@@ -1221,6 +1221,18 @@ minioClient.putObjectTagging('bucketname','object-name', tags, function (err){
 })
 ```
 
+__Example 1__
+Put tags on a version of an object.
+
+```js
+minioClient.putObjectTagging('bucketname','object-name', tags, { versionId: "my-version-id" }, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
 <a name="removeObjectTagging"></a>
 ### removeObjectTagging(bucketName, objectName[, removeOpts, callback])
 

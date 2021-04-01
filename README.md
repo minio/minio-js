@@ -178,6 +178,9 @@ The full API Reference is available here.
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 * [get-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
 * [set-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
+* [set-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
+* [get-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-tagging.js)
+* [remove-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
 * [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
 * [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
 
@@ -195,6 +198,9 @@ The full API Reference is available here.
 * [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
 * [get-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.js)
 * [put-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.js)
+* [put-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/put-object-tagging.js)
+* [get-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/get-object-tagging.js)
+* [remove-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
 
 #### Full Examples : Presigned Operations
 * [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)

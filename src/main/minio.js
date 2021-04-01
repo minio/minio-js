@@ -2364,8 +2364,8 @@ export class Client {
    * __Arguments__
    * bucketName _string_
    * objectName _string_
+   *  * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
    *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
-   * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
   putObjectTagging(bucketName, objectName, tags, putOpts={}, cb){
