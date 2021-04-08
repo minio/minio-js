@@ -1198,6 +1198,8 @@ minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: "my-vers
 
 <a name="putObjectTagging"></a>
 ### putObjectTagging(bucketName, objectName, tags[, putOpts, callback])
+<a name="setObjectTagging"></a>
+### setObjectTagging(bucketName, objectName, tags[, putOpts, callback])
 
 Put Tags on an Object
 
@@ -1213,7 +1215,7 @@ __Parameters__
 
 __Example__
 ```js
-minioClient.putObjectTagging('bucketname','object-name', tags, function (err){
+minioClient.setObjectTagging('bucketname','object-name', tags, function (err){
   if (err) {
     return console.log(err)
   }
@@ -1225,7 +1227,7 @@ __Example 1__
 Put tags on a version of an object.
 
 ```js
-minioClient.putObjectTagging('bucketname','object-name', tags, { versionId: "my-version-id" }, function (err){
+minioClient.setObjectTagging('bucketname','object-name', tags, { versionId: "my-version-id" }, function (err){
   if (err) {
     return console.log(err)
   }

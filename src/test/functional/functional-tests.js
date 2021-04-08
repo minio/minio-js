@@ -1692,7 +1692,7 @@ describe('functional tests', function() {
       })
 
       step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
-        client.putObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, (err) => {
+        client.setObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, (err) => {
           if (err) return done(err)
           done()
         })
@@ -1762,7 +1762,7 @@ describe('functional tests', function() {
 
       step(`Set tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
         if(isVersioningSupported) {
-          client.putObjectTagging(tagsVersionedBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, {versionId:versionId}, (err) => {
+          client.setObjectTagging(tagsVersionedBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, {versionId:versionId}, (err) => {
             if (err) return done(err)
             done()
           })

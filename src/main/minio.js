@@ -2368,7 +2368,7 @@ export class Client {
    *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  putObjectTagging(bucketName, objectName, tags, putOpts={}, cb){
+  setObjectTagging(bucketName, objectName, tags, putOpts={}, cb){
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2743,7 +2743,7 @@ Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersio
 Client.prototype.setBucketTagging=promisify((Client.prototype.setBucketTagging))
 Client.prototype.removeBucketTagging=promisify((Client.prototype.removeBucketTagging))
 Client.prototype.getBucketTagging=promisify((Client.prototype.getBucketTagging))
-Client.prototype.putObjectTagging=promisify((Client.prototype.putObjectTagging))
+Client.prototype.setObjectTagging=promisify((Client.prototype.setObjectTagging))
 Client.prototype.removeObjectTagging=promisify((Client.prototype.removeObjectTagging))
 Client.prototype.getObjectTagging=promisify((Client.prototype.getObjectTagging))
 Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
