@@ -17,7 +17,11 @@
 import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
-import { sanitizeETag, isObject } from "./helpers"
+import {
+  isObject, 
+  sanitizeETag, 
+  RETENTION_VALIDITY_UNITS
+} from "./helpers"
 
 var parseXml = (xml) => {
   var result = null
@@ -459,4 +463,31 @@ export function parseListObjectsV2WithMetadata(xml) {
 export function parseBucketVersioningConfig(xml){
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
+}
+
+
+export function parseObjectLockConfig(xml){
+  const xmlObj = parseXml(xml)
+  let lockConfigResult={}
+  if(xmlObj.ObjectLockConfiguration) {
+    lockConfigResult = {
+      objectLockEnabled:  xmlObj.ObjectLockConfiguration.ObjectLockEnabled
+    }
+    let retentionResp
+    if(xmlObj.ObjectLockConfiguration && xmlObj.ObjectLockConfiguration.Rule && xmlObj.ObjectLockConfiguration.Rule.DefaultRetention){
+      retentionResp = xmlObj.ObjectLockConfiguration.Rule.DefaultRetention || {}
+      lockConfigResult.mode= retentionResp.Mode
+    }
+    if(retentionResp) {
+      const isUnitYears = retentionResp.Years
+      if (isUnitYears) {
+        lockConfigResult.validity = isUnitYears
+        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.YEARS
+      } else {
+        lockConfigResult.validity = retentionResp.Days
+        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.DAYS
+      }
+    }
+    return lockConfigResult
+  }
 }

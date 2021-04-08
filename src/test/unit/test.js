@@ -712,6 +712,78 @@ describe('Client', function() {
       })
     })
   })
+
+  describe('Object Locking APIs', ()=> {
+    describe('getObjectLockConfig(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getObjectLockConfig(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getObjectLockConfig('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('setObjectLockConfig(bucket, lockConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.setObjectLockConfig(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.setObjectLockConfig('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid mode ', (done) => {
+        try {
+          client.setObjectLockConfig('my-bucket',{mode:"invalid_mode"}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid unit ', (done) => {
+        try {
+          client.setObjectLockConfig('my-bucket',{ mode:"COMPLIANCE",unit:"invalid_unit"}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid validity ', (done) => {
+        try {
+          client.setObjectLockConfig('my-bucket',{mode:"COMPLIANCE",unit:"invalid_unit", validity:''}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing  invalid config ', (done) => {
+        try {
+          client.setObjectLockConfig('my-bucket',{mode:"COMPLIANCE", randomProp:true, nonExisting:false,}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+  })
     
 })
 

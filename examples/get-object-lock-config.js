@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,11 @@ var s3Client = new Minio.Client({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
-// Create a bucket name my-bucketname.
-s3Client.makeBucket('my-bucketname', 'us-west-1', function(e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log("Success")
-})
 
-// Create a bucket with object locking enabled.
-s3Client.makeBucket('mybucket', 'us-east-1', { ObjectLocking:true }, function(err) {
-  if (err) return console.log('Error creating bucket with lock .', err)
-  console.log('Bucket created successfully in "us-east-1" and enabled object lock')
+
+s3Client.getObjectLockConfig('my-bucketname', function (err,lockConfig){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success", lockConfig)
 })

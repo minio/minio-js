@@ -124,6 +124,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`  | _string_  | Name of the bucket. |
 | `region`  |  _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
+| `makeOpts` | _object_  | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
 
 
@@ -134,6 +135,16 @@ __Example__
 minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
   if (err) return console.log('Error creating bucket.', err)
   console.log('Bucket created successfully in "us-east-1".')
+})
+```
+
+__Example 1__
+Create a bucket with object locking enabled.
+
+```js
+minioClient.makeBucket('mybucket', 'us-east-1', { ObjectLocking:true }, function(err) {
+  if (err) return console.log('Error creating bucket with object lock .', err)
+  console.log('Bucket created successfully in "us-east-1" and enabled object lock')
 })
 ```
 
@@ -451,6 +462,68 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
 })
 ```
 
+<a name="setObjectLockConfig"></a>
+### setObjectLockConfig(bucketName, lockConfig [, callback])
+
+Set Object lock config on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `lockConfig`  | _object_  |  Versioning Configuration  can be either `{}` to reset or object with all of the following keys: `{mode , unit , validity:number}`  `mode` - accepts either COMPLIANCE or COMPLIANCE , `unit` accepts either Days or Years `validity` accepts any valid number in respective unit specified |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example 1__
+
+```js
+s3Client.setObjectLockConfig('my-bucketname', {mode:"COMPLIANCE",unit:'Days', validity:10 }, function (err){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success")
+})
+```
+
+__Example 2__
+To reset/remove object lock config on a bucket.
+
+```js
+s3Client.setObjectLockConfig('my-bucketname', {}, function (err){
+if (err) {
+return console.log(err)
+}
+console.log("Success")
+})
+```
+
+
+<a name="getObjectLockConfig"></a>
+### getObjectLockConfig(bucketName [, callback])
+
+Get Lock config on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+
+__Example __
+Get object lock on a Bucket
+
+```js
+s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success",lockConfig)
+})
+```
 ## 3.  Object operations
 
 <a name="getObject"></a>

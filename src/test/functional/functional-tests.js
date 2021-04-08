@@ -1638,5 +1638,120 @@ describe('functional tests', function() {
 
     })
   })
-    
+
+
+  describe('Object Lock API Bucket Options Test', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    //Gateway mode does not support this header.
+
+    describe('Object Lock support makeBucket API Tests', function () {
+      const  lockEnabledBucketName = "minio-js-test-lock-mb-" + uuid.v4()
+      let isFeatureSupported = false
+      step(`Check if bucket with object lock can be created:_bucketName:${lockEnabledBucketName}`, done => {
+        client.makeBucket(lockEnabledBucketName, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`Get lock config on a bucket:_bucketName:${lockEnabledBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockEnabledBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Check if bucket can be deleted:_bucketName:${lockEnabledBucketName}`, done => {
+        client.removeBucket(lockEnabledBucketName, (err) => {
+          if(isFeatureSupported) {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          }else{
+            done()
+          }
+        })
+      })
+
+    })
+
+    describe('Object Lock support Set/Get API Tests', function () {
+      const  lockConfigBucketName = "minio-js-test-lock-conf-" + uuid.v4()
+      let isFeatureSupported = false
+      step(`Check if bucket with object lock can be created:_bucketName:${lockConfigBucketName}`, done => {
+        client.makeBucket(lockConfigBucketName, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+      step(`Update or replace lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.setObjectLockConfig(lockConfigBucketName, {mode:"GOVERNANCE",unit:'Years', validity:2 }, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+      step(`Get lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockConfigBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Set lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.setObjectLockConfig(lockConfigBucketName, {}, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+      step(`Get and verify lock config on a bucket after reset/update:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockConfigBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Check if bucket can be deleted:_bucketName:${lockConfigBucketName}`, done => {
+        client.removeBucket(lockConfigBucketName, (err) => {
+          if(isFeatureSupported) {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          }else{
+            done()
+          }
+        })
+      })
+
+    })
+
+  })
 })
