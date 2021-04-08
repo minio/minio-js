@@ -114,7 +114,7 @@ var s3Client = new Minio.Client({
 ## 2. Bucket operations
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName, region[, callback])
+### makeBucket(bucketName, region[, makeOpts , callback])
 
 Creates a new bucket.
 
