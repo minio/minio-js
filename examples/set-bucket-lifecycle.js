@@ -28,7 +28,7 @@ var s3Client = new Minio.Client({
 
 const lifecycleConfig= {
   Rule: [{
-    "ID": "Transition and Expiration Rule",
+    "ID": "Expiration Days Rule",
     "Status": "Enabled",
     "Filter": {
       "Prefix":"",
@@ -46,3 +46,29 @@ s3Client.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
   }
   console.log("Success")
 })
+
+//Example to demonstrate Expiration Date
+const expirationDate = new Date()
+expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+
+const lifecycleConfigWithExpirationDate= {
+  Rule: [{
+    "ID": "Expiration Date Rule",
+    "Status": "Enabled",
+    "Filter": {
+      "Prefix":"",
+    },
+    "Expiration": {
+      Date:expirationDate.toISOString()
+    }
+  }
+  ]
+}
+
+s3Client.setBucketLifecycle('bucketname',lifecycleConfigWithExpirationDate, function (err) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+
