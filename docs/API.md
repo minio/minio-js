@@ -143,7 +143,7 @@ Create a bucket with object locking enabled.
 
 ```js
 minioClient.makeBucket('mybucket', 'us-east-1', { ObjectLocking:true }, function(err) {
-  if (err) return console.log('Error creating bucket with object lock .', err)
+  if (err) return console.log('Error creating bucket with object lock.', err)
   console.log('Bucket created successfully in "us-east-1" and enabled object lock')
 })
 ```
@@ -473,13 +473,13 @@ __Parameters__
 | Param  |  Type | Description  |
 | ---| ---|---|
 | `bucketname`  | _string_  |  Name of the bucket. |
-| `lockConfig`  | _object_  |  Versioning Configuration  can be either `{}` to reset or object with all of the following keys: `{mode , unit , validity:number}`  `mode` - accepts either COMPLIANCE or COMPLIANCE , `unit` accepts either Days or Years `validity` accepts any valid number in respective unit specified |
+| `lockConfig`  | _object_  |  Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
 |`callback(err)` | _function_ | Callback is called with `err` in case of error.|
 
 __Example 1__
 
 ```js
-s3Client.setObjectLockConfig('my-bucketname', {mode:"COMPLIANCE",unit:'Days', validity:10 }, function (err){
+s3Client.setObjectLockConfig('my-bucketname', {mode:"COMPLIANCE", unit:'Days', validity:10 }, function (err){
     if (err) {
         return console.log(err)
     }
@@ -514,14 +514,14 @@ __Parameters__
 |`callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
 
 __Example __
-Get object lock on a Bucket
+Get object lock configuration on a Bucket
 
 ```js
 s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig){
     if (err) {
         return console.log(err)
     }
-    console.log("Success",lockConfig)
+    console.log(lockConfig)
 })
 ```
 ## 3.  Object operations

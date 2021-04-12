@@ -2331,7 +2331,11 @@ export class Client {
     const builder = new xml2js.Builder({rootName:'ObjectLockConfiguration', renderOpts:{'pretty':false}, headless:true})
     const payload = builder.buildObject(config)
 
-    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+    const headers = {}
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, query, headers}, payload, 200, '', false, cb)
   }
 
   getObjectLockConfig(bucketName, cb) {
