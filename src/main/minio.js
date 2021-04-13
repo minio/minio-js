@@ -2317,9 +2317,6 @@ export class Client {
         if (lockConfigOpts.mode) {
           config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
         }
-        if (lockConfigOpts.unit) {
-          config.Rule.DefaultRetention.Unit = lockConfigOpts.unit
-        }
         if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
           config.Rule.DefaultRetention.Days = lockConfigOpts.validity
         } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
