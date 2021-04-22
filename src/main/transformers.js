@@ -217,3 +217,7 @@ export function getNotificationTransformer() {
 export function  bucketVersioningTransformer(){
   return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
+
+export function  objectLockTransformer(){
+  return getConcater(xmlParsers.parseObjectLockConfig)
+}

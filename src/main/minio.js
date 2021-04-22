@@ -35,7 +35,8 @@ import {
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag
+  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
+  RETENTION_MODES, RETENTION_VALIDITY_UNITS
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -520,19 +521,34 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_ - Name of the bucket
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
+  // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, cb) {
+  makeBucket(bucketName, region, makeOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
+    //Backward Compatibility
+    if(isObject(region)){
+      cb= makeOpts
+      makeOpts=region
+      region = ''
+    }
     if (isFunction(region)) {
       cb = region
       region = ''
+      makeOpts={}
+    }
+    if(isFunction(makeOpts)){
+      cb=makeOpts
+      makeOpts={}
     }
 
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
+    }
+    if (!isObject(makeOpts)) {
+      throw new TypeError('makeOpts should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -567,6 +583,11 @@ export class Client {
     }
     var method = 'PUT'
     var headers = {}
+    
+    if(makeOpts.ObjectLocking){
+      headers["x-amz-bucket-object-lock-enabled"]=true
+    }
+
     if (!region) region = 'us-east-1'
     this.makeRequest({method, bucketName, headers}, payload, 200, region, false, cb)
   }
@@ -2259,6 +2280,86 @@ export class Client {
     this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
 
+  setObjectLockConfig(bucketName, lockConfigOpts={}, cb) {
+
+    const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
+    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
+
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+
+    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
+      throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
+    }
+    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)){
+      throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
+    }
+    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)){
+      throw new TypeError(`lockConfigOpts.validity should be a number`)
+    }
+
+    const method = 'PUT'
+    const query = "object-lock"
+
+    let config={
+      ObjectLockEnabled:"Enabled"
+    }
+    const configKeys = Object.keys(lockConfigOpts)
+    //Check if keys are present and all keys are present.
+    if(configKeys.length > 0){
+      if(_.difference(configKeys, ['unit','mode','validity']).length !== 0){
+        throw new TypeError(`lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`)
+      } else {
+        config.Rule={
+          DefaultRetention:{}
+        }
+        if (lockConfigOpts.mode) {
+          config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
+        }
+        if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
+          config.Rule.DefaultRetention.Days = lockConfigOpts.validity
+        } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
+          config.Rule.DefaultRetention.Years = lockConfigOpts.validity
+        }
+      }
+    }
+
+    const builder = new xml2js.Builder({rootName:'ObjectLockConfiguration', renderOpts:{'pretty':false}, headless:true})
+    const payload = builder.buildObject(config)
+
+    const headers = {}
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, query, headers}, payload, 200, '', false, cb)
+  }
+
+  getObjectLockConfig(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    const query = "object-lock"
+
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let objectLockConfig = Buffer.from('')
+      pipesetup(response, transformers.objectLockTransformer())
+        .on('data', data => {
+          objectLockConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, objectLockConfig)
+        })
+    })
+  }
+  
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2296,6 +2397,8 @@ Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
 Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
+Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
+Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 
 export class CopyConditions {
   constructor() {

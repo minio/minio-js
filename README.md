@@ -127,6 +127,8 @@ The full API Reference is available here.
 * [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
 * [`getBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#getBucketVersioning)
 * [`setBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#setBucketVersioning)
+* [`getObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#getObjectLockConfig)
+* [`setObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#setObjectLockConfig)
 
 ### API Reference : File Object Operations
 
@@ -176,6 +178,8 @@ The full API Reference is available here.
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 * [get-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
 * [set-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
+* [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
+* [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
 
 #### Full Examples : File Object Operations
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
