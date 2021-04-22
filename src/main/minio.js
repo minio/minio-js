@@ -583,7 +583,7 @@ export class Client {
     }
     var method = 'PUT'
     var headers = {}
-    
+
     if(makeOpts.ObjectLocking){
       headers["x-amz-bucket-object-lock-enabled"]=true
     }
@@ -1529,7 +1529,7 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
+  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucketName, objectName, removeOpts={} , cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1551,9 +1551,19 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     const method = 'DELETE'
-    const query = querystring.stringify( removeOpts )
+    const queryParams = {}
 
-    let requestOptions = {method, bucketName,objectName}
+    if(removeOpts.versionId){
+      queryParams.versionId=`${removeOpts.versionId}`
+    }
+    const headers = {}
+    if(removeOpts.governanceBypass){
+      headers["X-Amz-Bypass-Governance-Retention"]=true
+    }
+
+    const query = querystring.stringify( queryParams )
+
+    let requestOptions = {method, bucketName, objectName, headers}
     if(query){
       requestOptions['query']=query
     }
@@ -2359,7 +2369,100 @@ export class Client {
         })
     })
   }
-  
+
+  putObjectRetention(bucketName, objectName, retentionOpts={}, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(retentionOpts)) {
+      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
+    } else {
+      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
+        throw new errors.InvalidArgumentError('Invalid value for governanceBypass',retentionOpts.governanceBypass)
+      }
+      if (retentionOpts.mode && ![RETENTION_MODES.COMPLIANCE,RETENTION_MODES.GOVERNANCE].includes((retentionOpts.mode))) {
+        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
+      }
+      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
+        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate',retentionOpts.retainUntilDate)
+      }
+      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
+        throw new errors.InvalidArgumentError('Invalid value for versionId',retentionOpts.versionId)
+      }
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const method = 'PUT'
+    let query = "retention"
+
+    const headers = {}
+    if(retentionOpts.governanceBypass){
+      headers["X-Amz-Bypass-Governance-Retention"]=true
+    }
+
+    const builder = new xml2js.Builder({rootName:'Retention', renderOpts:{'pretty':false}, headless:true})
+    const params ={}
+
+    if(retentionOpts.mode){
+      params.Mode =retentionOpts.mode
+    }
+    if(retentionOpts.retainUntilDate){
+      params.RetainUntilDate =retentionOpts.retainUntilDate
+    }
+    if(retentionOpts.versionId){
+      query += `&versionId=${retentionOpts.versionId}`
+    }
+
+    let payload = builder.buildObject(params)
+
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    //FIXME minio Server returns 204 but AWS returns 200. So in aws, though the operation is success, error is thrown.
+    this.makeRequest({method, bucketName, objectName, query, headers}, payload, 204, '', false, cb)
+  }
+
+  getObjectRetention(bucketName ,objectName, getOpts, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if(!isObject(getOpts)){
+      throw new errors.InvalidArgumentError('callback should be of type "object"')
+    }else if(getOpts.versionId && !isString(getOpts.versionId)){
+      throw new errors.InvalidArgumentError('VersionID should be of type "string"')
+    }
+    if (cb && !isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    let query = "retention"
+    if(getOpts.versionId){
+      query += `&versionId=${getOpts.versionId}`
+    }
+
+    this.makeRequest({method, bucketName,objectName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let retentionConfig = Buffer.from('')
+      pipesetup(response, transformers.objectRetentionTransformer())
+        .on('data', data => {
+          retentionConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, retentionConfig)
+        })
+    })
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2399,6 +2502,8 @@ Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVers
 Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
 Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
+Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
+Client.prototype.getObjectRetention =promisify((Client.prototype.getObjectRetention))
 
 export class CopyConditions {
   constructor() {

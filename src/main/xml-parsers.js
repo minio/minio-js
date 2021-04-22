@@ -491,3 +491,14 @@ export function parseObjectLockConfig(xml){
     return lockConfigResult
   }
 }
+
+
+export function parseObjectRetentionConfig(xml){
+  const xmlObj = parseXml(xml)
+  const retentionConfig = xmlObj.Retention
+
+  return {
+    mode:retentionConfig.Mode,
+    retainUntilDate:retentionConfig.RetainUntilDate
+  }
+}

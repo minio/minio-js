@@ -40,3 +40,11 @@ s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-uuid"}, f
   }
   console.log("Success")
 })
+
+// Remove an object with name 'my-objectname' and a versionId with object renetion override with governanceBypass:true.
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-version-uuid", governanceBypass:true}, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})

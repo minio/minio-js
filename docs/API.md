@@ -39,6 +39,9 @@ var s3Client = new Minio.Client({
 | [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
 | [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+|  | [`putObjectRetention`](#putObjectRetention)  |
+|  | [`getObjectRetention`](#getObjectRetention)  |
+
 
 
 
@@ -922,8 +925,7 @@ __Parameters__
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
-__Example__
-
+__Example 1__
 
 ```js
 minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
@@ -933,16 +935,30 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   console.log('Removed the object')
 })
 ```
-__Example delete a specific version of an oject__
 
+__Example 2__
+Delete a specific version of an oject
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function(err) {
+minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-version-uuid" }, function(err) {
   if (err) {
     return console.log('Unable to remove object', err)
   }
   console.log('Removed the object')
 })
+```
+
+__Example 3__
+Remove an object version with retention option (governanceBypass)
+
+```js
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-version-uuid", governanceBypass:true}, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})
+
 ```
 
 <a name="removeObjects"></a>
@@ -1044,6 +1060,69 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
     return console.log('Unable to remove incomplete object', err)
   }
   console.log('Incomplete object removed successfully.')
+})
+```
+
+
+<a name="putObjectRetention"></a>
+### putObjectRetention(bucketName, objectName, retentionOpts [, callback])
+
+Apply retention on an object.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  |_string_   | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `retentionOpts` | _object_ | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:<object_version_uuid> }`  Default is `{}`|
+| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
+
+
+__Example__
+Apply object retention on an object
+
+```js
+const bucketName = 'my-bucket'
+const objectName ="my-object"
+
+const retainUntilDate = new Date('2021-08-02')
+retainUntilDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+const versionId ="e67b4b08-144d-4fc4-ba15-43c3f7f9ba74"
+
+const objRetPromise = minioClient.putObjectRetention(
+    bucketName, 
+    objectName, 
+    { governanceBypass:true, Mode:"GOVERNANCE", retainUntilDate:retainUntilDate.toISOString(), versionId:versionId }, 
+    function (err, res){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success", res)
+})
+```
+
+<a name="getObjectRetention"></a>
+### getObjectRetention(bucketName, objectName, getOpts [,callback])
+
+Get retention config of an object
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketName`  |_string_   | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `getOpts` | _object_ | Options for retention like : `{ versionId:<object_version_id> }`  Default is `{}`|
+| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+
+__Example__
+```js
+minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: 'object-version-id' }, function (err, res){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success", res)
 })
 ```
 
