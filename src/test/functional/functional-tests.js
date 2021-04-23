@@ -1832,7 +1832,7 @@ describe('functional tests', function() {
         })
       })
 
-      step(`Get lifecycle config of a bucket_bucketName:${bucketName}`, done => {
+      step("Set lifecycle config of a bucket", done => {
         client.getBucketLifecycle(bucketName, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
