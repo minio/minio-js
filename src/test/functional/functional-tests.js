@@ -1640,105 +1640,6 @@ describe('functional tests', function() {
   })
 
 
-  describe('Object retention API Tests', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    //Gateway mode does not support this header.
-
-    describe('Object retention get/set API Test', function () {
-      const  objRetentionBucket = "minio-js-test-retention-" + uuid.v4()
-        const retentionObjName = "RetentionObject"
-      let isFeatureSupported = false
-        let versionId = null
-
-      step(`Check if bucket with object lock can be created:_bucketName:${objRetentionBucket}`, done => {
-        client.makeBucket(objRetentionBucket, { ObjectLocking: true }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          isFeatureSupported= true
-          if (err) return done(err)
-          done()
-        })
-      })
-
-        step(`putObject(bucketName, objectName, stream)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}, stream:100Kib_`, done => {
-            //Put two versions of the same object.
-            if(isFeatureSupported) {
-                client.putObject(objRetentionBucket, retentionObjName,  readableStream(_1byte), _1byte.length, {},)
-                    .then(() => done())
-                    .catch(done)
-            }else{
-                done()
-            }
-        })
-
-        step(`statObject(bucketName, objectName, statOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-            if(isFeatureSupported) {
-                client.statObject(objRetentionBucket, retentionObjName, {}, (e, res) => {
-                    versionId = res.versionId
-                    done()
-                })
-            }else{
-                done()
-            }
-
-        })
-
-        step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-            //Put two versions of the same object.
-            if(isFeatureSupported) {
-                const expirationDate = new Date('2021-08-02')
-                expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
-
-                client.putObjectRetention(objRetentionBucket, retentionObjName,  {
-                    governanceBypass:true,
-                    mode:"GOVERNANCE",
-                    retainUntilDate:expirationDate.toISOString(),
-                    versionId:versionId
-                })
-                    .then(() => done())
-                    .catch(done)
-            }else{
-                done()
-            }
-        })
-
-        step(`getObjectRetention(bucketName, objectName, getOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-            if(isFeatureSupported) {
-                client.getObjectRetention(objRetentionBucket, retentionObjName, {versionId:versionId}, (e, res) => {
-                    done()
-                })
-            }else{
-                done()
-            }
-
-        })
-
-        step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-            if(isFeatureSupported) {
-                client.removeObject(objRetentionBucket, retentionObjName, {versionId:versionId, governanceBypass:true}, (e, res) => {
-                    done()
-                })
-            }else{
-                done()
-            }
-
-        })
-
-        step(`removeBucket(bucketName, )_bucketName:${objRetentionBucket}`, done => {
-            if(isFeatureSupported) {
-                client.removeBucket(objRetentionBucket,  (e, res) => {
-                    done()
-                })
-            }else{
-                done()
-            }
-
-        })
-
-
-    })
-  })
-
-
   describe('Object Lock API Bucket Options Test', ()=>{
     //Isolate the bucket/object for easy debugging and tracking.
     //Gateway mode does not support this header.
@@ -1852,5 +1753,102 @@ describe('functional tests', function() {
 
     })
 
+  })
+
+  describe('Object retention API Tests', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    //Gateway mode does not support this header.
+
+    describe('Object retention get/set API Test', function () {
+      const  objRetentionBucket = "minio-js-test-retention-" + uuid.v4()
+      const retentionObjName = "RetentionObject"
+      let isFeatureSupported = false
+      let versionId = null
+
+      step(`Check if bucket with object lock can be created:_bucketName:${objRetentionBucket}`, done => {
+        client.makeBucket(objRetentionBucket, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}, stream:100Kib_`, done => {
+        //Put two versions of the same object.
+        if(isFeatureSupported) {
+          client.putObject(objRetentionBucket, retentionObjName,  readableStream(_1byte), _1byte.length, {})
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`statObject(bucketName, objectName, statOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.statObject(objRetentionBucket, retentionObjName, {}, (e, res) => {
+            versionId = res.versionId
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        //Put two versions of the same object.
+        if(isFeatureSupported) {
+          const expirationDate = new Date('2021-08-02')
+          expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+
+          client.putObjectRetention(objRetentionBucket, retentionObjName,  {
+            governanceBypass:true,
+            mode:"GOVERNANCE",
+            retainUntilDate:expirationDate.toISOString(),
+            versionId:versionId
+          })
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`getObjectRetention(bucketName, objectName, getOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectRetention(objRetentionBucket, retentionObjName, {versionId:versionId}, () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.removeObject(objRetentionBucket, retentionObjName, {versionId:versionId, governanceBypass:true}, () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`removeBucket(bucketName, )_bucketName:${objRetentionBucket}`, done => {
+        if(isFeatureSupported) {
+          client.removeBucket(objRetentionBucket,  () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+            
+    })
   })
 })
