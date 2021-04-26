@@ -29,7 +29,7 @@ var s3Client = new Minio.Client({
 const bucketName = 'my-bucket'
 const objectName ="my-object"
 
-const versionId ="e67b4b08-144d-4fc4-ba15-43c3f7f9ba74"
+const versionId ="my-versionId"
 
 const objRetPromise = s3Client.getObjectRetention(bucketName, objectName, {versionId:versionId} )
 objRetPromise.then((data) => {

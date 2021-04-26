@@ -31,9 +31,9 @@ const objectName ="my-object"
 
 const expirationDate = new Date('2021-08-02')
 expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
-const versionId ="e67b4b08-144d-4fc4-ba15-43c3f7f9ba74"
+const versionId ="my-versionId"
 
-const objRetPromise = s3Client.putObjectRetention(bucketName,objectName,{governanceBypass:true,Mode:"GOVERNANCE",retainUntilDate:expirationDate.toISOString(),versionID:versionId} )
+const objRetPromise = s3Client.putObjectRetention(bucketName, objectName, { mode:"GOVERNANCE", retainUntilDate:expirationDate.toISOString(), versionId:versionId} )
 objRetPromise.then(() => {
   console.log("Success")
 })
