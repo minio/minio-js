@@ -1800,7 +1800,9 @@ describe('functional tests', function() {
       step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
         //Put two versions of the same object.
         if(isFeatureSupported) {
-          const expirationDate = new Date('2021-08-02')
+          let expirationDate = new Date()
+          //set expiry to start of next day.
+          expirationDate.setDate(expirationDate.getDate() + 1)
           expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
 
           client.putObjectRetention(objRetentionBucket, retentionObjName,  {
