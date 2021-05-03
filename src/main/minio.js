@@ -2350,8 +2350,8 @@ export class Client {
     if(!isObject(tags)){
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
-    if(Object.keys(tags).length > 50){
-      throw new errors.InvalidArgumentError('maximum tags allowed is 50"')
+    if(Object.keys(tags).length > 10){
+      throw new errors.InvalidArgumentError('maximum tags allowed is 10"')
     }
     if (!isFunction(cb)) {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
@@ -2384,8 +2384,8 @@ export class Client {
     if(!isObject(tags)){
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
-    if(Object.keys(tags).length > 50){
-      throw new errors.InvalidArgumentError('Maximum tags allowed is 50"')
+    if(Object.keys(tags).length > 10){
+      throw new errors.InvalidArgumentError('Maximum tags allowed is 10"')
     }
 
     if (!isFunction(cb)) {
