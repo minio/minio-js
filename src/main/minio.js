@@ -36,7 +36,7 @@ import {
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
   insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
-  RETENTION_MODES, RETENTION_VALIDITY_UNITS
+  RETENTION_MODES, RETENTION_VALIDITY_UNITS, LEGAL_HOLD_STATUS
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -2935,6 +2935,105 @@ export class Client {
     this.makeRequest({method, bucketName, query}, '', 200, '', false, cb)
   }
 
+
+  getObjectLegalHold(bucketName, objectName, getOpts={}, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if(isFunction(getOpts)){
+      cb= getOpts
+      getOpts = {}
+    }
+
+    if (!isObject(getOpts))  {
+      throw new TypeError('getOpts should be of type "Object"')
+    } else if(Object.keys(getOpts).length> 0 && getOpts.versionId && !isString((getOpts.versionId))){
+      throw new TypeError('versionId should be of type string.:',getOpts.versionId )
+    }
+
+
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+
+    const method = 'GET'
+    let query = "legal-hold"
+
+    if (getOpts.versionId){
+      query +=`&versionId=${getOpts.versionId}`
+    }
+
+    this.makeRequest({method, bucketName, objectName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let legalHoldConfig = Buffer.from('')
+      pipesetup(response, transformers.objectLegalHoldTransformer())
+        .on('data', data => {
+          legalHoldConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, legalHoldConfig)
+        })
+    })
+
+  }
+
+  setObjectLegalHold(bucketName, objectName, setOpts={}, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if(isFunction(setOpts)){
+      cb= setOpts
+      setOpts = {
+        status:LEGAL_HOLD_STATUS.ENABLED
+      }
+    }
+    if (!isObject(setOpts)) {
+      throw new TypeError('setOpts should be of type "Object"')
+    }else {
+
+      if(![LEGAL_HOLD_STATUS.ENABLED, LEGAL_HOLD_STATUS.DISABLED].includes((setOpts.status))){
+        throw new TypeError('Invalid status:', setOpts.status )
+      }
+      if(setOpts.versionId && !setOpts.versionId.length){
+        throw new TypeError('versionId should be of type string.:', setOpts.versionId )
+      }
+    }
+
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+
+    const method = 'PUT'
+    let query = "legal-hold"
+
+    if (setOpts.versionId){
+      query +=`&versionId=${setOpts.versionId}`
+    }
+
+    let config={
+      Status: setOpts.status
+    }
+
+    const builder = new xml2js.Builder({rootName:'LegalHold', renderOpts:{'pretty':false}, headless:true})
+    const payload = builder.buildObject(config)
+    const headers = {}
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, objectName, query, headers}, payload, 200, '', false, cb)
+
+
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2991,6 +3090,8 @@ Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucke
 Client.prototype.setBucketReplication =promisify(Client.prototype.setBucketReplication)
 Client.prototype.getBucketReplication =promisify(Client.prototype.getBucketReplication)
 Client.prototype.removeBucketReplication=promisify(Client.prototype.removeBucketReplication)
+Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHold)
+Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
 
 export class CopyConditions {
   constructor() {
