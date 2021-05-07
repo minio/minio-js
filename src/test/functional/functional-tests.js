@@ -2243,4 +2243,128 @@ describe('functional tests', function() {
     })
   })
 
+  describe('Bucket Encryption Related APIs', ()=> {
+    //Isolate the bucket/object for easy debugging and tracking.
+    //this is not supported in gateway mode.
+    const encBucketName = "minio-js-test-bucket-enc-" + uuid.v4()
+    before((done) => client.makeBucket(encBucketName, '', done))
+    after((done) => client.removeBucket(encBucketName, done))
+
+
+    const encObjName = 'datafile-to-encrypt-100-kB'
+    const encObjFileContent = Buffer.alloc(100 * 1024, 0)
+    let isEncryptionSupported = false
+
+    step(`Set Encryption on a bucket:_bucketName:${encBucketName}`, done => {
+      // setBucketEncryption succeeds in NAS mode.
+      const buckEncPromise = client.setBucketEncryption(encBucketName)
+      buckEncPromise.then(() => {
+        done()
+      })
+        .catch(() => {
+          done()
+        })
+    })
+
+    step(`Get encryption of a bucket:_bucketName:${encBucketName}`, done => {
+      const getBucEncObj = client.getBucketEncryption(encBucketName)
+      getBucEncObj.then(() => {
+        done()
+      })
+        .catch((err) => {
+          if (err && err.code === 'NotImplemented') {
+            isEncryptionSupported = false
+            return done()
+          }
+          if (err) return done(err)
+
+          done()
+        })
+    })
+
+    step(`Put an object to check for default encryption bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
+      if(isEncryptionSupported) {
+        const putObjPromise =  client.putObject(encBucketName, encObjName, encObjFileContent)
+        putObjPromise.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+
+    step(`Stat of an object to check for default encryption applied on a bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
+      if(isEncryptionSupported) {
+        const statObjPromise = client.statObject(encBucketName, encObjName)
+        statObjPromise.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+
+    step(`Stat of an object to check for default encryption applied on a bucket:_bucketName:${encBucketName}`, done => {
+      if(isEncryptionSupported) {
+        const getBuckEnc = client.getBucketEncryption(encBucketName)
+        getBuckEnc.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+
+    step(`Remove object on a bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
+      if(isEncryptionSupported) {
+        const removeObj = client.removeObject(encBucketName,encObjName)
+        removeObj.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+
+    step(`Remove encryption on a bucket:_bucketName:${encBucketName}`, done => {
+      if(isEncryptionSupported) {
+        const removeObj = client.removeBucketEncryption(encBucketName)
+        removeObj.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+    step(`Get encryption on a bucket:_bucketName:${encBucketName}`, done => {
+      if(isEncryptionSupported) {
+        const getBuckEnc = client.getBucketEncryption(encBucketName)
+        getBuckEnc.then(() => {
+          done()
+        })
+          .catch(() => {
+            done()
+          })
+      }else{
+        done()
+      }
+    })
+
+  })
+
 })

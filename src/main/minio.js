@@ -2779,6 +2779,87 @@ export class Client {
     })
   }
 
+
+  setBucketEncryption(bucketName, encryptionConfig, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+
+    if(isFunction(encryptionConfig)){
+      cb= encryptionConfig
+      encryptionConfig = null
+    }
+
+    if(!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length >1){
+      throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const encryptionObj = _.isEmpty(encryptionConfig) ? {
+      //Default MinIO Server Supported Rule
+      Rule:[
+        {
+          ApplyServerSideEncryptionByDefault: {
+            SSEAlgorithm:"AES256"
+          }
+        }
+      ]
+
+    } : encryptionConfig
+
+    let method = 'PUT'
+    let query = "encryption"
+    let builder = new xml2js.Builder({rootName:'ServerSideEncryptionConfiguration', renderOpts:{'pretty':false}, headless:true})
+    let payload = builder.buildObject(encryptionObj)
+
+    const headers = {}
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, query,headers}, payload, 200, '', false, cb)
+  }
+
+  getBucketEncryption(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    const query = "encryption"
+
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let bucketEncConfig = Buffer.from('')
+      pipesetup(response, transformers.bucketEncryptionTransformer())
+        .on('data', data => {
+          bucketEncConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, bucketEncConfig)
+        })
+    })
+  }
+  removeBucketEncryption(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'DELETE'
+    const query = "encryption"
+
+    this.makeRequest({method, bucketName, query}, '', 204, '', false, cb)
+  }
+
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2829,6 +2910,9 @@ Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockCo
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
 Client.prototype.getObjectRetention =promisify((Client.prototype.getObjectRetention))
+Client.prototype.setBucketEncryption = promisify((Client.prototype.setBucketEncryption))
+Client.prototype.getBucketEncryption = promisify((Client.prototype.getBucketEncryption))
+Client.prototype.removeBucketEncryption = promisify((Client.prototype.removeBucketEncryption))
 
 export class CopyConditions {
   constructor() {
