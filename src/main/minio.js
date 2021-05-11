@@ -28,6 +28,7 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 import util from 'util'
+import axios from 'axios'
 
 import {
   extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
@@ -164,18 +165,20 @@ export class Client {
     this.reqOptions = {}
   }
 
-  static async getTempCredentialsFromJWTToken(token,valid){
+  static async getTempCredentialsFromJWTToken(minioURL,token,valid){
     try{
-      response= await axios.post(minioURL,'Action=AssumeRoleWithWebIdentity&DurationSeconds='+valid+'&WebIdentityToken='+encodeURIComponent(token.token)+"&Version=2011-06-15",{ headers: {
+      let response= await axios.post(minioURL,'Action=AssumeRoleWithWebIdentity&DurationSeconds='+valid+'&WebIdentityToken='+encodeURIComponent(token)+"&Version=2011-06-15",{ headers: {
         'Accept': 'application/xml',
         'Content-Type':'application/x-www-form-urlencoded'
       }});
+     
       if(response.data){
-       return response.data;        
+        return response.data;        
       }
-    }catch{
+    }catch (error) {
       return null;
     }
+    return null;
 
   }
 
