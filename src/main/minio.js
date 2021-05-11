@@ -164,6 +164,21 @@ export class Client {
     this.reqOptions = {}
   }
 
+  static async getTempCredentialsFromJWTToken(token,valid){
+    try{
+      response= await axios.post(minioURL,'Action=AssumeRoleWithWebIdentity&DurationSeconds='+valid+'&WebIdentityToken='+encodeURIComponent(token.token)+"&Version=2011-06-15",{ headers: {
+        'Accept': 'application/xml',
+        'Content-Type':'application/x-www-form-urlencoded'
+      }});
+      if(response.data){
+       return response.data;        
+      }
+    }catch{
+      return null;
+    }
+
+  }
+
   // Sets the supported request options.
   setRequestOptions(options) {
     if (!isObject(options)) {
