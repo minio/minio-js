@@ -225,3 +225,6 @@ export function  objectLockTransformer(){
 export function  objectRetentionTransformer(){
   return getConcater(xmlParsers.parseObjectRetentionConfig)
 }
+export function  selectObjectTransformer(){
+  return  getConcater()
+}

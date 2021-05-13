@@ -18,7 +18,7 @@ import fs from 'fs'
 import Crypto from 'crypto'
 import Http from 'http'
 import Https from 'https'
-import Stream from 'stream'
+import Stream,{Readable} from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
@@ -28,7 +28,7 @@ import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 import util from 'util'
-
+import Through2 from 'through2'
 import {
   extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
@@ -52,6 +52,7 @@ import { getS3Endpoint } from './s3-endpoints.js'
 import { NotificationConfig, NotificationPoller } from './notification'
 
 import extensions from './extensions'
+import {getConcater, selectObjectTransformer} from "./transformers"
 
 var Package = require('../../package.json')
 
@@ -2463,6 +2464,116 @@ export class Client {
     })
   }
 
+
+  selectObjectContent(bucketName, objectName, selOpts={}, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if(isObject(selOpts) && Object.keys(selOpts).length >0){
+
+      if (!isString(selOpts.expression)) {
+        throw new TypeError('sqlExpression should be of type "string"')
+      }
+      if (!isObject(selOpts.inputSerialization)) {
+        throw new TypeError('inputSerialization should be of type "object"')
+      }
+      if (!isObject(selOpts.outputSerialization)) {
+        throw new TypeError('outputSerialization should be of type "object"')
+      }
+
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const headers = {}
+    const method = 'POST'
+    let query = `select`
+    query += "&select-type=2"
+
+    const config = [
+      {
+        "Expression": selOpts.expression
+      },
+      {
+        "ExpressionType": "SQL"
+      },
+      {
+        "InputSerialization": [selOpts.inputSerialization]
+      },
+      {
+        "OutputSerialization": [selOpts.outputSerialization]
+      }
+    ]
+
+
+    const builder = new xml2js.Builder({rootName:'SelectObjectContentRequest', renderOpts:{'pretty':false}, headless:true})
+    const payload = builder.buildObject(config)
+
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    headers['Content-MD5'] = md5digest.toString('base64')
+    this.makeRequest({method, bucketName, objectName, headers, query}, payload, 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let selResult
+      var bufs = []
+      //TODO check how to go about this !?
+      // console.log(response)
+
+      //  const readable = readableStream(response)
+
+      /* let body = []
+      response.pipe().on('data', (chunk) => {
+        body.push(chunk)
+      }).on('end', () => {
+        body = Buffer.concat(body).toString()
+        console.log("STB::",body)
+        // at this point, `body` has the entire request body stored in it as a string
+      })*/
+
+
+
+      /* let body = []
+        response.pipe.on('error', (err) => {
+        console.error(err)
+      }).on('data', (chunk) => {
+        body.push(chunk)
+      }).on('end', () => {
+        body = Buffer.concat(body).toString()
+        // At this point, we have the headers, method, url and body, and can now
+        // do whatever we need to in order to respond to this request.
+      })*/
+
+      /* response.pipe(Through2( {}, (transformData)=>{
+        // console.log("::",Buffer.concat(transformData).toString())
+         console.log("::Hello::---------------")
+         const bufData = Buffer.from(transformData).toString()
+         console.log("::Hello::",bufData)
+
+         console.log("::Hello::---------------")
+    cb(null, bufData)
+     }))
+        */
+      /* const rp=response.pipe()
+        console.log(rp.body(),rp.body )*/
+
+      pipesetup(response, transformers.selectObjectTransformer())
+        .on('data', data => {
+          selResult = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, selResult)
+        })
+    })
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2504,6 +2615,7 @@ Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockCo
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
 Client.prototype.getObjectRetention =promisify((Client.prototype.getObjectRetention))
+Client.prototype.selectObjectContent=promisify((Client.prototype.selectObjectContent))
 
 export class CopyConditions {
   constructor() {

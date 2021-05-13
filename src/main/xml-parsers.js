@@ -502,3 +502,13 @@ export function parseObjectRetentionConfig(xml){
     retainUntilDate:retentionConfig.RetainUntilDate
   }
 }
+
+
+export function parseSelectObjectResponse(xml){
+  //console.log("::Parse::",xml)
+  // const xmlObj = parseXml(xml)
+  //console.log("::JSON::",JSON.stringify(xmlObj),xml)
+
+  //console.log(JSON.stringify(xmlObj))
+  return xml
+}
