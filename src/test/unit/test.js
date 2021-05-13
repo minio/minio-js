@@ -784,6 +784,111 @@ describe('Client', function() {
       })
     })
   })
-    
+
+  describe('Object retention APIs', ()=> {
+    describe('getObjectRetention(bucket, objectName, getRetentionOpts,callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getObjectRetention(null,'','', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getObjectRetention('', '','',function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on invalid  object name', (done) => {
+        try {
+          client.getObjectRetention('my-bucket', null, '',function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on invalid  versionId', (done) => {
+        try {
+          client.getObjectRetention('my-bucket', 'objectname', {versionId:123},function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.putObjectRetention(null,'',{}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.putObjectRetention('','',{}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on null object', (done) => {
+        try {
+          client.putObjectRetention('my-bucket',null,{}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty object', (done) => {
+        try {
+          client.putObjectRetention('my-bucket', '', {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid mode ', (done) => {
+        try {
+          client.putObjectRetention('my-bucket', 'my-object', {mode:"invalid_mode"}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid governanceBypass ', (done) => {
+        try {
+          client.putObjectRetention('my-bucket', 'my-object', { governanceBypass:"nonbool"}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid (null) retainUntilDate ', (done) => {
+        try {
+          client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate:12345}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on passing invalid versionId ', (done) => {
+        try {
+          client.putObjectRetention('my-bucket',{ versionId:"COMPLIANCE" }, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+  })
+
 })
 

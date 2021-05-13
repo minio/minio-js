@@ -193,6 +193,8 @@ The full API Reference is available here.
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 * [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
+* [get-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.js)
+* [put-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.js)
 
 #### Full Examples : Presigned Operations
 * [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)

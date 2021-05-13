@@ -221,3 +221,7 @@ export function  bucketVersioningTransformer(){
 export function  objectLockTransformer(){
   return getConcater(xmlParsers.parseObjectLockConfig)
 }
+
+export function  objectRetentionTransformer(){
+  return getConcater(xmlParsers.parseObjectRetentionConfig)
+}
