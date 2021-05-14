@@ -2531,11 +2531,12 @@ export class Client {
   }
 
   /** Put lifecycle configuration on a bucket.
+  /** Apply lifecycle configuration on a bucket.
    * bucketName _string_
    * policyConfig _object_ a valid policy configuration object.
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  putBucketLifecycle(bucketName, policyConfig, cb){
+  applyBucketLifecycle(bucketName, policyConfig, cb){
     const method = 'PUT'
     const query="lifecycle"
 
@@ -2557,6 +2558,9 @@ export class Client {
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
   removeBucketLifecycle(bucketName, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
     const method = 'DELETE'
     const query="lifecycle"
     this.makeRequest({method, bucketName, query}, '', 204, '', false, cb)
@@ -2571,10 +2575,10 @@ export class Client {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if(lifeCycleConfig===null || lifeCycleConfig ===''){
+    if(_.isEmpty(lifeCycleConfig)){
       this.removeBucketLifecycle(bucketName, cb)
     }else {
-      this.putBucketLifecycle(bucketName, lifeCycleConfig, cb)
+      this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
     }
   }
 
@@ -2820,6 +2824,7 @@ Client.prototype.removeObjectTagging=promisify((Client.prototype.removeObjectTag
 Client.prototype.getObjectTagging=promisify((Client.prototype.getObjectTagging))
 Client.prototype.setBucketLifecycle=promisify((Client.prototype.setBucketLifecycle))
 Client.prototype.getBucketLifecycle=promisify((Client.prototype.getBucketLifecycle))
+Client.prototype.removeBucketLifecycle=promisify((Client.prototype.removeBucketLifecycle))
 Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))

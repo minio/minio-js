@@ -185,6 +185,7 @@ The full API Reference is available here.
 * [remove-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
 * [set-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.js)
 * [get-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.js)
+* [remove-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.js)
 * [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
 * [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
 

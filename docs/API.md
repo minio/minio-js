@@ -49,6 +49,13 @@ var s3Client = new Minio.Client({
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
 |  | [`putObjectRetention`](#putObjectRetention)  |
 |  | [`getObjectRetention`](#getObjectRetention)  |
+| [`getBucketVersioning`](#getBucketVersioning)  |[`removeObject`](#removeObject)    |
+| [`setBucketVersioning`](#setBucketVersioning)|[`removeObjects`](#removeObjects)    |
+| [`setBucketLifecycle`](#setBucketLifecycle) |[`removeIncompleteUpload`](#removeIncompleteUpload) |
+| [`getBucketLifecycle`](#getBucketLifecycle) |[`putObjectRetention`](#putObjectRetention)   |
+| [`removeBucketLifecycle`](#removeBucketLifecycle) |[`getObjectRetention`](#getObjectRetention)   |
+
+
 
 
 
@@ -578,6 +585,8 @@ minioClient.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
 })
 ```
 
+
+
 <a name="getBucketLifecycle"></a>
 ### getBucketLifecycle(bucketName, callback)
 
@@ -599,6 +608,30 @@ minioClient.getBucketLifecycle('bucketname', function (err, lifecycleConfig) {
   console.log("Success", lifecycleConfig)
 })
 ```
+
+<a name="removeBucketLifecycle"></a>
+### removeBucketLifecycle(bucketName, callback)
+
+Remove Lifecycle Configuration of a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+ 
+minioClient.removeBucketLifecycle('bucketname', function (err) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
 
 <a name="setObjectLockConfig"></a>
 ### setObjectLockConfig(bucketName, lockConfig [, callback])

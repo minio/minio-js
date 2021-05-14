@@ -955,6 +955,26 @@ describe('Client', function() {
     })
 
   })
+  describe('removeBucketLifecycle(bucket, callback)', () => {
+    it('should fail on null bucket', (done) => {
+      try {
+        client.removeBucketLifecycle(null, null,function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+    it('should fail on empty bucket', (done) => {
+      try {
+        client.removeBucketLifecycle('', null,function () {
+        })
+      } catch (e) {
+        done()
+      }
+    })
+
+  })
 
   describe('Object Locking APIs', ()=> {
     describe('getObjectLockConfig(bucket, callback)', () => {

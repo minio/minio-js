@@ -1840,6 +1840,14 @@ describe('functional tests', function() {
         })
       })
 
+      step("Remove lifecycle config of a bucket", done => {
+        client.removeBucketLifecycle(bucketName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          done()
+        })
+      })
+
     })
   })
 
