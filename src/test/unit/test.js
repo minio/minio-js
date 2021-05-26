@@ -1238,5 +1238,109 @@ describe('Client', function() {
     })
 
   })
+  describe('Bucket Replication APIs', ()=> {
+    describe('setBucketReplication(bucketName, replicationConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.setBucketReplication(null, {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.setBucketReplication('', {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on empty replicationConfig', (done) => {
+        try {
+          client.setBucketReplication('my-bucket', {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on empty replicationConfig role', (done) => {
+        try {
+          client.setBucketReplication('my-bucket', {role:''}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on  invalid value for replicationConfig role', (done) => {
+        try {
+          client.setBucketReplication('my-bucket', {role:12}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on  empty value for replicationConfig rules', (done) => {
+        try {
+          client.setBucketReplication('my-bucket', {role:"arn:",rules:[]}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on  null value for replicationConfig rules', (done) => {
+        try {
+          client.setBucketReplication('my-bucket', {role:"arn:",rules:null}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+    })
+
+    describe('getBucketReplication(bucketName, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getBucketReplication(null, {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getBucketReplication('', {},function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('removeBucketReplication(bucketName, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.removeBucketReplication(null, {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.removeBucketReplication('', {},function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+  })
+
 })
 

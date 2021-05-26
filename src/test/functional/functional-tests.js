@@ -2367,4 +2367,11 @@ describe('functional tests', function() {
 
   })
 
+  describe('Bucket Replication API Tests', ()=> {
+    //TODO - As of now, there is no api to get arn programmatically to setup replication through APIs and verify.
+    //Please refer to minio server documentation and mc cli.
+    //https://docs.min.io/docs/minio-bucket-replication-guide.html
+    //https://docs.min.io/minio/baremetal/replication/replication-overview.html#minio-bucket-replication-clientside
+  })
+
 })

@@ -2860,6 +2860,81 @@ export class Client {
   }
 
 
+  setBucketReplication(bucketName, replicationConfig={}, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(replicationConfig)) {
+      throw new errors.InvalidArgumentError('replicationConfig should be of type "object"')
+    } else {
+      if (_.isEmpty(replicationConfig.role)) {
+        throw new errors.InvalidArgumentError('Role cannot be empty')
+      }else if (replicationConfig.role && !isString(replicationConfig.role)) {
+        throw new errors.InvalidArgumentError('Invalid value for role', replicationConfig.role)
+      }
+      if (_.isEmpty(replicationConfig.rules)) {
+        throw new errors.InvalidArgumentError('Minimum one replication rule must be specified')
+      }
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const method = 'PUT'
+    let query = "replication"
+    const headers = {}
+
+    const replicationParamsConfig = {
+      ReplicationConfiguration: {
+        Role: replicationConfig.role,
+        Rule: replicationConfig.rules
+      }
+    }
+
+    const builder =  new xml2js.Builder({ renderOpts:{'pretty':false},headless: true })
+
+    let payload = builder.buildObject(replicationParamsConfig)
+
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName,  query, headers}, payload, 200, '', false, cb)
+  }
+
+  getBucketReplication(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    const query = "replication"
+
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let replicationConfig = Buffer.from('')
+      pipesetup(response, transformers.replicationConfigTransformer())
+        .on('data', data => {
+          replicationConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, replicationConfig)
+        })
+    })
+  }
+
+  removeBucketReplication(bucketName, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query="replication"
+    this.makeRequest({method, bucketName, query}, '', 200, '', false, cb)
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2895,24 +2970,27 @@ Client.prototype.removeAllBucketNotification = promisify(Client.prototype.remove
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
-Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
-Client.prototype.setBucketTagging=promisify((Client.prototype.setBucketTagging))
-Client.prototype.removeBucketTagging=promisify((Client.prototype.removeBucketTagging))
-Client.prototype.getBucketTagging=promisify((Client.prototype.getBucketTagging))
-Client.prototype.setObjectTagging=promisify((Client.prototype.setObjectTagging))
-Client.prototype.removeObjectTagging=promisify((Client.prototype.removeObjectTagging))
-Client.prototype.getObjectTagging=promisify((Client.prototype.getObjectTagging))
-Client.prototype.setBucketLifecycle=promisify((Client.prototype.setBucketLifecycle))
-Client.prototype.getBucketLifecycle=promisify((Client.prototype.getBucketLifecycle))
-Client.prototype.removeBucketLifecycle=promisify((Client.prototype.removeBucketLifecycle))
-Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
-Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
-Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
-Client.prototype.getObjectRetention =promisify((Client.prototype.getObjectRetention))
-Client.prototype.setBucketEncryption = promisify((Client.prototype.setBucketEncryption))
-Client.prototype.getBucketEncryption = promisify((Client.prototype.getBucketEncryption))
-Client.prototype.removeBucketEncryption = promisify((Client.prototype.removeBucketEncryption))
+Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersioning)
+Client.prototype.setBucketVersioning=promisify(Client.prototype.setBucketVersioning)
+Client.prototype.setBucketTagging=promisify(Client.prototype.setBucketTagging)
+Client.prototype.removeBucketTagging=promisify(Client.prototype.removeBucketTagging)
+Client.prototype.getBucketTagging=promisify(Client.prototype.getBucketTagging)
+Client.prototype.setObjectTagging=promisify(Client.prototype.setObjectTagging)
+Client.prototype.removeObjectTagging=promisify(Client.prototype.removeObjectTagging)
+Client.prototype.getObjectTagging=promisify(Client.prototype.getObjectTagging)
+Client.prototype.setBucketLifecycle=promisify(Client.prototype.setBucketLifecycle)
+Client.prototype.getBucketLifecycle=promisify(Client.prototype.getBucketLifecycle)
+Client.prototype.removeBucketLifecycle=promisify(Client.prototype.removeBucketLifecycle)
+Client.prototype.setObjectLockConfig=promisify(Client.prototype.setObjectLockConfig)
+Client.prototype.getObjectLockConfig=promisify(Client.prototype.getObjectLockConfig)
+Client.prototype.putObjectRetention =promisify(Client.prototype.putObjectRetention)
+Client.prototype.getObjectRetention =promisify(Client.prototype.getObjectRetention)
+Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
+Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
+Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
+Client.prototype.setBucketReplication =promisify(Client.prototype.setBucketReplication)
+Client.prototype.getBucketReplication =promisify(Client.prototype.getBucketReplication)
+Client.prototype.removeBucketReplication=promisify(Client.prototype.removeBucketReplication)
 
 export class CopyConditions {
   constructor() {
