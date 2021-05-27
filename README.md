@@ -129,6 +129,7 @@ The full API Reference is available here.
 * [`setBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#setBucketVersioning)
 * [`setBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#setBucketLifecycle)
 * [`getBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#getBucketLifecycle)
+* [`removeBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#removeBucketLifecycle)
 * [`getObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#getObjectLockConfig)
 * [`setObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#setObjectLockConfig)
 

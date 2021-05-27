@@ -38,22 +38,14 @@ var s3Client = new Minio.Client({
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 | [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
 | [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
-| [`setBucketTagging`](#setBucketTagging)       | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-| [`removeBucketTagging`](#removeBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
-| [`getBucketTagging`](#getBucketTagging)       | [`getObjectRetention`](#getObjectRetention)  |
-|    |  [`putObjectTagging`](#putObjectTagging)    |
-|    |  [`removeObjectTagging`](#removeObjectTagging)    |
-|    |  [`getObjectTagging`](#getObjectTagging)    |
-| [`setBucketLifecycle`] (#setBucketLifecycle)|   |
-| [`getBucketLifecycle`] (#getBucketLifecycle)|   |
-|  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
+| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  |
+| [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    |
+| [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    |
+|  [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
 |  | [`putObjectRetention`](#putObjectRetention)  |
 |  | [`getObjectRetention`](#getObjectRetention)  |
-| [`getBucketVersioning`](#getBucketVersioning)  |[`removeObject`](#removeObject)    |
-| [`setBucketVersioning`](#setBucketVersioning)|[`removeObjects`](#removeObjects)    |
-| [`setBucketLifecycle`](#setBucketLifecycle) |[`removeIncompleteUpload`](#removeIncompleteUpload) |
-| [`getBucketLifecycle`](#getBucketLifecycle) |[`putObjectRetention`](#putObjectRetention)   |
-| [`removeBucketLifecycle`](#removeBucketLifecycle) |[`getObjectRetention`](#getObjectRetention)   |
 
 
 
