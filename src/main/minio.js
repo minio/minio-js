@@ -2530,6 +2530,82 @@ export class Client {
 
   }
 
+  /** Put lifecycle configuration on a bucket.
+  /** Apply lifecycle configuration on a bucket.
+   * bucketName _string_
+   * policyConfig _object_ a valid policy configuration object.
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  applyBucketLifecycle(bucketName, policyConfig, cb){
+    const method = 'PUT'
+    const query="lifecycle"
+
+    const encoder = new util.TextEncoder()
+    const headers ={}
+    const builder = new xml2js.Builder({ rootName:'LifecycleConfiguration', headless:true, renderOpts:{'pretty':false},})
+    let payload = builder.buildObject(policyConfig)
+    payload = encoder.encode(payload)
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    const requestOptions = { method, bucketName, query, headers }
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest(requestOptions, payload, 200, '', false, cb)
+
+  }
+
+  /** Remove lifecycle configuration of a bucket.
+   * bucketName _string_
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  removeBucketLifecycle(bucketName, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query="lifecycle"
+    this.makeRequest({method, bucketName, query}, '', 204, '', false, cb)
+  }
+
+  /** Set/Override lifecycle configuration on a bucket. if the configuration is empty, it removes the configuration.
+   * bucketName _string_
+   * lifeCycleConfig _object_ one of the following values: (null or '') to remove the lifecycle configuration. or a valid lifecycle configuration
+   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  setBucketLifecycle(bucketName, lifeCycleConfig=null, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if(_.isEmpty(lifeCycleConfig)){
+      this.removeBucketLifecycle(bucketName, cb)
+    }else {
+      this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
+    }
+  }
+
+  /** Get lifecycle configuration on a bucket.
+   * bucketName _string_
+   * `cb(config)` _function_ - callback function with lifecycle configuration as the error argument.
+   */
+  getBucketLifecycle(bucketName, cb){
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query ="lifecycle"
+    const requestOptions = { method, bucketName, query }
+
+    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+      const transformer = transformers.lifecycleTransformer()
+      if (e) return cb(e)
+      let lifecycleConfig
+      pipesetup(response, transformer)
+        .on('data', result => lifecycleConfig = result)
+        .on('error', e => cb(e))
+        .on('end', () => cb(null, lifecycleConfig))
+    })
+
+  }
+
   setObjectLockConfig(bucketName, lockConfigOpts={}, cb) {
 
     const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
@@ -2746,6 +2822,9 @@ Client.prototype.getBucketTagging=promisify((Client.prototype.getBucketTagging))
 Client.prototype.setObjectTagging=promisify((Client.prototype.setObjectTagging))
 Client.prototype.removeObjectTagging=promisify((Client.prototype.removeObjectTagging))
 Client.prototype.getObjectTagging=promisify((Client.prototype.getObjectTagging))
+Client.prototype.setBucketLifecycle=promisify((Client.prototype.setBucketLifecycle))
+Client.prototype.getBucketLifecycle=promisify((Client.prototype.getBucketLifecycle))
+Client.prototype.removeBucketLifecycle=promisify((Client.prototype.removeBucketLifecycle))
 Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
 Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
 Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))

@@ -38,12 +38,18 @@ var s3Client = new Minio.Client({
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 | [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
 | [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
-| [`setBucketTagging`](#setBucketTagging)       | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-| [`removeBucketTagging`](#removeBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
-| [`getBucketTagging`](#getBucketTagging)       | [`getObjectRetention`](#getObjectRetention)  |
-|    |  [`putObjectTagging`](#putObjectTagging)    |
-|    |  [`removeObjectTagging`](#removeObjectTagging)    |
-|    |  [`getObjectTagging`](#getObjectTagging)    |
+| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
+| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  |
+| [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    |
+| [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    |
+|  [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
+|  | [`putObjectRetention`](#putObjectRetention)  |
+|  | [`getObjectRetention`](#getObjectRetention)  |
+
+
+
+
 
 
 ## 1.  Constructor
@@ -533,6 +539,92 @@ minioClient.getBucketTagging('bucketname', function (err, tagsList){
 })
 ```
 
+
+<a name="setBucketLifecycle"></a>
+### setBucketLifecycle(bucketName, lifecycleConfig, callback)
+
+Set Lifecycle Configuration on a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `lifecycleConfig`  | _object_  | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+const lifecycleConfig= {
+    Rule: [{
+        "ID": "Transition and Expiration Rule",
+        "Status": "Enabled",
+        "Filter": {
+            "Prefix":"",
+        },
+        "Expiration": {
+            "Days": "3650"
+        } 
+    }
+   ]
+}
+    
+minioClient.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+
+
+<a name="getBucketLifecycle"></a>
+### getBucketLifecycle(bucketName, callback)
+
+Get Lifecycle Configuration of a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. Otherwise it is called with `error`|
+
+__Example__
+```js
+minioClient.getBucketLifecycle('bucketname', function (err, lifecycleConfig) {
+  if (err) {
+      return console.log(err)
+  }
+  console.log("Success", lifecycleConfig)
+})
+```
+
+<a name="removeBucketLifecycle"></a>
+### removeBucketLifecycle(bucketName, callback)
+
+Remove Lifecycle Configuration of a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+ 
+minioClient.removeBucketLifecycle('bucketname', function (err) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+
 <a name="setObjectLockConfig"></a>
 ### setObjectLockConfig(bucketName, lockConfig [, callback])
 
@@ -607,7 +699,7 @@ __Parameters__
 
 | Param  |  Type | Description  |
 |---|---|---|
-|`bucketName` | _string_ | Name of the bucket. |
+|`bucketName` | _string_ | Name of the bucket. | 
 |`objectName` | _string_ | Name of the object. |
 |`getOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 |`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |

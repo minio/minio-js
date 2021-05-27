@@ -127,6 +127,9 @@ The full API Reference is available here.
 * [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
 * [`getBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#getBucketVersioning)
 * [`setBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#setBucketVersioning)
+* [`setBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#setBucketLifecycle)
+* [`getBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#getBucketLifecycle)
+* [`removeBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#removeBucketLifecycle)
 * [`getObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#getObjectLockConfig)
 * [`setObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#setObjectLockConfig)
 
@@ -181,6 +184,9 @@ The full API Reference is available here.
 * [set-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
 * [get-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-tagging.js)
 * [remove-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
+* [set-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.js)
+* [get-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.js)
+* [remove-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.js)
 * [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
 * [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
 
