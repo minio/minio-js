@@ -38,11 +38,12 @@ var s3Client = new Minio.Client({
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 | [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
 | [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
-|  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-|  | [`putObjectRetention`](#putObjectRetention)  |
-|  | [`getObjectRetention`](#getObjectRetention)  |
-
-
+| [`setBucketTagging`](#setBucketTagging)       | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+| [`removeBucketTagging`](#removeBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
+| [`getBucketTagging`](#getBucketTagging)       | [`getObjectRetention`](#getObjectRetention)  |
+|    |  [`putObjectTagging`](#putObjectTagging)    |
+|    |  [`removeObjectTagging`](#removeObjectTagging)    |
+|    |  [`getObjectTagging`](#getObjectTagging)    |
 
 
 ## 1.  Constructor
@@ -462,6 +463,73 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
     return console.log(err)
   }
   console.log("Success")
+})
+```
+
+<a name="setBucketTagging"></a>
+### setBucketTagging(bucketName, tags, callback)
+
+Set Tags on a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `tags`  | _object_  |  Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.setBucketTagging('bucketname',tags, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="removeBucketTagging"></a>
+### removeBucketTagging(bucketName, callback)
+
+Remove Tags on a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.removeBucketTagging('bucketname', function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="getBucketTagging"></a>
+### getBucketTagging(bucketName, callback)
+
+Remove Tags on a Bucket
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.getBucketTagging('bucketname', function (err, tagsList){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success",tagsList)
 })
 ```
 
@@ -1008,7 +1076,7 @@ objectsStream.on('end', function() {
 
 ```
 
-__Example 1__
+__Example1__
 
 With versioning Support 
 
@@ -1128,6 +1196,119 @@ minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: "my-vers
 })
 ```
 
+<a name="putObjectTagging"></a>
+### putObjectTagging(bucketName, objectName, tags[, putOpts, callback])
+<a name="setObjectTagging"></a>
+### setObjectTagging(bucketName, objectName, tags[, putOpts, callback])
+
+Put Tags on an Object
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `objectName`  | _string_  |  Name of the object. |
+| `tags`  | _object_  |  Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
+| `putOpts`  | _object_  | Default is {}.  e.g `{versionId:"my-version-id"}`. (Optional)|
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.setObjectTagging('bucketname','object-name', tags, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+__Example 1__
+Put tags on a version of an object.
+
+```js
+minioClient.setObjectTagging('bucketname','object-name', tags, { versionId: "my-version-id" }, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="removeObjectTagging"></a>
+### removeObjectTagging(bucketName, objectName[, removeOpts, callback])
+
+Remove Tags on an Object
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `objectName`  | _string_  |  Name of the object. |
+| `removeOpts`  | _object_  |  Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.removeObjectTagging('bucketname','object-name', function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+
+__Example1__
+Remove tags on a version of an object.
+
+```js
+minioClient.removeObjectTagging('bucketname', 'object-name', {versionId:"my-object-version-id"}, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+```
+
+<a name="getObjectTagging"></a>
+### getObjectTagging(bucketName, objectName[, getOpts, callback])
+
+Get Tags of an Object
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `objectName`  | _string_  |  Name of the object. |
+| `getOpts`  | _object_  | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+minioClient.getObjectTagging('bucketname', 'object-name', function (err, tagsList){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success", tagsList)
+})
+```
+
+
+__Example1__
+Get tags on a version of an object.
+
+```js
+minioClient.getObjectTagging('bucketname', 'object-name', {versionId:"my-object-version-id"}, function (err, tagsList){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success", tagsList)
+})
+```
+
 ## 4. Presigned operations
 
 Presigned URLs are generated for temporary download/upload access to private objects.
@@ -1152,7 +1333,7 @@ __Parameters__
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
-__Example 1__
+__Example1__
 
 
 ```js
@@ -1165,7 +1346,7 @@ minioClient.presignedUrl('GET', 'mybucket', 'hello.txt', 24*60*60, function(err,
 ```
 
 
-__Example 2__
+__Example2__
 
 
 ```js

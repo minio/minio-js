@@ -18,8 +18,8 @@ import fxp from 'fast-xml-parser'
 import _ from 'lodash'
 import * as errors from './errors.js'
 import {
-  isObject, 
-  sanitizeETag, 
+  isObject,
+  sanitizeETag,
   RETENTION_VALIDITY_UNITS
 } from "./helpers"
 
@@ -463,6 +463,21 @@ export function parseListObjectsV2WithMetadata(xml) {
 export function parseBucketVersioningConfig(xml){
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
+}
+
+export function parseTagging(xml){
+  const xmlObj = parseXml(xml)
+  let result =[]
+  if(xmlObj.Tagging && xmlObj.Tagging.TagSet&& xmlObj.Tagging.TagSet.Tag){
+    const tagResult = xmlObj.Tagging.TagSet.Tag
+    //if it is a single tag convert into an array so that the return value is always an array.
+    if(isObject(tagResult)){
+      result.push(tagResult)
+    }else{
+      result = tagResult
+    }
+  }
+  return result
 }
 
 
