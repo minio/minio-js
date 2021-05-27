@@ -265,7 +265,7 @@ export function presignSignatureV4(request, accessKey, secretKey, sessionToken, 
   requestQuery.push(`X-Amz-Expires=${expires}`)
   requestQuery.push(`X-Amz-SignedHeaders=${uriEscape(signedHeaders.join(';').toLowerCase())}`)
   if (sessionToken) {
-    requestQuery.push(`X-Amz-Security-Token=${sessionToken}`)
+    requestQuery.push(`X-Amz-Security-Token=${uriEscape(sessionToken)}`)
   }
 
   var resource = request.path.split('?')[0]
