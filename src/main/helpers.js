@@ -369,3 +369,13 @@ export function sanitizeETag(etag='') {
   return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, m => replaceChars[m])
     
 }
+
+export const RETENTION_MODES ={
+  GOVERNANCE:"GOVERNANCE",
+  COMPLIANCE:"COMPLIANCE"
+}
+
+export const RETENTION_VALIDITY_UNITS={
+  DAYS:"Days",
+  YEARS:"Years"
+}

@@ -39,6 +39,9 @@ var s3Client = new Minio.Client({
 | [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
 | [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
+|  | [`putObjectRetention`](#putObjectRetention)  |
+|  | [`getObjectRetention`](#getObjectRetention)  |
+
 
 
 
@@ -114,7 +117,7 @@ var s3Client = new Minio.Client({
 ## 2. Bucket operations
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName, region[, callback])
+### makeBucket(bucketName, region[, makeOpts , callback])
 
 Creates a new bucket.
 
@@ -124,6 +127,7 @@ __Parameters__
 |---|---|---|
 |`bucketName`  | _string_  | Name of the bucket. |
 | `region`  |  _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
+| `makeOpts` | _object_  | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)
 |`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
 
 
@@ -134,6 +138,16 @@ __Example__
 minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
   if (err) return console.log('Error creating bucket.', err)
   console.log('Bucket created successfully in "us-east-1".')
+})
+```
+
+__Example 1__
+Create a bucket with object locking enabled.
+
+```js
+minioClient.makeBucket('mybucket', 'us-east-1', { ObjectLocking:true }, function(err) {
+  if (err) return console.log('Error creating bucket with object lock.', err)
+  console.log('Bucket created successfully in "us-east-1" and enabled object lock')
 })
 ```
 
@@ -451,6 +465,68 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
 })
 ```
 
+<a name="setObjectLockConfig"></a>
+### setObjectLockConfig(bucketName, lockConfig [, callback])
+
+Set Object lock config on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `lockConfig`  | _object_  |  Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example 1__
+
+```js
+s3Client.setObjectLockConfig('my-bucketname', {mode:"COMPLIANCE", unit:'Days', validity:10 }, function (err){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success")
+})
+```
+
+__Example 2__
+To reset/remove object lock config on a bucket.
+
+```js
+s3Client.setObjectLockConfig('my-bucketname', {}, function (err){
+if (err) {
+return console.log(err)
+}
+console.log("Success")
+})
+```
+
+
+<a name="getObjectLockConfig"></a>
+### getObjectLockConfig(bucketName [, callback])
+
+Get Lock config on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+
+__Example __
+Get object lock configuration on a Bucket
+
+```js
+s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig){
+    if (err) {
+        return console.log(err)
+    }
+    console.log(lockConfig)
+})
+```
 ## 3.  Object operations
 
 <a name="getObject"></a>
@@ -623,7 +699,7 @@ __Example__
 To Stream a specific object version into a file.
 
 ```js
-minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
+minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg', {versionId:"my-versionId"}, function(e) {
   if (e) {
     return console.log(e)
   }
@@ -825,7 +901,7 @@ __Example stat on a version of an object__
 
 
 ```js
-minioClient.statObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function(err, stat) {
+minioClient.statObject('mybucket', 'photo.jpg', { versionId : "my-versionId" }, function(err, stat) {
   if (err) {
     return console.log(err)
   }
@@ -834,7 +910,7 @@ minioClient.statObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function
 ```
 
 <a name="removeObject"></a>
-### removeObject(bucketName, objectName, removeOpts[, callback])
+### removeObject(bucketName, objectName [, removeOpts] [, callback])
 
 Removes an object.
 
@@ -845,12 +921,11 @@ __Parameters__
 |---|---|---|
 |`bucketName`   |  _string_ | Name of the bucket.  |
 | objectName  |  _string_ | Name of the object.  |
-| removeOpts  |  _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)|
+| removeOpts  |  _object_ | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional)|
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
-__Example__
-
+__Example 1__
 
 ```js
 minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
@@ -860,16 +935,30 @@ minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
   console.log('Removed the object')
 })
 ```
-__Example delete a specific version of an oject__
 
+__Example 2__
+Delete a specific version of an object
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "uuid" }, function(err) {
+minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-versionId" }, function(err) {
   if (err) {
     return console.log('Unable to remove object', err)
   }
   console.log('Removed the object')
 })
+```
+
+__Example 3__
+Remove an object version locked with retention mode `GOVERNANCE` using the `governanceBypass` remove option
+
+```js
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true}, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})
+
 ```
 
 <a name="removeObjects"></a>
@@ -883,7 +972,7 @@ __Parameters__
 | Param | Type | Description |
 | ---- | ---- | ---- |
 | `bucketName` | _string_ | Name of the bucket. |
-| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{name:"my-obj-name",versionId:"my-version-id"}] |
+| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{name:"my-obj-name",versionId:"my-versionId"}] |
 | `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
 
 
@@ -974,6 +1063,71 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function(err) {
 })
 ```
 
+
+<a name="putObjectRetention"></a>
+### putObjectRetention(bucketName, objectName [, retentionOpts] [, callback])
+
+Apply retention on an object.
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  |_string_   | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `retentionOpts` | _object_ | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }`  Default is `{}` (Optional)|
+| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
+
+
+__Example__
+Apply object retention on an object
+
+```js
+const bucketName = 'my-bucket'
+const objectName ="my-object"
+
+const expirationDate = new Date()
+expirationDate.setDate(expirationDate.getDate() + 1)
+expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+const versionId ="e67b4b08-144d-4fc4-ba15-43c3f7f9ba74"
+
+const objRetPromise = minioClient.putObjectRetention(
+    bucketName, 
+    objectName, 
+    { Mode:"GOVERNANCE", retainUntilDate:retainUntilDate.toISOString(), versionId:versionId }, 
+    function (err){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success")
+})
+```
+
+<a name="getObjectRetention"></a>
+### getObjectRetention(bucketName, objectName [, getOpts] [, callback])
+
+Get retention config of an object
+
+__Parameters__
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketName`  |_string_   | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `getOpts` | _object_ | Options for retention like : `{ versionId:"my-versionId" }`  Default is `{}` (Optional)|
+| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+
+__Example__
+
+```js
+minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: "my-versionId" }, function (err, res){
+  if (err) {
+    return console.log(err)
+  }
+  console.log(res)
+})
+```
+
 ## 4. Presigned operations
 
 Presigned URLs are generated for temporary download/upload access to private objects.
@@ -993,7 +1147,7 @@ __Parameters__
 |`bucketName` | _string_ | Name of the bucket. |
 |`objectName` | _string_ | Name of the object. |
 |`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
-|`reqParams`  | _object_ | request parameters. (optional) |
+|`reqParams`  | _object_ | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}|
 |`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
 |`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
@@ -1019,6 +1173,17 @@ __Example 2__
 // Lists objects in 'myBucket' with prefix 'data'.
 // Lists max 1000 of them.
 minioClient.presignedUrl('GET', 'mybucket', '', 1000, {'prefix': 'data', 'max-keys': 1000}, function(err, presignedUrl) {
+  if (err) return console.log(err)
+  console.log(presignedUrl)
+})
+```
+
+__Example 3__
+
+
+```js
+// Get Object with versionid
+minioClient.presignedUrl('GET', 'mybucket', '', 1000, {versionId: "10fa9946-3f64-4137-a58f-888065c0732e"}, function(err, presignedUrl) {
   if (err) return console.log(err)
   console.log(presignedUrl)
 })

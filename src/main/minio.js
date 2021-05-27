@@ -35,7 +35,8 @@ import {
   uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag
+  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
+  RETENTION_MODES, RETENTION_VALIDITY_UNITS
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -520,19 +521,34 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_ - Name of the bucket
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
+  // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, cb) {
+  makeBucket(bucketName, region, makeOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
+    //Backward Compatibility
+    if(isObject(region)){
+      cb= makeOpts
+      makeOpts=region
+      region = ''
+    }
     if (isFunction(region)) {
       cb = region
       region = ''
+      makeOpts={}
+    }
+    if(isFunction(makeOpts)){
+      cb=makeOpts
+      makeOpts={}
     }
 
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
+    }
+    if (!isObject(makeOpts)) {
+      throw new TypeError('makeOpts should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
@@ -567,6 +583,11 @@ export class Client {
     }
     var method = 'PUT'
     var headers = {}
+
+    if(makeOpts.ObjectLocking){
+      headers["x-amz-bucket-object-lock-enabled"]=true
+    }
+
     if (!region) region = 'us-east-1'
     this.makeRequest({method, bucketName, headers}, payload, 200, region, false, cb)
   }
@@ -1508,7 +1529,7 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
+  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucketName, objectName, removeOpts={} , cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1530,9 +1551,19 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     const method = 'DELETE'
-    const query = querystring.stringify( removeOpts )
+    const queryParams = {}
 
-    let requestOptions = {method, bucketName,objectName}
+    if(removeOpts.versionId){
+      queryParams.versionId=`${removeOpts.versionId}`
+    }
+    const headers = {}
+    if(removeOpts.governanceBypass){
+      headers["X-Amz-Bypass-Governance-Retention"]=true
+    }
+
+    const query = querystring.stringify( queryParams )
+
+    let requestOptions = {method, bucketName, objectName, headers}
     if(query){
       requestOptions['query']=query
     }
@@ -1672,7 +1703,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `reqParams` _object_: request parameters (optional)
+  // * `reqParams` _object_: request parameters (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
   presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
     if (this.anonymous) {
@@ -1732,7 +1763,7 @@ export class Client {
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `respHeaders` _object_: response headers to override (optional)
+  // * `respHeaders` _object_: response headers to override or request params for query (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
   presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2259,6 +2290,179 @@ export class Client {
     this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
   }
 
+  setObjectLockConfig(bucketName, lockConfigOpts={}, cb) {
+
+    const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
+    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
+
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+
+    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
+      throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
+    }
+    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)){
+      throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
+    }
+    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)){
+      throw new TypeError(`lockConfigOpts.validity should be a number`)
+    }
+
+    const method = 'PUT'
+    const query = "object-lock"
+
+    let config={
+      ObjectLockEnabled:"Enabled"
+    }
+    const configKeys = Object.keys(lockConfigOpts)
+    //Check if keys are present and all keys are present.
+    if(configKeys.length > 0){
+      if(_.difference(configKeys, ['unit','mode','validity']).length !== 0){
+        throw new TypeError(`lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`)
+      } else {
+        config.Rule={
+          DefaultRetention:{}
+        }
+        if (lockConfigOpts.mode) {
+          config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
+        }
+        if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
+          config.Rule.DefaultRetention.Days = lockConfigOpts.validity
+        } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
+          config.Rule.DefaultRetention.Years = lockConfigOpts.validity
+        }
+      }
+    }
+
+    const builder = new xml2js.Builder({rootName:'ObjectLockConfiguration', renderOpts:{'pretty':false}, headless:true})
+    const payload = builder.buildObject(config)
+
+    const headers = {}
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, query, headers}, payload, 200, '', false, cb)
+  }
+
+  getObjectLockConfig(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    const query = "object-lock"
+
+    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let objectLockConfig = Buffer.from('')
+      pipesetup(response, transformers.objectLockTransformer())
+        .on('data', data => {
+          objectLockConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, objectLockConfig)
+        })
+    })
+  }
+
+  putObjectRetention(bucketName, objectName, retentionOpts={}, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(retentionOpts)) {
+      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
+    } else {
+      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
+        throw new errors.InvalidArgumentError('Invalid value for governanceBypass',retentionOpts.governanceBypass)
+      }
+      if (retentionOpts.mode && ![RETENTION_MODES.COMPLIANCE,RETENTION_MODES.GOVERNANCE].includes((retentionOpts.mode))) {
+        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
+      }
+      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
+        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate',retentionOpts.retainUntilDate)
+      }
+      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
+        throw new errors.InvalidArgumentError('Invalid value for versionId',retentionOpts.versionId)
+      }
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const method = 'PUT'
+    let query = "retention"
+
+    const headers = {}
+    if(retentionOpts.governanceBypass){
+      headers["X-Amz-Bypass-Governance-Retention"]=true
+    }
+
+    const builder = new xml2js.Builder({rootName:'Retention', renderOpts:{'pretty':false}, headless:true})
+    const params ={}
+
+    if(retentionOpts.mode){
+      params.Mode =retentionOpts.mode
+    }
+    if(retentionOpts.retainUntilDate){
+      params.RetainUntilDate =retentionOpts.retainUntilDate
+    }
+    if(retentionOpts.versionId){
+      query += `&versionId=${retentionOpts.versionId}`
+    }
+
+    let payload = builder.buildObject(params)
+
+    const md5digest = Crypto.createHash('md5').update(payload).digest()
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    //FIXME minio Server returns 204 but AWS returns 200. So in aws, though the operation is success, error is thrown.
+    this.makeRequest({method, bucketName, objectName, query, headers}, payload, 204, '', false, cb)
+  }
+
+  getObjectRetention(bucketName ,objectName, getOpts, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if(!isObject(getOpts)){
+      throw new errors.InvalidArgumentError('callback should be of type "object"')
+    }else if(getOpts.versionId && !isString(getOpts.versionId)){
+      throw new errors.InvalidArgumentError('VersionID should be of type "string"')
+    }
+    if (cb && !isFunction(cb)) {
+      throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+    const method = 'GET'
+    let query = "retention"
+    if(getOpts.versionId){
+      query += `&versionId=${getOpts.versionId}`
+    }
+
+    this.makeRequest({method, bucketName,objectName, query}, '', 200, '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let retentionConfig = Buffer.from('')
+      pipesetup(response, transformers.objectRetentionTransformer())
+        .on('data', data => {
+          retentionConfig = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, retentionConfig)
+        })
+    })
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -2296,6 +2500,10 @@ Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify((Client.prototype.getBucketVersioning))
 Client.prototype.setBucketVersioning=promisify((Client.prototype.setBucketVersioning))
+Client.prototype.setObjectLockConfig=promisify((Client.prototype.setObjectLockConfig))
+Client.prototype.getObjectLockConfig=promisify((Client.prototype.getObjectLockConfig))
+Client.prototype.putObjectRetention =promisify((Client.prototype.putObjectRetention))
+Client.prototype.getObjectRetention =promisify((Client.prototype.getObjectRetention))
 
 export class CopyConditions {
   constructor() {

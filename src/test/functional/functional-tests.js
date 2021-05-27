@@ -1638,5 +1638,396 @@ describe('functional tests', function() {
 
     })
   })
-    
+
+  describe('Versioning Supported preSignedUrl Get, Put Tests', function() {
+    /**
+         * Test Steps
+         * 1. Create Versioned Bucket
+         * 2. presignedPutObject of 2 Versions of different size
+         * 3. List and ensure that there are two versions
+         * 4. presignedGetObject with versionId to ensure that we are able to get
+         * 5. Remove each version
+         * 6. Cleanup bucket.
+         */
+
+    const versionedBucketName = "minio-js-test-ver-presign" + uuid.v4()
+    const versionedPresignObjName = 'datafile-1-b'
+    const _100_byte=Buffer.alloc(100 * 1024, 0)
+    const _200_byte=Buffer.alloc(200 * 1024, 0)
+    let isVersioningSupported=false
+    const objectsList = []
+
+
+
+    function putPreSignedObject (bucketName, objectName, expires=1000, _incoming_obj,cb) {
+      client.presignedPutObject(bucketName, objectName, expires, (e, presignedUrl) => {
+        if (e) {
+          cb && cb()
+        }
+        let mobileClientReqWithProtocol = http
+        var upldRequestOptions = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        upldRequestOptions.method = 'PUT'
+        upldRequestOptions.headers = {
+          'content-length': _incoming_obj.length
+        }
+        if (upldRequestOptions.protocol === 'https:') {
+          mobileClientReqWithProtocol = https
+        }
+        const uploadRequest = mobileClientReqWithProtocol.request(upldRequestOptions, (response) => {
+          if (response.statusCode !== 200) return new Error(`error on put : ${response.statusCode}`)
+          response.on('error', () => {
+            cb && cb()
+          })
+          response.on('end', () => {
+            cb && cb()
+          })
+          response.on('data', () => {
+          })
+        })
+
+        uploadRequest.on('error', () => {
+          cb && cb()
+        })
+
+        uploadRequest.write(_incoming_obj)
+        uploadRequest.end()
+      })
+
+    }
+
+
+    before((done) => client.makeBucket(versionedBucketName, '', ()=>{
+      client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
+        isVersioningSupported = true
+        done()
+      })
+
+    }))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+
+    step(`presignedPutObject(bucketName, objectName, expires=1000, _incoming_obj,cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version 1`, done => {
+      if(isVersioningSupported) {
+        putPreSignedObject(versionedBucketName,versionedPresignObjName,1000,_100_byte,()=>{
+          done()
+        })
+      }else {
+        done()
+      }
+    })
+
+    step(`presignedPutObject(bucketName, objectName, expires=1000, _incoming_obj,cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version 2`, done => {
+      if(isVersioningSupported) {
+        putPreSignedObject(versionedBucketName,versionedPresignObjName,1000,_200_byte,()=>{
+          done()
+        })
+      }else {
+        done()
+      }
+    })
+
+    step(`listObjects(bucketName, objectName, expires=1000, _incoming_obj,cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version 2`, done => {
+      if(isVersioningSupported) {
+        const objectsStream = client.listObjects(versionedBucketName, '', true,{IncludeVersion: true})
+        objectsStream.on('data', function(obj) {
+          objectsList.push({VersionId:obj.versionId, Key:obj.name})
+        })
+
+        objectsStream.on('error', function() {
+          return done()
+        })
+        objectsStream.on('end', function() {
+          if(objectsList.length === 2) {
+            // 2 versions need to be listed.
+            done()
+          }else{
+            return  done(new Error("Version count does not match for versioned presigned url test."))
+          }
+        })
+      }else {
+        done()
+      }
+    })
+
+    step(`presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, versionId, cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} first version`, done => {
+      if(isVersioningSupported) {
+        client.presignedGetObject(versionedBucketName, versionedPresignObjName, 1000, {versionId: objectsList[1].VersionId},new Date(), (e, presignedUrl) => {
+          if (e) {
+            return done()
+          }
+          let mobileClientReqWithProtocol = http
+          const getReqOpts = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+          getReqOpts.method = 'GET'
+          const _100kbmd5 = crypto.createHash('md5').update(_100_byte).digest('hex')
+
+          const hash = crypto.createHash('md5')
+          if (getReqOpts.protocol === 'https:') {
+            mobileClientReqWithProtocol = https
+          }
+          const request = mobileClientReqWithProtocol.request(getReqOpts, (response) => {
+            //if delete marker. method not allowed.
+            if (response.statusCode !== 200) return new Error(`error on get : ${response.statusCode}`)
+            response.on('error', () => {
+              return done()
+            })
+            response.on('end', () => {
+              const hashValue =hash.digest('hex')
+              if ( hashValue === _100kbmd5) {
+                done()
+              }else{
+                return done(new Error("Unable to retrieve version of an object using presignedGetObject"))
+              }
+            })
+            response.on('data', (data) => {
+              hash.update(data)
+            })
+          })
+          request.on('error', () =>{
+            return done()
+          })
+          request.end()
+        })
+      }else {
+        done()
+      }
+    })
+
+    step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName} _${versionedPresignObjName} _${objectsList.length} versions`, done => {
+      if(isVersioningSupported) {
+        let count = 0
+        objectsList.forEach((objItem)=>{
+          client.removeObject(versionedBucketName, objItem.Key,{versionId:objItem.VersionId}, function(e) {
+            if (e) {
+              done()
+            }
+            count +=1
+            if(count === 2){
+              //2 versions expected to be deleted.
+              done()
+            }
+          })
+        })
+      }else {
+        done()
+      }
+    })
+  })
+
+
+  describe('Object Lock API Bucket Options Test', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    //Gateway mode does not support this header.
+
+    describe('Object Lock support makeBucket API Tests', function () {
+      const  lockEnabledBucketName = "minio-js-test-lock-mb-" + uuid.v4()
+      let isFeatureSupported = false
+      step(`Check if bucket with object lock can be created:_bucketName:${lockEnabledBucketName}`, done => {
+        client.makeBucket(lockEnabledBucketName, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`Get lock config on a bucket:_bucketName:${lockEnabledBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockEnabledBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Check if bucket can be deleted:_bucketName:${lockEnabledBucketName}`, done => {
+        client.removeBucket(lockEnabledBucketName, (err) => {
+          if(isFeatureSupported) {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          }else{
+            done()
+          }
+        })
+      })
+
+    })
+
+    describe('Object Lock support Set/Get API Tests', function () {
+      const  lockConfigBucketName = "minio-js-test-lock-conf-" + uuid.v4()
+      let isFeatureSupported = false
+      step(`Check if bucket with object lock can be created:_bucketName:${lockConfigBucketName}`, done => {
+        client.makeBucket(lockConfigBucketName, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+      step(`Update or replace lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.setObjectLockConfig(lockConfigBucketName, {mode:"GOVERNANCE",unit:'Years', validity:2 }, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+      step(`Get lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockConfigBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Set lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.setObjectLockConfig(lockConfigBucketName, {}, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+      step(`Get and verify lock config on a bucket after reset/update:_bucketName:${lockConfigBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectLockConfig(lockConfigBucketName, (err) => {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          })
+        }else{
+          done()
+        }
+      })
+
+      step(`Check if bucket can be deleted:_bucketName:${lockConfigBucketName}`, done => {
+        client.removeBucket(lockConfigBucketName, (err) => {
+          if(isFeatureSupported) {
+            if (err && err.code === 'NotImplemented') return done()
+            if (err) return done(err)
+            done()
+          }else{
+            done()
+          }
+        })
+      })
+
+    })
+
+  })
+
+  describe('Object retention API Tests', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    //Gateway mode does not support this header.
+
+    describe('Object retention get/set API Test', function () {
+      const  objRetentionBucket = "minio-js-test-retention-" + uuid.v4()
+      const retentionObjName = "RetentionObject"
+      let isFeatureSupported = false
+      let versionId = null
+
+      step(`Check if bucket with object lock can be created:_bucketName:${objRetentionBucket}`, done => {
+        client.makeBucket(objRetentionBucket, { ObjectLocking: true }, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported= true
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}, stream:100Kib_`, done => {
+        //Put two versions of the same object.
+        if(isFeatureSupported) {
+          client.putObject(objRetentionBucket, retentionObjName,  readableStream(_1byte), _1byte.length, {})
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`statObject(bucketName, objectName, statOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.statObject(objRetentionBucket, retentionObjName, {}, (e, res) => {
+            versionId = res.versionId
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        //Put two versions of the same object.
+        if(isFeatureSupported) {
+          let expirationDate = new Date()
+          //set expiry to start of next day.
+          expirationDate.setDate(expirationDate.getDate() + 1)
+          expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+
+          client.putObjectRetention(objRetentionBucket, retentionObjName,  {
+            governanceBypass:true,
+            mode:"GOVERNANCE",
+            retainUntilDate:expirationDate.toISOString(),
+            versionId:versionId
+          })
+            .then(() => done())
+            .catch(done)
+        }else{
+          done()
+        }
+      })
+
+      step(`getObjectRetention(bucketName, objectName, getOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.getObjectRetention(objRetentionBucket, retentionObjName, {versionId:versionId}, () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
+        if(isFeatureSupported) {
+          client.removeObject(objRetentionBucket, retentionObjName, {versionId:versionId, governanceBypass:true}, () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`removeBucket(bucketName, )_bucketName:${objRetentionBucket}`, done => {
+        if(isFeatureSupported) {
+          client.removeBucket(objRetentionBucket,  () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+    })
+  })
+
 })
