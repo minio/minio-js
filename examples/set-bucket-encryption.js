@@ -59,3 +59,50 @@ s3Client.setBucketEncryption("my-bucket", encryptionConfig, function (error){
   }
   console.log("Success")
 })
+
+
+/**
+ * KMS ID based SSE Encryption
+ * Sample Configuration:
+ *
+ * export MINIO_KMS_KES_ENDPOINT=https://play.min.io:7373;
+ * export MINIO_KMS_KES_KEY_FILE=root.key;
+ * export MINIO_KMS_KES_CERT_FILE=root.cert;
+ * export MINIO_KMS_KES_KEY_NAME=my-minio-key; //KMS Key ID
+ *
+ * Start the server.
+ *
+ *
+ * Sample stat on an object:
+ * {
+ *    size: 150029,
+ *    metaData: {
+ *      'content-type': 'application/octet-stream',
+ *      'x-amz-server-side-encryption': 'aws:kms',
+ *      'x-amz-server-side-encryption-aws-kms-key-id': 'my-minio-key', // the key will be printed here.
+ *      example: '5678',
+ *      testing: '1234'
+ *    },
+ *    lastModified: 2021-05-28T04:35:47.000Z,
+ *    versionId: null,
+ *    etag: '80f98a015af584b829f06c11f49f8e09'
+ *  }
+ */
+
+const kmsIdEncryptionConfig = {
+  Rule:[
+    {
+      ApplyServerSideEncryptionByDefault: {
+        KMSMasterKeyID:'my-minio-key', //as per env value
+        SSEAlgorithm:"aws:kms" // this is important
+      }
+    }
+  ]
+}
+
+s3Client.setBucketEncryption("my-bucket", kmsIdEncryptionConfig, function (error){
+  if (error) {
+    return console.log(error)
+  }
+  console.log("Success")
+})
