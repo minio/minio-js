@@ -30,7 +30,7 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function(err, res) {
   if (err) {
     return console.log('Unable to get legal hold config for the object', err)
   }
-  console.log('Success', res)
+  console.log(res)
 })
 
 //With versionId
@@ -38,5 +38,5 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-vers
   if (err) {
     return console.log('Unable to get legal hold config for the object', err)
   }
-  console.log('Success', res)
+  console.log(res)
 })

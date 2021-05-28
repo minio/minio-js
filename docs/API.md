@@ -44,15 +44,18 @@ var s3Client = new Minio.Client({
 | [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    |
 | [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    |
 | [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
-| [`setObjectLockConfig`](#setObjectLockConfig)    | [`putObjectRetention`](#putObjectRetention)  |
-| [`getObjectLockConfig`](#getObjectLockConfig)    | [`getObjectRetention`](#getObjectRetention)  |
-| [`setBucketEncryption`](#setBucketEncryption)     | [`getObjectLegalHold`](#getObjectLegalHold) |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold)   |
+| [`setObjectLockConfig`](#setObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) |
+| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) |
+| [`getObjectLockConfig`](#getObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) |
+| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) |
+| [`setBucketEncryption`](#setBucketEncryption)     |   |
 | [`removeBucketEncryption`](#removeBucketEncryption)  |    |
 | [`setBucketReplication`](#setBucketReplication)|  |
 | [`getBucketReplication`](#getBucketReplication)|   |
 | [`removeBucketReplication`](#removeBucketReplication)|  |
-
+| [`setBucketEncryption`](#setBucketEncryption)     |  |
+| [`getBucketEncryption`](#getBucketEncryption)     |  |
+| [`removeBucketEncryption`](#removeBucketEncryption)  |    |
 
 
 ## 1.  Constructor
@@ -1632,9 +1635,9 @@ minioClient.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-v
 
 
 <a name="setObjectLegalHold"></a>
-### setObjectLegalHold(bucketName, objectName, setOpts [, callback])
+### setObjectLegalHold(bucketName, objectName, [,setOpts, callback])
 
-Get legal hold on an object.
+Set legal hold on an object.
 
 __Parameters__
 
@@ -1643,7 +1646,7 @@ __Parameters__
 |---|---|---|
 | `bucketName`  |_string_   | Name of the bucket.  |
 | `objectName`  | _string_  | Name of the object.  |
-| `setOpts`  | _object_  | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{}` . |
+| `setOpts`  | _object_  | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{status:'ON'}` if not passed. |
 | `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
 
 
@@ -1655,7 +1658,7 @@ minioClient.setObjectLegalHold('bucketName', 'objectName', {Status:"ON"}, functi
   if (err) {
     return console.log('Unable to set legal hold config for the object', err)
   }
-  console.log('Success', res)
+  console.log('Success')
 })
 ```
 
@@ -1667,7 +1670,7 @@ minioClient.setObjectLegalHold('bucketName', 'objectName', { Status:"ON", versio
   if (err) {
     return console.log('Unable to set legal hold config for the object version', err)
   }
-  console.log('Success', res)
+  console.log('Success')
 })
 ```
 

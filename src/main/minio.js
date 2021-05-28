@@ -2990,26 +2990,35 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
+
+    const defaultOpts = {
+      status:LEGAL_HOLD_STATUS.ENABLED
+    }
     if(isFunction(setOpts)){
       cb= setOpts
-      setOpts = {
-        status:LEGAL_HOLD_STATUS.ENABLED
-      }
+      setOpts =defaultOpts
     }
+
     if (!isObject(setOpts)) {
       throw new TypeError('setOpts should be of type "Object"')
     }else {
 
       if(![LEGAL_HOLD_STATUS.ENABLED, LEGAL_HOLD_STATUS.DISABLED].includes((setOpts.status))){
-        throw new TypeError('Invalid status:', setOpts.status )
+        throw new TypeError('Invalid status: '+setOpts.status )
       }
       if(setOpts.versionId && !setOpts.versionId.length){
-        throw new TypeError('versionId should be of type string.:', setOpts.versionId )
+        throw new TypeError('versionId should be of type string.:'+ setOpts.versionId )
       }
     }
 
     if (!isFunction(cb)) {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
+    }
+
+    if( _.isEmpty(setOpts)){
+      setOpts={
+        defaultOpts
+      }
     }
 
     const method = 'PUT'
