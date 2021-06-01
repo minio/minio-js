@@ -43,11 +43,12 @@ var s3Client = new Minio.Client({
 | [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  |
 | [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    |
 | [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    |
-|  [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
-|  | [`putObjectRetention`](#putObjectRetention)  |
-|  | [`getObjectRetention`](#getObjectRetention)  |
-
-
+| [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
+| [`setObjectLockConfig`](#setObjectLockConfig)    | [`putObjectRetention`](#putObjectRetention)  |
+| [`getObjectLockConfig`](#getObjectLockConfig)    | [`getObjectRetention`](#getObjectRetention)  |
+|[`setBucketEncryption`](#setBucketEncryption)     |  |
+|[`getBucketEncryption`](#getBucketEncryption)     |    |
+|[`removeBucketEncryption`](#removeBucketEncryption)  |    |
 
 
 
@@ -687,6 +688,95 @@ s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig){
     console.log(lockConfig)
 })
 ```
+
+<a name="setBucketEncryption"></a>
+### setBucketEncryption(bucketName [,encryptionConfig, callback])
+
+Set encryption configuration on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `encryptionConfig`  | _object_  |  Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied.
+|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+
+__Example __
+Set Encryption configuration on a Bucket
+
+```js
+s3Client.setBucketEncryption('my-bucketname', function (err, lockConfig){
+    if (err) {
+        return console.log(err)
+    }
+    console.log(lockConfig)
+})
+```
+
+__Example 1__
+Set Encryption configuration on a Bucket with an Algorithm
+
+```js
+s3Client.setBucketEncryption('my-bucketname',{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}, function (err, lockConfig){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success")
+})
+```
+
+<a name="getBucketEncryption"></a>
+### getBucketEncryption(bucketName [, callback])
+
+Get encryption configuration of a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+
+__Example __
+Get Encryption configuration of a Bucket
+
+```js
+s3Client.getBucketEncryption('my-bucketname', function (err, encConfig){
+    if (err) {
+        return console.log(err)
+    }
+    console.log(encConfig)
+})
+```
+
+<a name="removeBucketEncryption"></a>
+### removeBucketEncryption(bucketName [, callback])
+
+Remove encryption configuration of a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+
+__Example __
+Remove Encryption configuration of a Bucket
+
+```js
+s3Client.removeBucketEncryption('my-bucketname', function (err){
+    if (err) {
+        return console.log(err)
+    }
+    console.log("Success")
+})
+```
+
 ## 3.  Object operations
 
 <a name="getObject"></a>

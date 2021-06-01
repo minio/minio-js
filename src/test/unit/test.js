@@ -1153,5 +1153,90 @@ describe('Client', function() {
     })
   })
 
+
+  describe('Bucket Encryption APIs', ()=> {
+
+    describe('setBucketEncryption(bucket, encryptionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.setBucketEncryption(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.setBucketEncryption('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on multiple rules', (done) => {
+        try {
+          client.setBucketEncryption('my-bucket', {
+            //Default Rule
+            Rule:[
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm:"AES256"
+                }
+              },
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm:"AES256"
+                }
+              }
+            ]
+
+          },function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+    })
+
+    describe('getBucketEncryption(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getBucketEncryption(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getBucketEncryption('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('removeBucketEncryption(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.removeBucketEncryption(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.removeBucketEncryption('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+  })
 })
 

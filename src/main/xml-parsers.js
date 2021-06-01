@@ -522,3 +522,9 @@ export function parseObjectRetentionConfig(xml){
     retainUntilDate:retentionConfig.RetainUntilDate
   }
 }
+
+
+export function  parseBucketEncryptionConfig(xml){
+  let encConfig = parseXml(xml)
+  return encConfig
+}
