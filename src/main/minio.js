@@ -2793,22 +2793,23 @@ export class Client {
     if(!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length >1){
       throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
     }
-
-    if (!isFunction(cb)) {
+    if (cb && !isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
-    const encryptionObj = _.isEmpty(encryptionConfig) ? {
+    let encryptionObj =encryptionConfig
+    if(_.isEmpty(encryptionConfig)) {
+      encryptionObj={
       //Default MinIO Server Supported Rule
-      Rule:[
-        {
-          ApplyServerSideEncryptionByDefault: {
-            SSEAlgorithm:"AES256"
+        Rule:[
+          {
+            ApplyServerSideEncryptionByDefault: {
+              SSEAlgorithm:"AES256"
+            }
           }
-        }
-      ]
+        ]
 
-    } : encryptionConfig
+      }}
 
     let method = 'PUT'
     let query = "encryption"
