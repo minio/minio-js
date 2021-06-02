@@ -49,6 +49,10 @@ var s3Client = new Minio.Client({
 |[`setBucketEncryption`](#setBucketEncryption)     |  |
 |[`getBucketEncryption`](#getBucketEncryption)     |    |
 |[`removeBucketEncryption`](#removeBucketEncryption)  |    |
+| [`removeBucketLifecycle`](#removeBucketLifecycle) |   |
+| [`setBucketReplication`](#setBucketReplication)|  |
+| [`getBucketReplication`](#getBucketReplication)|   |
+| [`removeBucketReplication`](#removeBucketReplication)|  |
 
 
 
@@ -471,6 +475,101 @@ minioClient.setBucketVersioning('bucketname',versioningConfig, function (err){
   }
   console.log("Success")
 })
+```
+
+
+<a name="setBucketReplication"></a>
+### setBucketReplication(bucketName, replicationConfig, callback)
+
+Set replication config on a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+| `replicationConfig`  | _object_  |  replicationConfig Configuration as a JSON Object |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+
+__Example__
+```js
+const arnFromMcCli = "arn:minio:replication::1277fcbe7df0bab76ab0c64cf7c45a0d27e01917ee5f11e913f3478417833660:destination"
+
+var replicationConfig = {
+    role:arnFromMcCli,
+    rules:[{
+        "DeleteMarkerReplication": {
+            "Status": "Disabled"
+        },
+        "DeleteReplication": {
+            "Status": [
+            ]
+        },
+        "Destination": {
+            "Bucket": "arn:aws:s3:::destination"
+        },
+        "Priority": "1",
+        "Status": "Enabled"
+    }]
+}
+
+minioClient.setBucketReplication('bucketname',replicationConfig, function (err){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+
+```
+
+<a name="getBucketReplication"></a>
+### getBucketReplication(bucketName, callback)
+
+Get replication config of a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err, replicationConfig)` | _function_ | Callback is called with `err` in case of error. else returns the info in`replicationConfig` ,which contains`{role: __string__, rules:__Array__ }`. |
+
+__Example__
+```js
+minioClient.getBucketReplication('bucketname', function (err,replicationConfig){
+  if (err) {
+    return console.log(err)
+  }
+  console.log(replicationConfig)
+})
+
+```
+
+
+<a name="removeBucketReplication"></a>
+### removeBucketReplication(bucketName, callback)
+
+Remove replication config of a Bucket
+
+__Parameters__
+
+
+| Param  |  Type | Description  |
+| ---| ---|---|
+| `bucketname`  | _string_  |  Name of the bucket. |
+|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+
+__Example__
+```js
+minioClient.removeBucketReplication('bucketname', function (err,replicationConfig){
+  if (err) {
+    return console.log(err)
+  }
+  console.log("Success")
+})
+
 ```
 
 <a name="setBucketTagging"></a>

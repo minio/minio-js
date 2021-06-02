@@ -189,6 +189,9 @@ The full API Reference is available here.
 * [remove-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.js)
 * [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
 * [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
+* [set-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-replication.js)
+* [get-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-replication.js)
+* [remove-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.js)
 
 #### Full Examples : File Object Operations
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
