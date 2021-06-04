@@ -1650,7 +1650,7 @@ __Parameters__
 | `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
 
 
-__Example__
+__Example 1__
 
 Set Legal hold of an object.
 ```js
@@ -1662,7 +1662,7 @@ minioClient.setObjectLegalHold('bucketName', 'objectName', {Status:"ON"}, functi
 })
 ```
 
-__Example 1__
+__Example 2__
 
 Set Legal hold of an object with versionId.
 ```js
