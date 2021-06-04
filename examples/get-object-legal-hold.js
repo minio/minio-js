@@ -28,7 +28,7 @@ var s3Client = new Minio.Client({
 //Get Legalhold config
 s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function(err, res) {
   if (err) {
-    return console.log('Unable to get legal hold config for the object', err)
+    return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
   }
   console.log(res)
 })
@@ -36,7 +36,19 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function(err, res) {
 //With versionId
 s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' }, function(err, res) {
   if (err) {
-    return console.log('Unable to get legal hold config for the object', err)
+    return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
   }
   console.log(res)
 })
+
+//Promise based version:
+const objectLegalHoldPromise = s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' })
+objectLegalHoldPromise.then((data) => {
+  console.log("Success...", data)
+})
+  .catch((e)=>{
+    // Print only the error message.  if called on an object without object lock config.
+    // e.g: "The specified object does not have a ObjectLock configuration"
+    console.log(e.message) 
+      
+  })

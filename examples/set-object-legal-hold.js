@@ -30,7 +30,7 @@ s3Client.setObjectLegalHold('bucketName', 'objectName', {status:"ON"}, function(
   if (err) {
     return console.log('Unable to set legal hold config for the object', err)
   }
-  console.log('Success', res)
+  console.log('Success')
 })
 
 //Set legal hold config of an object with versionId.
@@ -38,5 +38,5 @@ s3Client.setObjectLegalHold('bucketName', 'objectName', { status:"ON", versionId
   if (err) {
     return console.log('Unable to set legal hold config for the object version', err)
   }
-  console.log('Success', res)
+  console.log('Success')
 })
