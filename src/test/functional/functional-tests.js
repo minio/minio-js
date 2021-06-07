@@ -2374,4 +2374,120 @@ describe('functional tests', function() {
     //https://docs.min.io/minio/baremetal/replication/replication-overview.html#minio-bucket-replication-clientside
   })
 
+  describe('Object Legal hold API Tests', ()=>{
+    //Isolate the bucket/object for easy debugging and tracking.
+    //Gateway mode does not support this header.
+    let versionId = null
+    describe('Object Legal hold get/set API Test', function () {
+      const objLegalHoldBucketName = "minio-js-test-legalhold-" + uuid.v4()
+      const objLegalHoldObjName = "LegalHoldObject"
+      let isFeatureSupported = false
+
+
+      step(`Check if bucket with object lock can be created:_bucketName:${objLegalHoldBucketName}`, done => {
+        client.makeBucket(objLegalHoldBucketName, {ObjectLocking: true}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          isFeatureSupported = true
+          if (err) return done(err)
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}, stream:100Kib_`, done => {
+        if (isFeatureSupported) {
+          client.putObject(objLegalHoldBucketName, objLegalHoldObjName, readableStream(_1byte), _1byte.length, {})
+            .then(() => done())
+            .catch(done)
+        } else {
+          done()
+        }
+      })
+
+      step(`statObject(bucketName, objectName, statOpts)_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.statObject(objLegalHoldBucketName, objLegalHoldObjName, {}, (e, res) => {
+            versionId = res.versionId
+            done()
+          })
+        } else {
+          done()
+        }
+      })
+
+      step(`setObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+      })
+
+      step(`setObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {status:"ON", versionId:versionId}, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+
+      })
+
+      step(`getObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.getObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+      })
+
+      step(`setObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {status:"OFF", versionId:versionId}, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+
+      })
+
+      step(`getObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if (isFeatureSupported) {
+          client.getObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {versionId:versionId}, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+
+      })
+
+      step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
+        if(isFeatureSupported) {
+          client.removeObject(objLegalHoldBucketName, objLegalHoldObjName, {versionId:versionId, governanceBypass:true}, () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+      step(`removeBucket(bucketName, )_bucketName:${objLegalHoldBucketName}`, done => {
+        if(isFeatureSupported) {
+          client.removeBucket(objLegalHoldBucketName,  () => {
+            done()
+          })
+        }else{
+          done()
+        }
+
+      })
+
+    })})
 })

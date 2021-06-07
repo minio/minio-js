@@ -210,6 +210,8 @@ The full API Reference is available here.
 * [put-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/put-object-tagging.js)
 * [get-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/get-object-tagging.js)
 * [remove-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
+* [set-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.js)
+* [get-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.js)
 
 #### Full Examples : Presigned Operations
 * [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)

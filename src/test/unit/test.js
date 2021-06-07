@@ -1342,5 +1342,90 @@ describe('Client', function() {
     })
   })
 
+
+  describe('Object Legal Hold APIs', ()=> {
+    describe('getObjectLegalHold(bucketName, objectName, getOpts={}, cb)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.getObjectLegalHold(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.getObjectLegalHold('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on null objectName', (done) => {
+        try {
+          client.getObjectLegalHold('my-bucket', null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null getOpts', (done) => {
+        try {
+          client.getObjectLegalHold('my-bucker', 'my-object', null,  function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+
+    describe('setObjectLegalHold(bucketName, objectName, setOpts={}, cb)', () => {
+      it('should fail on null bucket', (done) => {
+        try {
+          client.setObjectLegalHold(null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty bucket', (done) => {
+        try {
+          client.setObjectLegalHold('', function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+
+      it('should fail on null objectName', (done) => {
+        try {
+          client.setObjectLegalHold('my-bucket', null, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on null setOpts', (done) => {
+        try {
+          client.setObjectLegalHold('my-bucker', 'my-object', null,  function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+      it('should fail on empty versionId', (done) => {
+        try {
+          client.setObjectLegalHold('my-bucker', 'my-object', {}, function () {
+          })
+        } catch (e) {
+          done()
+        }
+      })
+    })
+  })
+
+
+
 })
 

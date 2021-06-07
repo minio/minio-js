@@ -379,3 +379,8 @@ export const RETENTION_VALIDITY_UNITS={
   DAYS:"Days",
   YEARS:"Years"
 }
+
+export const LEGAL_HOLD_STATUS={
+  ENABLED:"ON",
+  DISABLED:"OFF"
+}
