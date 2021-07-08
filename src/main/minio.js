@@ -161,7 +161,31 @@ export class Client {
     // header for signature calculation.
     this.enableSHA256 = !this.anonymous && !params.useSSL
 
+    this.s3AccelerateEndpoint = ( params.s3AccelerateEndpoint || null )
     this.reqOptions = {}
+  }
+
+  //This is s3 Specific and does not hold validity in any other Object storage.
+  getAccelerateEndPointIfSet(bucketName, objectName){
+    if (!_.isEmpty(this.s3AccelerateEndpoint)  && !_.isEmpty(bucketName)  && !_.isEmpty(objectName) ) {
+      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
+      // Disable transfer acceleration for non-compliant bucket names.
+      if (bucketName.indexOf(".")!== -1) {
+        throw new Error(`Transfer Acceleration is not supported for non compliant bucket:${bucketName}`)
+      }
+      // If transfer acceleration is requested set new host.
+      // For more details about enabling transfer acceleration read here.
+      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
+      return this.s3AccelerateEndpoint
+    }
+    return  false
+  }
+
+  /**
+   * @param endPoint _string_ valid S3 acceleration end point
+   */
+  setS3TransferAccelerate(endPoint){
+    this.s3AccelerateEndpoint = endPoint
   }
 
   // Sets the supported request options.
@@ -204,7 +228,12 @@ export class Client {
     reqOptions.host = this.host
     // For Amazon S3 endpoint, get endpoint based on region.
     if (isAmazonEndpoint(reqOptions.host)) {
-      reqOptions.host = getS3Endpoint(region)
+      const accelerateEndPoint = this.getAccelerateEndPointIfSet(bucketName, objectName)
+      if (accelerateEndPoint ) {
+        reqOptions.host = `${accelerateEndPoint}`
+      }else {
+        reqOptions.host = getS3Endpoint(region)
+      }
     }
 
     if (virtualHostStyle && !opts.pathStyle) {

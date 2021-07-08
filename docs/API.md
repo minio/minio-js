@@ -27,35 +27,35 @@ var s3Client = new Minio.Client({
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
-| Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations |
-| ------------- |-------------| -----| ----- |
-| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
-| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  |
-| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
-| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
-| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
-| [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    |
-| [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    |
-| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  |
-| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  |
-| [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    |
-| [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    |
-| [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    |
-| [`setObjectLockConfig`](#setObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) |
-| [`getObjectLockConfig`](#getObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) |
-| [`setBucketEncryption`](#setBucketEncryption)     |   |
-| [`removeBucketEncryption`](#removeBucketEncryption)  |    |
-| [`setBucketReplication`](#setBucketReplication)|  |
-| [`getBucketReplication`](#getBucketReplication)|   |
-| [`removeBucketReplication`](#removeBucketReplication)|  |
-| [`setBucketEncryption`](#setBucketEncryption)     |  |
-| [`getBucketEncryption`](#getBucketEncryption)     |  |
-| [`removeBucketEncryption`](#removeBucketEncryption)  |    |
+| Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations | Custom Settings |
+| ------------- |-------------| -----| ----- | ----- |
+| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) | [`setS3TransferAccelerate`](#setS3TransferAccelerate)|
+| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) | |
+| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) | |
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | |
+| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy) |
+| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)| |
+| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) | |
+| [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    | |
+| [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    | |
+| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload)  | |
+| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  | |
+| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  | |
+| [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    | |
+| [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    | |
+| [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    | |
+| [`setObjectLockConfig`](#setObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
+| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
+| [`getObjectLockConfig`](#getObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
+| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
+| [`setBucketEncryption`](#setBucketEncryption)     |  | |
+| [`removeBucketEncryption`](#removeBucketEncryption)  |    | |
+| [`setBucketReplication`](#setBucketReplication)|  | |
+| [`getBucketReplication`](#getBucketReplication)|   | |
+| [`removeBucketReplication`](#removeBucketReplication)|  | |
+| [`setBucketEncryption`](#setBucketEncryption)     |  | |
+| [`getBucketEncryption`](#getBucketEncryption)     |  | |
+| [`removeBucketEncryption`](#removeBucketEncryption)  |    | |
 
 
 ## 1.  Constructor
@@ -2037,8 +2037,21 @@ minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function(er
   console.log('Bucket policy set')
 })
 ```
+## 6. Custom Settings
 
-## 6. HTTP request options
+<a name="setS3TransferAccelerate"></a>
+### setS3TransferAccelerate(endpoint)
+Set AWS S3 transfer acceleration endpoint for all API requests hereafter.
+NOTE: This API applies only to AWS S3 and is a no operation for S3 compatible object storage services.
+
+__Parameters__
+
+| Param  | Type  | Description  |
+|---|---|---|
+|`endpoint`  | _string_  | Set to new S3 transfer acceleration endpoint.|
+
+
+## 7. HTTP request options
 ### setRequestOptions(options)
 
 Set the HTTP/HTTPS request options. Supported options are `agent` ([http.Agent()](https://nodejs.org/api/http.html#http_class_http_agent)), `family` ([IP address family to use while resolving `host` or `hostname`](https://nodejs.org/api/http.html#http_http_request_url_options_callback)), and tls related options ('agent', 'ca', 'cert', 'ciphers', 'clientCertEngine', 'crl', 'dhparam', 'ecdhCurve', 'honorCipherOrder', 'key', 'passphrase', 'pfx', 'rejectUnauthorized', 'secureOptions', 'secureProtocol', 'servername', 'sessionIdContext') documented [here](https://nodejs.org/api/tls.html#tls_tls_createsecurecontext_options)
