@@ -112,7 +112,7 @@ export function parseListMultipart(xml) {
     toArray(xmlobj.Upload).forEach(upload => {
       var key = upload.Key
       var uploadId = upload.UploadId
-      var initiator = {id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName}
+      var initiator = {id: upload.RequestInitiator.ID, displayName: upload.RequestInitiator.DisplayName}
       var owner = {id: upload.Owner.ID, displayName: upload.Owner.DisplayName}
       var storageClass = upload.StorageClass
       var initiated = new Date(upload.Initiated)
