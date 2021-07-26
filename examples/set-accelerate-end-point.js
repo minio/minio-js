@@ -1,9 +1,5 @@
-
-
-
-
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2020 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +36,6 @@ s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-st
   if (e) {
     return console.log(e.message)
   }
-  console.log("Successfully uploaded the buffer to accelerated end point")
+  console.log("Success")
 })
 
