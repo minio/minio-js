@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs'
-import Crypto from 'crypto'
 import Http from 'http'
 import Https from 'https'
 import Stream from 'stream'
@@ -27,7 +26,7 @@ import querystring from 'querystring'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
-import util from 'util'
+import { TextEncoder } from "web-encoding"
 
 import {
   extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
@@ -36,6 +35,7 @@ import {
   isString, isObject, isArray, isValidDate, pipesetup,
   readableStream, isReadableStream, isVirtualHostStyle,
   insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
+  toMd5, toSha256,
   RETENTION_MODES, RETENTION_VALIDITY_UNITS, LEGAL_HOLD_STATUS
 } from './helpers.js'
 
@@ -366,7 +366,7 @@ export class Client {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
-    if (this.enableSHA256) sha256sum = Crypto.createHash('sha256').update(payload).digest('hex')
+    if (this.enableSHA256) sha256sum = toSha256(payload)
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb)
   }
@@ -1607,7 +1607,7 @@ export class Client {
       result.listOfList.push(result.list)
     }
 
-    const encoder = new util.TextEncoder()
+    const encoder = new TextEncoder()
 
     async.eachSeries(result.listOfList, (list, callback) => {
       var deleteObjects={"Delete":[{Quiet:true}], }
@@ -1626,9 +1626,8 @@ export class Client {
       let payload = builder.buildObject(deleteObjects)
       payload = encoder.encode(payload)
       const headers = {}
-      const md5digest = Crypto.createHash('md5').update(payload).digest()
 
-      headers['Content-MD5'] = md5digest.toString('base64')
+      headers['Content-MD5'] = toMd5(payload)
 
       this.makeRequest({ method, bucketName, query, headers}, payload, 200, '', false, (e) => {
         if (e) return callback(e)
@@ -2319,19 +2318,18 @@ export class Client {
         }
       }
     }
-    const encoder = new util.TextEncoder()
+    const encoder = new TextEncoder()
     const headers ={}
     const builder = new xml2js.Builder({ headless:true,renderOpts:{'pretty':false},})
     let payload = builder.buildObject(taggingConfig)
     payload = encoder.encode(payload)
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-
+      
     const requestOptions = { method, bucketName, query, headers }
 
     if(objectName){
       requestOptions['objectName']=objectName
     }
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest(requestOptions, payload, 200, '', false, cb)
 
@@ -2540,14 +2538,13 @@ export class Client {
     const method = 'PUT'
     const query="lifecycle"
 
-    const encoder = new util.TextEncoder()
+    const encoder = new TextEncoder()
     const headers ={}
     const builder = new xml2js.Builder({ rootName:'LifecycleConfiguration', headless:true, renderOpts:{'pretty':false},})
     let payload = builder.buildObject(policyConfig)
     payload = encoder.encode(payload)
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
     const requestOptions = { method, bucketName, query, headers }
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest(requestOptions, payload, 200, '', false, cb)
 
@@ -2655,8 +2652,7 @@ export class Client {
     const payload = builder.buildObject(config)
 
     const headers = {}
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] =toMd5(payload)
 
     this.makeRequest({method, bucketName, query, headers}, payload, 200, '', false, cb)
   }
@@ -2736,8 +2732,7 @@ export class Client {
 
     let payload = builder.buildObject(params)
 
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] = toMd5(payload)
 
     //FIXME minio Server returns 204 but AWS returns 200. So in aws, though the operation is success, error is thrown.
     this.makeRequest({method, bucketName, objectName, query, headers}, payload, 204, '', false, cb)
@@ -2817,8 +2812,7 @@ export class Client {
     let payload = builder.buildObject(encryptionObj)
 
     const headers = {}
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] =toMd5(payload)
 
     this.makeRequest({method, bucketName, query,headers}, payload, 200, '', false, cb)
   }
@@ -2896,8 +2890,7 @@ export class Client {
 
     let payload = builder.buildObject(replicationParamsConfig)
 
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] =toMd5(payload)
 
     this.makeRequest({method, bucketName,  query, headers}, payload, 200, '', false, cb)
   }
@@ -3036,8 +3029,7 @@ export class Client {
     const builder = new xml2js.Builder({rootName:'LegalHold', renderOpts:{'pretty':false}, headless:true})
     const payload = builder.buildObject(config)
     const headers = {}
-    const md5digest = Crypto.createHash('md5').update(payload).digest()
-    headers['Content-MD5'] = md5digest.toString('base64')
+    headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest({method, bucketName, objectName, query, headers}, payload, 200, '', false, cb)
 
