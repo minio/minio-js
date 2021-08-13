@@ -60,7 +60,7 @@ export default class ObjectUploader extends Transform {
   _transform(chunk, encoding, callback) {
     this.emptyStream = false
     let method = 'PUT'
-    let headers = Object.assign({}, this.metaData, {'Content-Length': chunk.length})
+    let headers = {'Content-Length': chunk.length}
     let md5digest = ''
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
@@ -75,7 +75,9 @@ export default class ObjectUploader extends Transform {
     if (this.partNumber == 1 && chunk.length < this.partSize) {
       // PUT the chunk in a single request — use an empty query.
       let options = {
-        method, headers,
+        method,
+        // Set user metadata as this is not a multipart upload
+        headers: Object.assign({}, this.metaData, headers),
         query: '',
         bucketName: this.bucketName,
         objectName: this.objectName

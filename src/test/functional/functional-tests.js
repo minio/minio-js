@@ -408,9 +408,9 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step(`putObject(bucketName, objectName, stream, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
+    step(`putObject(bucketName, objectName, stream, metadata, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
       var stream = readableStream(_65mb)
-      client.putObject(bucketName, _65mbObjectName, stream, () => {
+      client.putObject(bucketName, _65mbObjectName, stream, metaData, () => {
         setTimeout(() => {
           if (Object.values(httpAgent.sockets).length === 0) return done()
           done(new Error('http request did not release network socket'))
@@ -471,6 +471,10 @@ describe('functional tests', function() {
       client.statObject(bucketName, _65mbObjectName, (e, stat) => {
         if (e) return done(e)
         if (stat.size !== _65mb.length) return done(new Error('size mismatch'))
+        if (`${metaData.randomstuff}` !== stat.metaData.randomstuff) return done(new Error('metadata "randomstuff" mismatch'))
+        if (`${metaData["X-Amz-Meta-Testing"]}` !== stat.metaData["testing"]) return done(new Error('metadata "testing" mismatch'))
+        if (`${metaData["Content-Type"]}` !== stat.metaData["content-type"]) return done(new Error('metadata "content-type" mismatch'))
+        if (`${metaData["Content-Language"]}` !== stat.metaData["content-language"]) return done(new Error('metadata "content-language" mismatch'))
         done()
       })
     })
