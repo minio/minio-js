@@ -16,6 +16,7 @@
 
 import stream from 'stream'
 import mime from 'mime-types'
+var Crypto = require('crypto')
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -383,4 +384,16 @@ export const RETENTION_VALIDITY_UNITS={
 export const LEGAL_HOLD_STATUS={
   ENABLED:"ON",
   DISABLED:"OFF"
+}
+
+const objectToBuffer = (payload) =>{
+  const payloadBuf = Buffer.from(Buffer.from(JSON.stringify(payload)))
+  return payloadBuf
+}
+
+export const toMd5=(payload)=>{
+  return Crypto.createHash('md5').update(objectToBuffer(payload)).digest().toString('base64')
+}
+export const toSha256=(payload)=>{
+  return Crypto.createHash('sha256').update(payload).digest('hex')
 }

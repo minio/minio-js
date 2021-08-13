@@ -731,7 +731,7 @@ describe('functional tests', function() {
 
     step(`setBucketPolicy(bucketName, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, done => {
       client.setBucketPolicy(bucketName, policy, err => {
-        if (err && err.code == 'NotImplemented') return done()
+        if (err && err.code === 'NotImplemented') return done()
         if (err) return done(err)
         done()
       })
@@ -739,7 +739,7 @@ describe('functional tests', function() {
 
     step(`getBucketPolicy(bucketName, cb)_bucketName:${bucketName}_`, done => {
       client.getBucketPolicy(bucketName, (err, response) => {
-        if (err && err.code == 'NotImplemented') return done()
+        if (err && err.code === 'NotImplemented') return done()
         if (err) return done(err)
         if (!response) {
           return done(new Error(`policy is empty`))
@@ -905,22 +905,22 @@ describe('functional tests', function() {
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
           if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
-          if (respHeaders['response-content-type'] != response.headers['content-type']) {
+          if (respHeaders['response-content-type'] !== response.headers['content-type']) {
             return done(new Error(`content-type header mismatch`))
           }
-          if (respHeaders['response-content-language'] != response.headers['content-language']) {
+          if (respHeaders['response-content-language'] !== response.headers['content-language']) {
             return done(new Error(`content-language header mismatch`))
           }
-          if (respHeaders['response-expires'] != response.headers['expires']) {
+          if (respHeaders['response-expires'] !== response.headers['expires']) {
             return done(new Error(`expires header mismatch`))
           }
-          if (respHeaders['response-cache-control'] != response.headers['cache-control']) {
+          if (respHeaders['response-cache-control'] !== response.headers['cache-control']) {
             return done(new Error(`cache-control header mismatch`))
           }
-          if (respHeaders['response-content-disposition'] != response.headers['content-disposition']) {
+          if (respHeaders['response-content-disposition'] !== response.headers['content-disposition']) {
             return done(new Error(`content-disposition header mismatch`))
           }
-          if (respHeaders['response-content-encoding'] != response.headers['content-encoding']) {
+          if (respHeaders['response-content-encoding'] !== response.headers['content-encoding']) {
             return done(new Error(`content-encoding header mismatch`))
           }
           response.on('data', () => {})
@@ -1071,7 +1071,7 @@ describe('functional tests', function() {
             return done(new Error(`listObjects should throw exception when empty bucketname is passed`))
           })
       } catch (e) {
-        if (e.name == 'InvalidBucketNameError') {
+        if (e.name === 'InvalidBucketNameError') {
           done()
         } else {
           done(e)
@@ -1213,7 +1213,7 @@ describe('functional tests', function() {
       step(`listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, prefix:photos/, suffix:.jpg, events:bad_`, done => {
         let poller = client.listenBucketNotification(bucketName, 'photos/', '.jpg', ['bad'])
         poller.on('error', error => {
-          if (error.code != 'NotImplemented') {
+          if (error.code !== 'NotImplemented') {
             assert.match(error.message, /A specified event is not supported for notifications./)
             assert.equal(error.code, 'InvalidArgument')
           }
@@ -1236,7 +1236,7 @@ describe('functional tests', function() {
         })
         setTimeout(() => { // Give it some time for the notification to be setup.
           if (pollerError) {
-            if (pollerError.code != 'NotImplemented') {
+            if (pollerError.code !== 'NotImplemented') {
               done(pollerError)
             } else {
               done()
@@ -1263,7 +1263,7 @@ describe('functional tests', function() {
         let poller = client.listenBucketNotification(bucketName, '', '', ['s3:ObjectRemoved:*'])
         poller.on('notification', assert.fail)
         poller.on('error', error => {
-          if (error.code != 'NotImplemented') {
+          if (error.code !== 'NotImplemented') {
             done(error)
           }
         })
