@@ -228,6 +228,9 @@ The full API Reference is available here.
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
 * [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
 
+## Custom Settings
+* [setAccelerateEndPoint](https://github.com/minio/minio-js/blob/master/examples/set-accelerate-end-point.js)
+
 ## Explore Further
 * [Complete Documentation](https://docs.min.io)
 * [MinIO JavaScript Client SDK API Reference](https://docs.min.io/docs/javascript-client-api-reference)
