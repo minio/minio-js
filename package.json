@@ -35,6 +35,7 @@
     "block-stream2": "^2.0.0",
     "es6-error": "^4.1.1",
     "fast-xml-parser": "^3.17.5",
+    "ipaddr.js": "^2.0.1",
     "json-stream": "^1.0.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.14",

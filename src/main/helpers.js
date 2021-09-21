@@ -17,6 +17,7 @@
 import stream from 'stream'
 import mime from 'mime-types'
 var Crypto = require('crypto')
+const ipaddr = require('ipaddr.js')
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -102,10 +103,9 @@ export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
   return isAmazonEndpoint(endpoint) || !pathStyle
 }
 
-var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/
 
 export function isValidIP(ip) {
-  return ipv4Regex.test(ip)
+  return ipaddr.isValid(ip)
 }
 
 // isValidEndpoint - true if endpoint is valid domain.
