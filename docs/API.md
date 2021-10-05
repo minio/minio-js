@@ -285,8 +285,10 @@ __Example__
 
 
 ```js
+var data = []
 var stream = minioClient.listObjects('mybucket','', true)
-stream.on('data', function(obj) { console.log(obj) } )
+stream.on('data', function(obj) { data.push(obj) } )
+stream.on("end", function (obj) { console.log(data) })
 stream.on('error', function(err) { console.log(err) } )
 ```
 
@@ -294,8 +296,10 @@ __Example1__
 To get Object versions
 
 ```js
+var data = []
 var stream = minioClient.listObjects('mybucket','', true, {IncludeVersion:true})
-stream.on('data', function(obj) { console.log(obj) } )
+stream.on('data', function(obj) { data.push(obj) } )
+stream.on("end", function (obj) { console.log(data) })
 stream.on('error', function(err) { console.log(err) } )
 ```
 
