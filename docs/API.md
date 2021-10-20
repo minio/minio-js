@@ -46,8 +46,8 @@ var s3Client = new Minio.Client({
 | [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    | |
 | [`setObjectLockConfig`](#setObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
 | [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
-| [`getObjectLockConfig`](#getObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
+| [`getObjectLockConfig`](#getObjectLockConfig)    |    | |
+| [`getBucketEncryption`](#getBucketEncryption)     | | |
 | [`setBucketEncryption`](#setBucketEncryption)     |  | |
 | [`removeBucketEncryption`](#removeBucketEncryption)  |    | |
 | [`setBucketReplication`](#setBucketReplication)|  | |
