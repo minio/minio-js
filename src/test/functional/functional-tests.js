@@ -119,7 +119,7 @@ describe('functional tests', function() {
   }
 
   var tmpDir = os.tmpdir()
-    
+
   function readableStream(data) {
     var s = new stream.Readable()
     s._read = () => {}
@@ -127,7 +127,7 @@ describe('functional tests', function() {
     s.push(null)
     return s
   }
-  
+
   var traceStream
 
   // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
@@ -1200,7 +1200,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step(`removeObjects with non latin charactes`, done => {
+    step(`removeObjects with non latin characters`, done => {
       client.removeObjects(bucketName, ['fileΩ'])
         .then(() => done())
         .catch(done)
@@ -1573,7 +1573,7 @@ describe('functional tests', function() {
 
   describe('Versioning tests on a bucket for Deletion of Multiple versions', function () {
     //Isolate the bucket/object for easy debugging and tracking.
-    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versionedBucketName = "minio-js-test-version-" + uuid.v4()
     const versioned_100kbObjectName = 'datafile-100-kB'
     const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
 
@@ -1653,7 +1653,7 @@ describe('functional tests', function() {
   })
 
   describe('Bucket Tags API', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
+    // Isolate the bucket/object for easy debugging and tracking.
     const  tagsBucketName = "minio-js-test-tags-" + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
     after((done) => client.removeBucket(tagsBucketName, done))
@@ -1661,12 +1661,14 @@ describe('functional tests', function() {
     describe('set, get and remove Tags on a bucket', function () {
       step(`Set tags on a bucket_bucketName:${tagsBucketName}`, done => {
         client.setBucketTagging(tagsBucketName, {'test-tag-key':'test-tag-value'}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
         })
       })
       step(`Get tags on a bucket_bucketName:${tagsBucketName}`, done => {
         client.getBucketTagging(tagsBucketName, (err, tagList) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           if(isArray(tagList)) {
             done()
@@ -1676,6 +1678,7 @@ describe('functional tests', function() {
 
       step(`remove Tags on a bucket_bucketName:${tagsBucketName}`, done => {
         client.removeBucketTagging(tagsBucketName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
         })
@@ -1706,6 +1709,7 @@ describe('functional tests', function() {
 
       step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
         client.setObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
         })
@@ -1713,6 +1717,7 @@ describe('functional tests', function() {
 
       step(`getObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
         client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           if(isArray(tagList)) {
             done()
@@ -1722,6 +1727,7 @@ describe('functional tests', function() {
 
       step(`removeObjectTagging on an object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
         client.removeObjectTagging(tagsBucketName, tagObjName, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
           if (err) return done()
           done()
         })
@@ -1800,6 +1806,7 @@ describe('functional tests', function() {
 
         if(isVersioningSupported) {
           client.removeObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err) => {
+            if (err && err.code === 'NotImplemented') return done()
             if (err) return done()
             done()
           })
@@ -2289,8 +2296,10 @@ describe('functional tests', function() {
             isEncryptionSupported = false
             return done()
           }
+          if (err && err.code === 'ServerSideEncryptionConfigurationNotFoundError') {
+            return done()
+          }
           if (err) return done(err)
-
           done()
         })
     })
