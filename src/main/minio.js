@@ -1253,7 +1253,7 @@ export class Client {
     if (!isObject(listQueryOpts)) {
       throw new TypeError('listQueryOpts should be of type "object"')
     }
-   
+
     if (!isString(Delimiter)) {
       throw new TypeError('Delimiter should be of type "string"')
     }
@@ -1639,18 +1639,15 @@ export class Client {
     const encoder = new TextEncoder()
 
     async.eachSeries(result.listOfList, (list, callback) => {
-      var deleteObjects={"Delete":[{Quiet:true}], }
+      var objects=[]
       list.forEach(function(value){
-        //Backward Compatibility
-        let entry
-        if(isObject(value)){
-          entry={"Object": [{"Key": value.name,  "VersionId":value.versionId}]}
-        }else{
-          entry={"Object": [{"Key": value}]}
+        if (isObject(value)) {
+          objects.push({"Key": value.name,  "VersionId": value.versionId})
+        } else {
+          objects.push({"Key": value})
         }
-
-        deleteObjects["Delete"].push(entry)
       })
+      let deleteObjects = {"Delete": {"Quiet": true, "Object": objects}}
       const builder = new xml2js.Builder({ headless: true })
       let payload = builder.buildObject(deleteObjects)
       payload = encoder.encode(payload)
@@ -2352,7 +2349,7 @@ export class Client {
     const builder = new xml2js.Builder({ headless:true,renderOpts:{'pretty':false},})
     let payload = builder.buildObject(taggingConfig)
     payload = encoder.encode(payload)
-      
+
     const requestOptions = { method, bucketName, query, headers }
 
     if(objectName){
