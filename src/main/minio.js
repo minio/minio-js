@@ -165,7 +165,7 @@ export class Client {
     this.reqOptions = {}
   }
 
-  //This is s3 Specific and does not hold validity in any other Object storage.
+  // This is s3 Specific and does not hold validity in any other Object storage.
   getAccelerateEndPointIfSet(bucketName, objectName){
     if (!_.isEmpty(this.s3AccelerateEndpoint)  && !_.isEmpty(bucketName)  && !_.isEmpty(objectName) ) {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
@@ -370,7 +370,7 @@ export class Client {
   // we parse the XML error and call the callback with the error message.
   // A valid region is passed by the calls - listBuckets, makeBucket and
   // getBucketRegion.
-  makeRequest(options, payload, statusCode, region, returnResponse, cb) {
+  makeRequest(options, payload, statusCodes, region, returnResponse, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
@@ -378,9 +378,11 @@ export class Client {
       // Buffer is of type 'object'
       throw new TypeError('payload should be of type "string" or "Buffer"')
     }
-    if (!isNumber(statusCode)) {
-      throw new TypeError('statusCode should be of type "number"')
-    }
+    statusCodes.forEach(statusCode => {
+      if (!isNumber(statusCode)) {
+        throw new TypeError('statusCode should be of type "number"')
+      }
+    })
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
     }
@@ -397,12 +399,12 @@ export class Client {
     var sha256sum = ''
     if (this.enableSHA256) sha256sum = toSha256(payload)
     var stream = readableStream(payload)
-    this.makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb)
+    this.makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb)
   }
 
   // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
-  makeRequestStream(options, stream, sha256sum, statusCode, region, returnResponse, cb) {
+  makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb) {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
@@ -412,9 +414,11 @@ export class Client {
     if (!isString(sha256sum)) {
       throw new TypeError('sha256sum should be of type "string"')
     }
-    if (!isNumber(statusCode)) {
-      throw new TypeError('statusCode should be of type "number"')
-    }
+    statusCodes.forEach(statusCode => {
+      if (!isNumber(statusCode)) {
+        throw new TypeError('statusCode should be of type "number"')
+      }
+    })
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
     }
@@ -454,7 +458,7 @@ export class Client {
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, response => {
-        if (statusCode !== response.statusCode) {
+        if (!statusCodes.includes(response.statusCode)) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
           // in future, if AWS S3 decides to send a different status code or
@@ -528,12 +532,12 @@ export class Client {
     //   obtained region.
     var pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', 200, 'us-east-1', true, (e, response) => {
+    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], 'us-east-1', true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
           if (!region) return cb(e)
-          this.makeRequest({method, bucketName, query}, '', 200, region, true, (e, response) => {
+          this.makeRequest({method, bucketName, query}, '', [200], region, true, (e, response) => {
             if (e) return cb(e)
             extractRegion(response)
           })
@@ -557,7 +561,7 @@ export class Client {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
-    //Backward Compatibility
+    // Backward Compatibility
     if(isObject(region)){
       cb= makeOpts
       makeOpts=region
@@ -618,7 +622,7 @@ export class Client {
     }
 
     if (!region) region = 'us-east-1'
-    this.makeRequest({method, bucketName, headers}, payload, 200, region, false, cb)
+    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, cb)
   }
 
   // List of buckets created.
@@ -634,7 +638,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', 200, 'us-east-1', true, (e, response) => {
+    this.makeRequest({method}, '', [200], 'us-east-1', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
@@ -724,7 +728,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'HEAD'
-    this.makeRequest({method, bucketName}, '', 200, '', false, err => {
+    this.makeRequest({method, bucketName}, '', [200], '', false, err => {
       if (err) {
         if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
         return cb(err)
@@ -746,7 +750,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName}, '', 204, '', false, (e) => {
+    this.makeRequest({method, bucketName}, '', [204], '', false, (e) => {
       // If the bucket was successfully removed, remove the region map entry.
       if (!e) delete(this.regionMap[bucketName])
       cb(e)
@@ -781,7 +785,7 @@ export class Client {
       cb => {
         var method = 'DELETE'
         var query = `uploadId=${removeUploadId}`
-        this.makeRequest({method, bucketName, objectName, query}, '', 204, '', false, e => cb(e))
+        this.makeRequest({method, bucketName, objectName, query}, '', [204], '', false, e => cb(e))
       },
       cb
     )
@@ -941,14 +945,14 @@ export class Client {
       headers.range = range
     }
 
-    var expectedStatus = 200
+    var expectedStatusCodes = [200]
     if (range) {
-      expectedStatus = 206
+      expectedStatusCodes.push(206)
     }
     var method = 'GET'
 
     var query = querystring.stringify(getOpts)
-    this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatus, '', true, cb)
+    this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatusCodes, '', true, cb)
   }
 
   // Uploads the object using contents from a file
@@ -981,7 +985,7 @@ export class Client {
     // Inserts correct `content-type` attribute based on metaData and filePath
     metaData = insertContentType(metaData, filePath)
 
-    //Updates metaData to have the correct prefix if needed
+    // Updates metaData to have the correct prefix if needed
     metaData = prependXAMZMeta(metaData)
     var size
     var partSize
@@ -1057,7 +1061,7 @@ export class Client {
               .on('data', data => {
                 var md5sumHex = (Buffer.from(data.md5sum, 'base64')).toString('hex')
                 if (part && (md5sumHex === part.etag)) {
-                  //md5 matches, chunk already uploaded
+                  // md5 matches, chunk already uploaded
                   partsDone.push({part: partNumber, etag: part.etag})
                   partNumber++
                   uploadedSize += length
@@ -1131,7 +1135,7 @@ export class Client {
       metaData = size
     }
 
-    //Ensures Metadata has appropriate prefix for A3 API
+    // Ensures Metadata has appropriate prefix for A3 API
     metaData = prependXAMZMeta(metaData)
     if (typeof stream === 'string' || stream instanceof Buffer) {
       // Adapts the non-stream interface into a stream.
@@ -1224,7 +1228,7 @@ export class Client {
     }
 
     var method = 'PUT'
-    this.makeRequest({method, bucketName, objectName, headers}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, headers}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getCopyObjectTransformer()
       pipesetup(response, transformer)
@@ -1294,7 +1298,7 @@ export class Client {
 
     var method = 'GET'
     var transformer = transformers.getListObjectsTransformer()
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })
@@ -1430,7 +1434,7 @@ export class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListObjectsV2Transformer()
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })
@@ -1519,7 +1523,7 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    //backward compatibility
+    // backward compatibility
     if (isFunction(statOpts)) {
       cb = statOpts
       statOpts={}
@@ -1534,7 +1538,7 @@ export class Client {
 
     var query = querystring.stringify(statOpts)
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName, query},'' ,200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query},'' , [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       // We drain the socket so that the connection gets closed. Note that this
@@ -1567,7 +1571,7 @@ export class Client {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    //backward compatibility
+    // backward compatibility
     if (isFunction(removeOpts)) {
       cb = removeOpts
       removeOpts={}
@@ -1597,7 +1601,7 @@ export class Client {
       requestOptions['query']=query
     }
 
-    this.makeRequest(requestOptions, '', 204, '', false, cb)
+    this.makeRequest(requestOptions, '', [200, 204], '', false, cb)
   }
 
   // Remove all the objects residing in the objectsList.
@@ -1655,7 +1659,7 @@ export class Client {
 
       headers['Content-MD5'] = toMd5(payload)
 
-      this.makeRequest({ method, bucketName, query, headers}, payload, 200, '', false, (e) => {
+      this.makeRequest({ method, bucketName, query, headers}, payload, [200], '', false, (e) => {
         if (e) return callback(e)
         callback(null)
       })
@@ -1679,7 +1683,7 @@ export class Client {
 
     let method = 'GET'
     let query = 'policy'
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let policy = Buffer.from('')
@@ -1717,7 +1721,7 @@ export class Client {
       method = 'PUT'
     }
 
-    this.makeRequest({method, bucketName, query}, policy, 204, '', false, cb)
+    this.makeRequest({method, bucketName, query}, policy, [204], '', false, cb)
   }
 
   // Generate a generic presigned URL which can be
@@ -1908,7 +1912,7 @@ export class Client {
     var method = 'POST'
     let headers = Object.assign({}, metaData)
     var query = 'uploads'
-    this.makeRequest({method, bucketName, objectName, query, headers}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query, headers}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getInitiateMultipartTransformer()
       pipesetup(response, transformer)
@@ -1958,7 +1962,7 @@ export class Client {
     var payloadObject = {CompleteMultipartUpload: parts}
     var payload = Xml(payloadObject)
 
-    this.makeRequest({method, bucketName, objectName, query}, payload, 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, payload, [200], '', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, transformer)
@@ -2033,7 +2037,7 @@ export class Client {
     query += `uploadId=${uriEscape(uploadId)}`
 
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListPartsTransformer()
       pipesetup(response, transformer)
@@ -2081,7 +2085,7 @@ export class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListMultipartTransformer()
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })
@@ -2190,7 +2194,7 @@ export class Client {
 
       if (!this.enableSHA256) headers['Content-MD5'] = md5sum
       this.makeRequestStream({method, bucketName, objectName, query, headers},
-                             stream, sha256sum, 200, '', true, (e, response) => {
+                             stream, sha256sum, [200], '', true, (e, response) => {
                                if (e) return cb(e)
                                const result = {
                                  etag: sanitizeETag(response.headers.etag),
@@ -2222,7 +2226,7 @@ export class Client {
     var query = 'notification'
     var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
     var payload = builder.buildObject(config)
-    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+    this.makeRequest({method, bucketName, query}, payload, [200], '', false, cb)
   }
 
   removeAllBucketNotification(bucketName, cb) {
@@ -2240,7 +2244,7 @@ export class Client {
     }
     var method = 'GET'
     var query = 'notification'
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getBucketNotificationTransformer()
       var bucketNotification
@@ -2281,7 +2285,7 @@ export class Client {
     var method = 'GET'
     var query = "versioning"
 
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let versionConfig = Buffer.from('')
@@ -2312,7 +2316,7 @@ export class Client {
     var builder = new xml2js.Builder({rootName:'VersioningConfiguration', renderOpts:{'pretty':false}, headless:true})
     var payload = builder.buildObject(versionConfig)
 
-    this.makeRequest({method, bucketName, query}, payload, 200, '', false, cb)
+    this.makeRequest({method, bucketName, query}, payload, [200], '', false, cb)
   }
 
   /** To set Tags on a bucket or object based on the params
@@ -2357,7 +2361,7 @@ export class Client {
     }
     headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest(requestOptions, payload, 200, '', false, cb)
+    this.makeRequest(requestOptions, payload, [200], '', false, cb)
 
   }
 
@@ -2429,16 +2433,15 @@ export class Client {
     const method = 'DELETE'
     let query ="tagging"
 
-    if(removeOpts && Object.keys(removeOpts).length && removeOpts.versionId){
+    if (removeOpts && Object.keys(removeOpts).length && removeOpts.versionId) {
       query =`${query}&versionId=${removeOpts.versionId}`
     }
     const requestOptions = { method, bucketName, objectName, query }
 
-    if(objectName){
-      requestOptions['objectName']=objectName
+    if (objectName) {
+      requestOptions['objectName'] = objectName
     }
-    // FIXME: This is a hack and it will be updated when server side is fixed to send the correct '204' status code
-    this.makeRequest(requestOptions, '', 200, '', true, cb)
+    this.makeRequest(requestOptions, '', [200, 204], '', true, cb)
   }
 
   /** Remove Tags associated with a bucket
@@ -2496,7 +2499,7 @@ export class Client {
     const query ="tagging"
     const requestOptions = { method, bucketName, query }
 
-    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       var transformer = transformers.getTagsTransformer()
       if (e) return cb(e)
       let tagsList
@@ -2542,7 +2545,7 @@ export class Client {
       requestOptions['objectName']=objectName
     }
 
-    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.getTagsTransformer()
       if (e) return cb(e)
       let tagsList
@@ -2572,8 +2575,7 @@ export class Client {
     const requestOptions = { method, bucketName, query, headers }
     headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest(requestOptions, payload, 200, '', false, cb)
-
+    this.makeRequest(requestOptions, payload, [200], '', false, cb)
   }
 
   /** Remove lifecycle configuration of a bucket.
@@ -2586,7 +2588,7 @@ export class Client {
     }
     const method = 'DELETE'
     const query="lifecycle"
-    this.makeRequest({method, bucketName, query}, '', 204, '', false, cb)
+    this.makeRequest({method, bucketName, query}, '', [204], '', false, cb)
   }
 
   /** Set/Override lifecycle configuration on a bucket. if the configuration is empty, it removes the configuration.
@@ -2617,7 +2619,7 @@ export class Client {
     const query ="lifecycle"
     const requestOptions = { method, bucketName, query }
 
-    this.makeRequest(requestOptions, '', 200, '', true, (e, response) => {
+    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.lifecycleTransformer()
       if (e) return cb(e)
       let lifecycleConfig
@@ -2655,7 +2657,7 @@ export class Client {
       ObjectLockEnabled:"Enabled"
     }
     const configKeys = Object.keys(lockConfigOpts)
-    //Check if keys are present and all keys are present.
+    // Check if keys are present and all keys are present.
     if(configKeys.length > 0){
       if(_.difference(configKeys, ['unit','mode','validity']).length !== 0){
         throw new TypeError(`lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`)
@@ -2680,7 +2682,7 @@ export class Client {
     const headers = {}
     headers['Content-MD5'] =toMd5(payload)
 
-    this.makeRequest({method, bucketName, query, headers}, payload, 200, '', false, cb)
+    this.makeRequest({method, bucketName, query, headers}, payload, [200], '', false, cb)
   }
 
   getObjectLockConfig(bucketName, cb) {
@@ -2693,7 +2695,7 @@ export class Client {
     const method = 'GET'
     const query = "object-lock"
 
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let objectLockConfig = Buffer.from('')
@@ -2759,9 +2761,7 @@ export class Client {
     let payload = builder.buildObject(params)
 
     headers['Content-MD5'] = toMd5(payload)
-
-    //FIXME minio Server returns 204 but AWS returns 200. So in aws, though the operation is success, error is thrown.
-    this.makeRequest({method, bucketName, objectName, query, headers}, payload, 204, '', false, cb)
+    this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200, 204], '', false, cb)
   }
 
   getObjectRetention(bucketName ,objectName, getOpts, cb) {
@@ -2785,7 +2785,7 @@ export class Client {
       query += `&versionId=${getOpts.versionId}`
     }
 
-    this.makeRequest({method, bucketName,objectName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName,objectName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let retentionConfig = Buffer.from('')
@@ -2821,7 +2821,7 @@ export class Client {
     let encryptionObj =encryptionConfig
     if(_.isEmpty(encryptionConfig)) {
       encryptionObj={
-      //Default MinIO Server Supported Rule
+      // Default MinIO Server Supported Rule
         Rule:[
           {
             ApplyServerSideEncryptionByDefault: {
@@ -2840,7 +2840,7 @@ export class Client {
     const headers = {}
     headers['Content-MD5'] =toMd5(payload)
 
-    this.makeRequest({method, bucketName, query,headers}, payload, 200, '', false, cb)
+    this.makeRequest({method, bucketName, query,headers}, payload, [200], '', false, cb)
   }
 
   getBucketEncryption(bucketName, cb) {
@@ -2853,7 +2853,7 @@ export class Client {
     const method = 'GET'
     const query = "encryption"
 
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let bucketEncConfig = Buffer.from('')
@@ -2877,7 +2877,7 @@ export class Client {
     const method = 'DELETE'
     const query = "encryption"
 
-    this.makeRequest({method, bucketName, query}, '', 204, '', false, cb)
+    this.makeRequest({method, bucketName, query}, '', [204], '', false, cb)
   }
 
 
@@ -2918,7 +2918,7 @@ export class Client {
 
     headers['Content-MD5'] =toMd5(payload)
 
-    this.makeRequest({method, bucketName,  query, headers}, payload, 200, '', false, cb)
+    this.makeRequest({method, bucketName,  query, headers}, payload, [200], '', false, cb)
   }
 
   getBucketReplication(bucketName, cb) {
@@ -2931,7 +2931,7 @@ export class Client {
     const method = 'GET'
     const query = "replication"
 
-    this.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let replicationConfig = Buffer.from('')
@@ -2952,7 +2952,7 @@ export class Client {
     }
     const method = 'DELETE'
     const query="replication"
-    this.makeRequest({method, bucketName, query}, '', 200, '', false, cb)
+    this.makeRequest({method, bucketName, query}, '', [200, 204], '', false, cb)
   }
 
 
@@ -2987,7 +2987,7 @@ export class Client {
       query +=`&versionId=${getOpts.versionId}`
     }
 
-    this.makeRequest({method, bucketName, objectName, query}, '', 200, '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, '', [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let legalHoldConfig = Buffer.from('')
@@ -3057,9 +3057,7 @@ export class Client {
     const headers = {}
     headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest({method, bucketName, objectName, query, headers}, payload, 200, '', false, cb)
-
-
+    this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200], '', false, cb)
   }
 
   get extensions() {

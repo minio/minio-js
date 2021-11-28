@@ -329,7 +329,7 @@ export function isAmzHeader(key) {
   var temp = key.toLowerCase()
   return temp.startsWith("x-amz-meta-") || temp === "x-amz-acl" || temp.startsWith("x-amz-server-side-encryption-") || temp === "x-amz-server-side-encryption"
 }
-//Checks if it is a supported Header
+// Checks if it is a supported Header
 export function isSupportedHeader(key) {
   var supported_headers = [
     'content-type',
@@ -340,7 +340,7 @@ export function isSupportedHeader(key) {
     'x-amz-website-redirect-location']
   return (supported_headers.indexOf(key.toLowerCase()) > -1)
 }
-//Checks if it is a storage header
+// Checks if it is a storage header
 export function isStorageclassHeader(key) {
   return key.toLowerCase() === "x-amz-storage-class"
 }

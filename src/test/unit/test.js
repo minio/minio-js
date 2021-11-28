@@ -602,7 +602,7 @@ describe('Client', function() {
           done()
         }
       })
-      //Versioning related options as removeOpts
+      // Versioning related options as removeOpts
       it('should fail on empty (null) removeOpts object', (done) => {
         try {
           client.removeObject('hello', 'testRemoveOpts',null, function() {})
@@ -1171,7 +1171,7 @@ describe('Client', function() {
       it('should fail on multiple rules', (done) => {
         try {
           client.setBucketEncryption('my-bucket', {
-            //Default Rule
+            // Default Rule
             Rule:[
               {
                 ApplyServerSideEncryptionByDefault: {

@@ -152,7 +152,7 @@ export class NotificationPoller extends EventEmitter {
       query = `${queries.join('&')}`
     }
     const region = this.client.region || 'us-east-1'
-    this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', 200, region, true, (e, response) => {
+    this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', [200], region, true, (e, response) => {
       if (e) return this.emit('error', e)
 
       let transformer = transformers.getNotificationTransformer()
