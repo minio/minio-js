@@ -1292,7 +1292,7 @@ describe('functional tests', function() {
   })
 
   describe('Bucket Versioning API', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
+    // Isolate the bucket/object for easy debugging and tracking.
     const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
     before((done) => client.makeBucket(versionedBucketName, '', done))
     after((done) => client.removeBucket(versionedBucketName, done))
@@ -1333,8 +1333,8 @@ describe('functional tests', function() {
   })
 
   describe('Versioning tests on a buckets', function () {
-    //Isolate the bucket/object for easy debugging and tracking.
-    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    // Isolate the bucket/object for easy debugging and tracking.
+    const versionedBucketName = "minio-js-test-version-" + uuid.v4()
     const versioned_100kbObjectName = 'datafile-100-kB'
     const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
 
@@ -1383,8 +1383,8 @@ describe('functional tests', function() {
   })
 
   describe('Versioning tests on a buckets: getObject, fGetObject, getPartialObject, putObject, removeObject with versionId support', function () {
-    //Isolate the bucket/object for easy debugging and tracking.
-    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    // Isolate the bucket/object for easy debugging and tracking.
+    const versionedBucketName = "minio-js-test-version-" + uuid.v4()
     const versioned_100kbObjectName = 'datafile-100-kB'
     const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
 
@@ -1461,7 +1461,7 @@ describe('functional tests', function() {
             done()
           })
         }else{
-          //In gateway mode, use regular delete to remove an object so that the bucket can be cleaned up.
+          // In gateway mode, use regular delete to remove an object so that the bucket can be cleaned up.
           client.removeObject(versionedBucketName, versioned_100kbObjectName, () => {
             done()
           })
@@ -1480,10 +1480,10 @@ describe('functional tests', function() {
   })
 
   describe('Versioning Supported listObjects', function() {
-    const  versionedBucketName = "minio-js-test-version-list" + uuid.v4()
+    const versionedBucketName = "minio-js-test-version-list" + uuid.v4()
     const prefixName  = "Prefix1"
     const versionedObjectName ="datafile-100-kB"
-    const objVersionIdCounter = [1,2,3,4,5]// This should track adding 5 versions of the same object.
+    const objVersionIdCounter = [1,2,3,4,5] // This should track adding 5 versions of the same object.
     let listObjectsNum = objVersionIdCounter.length
     let objArray = []
     let listPrefixArray = []
@@ -1572,7 +1572,7 @@ describe('functional tests', function() {
   })
 
   describe('Versioning tests on a bucket for Deletion of Multiple versions', function () {
-    //Isolate the bucket/object for easy debugging and tracking.
+    // Isolate the bucket/object for easy debugging and tracking.
     const versionedBucketName = "minio-js-test-version-" + uuid.v4()
     const versioned_100kbObjectName = 'datafile-100-kB'
     const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
@@ -1603,9 +1603,9 @@ describe('functional tests', function() {
         }
 
       })
-      //Put two versions of the same object.
+      // Put two versions of the same object.
       step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
-        //Put two versions of the same object.
+        // Put two versions of the same object.
         if(isVersioningSupported) {
           client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
             .then(() => done())
@@ -1624,7 +1624,7 @@ describe('functional tests', function() {
               return done(new Error(`listObjects lists ${objVersionList.length} objects, expected ${2}`))
             })
             .on('data', data => {
-              //Pass list object response as is to remove objects
+              // Pass list object response as is to remove objects
               objVersionList.push(data)
             })
         } else {
@@ -1636,7 +1636,7 @@ describe('functional tests', function() {
         if(isVersioningSupported) {
           let count=1
           objVersionList.forEach(()=>{
-            //remove multiple versions of the object.
+            // remove multiple versions of the object.
             client.removeObjects(versionedBucketName, objVersionList, ()=>{
               if (count === objVersionList.length) {
                 done()
@@ -1654,7 +1654,7 @@ describe('functional tests', function() {
 
   describe('Bucket Tags API', ()=>{
     // Isolate the bucket/object for easy debugging and tracking.
-    const  tagsBucketName = "minio-js-test-tags-" + uuid.v4()
+    const tagsBucketName = "minio-js-test-tags-" + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
     after((done) => client.removeBucket(tagsBucketName, done))
 
@@ -1689,8 +1689,8 @@ describe('functional tests', function() {
   })
 
   describe('Object Tags API', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    const  tagsBucketName = "minio-js-test-tags-" + uuid.v4()
+    // Isolate the bucket/object for easy debugging and tracking.
+    const tagsBucketName = "minio-js-test-tags-" + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
     after((done) => client.removeBucket(tagsBucketName, done))
 
@@ -1728,7 +1728,7 @@ describe('functional tests', function() {
       step(`removeObjectTagging on an object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
         client.removeObjectTagging(tagsBucketName, tagObjName, (err) => {
           if (err && err.code === 'NotImplemented') return done()
-          if (err) return done()
+          if (err) return done(err)
           done()
         })
       })
@@ -1742,8 +1742,8 @@ describe('functional tests', function() {
   })
 
   describe('Object Tags API with Versioning support', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    const  tagsVersionedBucketName = "minio-js-test-tags-version-" + uuid.v4()
+    // Isolate the bucket/object for easy debugging and tracking.
+    const tagsVersionedBucketName = "minio-js-test-tags-version-" + uuid.v4()
     before((done) => client.makeBucket(tagsVersionedBucketName, '', done))
     after((done) => client.removeBucket(tagsVersionedBucketName, done))
 
@@ -1807,7 +1807,7 @@ describe('functional tests', function() {
         if(isVersioningSupported) {
           client.removeObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err) => {
             if (err && err.code === 'NotImplemented') return done()
-            if (err) return done()
+            if (err) return done(err)
             done()
           })
         }else{
@@ -2000,7 +2000,7 @@ describe('functional tests', function() {
             mobileClientReqWithProtocol = https
           }
           const request = mobileClientReqWithProtocol.request(getReqOpts, (response) => {
-            //if delete marker. method not allowed.
+            // if delete marker. method not allowed.
             if (response.statusCode !== 200) return new Error(`error on get : ${response.statusCode}`)
             response.on('error', () => {
               return done()
@@ -2037,7 +2037,7 @@ describe('functional tests', function() {
             }
             count +=1
             if(count === 2){
-              //2 versions expected to be deleted.
+              // 2 versions expected to be deleted.
               done()
             }
           })
@@ -2050,11 +2050,11 @@ describe('functional tests', function() {
 
 
   describe('Object Lock API Bucket Options Test', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    //Gateway mode does not support this header.
+    // Isolate the bucket/object for easy debugging and tracking.
+    // Gateway mode does not support this header.
 
     describe('Object Lock support makeBucket API Tests', function () {
-      const  lockEnabledBucketName = "minio-js-test-lock-mb-" + uuid.v4()
+      const lockEnabledBucketName = "minio-js-test-lock-mb-" + uuid.v4()
       let isFeatureSupported = false
       step(`Check if bucket with object lock can be created:_bucketName:${lockEnabledBucketName}`, done => {
         client.makeBucket(lockEnabledBucketName, { ObjectLocking: true }, (err) => {
@@ -2165,11 +2165,11 @@ describe('functional tests', function() {
   })
 
   describe('Object retention API Tests', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    //Gateway mode does not support this header.
+    // Isolate the bucket/object for easy debugging and tracking.
+    // Gateway mode does not support this header.
 
     describe('Object retention get/set API Test', function () {
-      const  objRetentionBucket = "minio-js-test-retention-" + uuid.v4()
+      const objRetentionBucket = "minio-js-test-retention-" + uuid.v4()
       const retentionObjName = "RetentionObject"
       let isFeatureSupported = false
       let versionId = null
@@ -2184,7 +2184,7 @@ describe('functional tests', function() {
       })
 
       step(`putObject(bucketName, objectName, stream)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}, stream:100Kib_`, done => {
-        //Put two versions of the same object.
+        // Put two versions of the same object.
         if(isFeatureSupported) {
           client.putObject(objRetentionBucket, retentionObjName,  readableStream(_1byte), _1byte.length, {})
             .then(() => done())
@@ -2207,12 +2207,12 @@ describe('functional tests', function() {
       })
 
       step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-        //Put two versions of the same object.
+        // Put two versions of the same object.
         if(isFeatureSupported) {
           let expirationDate = new Date()
-          //set expiry to start of next day.
+          // set expiry to start of next day.
           expirationDate.setDate(expirationDate.getDate() + 1)
-          expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+          expirationDate.setUTCHours(0,0,0,0) // Should be start of the day.(midnight)
 
           client.putObjectRetention(objRetentionBucket, retentionObjName,  {
             governanceBypass:true,
@@ -2264,8 +2264,8 @@ describe('functional tests', function() {
   })
 
   describe('Bucket Encryption Related APIs', ()=> {
-    //Isolate the bucket/object for easy debugging and tracking.
-    //this is not supported in gateway mode.
+    // Isolate the bucket/object for easy debugging and tracking.
+    // this is not supported in gateway mode.
     const encBucketName = "minio-js-test-bucket-enc-" + uuid.v4()
     before((done) => client.makeBucket(encBucketName, '', done))
     after((done) => client.removeBucket(encBucketName, done))
@@ -2390,15 +2390,15 @@ describe('functional tests', function() {
   })
 
   describe('Bucket Replication API Tests', ()=> {
-    //TODO - As of now, there is no api to get arn programmatically to setup replication through APIs and verify.
-    //Please refer to minio server documentation and mc cli.
-    //https://docs.min.io/docs/minio-bucket-replication-guide.html
-    //https://docs.min.io/minio/baremetal/replication/replication-overview.html#minio-bucket-replication-clientside
+    // TODO - As of now, there is no api to get arn programmatically to setup replication through APIs and verify.
+    // Please refer to minio server documentation and mc cli.
+    // https://docs.min.io/docs/minio-bucket-replication-guide.html
+    // https://docs.min.io/minio/baremetal/replication/replication-overview.html#minio-bucket-replication-clientside
   })
 
   describe('Object Legal hold API Tests', ()=>{
-    //Isolate the bucket/object for easy debugging and tracking.
-    //Gateway mode does not support this header.
+    // Isolate the bucket/object for easy debugging and tracking.
+    // Gateway mode does not support this header.
     let versionId = null
     describe('Object Legal hold get/set API Test', function () {
       const objLegalHoldBucketName = "minio-js-test-legalhold-" + uuid.v4()
