@@ -130,6 +130,7 @@ export default class extensions {
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
+    queries.push(`encoding-type=url`)
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
     queries.push(`delimiter=${uriEscape(delimiter)}`)

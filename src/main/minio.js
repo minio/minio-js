@@ -1269,6 +1269,7 @@ export class Client {
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
     queries.push(`delimiter=${uriEscape(Delimiter)}`)
+    queries.push(`encoding-type=url`)
 
     if (IncludeVersion) {
       queries.push(`versions`)
@@ -1406,6 +1407,7 @@ export class Client {
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
+    queries.push(`encoding-type=url`)
 
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)

@@ -396,10 +396,28 @@ export const toMd5=(payload)=>{
   let payLoadBuf = objectToBuffer(payload)
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
-  payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf 
+  payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
   return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
 
 export const toSha256=(payload)=>{
   return Crypto.createHash('sha256').update(payload).digest('hex')
+}
+
+// toArray returns a single element array with param being the element,
+// if param is just a string, and returns 'param' back if it is an array
+// So, it makes sure param is always an array
+export const toArray = (param) => {
+  if (!Array.isArray(param)) {
+    return Array(param)
+  }
+  return param
+}
+
+
+export const sanitizeObjectKey=(objectName)=>{
+  // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
+  let asStrName= (objectName || "").replace(/\+/g, ' ')
+  const sanitizedName = decodeURIComponent(asStrName)
+  return sanitizedName
 }
