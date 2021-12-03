@@ -16,8 +16,9 @@
 
 import stream from 'stream'
 import mime from 'mime-types'
-var Crypto = require('crypto')
+var Crypto = require('crypto-browserify')
 const ipaddr = require('ipaddr.js')
+import { isBrowser } from "browser-or-node"
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -387,13 +388,18 @@ export const LEGAL_HOLD_STATUS={
 }
 
 const objectToBuffer = (payload) =>{
-  const payloadBuf = Buffer.from(Buffer.from(JSON.stringify(payload)))
+  const payloadBuf = Buffer.from(Buffer.from(payload))
   return payloadBuf
 }
 
 export const toMd5=(payload)=>{
-  return Crypto.createHash('md5').update(objectToBuffer(payload)).digest().toString('base64')
+  let payLoadBuf = objectToBuffer(payload)
+  // use string from browser and buffer from nodejs
+  // browser support is tested only against minio server
+  payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf 
+  return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
+
 export const toSha256=(payload)=>{
   return Crypto.createHash('sha256').update(payload).digest('hex')
 }
