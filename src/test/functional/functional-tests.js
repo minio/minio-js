@@ -2512,4 +2512,209 @@ describe('functional tests', function() {
       })
 
     })})
+
+  describe('Object Name special characters test without Prefix', ()=> {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const bucketNameForSpCharObjects = "minio-js-test-obj-spwpre-" + uuid.v4()
+    before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
+    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+
+    // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+
+    const objectContents = Buffer.alloc(100 * 1024, 0)
+
+    describe('Without Prefix Test', function () {
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}, stream:100Kib_`, done => {
+        client.putObject(bucketNameForSpCharObjects, objectNameSpecialChars, objectContents)
+          .then(() => {
+            done()
+          })
+          .catch(done)
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
+        const listStream = client.listObjects(bucketNameForSpCharObjects, "", true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+
+      step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
+        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+      step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
+        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+
+      step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}`, done => {
+        client.getObject(bucketNameForSpCharObjects, objectNameSpecialChars)
+          .then(stream => {
+            stream.on('data', function() {})
+            stream.on('end', done)
+          })
+          .catch(done)
+      })
+
+      step(`statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}`, done => {
+        client.statObject(bucketNameForSpCharObjects, objectNameSpecialChars, (e) => {
+          if (e) return done(e)
+          done()
+        })
+      })
+
+      step(`removeObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}`, done => {
+        client.removeObject(bucketNameForSpCharObjects, objectNameSpecialChars)
+          .then(() => done())
+          .catch(done)
+      })
+    })
+
+
+  })
+  describe('Object Name special characters test with a Prefix', ()=> {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const bucketNameForSpCharObjects = "minio-js-test-obj-spnpre-" + uuid.v4()
+    before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
+    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+
+    // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
+    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    const prefix="test"
+    const objectNameWithPrefixForSpecialChars = `${prefix}/${objectNameSpecialChars}`
+
+    const objectContents = Buffer.alloc(100 * 1024, 0)
+
+
+    describe('With Prefix Test', function () {
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefixForSpecialChars}, stream:100Kib`, done => {
+        client.putObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars, objectContents)
+          .then(() => {
+            done()
+          })
+          .catch(done)
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
+        const listStream = client.listObjects(bucketNameForSpCharObjects, prefix, true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+
+      step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
+        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, prefix, true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+
+      step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
+        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, prefix, true )
+        let listedObject = null
+        listStream.on('data', function (obj) {
+          listedObject =obj
+        })
+        listStream.on('end',()=>{
+          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+            done()
+          }else{
+            return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
+          }
+        })
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      })
+
+      step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName_:${objectNameWithPrefixForSpecialChars}`, done => {
+        client.getObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars)
+          .then(stream => {
+            stream.on('data', function() {})
+            stream.on('end', done)
+          })
+          .catch(done)
+      })
+
+      step(`statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefixForSpecialChars}`, done => {
+        client.statObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars, (e) => {
+          if (e) return done(e)
+          done()
+        })
+      })
+
+      step(`removeObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefixForSpecialChars}`, done => {
+        client.removeObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars)
+          .then(() => done())
+          .catch(done)
+      })
+    })
+
+  })
 })
