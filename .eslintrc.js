@@ -24,6 +24,17 @@ module.exports = {
       'error',
       (process.platform === 'win32' ? 'windows' : 'unix') // all windows platforms are denoted by win32
     ],
-    'semi': ['error', 'never']
+    'semi': ['error', 'never'],
+    'spaced-comment': ['error', 'always', {
+      'line': {
+        'markers': ['/'],
+        'exceptions': ['-', '+']
+    },
+    'block': {
+      'markers': ['!'],
+      'exceptions': ['*'],
+      'balanced': true
+    }
+    }]
   }
 }

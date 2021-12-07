@@ -16,8 +16,9 @@
 
 import stream from 'stream'
 import mime from 'mime-types'
-var Crypto = require('crypto')
+var Crypto = require('crypto-browserify')
 const ipaddr = require('ipaddr.js')
+import { isBrowser } from "browser-or-node"
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -325,7 +326,7 @@ export function isAmzHeader(key) {
   var temp = key.toLowerCase()
   return temp.startsWith("x-amz-meta-") || temp === "x-amz-acl" || temp.startsWith("x-amz-server-side-encryption-") || temp === "x-amz-server-side-encryption"
 }
-//Checks if it is a supported Header
+// Checks if it is a supported Header
 export function isSupportedHeader(key) {
   var supported_headers = [
     'content-type',
@@ -336,7 +337,7 @@ export function isSupportedHeader(key) {
     'x-amz-website-redirect-location']
   return (supported_headers.indexOf(key.toLowerCase()) > -1)
 }
-//Checks if it is a storage header
+// Checks if it is a storage header
 export function isStorageclassHeader(key) {
   return key.toLowerCase() === "x-amz-storage-class"
 }
@@ -383,13 +384,18 @@ export const LEGAL_HOLD_STATUS={
 }
 
 const objectToBuffer = (payload) =>{
-  const payloadBuf = Buffer.from(Buffer.from(JSON.stringify(payload)))
+  const payloadBuf = Buffer.from(Buffer.from(payload))
   return payloadBuf
 }
 
 export const toMd5=(payload)=>{
-  return Crypto.createHash('md5').update(objectToBuffer(payload)).digest().toString('base64')
+  let payLoadBuf = objectToBuffer(payload)
+  // use string from browser and buffer from nodejs
+  // browser support is tested only against minio server
+  payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
+  return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
+
 export const toSha256=(payload)=>{
   return Crypto.createHash('sha256').update(payload).digest('hex')
 }

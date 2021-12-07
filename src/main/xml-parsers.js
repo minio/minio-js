@@ -20,6 +20,8 @@ import * as errors from './errors.js'
 import {
   isObject,
   sanitizeETag,
+  toArray,
+  sanitizeObjectKey,
   RETENTION_VALIDITY_UNITS
 } from "./helpers"
 
@@ -31,16 +33,6 @@ var parseXml = (xml) => {
   }
 
   return result
-}
-
-// toArray returns a single element array with param being the element,
-// if param is just a string, and returns 'param' back if it is an array
-// So, it makes sure param is always an array
-var toArray = (param) => {
-  if (!Array.isArray(param)) {
-    return Array(param)
-  }
-  return param
 }
 
 // Parse XML and return information as Javascript types
@@ -299,7 +291,7 @@ const formatObjInfo = (content, opts={}) => {
     opts = {}
   }
 
-  const name = toArray(Key)[0]
+  const name = sanitizeObjectKey(toArray(Key)[0])
   const lastModified = new Date(toArray(LastModified)[0])
   const etag = sanitizeETag(toArray(ETag)[0])
 
@@ -342,7 +334,7 @@ export function parseListObjects(xml) {
     }
     if (listBucketResult.Contents) {
       toArray(listBucketResult.Contents).forEach(content => {
-        const name = toArray(content.Key)[0]
+        const name = sanitizeObjectKey(toArray(content.Key)[0])
         const lastModified = new Date(toArray(content.LastModified)[0])
         const etag = sanitizeETag(toArray(content.ETag)[0])
         const size = content.Size
@@ -403,7 +395,7 @@ export function parseListObjectsV2(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken
   if (xmlobj.Contents) {
     toArray(xmlobj.Contents).forEach(content => {
-      var name = content.Key
+      var name = sanitizeObjectKey(toArray(content.Key)[0])
       var lastModified = new Date(content.LastModified)
       var etag = sanitizeETag(content.ETag)
       var size = content.Size
@@ -436,7 +428,7 @@ export function parseListObjectsV2WithMetadata(xml) {
 
   if (xmlobj.Contents) {
     toArray(xmlobj.Contents).forEach(content => {
-      var name = content.Key
+      var name = sanitizeObjectKey(content.Key)
       var lastModified = new Date(content.LastModified)
       var etag = sanitizeETag(content.ETag)
       var size = content.Size
@@ -470,7 +462,7 @@ export function parseTagging(xml){
   let result =[]
   if(xmlObj.Tagging && xmlObj.Tagging.TagSet&& xmlObj.Tagging.TagSet.Tag){
     const tagResult = xmlObj.Tagging.TagSet.Tag
-    //if it is a single tag convert into an array so that the return value is always an array.
+    // if it is a single tag convert into an array so that the return value is always an array.
     if(isObject(tagResult)){
       result.push(tagResult)
     }else{
