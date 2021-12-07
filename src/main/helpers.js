@@ -111,7 +111,7 @@ export function isValidIP(ip) {
 
 // isValidEndpoint - true if endpoint is valid domain.
 export function isValidEndpoint(endpoint) {
-  return isValidDomain(endpoint) && isValidIP(endpoint)
+  return isValidDomain(endpoint) || isValidIP(endpoint)
 }
 
 // isValidDomain - true if input host is a valid domain.
