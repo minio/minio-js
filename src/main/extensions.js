@@ -23,7 +23,7 @@ import * as errors from './errors.js'
 import { isValidPrefix, isValidBucketName, uriEscape,
   isBoolean, isNumber, isString,
   pipesetup } from './helpers.js'
-  
+
 export default class extensions {
 
   constructor(client)
@@ -130,6 +130,7 @@ export default class extensions {
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
+    queries.push(`encoding-type=url`)
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
     queries.push(`delimiter=${uriEscape(delimiter)}`)
@@ -158,7 +159,7 @@ export default class extensions {
     }
     var method = 'GET'
     var transformer = transformers.getListObjectsV2WithMetadataTransformer()
-    this.client.makeRequest({method, bucketName, query}, '', 200, '', true, (e, response) => {
+    this.client.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)
     })

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,7 +83,7 @@ export default class ObjectUploader extends Transform {
         objectName: this.objectName
       }
 
-      this.client.makeRequest(options, chunk, 200, '', true, (err, response) => {
+      this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
         if (err) return callback(err)
         let result = {
           etag: sanitizeETag(response.headers.etag),
@@ -163,7 +163,7 @@ export default class ObjectUploader extends Transform {
     if (this.oldParts) {
       let oldPart = this.oldParts[partNumber]
 
-      //Calulcate the md5 hash, if it has not already been calculated.
+      // Calulcate the md5 hash, if it has not already been calculated.
       if(!md5digest) {
         md5digest = Crypto.createHash('md5').update(chunk).digest()
       }
@@ -189,7 +189,7 @@ export default class ObjectUploader extends Transform {
       objectName: this.objectName
     }
 
-    this.client.makeRequest(options, chunk, 200, '', true, (err, response) => {
+    this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
       if (err) return callback(err)
 
       // In order to aggregate the parts together, we need to collect the etags.
@@ -218,7 +218,7 @@ export default class ObjectUploader extends Transform {
         objectName: this.objectName
       }
 
-      this.client.makeRequest(options, '', 200, '', true, (err, response) => {
+      this.client.makeRequest(options, '', [200], '', true, (err, response) => {
         if (err) return callback(err)
 
         let result = {
