@@ -111,11 +111,7 @@ export function isValidIP(ip) {
 
 // isValidEndpoint - true if endpoint is valid domain.
 export function isValidEndpoint(endpoint) {
-  if (!isValidDomain(endpoint) && !isValidIP(endpoint)) {
-    return false
-  }
-  // Return true.
-  return true
+  return isValidDomain(endpoint) || isValidIP(endpoint)
 }
 
 // isValidDomain - true if input host is a valid domain.
@@ -413,7 +409,6 @@ export const toArray = (param) => {
   }
   return param
 }
-
 
 export const sanitizeObjectKey=(objectName)=>{
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
