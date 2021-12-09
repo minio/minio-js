@@ -58,6 +58,8 @@ import { NotificationConfig, NotificationPoller } from './notification'
 import extensions from './extensions'
 import CredentialProvider from "./CredentialProvider"
 
+import { parseSelectObjectContentResponse} from "./xml-parsers"
+
 var Package = require('../../package.json')
 
 export class Client {
@@ -3396,6 +3398,97 @@ export class Client {
       })
 
   }
+  selectObjectContent(bucketName, objectName, selOpts={}, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if(!_.isEmpty(selOpts)){
+
+      if (!isString(selOpts.expression)) {
+        throw new TypeError('sqlExpression should be of type "string"')
+      }
+      if(!_.isEmpty(selOpts.inputSerialization)) {
+        if (!isObject(selOpts.inputSerialization)) {
+          throw new TypeError('inputSerialization should be of type "object"')
+        }
+      }else{
+        throw new TypeError('inputSerialization is required')
+      }
+      if(!_.isEmpty(selOpts.outputSerialization)) {
+        if (!isObject(selOpts.outputSerialization)) {
+          throw new TypeError('outputSerialization should be of type "object"')
+        }
+      }else{
+        throw new TypeError('outputSerialization is required')
+      }
+
+    }else{
+      throw new TypeError('valid select configuration is required')
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const headers = {}
+    const method = 'POST'
+    let query = `select`
+    query += "&select-type=2"
+
+    const config = [
+      {
+        "Expression": selOpts.expression
+      },
+      {
+        "ExpressionType":selOpts.expressionType || "SQL"
+      },
+      {
+        "InputSerialization": [selOpts.inputSerialization]
+      },
+      {
+        "OutputSerialization": [selOpts.outputSerialization]
+      }
+    ]
+
+    // Optional
+    if(selOpts.requestProgress){
+      config.push(
+        {"RequestProgress":selOpts.requestProgress}
+      )
+    }
+    // Optional
+    if(selOpts.scanRange){
+      config.push(
+        {"ScanRange": selOpts.scanRange}
+
+      )
+    }
+
+
+    const builder = new xml2js.Builder({rootName:'SelectObjectContentRequest', renderOpts:{'pretty':false}, headless:true})
+    const payload = builder.buildObject(config)
+
+    const md5digest = toMd5(payload)
+    headers['Content-MD5'] = md5digest.toString('base64')
+
+    this.makeRequest({method, bucketName, objectName, headers, query}, payload, [200], '', true, (e, response) => {
+      if (e) return cb(e)
+
+      let selectResult
+      pipesetup(response, transformers.selectObjectContentTransformer())
+        .on('data', data => {
+          selectResult = parseSelectObjectContentResponse(data)
+        })
+        .on('error', cb)
+        .on('end', () => {
+          cb(null, selectResult)
+        })
+    })
+  }
+
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -3455,6 +3548,7 @@ Client.prototype.removeBucketReplication=promisify(Client.prototype.removeBucket
 Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHold)
 Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
+Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
 
 export class CopyConditions {
   constructor() {

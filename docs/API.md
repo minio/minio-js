@@ -28,31 +28,31 @@ var s3Client = new Minio.Client({
 })
 ```
 
-| Bucket operations                                     | Object operations                                   | Presigned operations                          | Bucket Policy & Notification operations                       | Custom Settings                                       |   |
-|-------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------|---------------------------------------------------------------|-------------------------------------------------------|---|
-| [`makeBucket`](#makeBucket)                           | [`getObject`](#getObject)                           | [`presignedUrl`](#presignedUrl)               | [`getBucketNotification`](#getBucketNotification)             | [`setS3TransferAccelerate`](#setS3TransferAccelerate) |   |
-| [`listBuckets`](#listBuckets)                         | [`getPartialObject`](#getPartialObject)             | [`presignedGetObject`](#presignedGetObject)   | [`setBucketNotification`](#setBucketNotification)             |                                                       |   |
-| [`bucketExists`](#bucketExists)                       | [`fGetObject`](#fGetObject)                         | [`presignedPutObject`](#presignedPutObject)   | [`removeAllBucketNotification`](#removeAllBucketNotification) |                                                       |   |
-| [`removeBucket`](#removeBucket)                       | [`putObject`](#putObject)                           | [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy)                         |                                                       |   |
-| [`listObjects`](#listObjects)                         | [`fPutObject`](#fPutObject)                         |                                               | [`setBucketPolicy`](#setBucketPolicy)                         |                                                       |   |
-| [`listObjectsV2`](#listObjectsV2)                     | [`copyObject`](#copyObject)                         |                                               | [`listenBucketNotification`](#listenBucketNotification)       |                                                       |   |
-| [`listIncompleteUploads`](#listIncompleteUploads)     | [`statObject`](#statObject)                         |                                               |                                                               |                                                       |   |
-| [`getBucketVersioning`](#getBucketVersioning)         | [`removeObject`](#removeObject)                     |                                               |                                                               |                                                       |   |
-| [`setBucketVersioning`](#setBucketVersioning)         | [`removeObjects`](#removeObjects)                   |                                               |                                                               |                                                       |   |
-| [`getBucketTagging`](#getBucketTagging)               | [`removeIncompleteUpload`](#removeIncompleteUpload) |                                               |                                                               |                                                       |   |
-| [`setBucketTagging`](#setBucketTagging)               | [`putObjectRetention`](#putObjectRetention)         |                                               |                                                               |                                                       |   |
-| [`removeBucketTagging`](#removeBucketTagging)         | [`getObjectRetention`](#getObjectRetention)         |                                               |                                                               |                                                       |   |
-| [`setBucketLifecycle`](#setBucketLifecycle)           | [`putObjectTagging`](#putObjectTagging)             |                                               |                                                               |                                                       |   |
-| [`getBucketLifecycle`](#getBucketLifecycle)           | [`removeObjectTagging`](#removeObjectTagging)       |                                               |                                                               |                                                       |   |
-| [`removeBucketLifecycle`](#removeBucketLifecycle)     | [`getObjectTagging`](#getObjectTagging)             |                                               |                                                               |                                                       |   |
-| [`setObjectLockConfig`](#setObjectLockConfig)         | [`getObjectLegalHold`](#getObjectLegalHold)         |                                               |                                                               |                                                       |   |
-| [`getBucketEncryption`](#getBucketEncryption)         | [`setObjectLegalHold`](#setObjectLegalHold)         |                                               |                                                               |                                                       |   |
-| [`getObjectLockConfig`](#getObjectLockConfig)         | [`composeObject`](#composeObject)                   |                                               |                                                               |                                                       |   |
-| [`setBucketEncryption`](#setBucketEncryption)         |                                                     |                                               |                                                               |                                                       |   |
-| [`removeBucketEncryption`](#removeBucketEncryption)   |                                                     |                                               |                                                               |                                                       |   |
-| [`setBucketReplication`](#setBucketReplication)       |                                                     |                                               |                                                               |                                                       |   |
-| [`getBucketReplication`](#getBucketReplication)       |                                                     |                                               |                                                               |                                                       |   |
-| [`removeBucketReplication`](#removeBucketReplication) |                                                     |                                               |                                                               |                                                       |   |
+| Bucket operations                                     | Object operations                                   | Presigned operations                          | Bucket Policy & Notification operations                       | Custom Settings                                       |     |
+|-------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------|---------------------------------------------------------------|-------------------------------------------------------|-----|
+| [`makeBucket`](#makeBucket)                           | [`getObject`](#getObject)                           | [`presignedUrl`](#presignedUrl)               | [`getBucketNotification`](#getBucketNotification)             | [`setS3TransferAccelerate`](#setS3TransferAccelerate) |     |
+| [`listBuckets`](#listBuckets)                         | [`getPartialObject`](#getPartialObject)             | [`presignedGetObject`](#presignedGetObject)   | [`setBucketNotification`](#setBucketNotification)             |                                                       |     |
+| [`bucketExists`](#bucketExists)                       | [`fGetObject`](#fGetObject)                         | [`presignedPutObject`](#presignedPutObject)   | [`removeAllBucketNotification`](#removeAllBucketNotification) |                                                       |     |
+| [`removeBucket`](#removeBucket)                       | [`putObject`](#putObject)                           | [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy)                         |                                                       |     |
+| [`listObjects`](#listObjects)                         | [`fPutObject`](#fPutObject)                         |                                               | [`setBucketPolicy`](#setBucketPolicy)                         |                                                       |     |
+| [`listObjectsV2`](#listObjectsV2)                     | [`copyObject`](#copyObject)                         |                                               | [`listenBucketNotification`](#listenBucketNotification)       |                                                       |     |
+| [`listIncompleteUploads`](#listIncompleteUploads)     | [`statObject`](#statObject)                         |                                               |                                                               |                                                       |     |
+| [`getBucketVersioning`](#getBucketVersioning)         | [`removeObject`](#removeObject)                     |                                               |                                                               |                                                       |     |
+| [`setBucketVersioning`](#setBucketVersioning)         | [`removeObjects`](#removeObjects)                   |                                               |                                                               |                                                       |     |
+| [`getBucketTagging`](#getBucketTagging)               | [`removeIncompleteUpload`](#removeIncompleteUpload) |                                               |                                                               |                                                       |     |
+| [`setBucketTagging`](#setBucketTagging)               | [`putObjectRetention`](#putObjectRetention)         |                                               |                                                               |                                                       |     |
+| [`removeBucketTagging`](#removeBucketTagging)         | [`getObjectRetention`](#getObjectRetention)         |                                               |                                                               |                                                       |     |
+| [`setBucketLifecycle`](#setBucketLifecycle)           | [`putObjectTagging`](#putObjectTagging)             |                                               |                                                               |                                                       |     |
+| [`getBucketLifecycle`](#getBucketLifecycle)           | [`removeObjectTagging`](#removeObjectTagging)       |                                               |                                                               |                                                       |     |
+| [`removeBucketLifecycle`](#removeBucketLifecycle)     | [`getObjectTagging`](#getObjectTagging)             |                                               |                                                               |                                                       |     |
+| [`setObjectLockConfig`](#setObjectLockConfig)         | [`getObjectLegalHold`](#getObjectLegalHold)         |                                               |                                                               |                                                       |     |
+| [`getObjectLockConfig`](#getObjectLockConfig)         | [`setObjectLegalHold`](#setObjectLegalHold)         |                                               |                                                               |                                                       |     |
+| [`getBucketEncryption`](#getBucketEncryption)         | [`composeObject`](#composeObject)                   |                                               |                                                               |                                                       |     |
+| [`setBucketEncryption`](#setBucketEncryption)         | [`selectObjectContent`](#selectObjectContent)       |                                               |                                                               |                                                       |     |
+| [`removeBucketEncryption`](#removeBucketEncryption)   |                                                     |                                               |                                                               |                                                       |     |
+| [`setBucketReplication`](#setBucketReplication)       |                                                     |                                               |                                                               |                                                       |     |
+| [`getBucketReplication`](#getBucketReplication)       |                                                     |                                               |                                                               |                                                       |     |
+| [`removeBucketReplication`](#removeBucketReplication) |                                                     |                                               |                                                               |                                                       |     |
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
@@ -1013,10 +1013,10 @@ __Parameters__
 
 __Return Value__
 
-| Value  |  Type | Description  |
-|---|---|---|
-| `err` | _object_ | Error in case of any failures
-| `file` | _file_ | Streamed Output file at the specified `filePath`
+| Value  | Type     | Description                                      |
+|--------|----------|--------------------------------------------------|
+| `err`  | _object_ | Error in case of any failures                    |
+| `file` | _file_   | Streamed Output file at the specified `filePath` |
 
 __Example__
 
@@ -1708,6 +1708,45 @@ const composePromise = minioClient.composeObject(destOption,sourceList)
     })
 
 ```
+
+<a name="selectObjectContent"></a>
+### selectObjectContent(bucketName, objectName, selOpts[, callback])
+
+Select contents of an object (S3 Select).
+
+__Parameters__
+
+| Param  |  Type | Description  |
+|---|---|---|
+| `bucketName`  |_string_   | Name of the bucket.  |
+| `objectName`  | _string_  | Name of the object.  |
+| `selOpts`  | _object_  |  |
+| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned, with the `SelectResults` type |
+
+__Example 1__
+Select all values
+```js
+const selectRequestConfig = {
+    expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
+    expressionType:"SQL",
+    inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
+            RecordDelimiter: "\n",
+            FieldDelimiter:  ",",
+        },
+        'CompressionType': 'NONE'},
+    outputSerialization : {'CSV': {RecordDelimiter: "\n",
+            FieldDelimiter:  ",",}},
+    requestProgress:{Enabled:true},
+}
+
+minioClient.selectObjectContent('bucketName', 'objectName', selectRequestConfig, function(err, res) {
+  if (err) {
+    return console.log('Unable to process select object content.', err.message)
+  }
+  console.log('Success')
+})
+```
+
 
 ## 4. Presigned operations
 
