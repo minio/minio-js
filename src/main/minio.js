@@ -1210,7 +1210,7 @@ export class Client {
     }
 
     var headers = {}
-    headers['x-amz-copy-source'] = uriEscape(srcObject)
+    headers['x-amz-copy-source'] = uriResourceEscape(srcObject)
 
     if (conditions !== null) {
       if (conditions.modified !== "") {
