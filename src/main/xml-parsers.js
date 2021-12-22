@@ -534,3 +534,9 @@ export function  parseObjectLegalHoldConfig(xml){
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold
 }
+
+export function uploadPartParser (xml){
+  const xmlObj = parseXml(xml)
+  const respEl = xmlObj.CopyPartResult
+  return respEl
+}

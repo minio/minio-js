@@ -20,6 +20,12 @@ var Crypto = require('crypto-browserify')
 const ipaddr = require('ipaddr.js')
 import { isBrowser } from "browser-or-node"
 
+const fs = require('fs')
+const path = require("path")
+import _ from 'lodash'
+import * as errors from './errors.js'
+import querystring from "querystring"
+
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
 export function promisify(fn) {
@@ -362,6 +368,11 @@ export function getVersionId(headers={}){
   return  versionIdValue || null
 }
 
+export function getSourceVersionId(headers={}){
+  const sourceVersionId = headers["x-amz-copy-source-version-id"]
+  return  sourceVersionId || null
+}
+
 export function sanitizeETag(etag='') {
   var replaceChars = {'"':'','&quot;':'','&#34;':'','&QUOT;':'','&#x00022':''}
   return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, m => replaceChars[m])
@@ -415,4 +426,312 @@ export const sanitizeObjectKey=(objectName)=>{
   let asStrName= (objectName || "").replace(/\+/g, ' ')
   const sanitizedName = decodeURIComponent(asStrName)
   return sanitizedName
+}
+
+
+export const PART_CONSTRAINTS ={
+// absMinPartSize - absolute minimum part size (5 MiB)
+  ABS_MIN_PART_SIZE:1024 * 1024 * 5,
+  // MIN_PART_SIZE - minimum part size 16MiB per object after which
+  MIN_PART_SIZE : 1024 * 1024 * 16,
+  // MAX_PARTS_COUNT - maximum number of parts for a single multipart session.
+  MAX_PARTS_COUNT : 10000,
+  // MAX_PART_SIZE - maximum part size 5GiB for a single multipart upload
+  // operation.
+  MAX_PART_SIZE: 1024 * 1024 * 1024 * 5,
+  // MAX_SINGLE_PUT_OBJECT_SIZE - maximum size 5GiB of object per PUT
+  // operation.
+  MAX_SINGLE_PUT_OBJECT_SIZE: 1024 * 1024 * 1024 * 5,
+  // MAX_MULTIPART_PUT_OBJECT_SIZE - maximum size 5TiB of object for
+  // Multipart operation.
+  MAX_MULTIPART_PUT_OBJECT_SIZE: 1024 * 1024 * 1024 * 1024 * 5
+}
+
+export const ENCRYPTION_TYPES ={
+  // SSEC represents server-side-encryption with customer provided keys
+  SSEC: "SSE-C",
+  // KMS represents server-side-encryption with managed keys
+  KMS: "KMS"
+
+}
+const GENERIC_SSE_HEADER="X-Amz-Server-Side-Encryption"
+
+const ENCRYPTION_HEADERS ={
+  // sseGenericHeader is the AWS SSE header used for SSE-S3 and SSE-KMS.
+  sseGenericHeader : GENERIC_SSE_HEADER,
+  // sseKmsKeyID is the AWS SSE-KMS key id.
+  sseKmsKeyID : GENERIC_SSE_HEADER + "-Aws-Kms-Key-Id",
+}
+
+/**
+ * Return Encryption headers
+ * @param encConfig
+ * @returns an object with key value pairs that can be used in headers.
+ */
+function getEncryptionHeaders (encConfig) {
+  const encType = encConfig.type
+  const encHeaders = {}
+  if(!_.isEmpty(encType) ){
+    if( encType === ENCRYPTION_TYPES.SSEC) {
+      return {
+        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: "AES256"
+      }
+    } else if(encType === ENCRYPTION_TYPES.KMS){
+      return {
+        [ENCRYPTION_HEADERS.sseGenericHeader]:encConfig.SSEAlgorithm,
+        [ENCRYPTION_HEADERS.sseKmsKeyID]:encConfig.KMSMasterKeyID
+      }
+    }
+  }
+
+  return encHeaders
+}
+
+export class CopySourceOptions {
+  /**
+     *
+     * @param Bucket __string__ Bucket Name
+     * @param Object __string__ Object Name
+     * @param VersionID __string__ Valid versionId
+     * @param MatchETag __string__ Etag to match
+     * @param NoMatchETag __string__ Etag to exclude
+     * @param MatchModifiedSince __string__ Modified Date of the object/part.  UTC Date in string format
+     * @param MatchUnmodifiedSince __string__ Modified Date of the object/part to exclude UTC Date in string format
+     * @param MatchRange __boolean__ true or false Object range to match
+     * @param Start
+     * @param End
+     * @param Encryption
+     */
+  constructor({
+    Bucket="",
+    Object="",
+    VersionID="",
+    MatchETag="",
+    NoMatchETag="",
+    MatchModifiedSince=null,
+    MatchUnmodifiedSince=null,
+    MatchRange=false,
+    Start=0,
+    End=0,
+    Encryption= {},
+  }={}) {
+
+    this.Bucket=Bucket
+    this.Object=Object
+    this.VersionID=VersionID
+    this.MatchETag=MatchETag
+    this.NoMatchETag=NoMatchETag
+    this.MatchModifiedSince=MatchModifiedSince
+    this.MatchUnmodifiedSince=MatchUnmodifiedSince
+    this.MatchRange=MatchRange
+    this.Start=Start
+    this.End=End
+    this.Encryption=Encryption
+  }
+
+  validate(){
+    if (!isValidBucketName(this.Bucket)) {
+      throw new errors.InvalidBucketNameError('Invalid Source bucket name: ' + this.Bucket)
+    }
+    if (!isValidObjectName(this.Object)) {
+      throw new errors.InvalidObjectNameError(`Invalid Source object name: ${this.Object}`)
+    }
+    if (this.MatchRange && (this.Start !==-1 && this.End !==-1) && this.Start > this.End || this.Start < 0) {
+      throw  new errors.InvalidObjectNameError("Source start must be non-negative, and start must be at most end.")
+    } else if(this.MatchRange&& !isNumber(this.Start) || !isNumber(this.End) ){
+      throw  new errors.InvalidObjectNameError("MatchRange is specified. But  Invalid Start and End values are specified. ")
+    }
+
+    return true
+  }
+
+  getHeaders (){
+    let headerOptions ={}
+    headerOptions["x-amz-copy-source"]=encodeURI(this.Bucket+"/"+this.Object)
+
+    if (!_.isEmpty(this.VersionID)) {
+      headerOptions["x-amz-copy-source"]=encodeURI(this.Bucket+"/"+this.Object)+"?versionId="+this.VersionID
+    }
+
+    if (!_.isEmpty(this.MatchETag)) {
+      headerOptions["x-amz-copy-source-if-match"]=this.MatchETag
+    }
+    if (!_.isEmpty(this.NoMatchETag)) {
+      headerOptions["x-amz-copy-source-if-none-match"]=this.NoMatchETag
+    }
+
+    if (!_.isEmpty(this.MatchModifiedSince)) {
+      headerOptions["x-amz-copy-source-if-modified-since"]= this.MatchModifiedSince
+    }
+    if (!_.isEmpty(this.MatchUnmodifiedSince)) {
+      headerOptions["x-amz-copy-source-if-unmodified-since"]= this.MatchUnmodifiedSince
+    }
+
+    return headerOptions
+
+  }
+}
+
+export class CopyDestinationOptions {
+  /*
+   * @param Bucket __string__
+   * @param Object __string__ Object Name for the destination (composed/copied) object defaults
+   * @param Encryption __object__ Encryption configuration defaults to {}
+   * @param UserMetadata __object__
+   * @param UserTags __object__ | __string__
+   * @param LegalHold __string__  ON | OFF
+   * @param RetainUntilDate __string__ UTC Date String
+   * @param Mode
+  */
+  constructor({
+    Bucket="",
+    Object="",
+    Encryption=null,
+    UserMetadata=null,
+    UserTags=null,
+    LegalHold = null,
+    RetainUntilDate=null,
+    Mode=null, //
+  }) {
+    this.Bucket=Bucket
+    this.Object=Object
+    this.Encryption=Encryption
+    this.UserMetadata=UserMetadata
+    this.UserTags=UserTags
+    this.LegalHold = LegalHold
+    this.Mode=Mode // retention mode
+    this.RetainUntilDate=RetainUntilDate
+  }
+
+  getHeaders (){
+    const replaceDirective = "REPLACE"
+    const headerOptions ={}
+
+    const userTags= this.UserTags
+    if (!_.isEmpty(userTags)) {
+      headerOptions["X-Amz-Tagging-Directive"]=replaceDirective
+      headerOptions["X-Amz-Tagging"]=isObject(userTags)? querystring.stringify(userTags):isString(userTags)?userTags:""
+    }
+
+    if (!_.isEmpty(this.Mode)) {
+      headerOptions["X-Amz-Object-Lock-Mode"]=this.Mode // GOVERNANCE or COMPLIANCE
+    }
+
+    if (!_.isEmpty(this.RetainUntilDate)) {
+      headerOptions["X-Amz-Object-Lock-Retain-Until-Date"]=this.RetainUntilDate// needs to be UTC.
+    }
+
+    if (!_.isEmpty(this.LegalHold) ){
+      headerOptions["X-Amz-Object-Lock-Legal-Hold"]= this.LegalHold// ON or OFF
+    }
+
+    if(!_.isEmpty(this.UserMetadata)){
+      const headerKeys = Object.keys(this.UserMetadata)
+      headerKeys.forEach((key)=>{
+        headerOptions[`X-Amz-Meta-${key}`]=this.UserMetadata[key]
+      })
+
+    }
+
+    if (!_.isEmpty(this.Encryption)){
+      const encryptionHeaders = getEncryptionHeaders(this.Encryption)
+      Object.keys(encryptionHeaders).forEach((key)=>{
+        headerOptions[key]=encryptionHeaders[key]
+      })
+
+    }
+    return headerOptions
+  }
+  validate(){
+    if (!isValidBucketName(this.Bucket)) {
+      throw new errors.InvalidBucketNameError('Invalid Destination bucket name: ' + this.Bucket)
+    }
+    if (!isValidObjectName(this.Object)) {
+      throw new errors.InvalidObjectNameError(`Invalid Destination object name: ${this.Object}`)
+    }
+    if(!_.isEmpty(this.UserMetadata) && !isObject(this.UserMetadata)){
+      throw new errors.InvalidObjectNameError(`Destination UserMetadata should be an object with key value pairs`)
+    }
+
+    if(!_.isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)){
+      throw new errors.InvalidObjectNameError(`Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]`)
+    }
+
+    if (!_.isEmpty(this.Encryption) && _.isEmpty(this.Encryption) ){
+      throw new errors.InvalidObjectNameError(`Invalid Encryption configuration for destination object `)
+    }
+    return true
+  }
+}
+
+export const  partsRequired= (size) =>{
+  let maxPartSize =PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE/ (PART_CONSTRAINTS.MAX_PARTS_COUNT - 1)
+  let requiredPartSize = size /maxPartSize
+  if ((size % maxPartSize) >0) {
+    requiredPartSize++
+  }
+  requiredPartSize = Math.trunc(requiredPartSize)
+  return requiredPartSize
+}
+
+// calculateEvenSplits - computes splits for a source and returns
+// start and end index slices. Splits happen evenly to be sure that no
+// part is less than 5MiB, as that could fail the multipart request if
+// it is not the last part.
+
+let startIndexParts = []
+let endIndexParts = []
+export function calculateEvenSplits(size , objInfo)  {
+  if (size === 0) {
+    return null
+  }
+  const reqParts = partsRequired(size)
+  startIndexParts = new Array(reqParts)
+  endIndexParts = new Array(reqParts)
+
+  let start = objInfo.Start
+  if (_.isEmpty( objInfo.Start) || start === -1 ){
+    start = 0
+  }
+  const divisorValue= Math.trunc(size/reqParts)
+
+  const reminderValue = size%reqParts
+
+  let nextStart = start
+
+  for (let i =0; i < reqParts; i++ ){
+    let curPartSize= divisorValue
+    if (i < reminderValue ){
+      curPartSize++
+    }
+
+    const currentStart =nextStart
+    let currentEnd = currentStart + curPartSize - 1
+    nextStart = currentEnd + 1
+
+    startIndexParts[i]= currentStart
+    endIndexParts[i]=currentEnd
+  }
+
+  return {startIndex:startIndexParts, endIndex:endIndexParts, objInfo:objInfo}
+
+}
+
+
+
+export function removeDirAndFiles(dirPath, removeSelf) {
+  if (removeSelf === undefined)
+    removeSelf = true
+  try { var files = fs.readdirSync(dirPath) }
+  catch(e) { return }
+  if (files.length > 0)
+    for (var i = 0; i < files.length; i++) {
+      var filePath = path.join(dirPath, files[i])
+      if (fs.statSync(filePath).isFile())
+        fs.unlinkSync(filePath)
+      else
+        removeDirAndFiles(filePath)
+    }
+  if (removeSelf)
+    fs.rmdirSync(dirPath)
 }

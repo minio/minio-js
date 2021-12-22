@@ -36,7 +36,11 @@ import {
   readableStream, isReadableStream, isVirtualHostStyle,
   insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
   toMd5, toSha256,
-  RETENTION_MODES, RETENTION_VALIDITY_UNITS, LEGAL_HOLD_STATUS
+  RETENTION_MODES, RETENTION_VALIDITY_UNITS,
+  LEGAL_HOLD_STATUS, CopySourceOptions, CopyDestinationOptions, getSourceVersionId,
+  PART_CONSTRAINTS,
+  partsRequired,
+  calculateEvenSplits
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -1180,7 +1184,7 @@ export class Client {
   // * `srcObject` _string_: path of the source object to be copied
   // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
   // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
-  copyObject(arg1, arg2, arg3, arg4, arg5) {
+  copyObjectV1(arg1, arg2, arg3, arg4, arg5) {
     var bucketName = arg1
     var objectName = arg2
     var srcObject = arg3
@@ -1235,6 +1239,69 @@ export class Client {
         .on('error', e => cb(e))
         .on('data', data => cb(null, data))
     })
+  }
+
+  /**
+     * Internal Method to perform copy of an object.
+     * @param sourceConfig __object__   instance of CopySourceOptions @link ./helpers/CopySourceOptions
+     * @param destConfig  __object__   instance of CopyDestinationOptions @link ./helpers/CopyDestinationOptions
+     * @param cb __function__ called with null if there is an error
+     * @returns Promise if no callack is passed.
+     */
+  copyObjectV2(sourceConfig, destConfig, cb){
+
+    if(!(sourceConfig instanceof CopySourceOptions )){
+      throw new errors.InvalidArgumentError('sourceConfig should of type CopySourceOptions ')
+    }
+    if(!(destConfig instanceof CopyDestinationOptions )){
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+    if(!destConfig.validate()){
+      return false
+    }
+    if(!destConfig.validate()){
+      return false
+    }
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    const headers = Object.assign({}, sourceConfig.getHeaders(), destConfig.getHeaders())
+
+    const  bucketName = destConfig.Bucket
+    const objectName= destConfig.Object
+
+    const method = 'PUT'
+    this.makeRequest({method, bucketName, objectName, headers}, '', [200], '', true, (e, response) => {
+      if (e) return cb(e)
+      const transformer = transformers.getCopyObjectTransformer()
+      pipesetup(response, transformer)
+        .on('error', e => cb(e))
+        .on('data', data => {
+          const resHeaders = response.headers
+
+          const copyObjResponse = {
+            Bucket: destConfig.Bucket,
+            Key: destConfig.Object,
+            LastModified: data.LastModified,
+            MetaData: extractMetadata(resHeaders),
+            VersionId:getVersionId(resHeaders),
+            SourceVersionId:getSourceVersionId(resHeaders),
+            Etag:sanitizeETag(resHeaders.etag),
+            Size: +resHeaders['content-length']
+          }
+
+          return  cb(null, copyObjResponse)
+        })
+    })
+  }
+
+  // Backward compatibility for Copy Object API.
+  copyObject(...allArgs) {
+    if (allArgs[0] instanceof CopySourceOptions && allArgs[1] instanceof CopyDestinationOptions) {
+      return this.copyObjectV2(...arguments)
+    }
+    return this.copyObjectV1(...arguments)
   }
 
   // list a batch of objects
@@ -2360,7 +2427,6 @@ export class Client {
     let payload = builder.buildObject(taggingConfig)
     payload = encoder.encode(payload)
     headers['Content-MD5'] = toMd5(payload)
-
     const requestOptions = { method, bucketName, query, headers }
 
     if(objectName){
@@ -3067,6 +3133,230 @@ export class Client {
     this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200], '', false, cb)
   }
 
+  /**
+     * Internal Method to abort a multipart upload request in case of any errors.
+     * @param bucketName __string__ Bucket Name
+     * @param objectName __string__ Object Name
+     * @param uploadId __string__ id of a multipart upload to cancel during compose object sequence.
+     * @param cb __function__ callback function
+     */
+  abortMultipartUpload(bucketName, objectName, uploadId, cb){
+    const method = 'DELETE'
+    let query =`uploadId=${uploadId}`
+
+    const requestOptions = { method, bucketName, objectName:objectName, query }
+    this.makeRequest(requestOptions, '', [204], '', false, cb)
+  }
+
+  /**
+     * Internal method to upload a part during compose object.
+     * @param partConfig __object__ contains the following.
+     *    bucketName __string__
+     *    objectName __string__
+     *    uploadID __string__
+     *    partNumber __number__
+     *    headers __object__
+     * @param cb called with null incase of error.
+     */
+  uploadPartCopy  (partConfig , cb) {
+    const {
+      bucketName, objectName, uploadID, partNumber , headers
+    } = partConfig
+
+    const method = 'PUT'
+    let query =`uploadId=${uploadID}&partNumber=${partNumber}`
+    const requestOptions = { method, bucketName, objectName:objectName, query, headers }
+    return this.makeRequest(requestOptions, '', [200], '', true,(e, response) => {
+      let partCopyResult = Buffer.from('')
+      if (e) return cb(e)
+      pipesetup(response, transformers.uploadPartTransformer())
+        .on('data', data => {
+          partCopyResult = data
+        })
+        .on('error', cb)
+        .on('end', () => {
+          let uploadPartCopyRes = {
+            etag:sanitizeETag(partCopyResult.ETag),
+            key:objectName,
+            part:partNumber
+          }
+
+          cb(null, uploadPartCopyRes)
+        })
+    }
+    )
+  }
+
+  composeObject (destObjConfig={}, sourceObjList=[], cb){
+    const me = this // many async flows. so store the ref.
+    const sourceFilesLength = sourceObjList.length
+
+    if(!(isArray(sourceObjList ))){
+      throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
+    }
+    if(!(destObjConfig instanceof CopyDestinationOptions )){
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+
+    if (sourceFilesLength < 1 || sourceFilesLength > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+      throw new errors.InvalidArgumentError(`"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`)
+    }
+
+    if (!isFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+
+    for(let i=0;i<sourceFilesLength;i++){
+      if(!sourceObjList[i].validate()){
+        return false
+      }
+    }
+
+    if(!destObjConfig.validate()){
+      return false
+    }
+
+    const getStatOptions = (srcConfig) =>{
+      return {
+        versionId: srcConfig.VersionID
+      }
+    }
+    const srcObjectSizes=[]
+    let totalSize=0
+    let totalParts=0
+
+    const sourceObjStats = sourceObjList.map( (srcItem) =>  me.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem))  )
+
+    return  Promise.all(sourceObjStats).then(srcObjectInfos =>{
+
+      const validatedStats =  srcObjectInfos.map( (resItemStat, index)=>{
+
+        const srcConfig = sourceObjList[index]
+
+        let srcCopySize =resItemStat.size
+        // Check if a segment is specified, and if so, is the
+        // segment within object bounds?
+        if (srcConfig.MatchRange) {
+          // Since range is specified,
+          //    0 <= src.srcStart <= src.srcEnd
+          // so only invalid case to check is:
+          const srcStart = srcConfig.Start
+          const srcEnd = srcConfig.End
+          if (srcEnd >= srcCopySize || srcStart < 0 ){
+            throw new errors.InvalidArgumentError(`CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`)
+          }
+          srcCopySize = srcEnd - srcStart + 1
+        }
+
+        // Only the last source may be less than `absMinPartSize`
+        if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength-1) {
+          throw new errors.InvalidArgumentError(`CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`)
+        }
+
+        // Is data to copy too large?
+        totalSize += srcCopySize
+        if (totalSize > PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE) {
+          throw new errors.InvalidArgumentError(`Cannot compose an object of size ${totalSize} (> 5TiB)`)
+        }
+
+        // record source size
+        srcObjectSizes[index] = srcCopySize
+
+        // calculate parts needed for current source
+        totalParts += partsRequired(srcCopySize)
+        // Do we need more parts than we are allowed?
+        if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT  ){
+          throw new errors.InvalidArgumentError(`Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`)
+        }
+
+        return resItemStat
+
+      })
+
+      if ((totalParts === 1 && totalSize <= PART_CONSTRAINTS.MAX_PART_SIZE) || (totalSize === 0)) {
+        return this.copyObject( sourceObjList[0], destObjConfig, cb) // use copyObjectV2
+      }
+
+      // preserve etag to avoid modification of object while copying.
+      for(let i=0;i<sourceFilesLength;i++){
+        sourceObjList[i].MatchETag = validatedStats[i].etag
+      }
+
+      const splitPartSizeList = validatedStats.map((resItemStat, idx)=>{
+        const calSize = calculateEvenSplits(srcObjectSizes[idx], sourceObjList[idx])
+        return calSize
+
+      })
+
+      function getUploadPartConfigList (uploadId) {
+        const uploadPartConfigList = []
+
+        splitPartSizeList.forEach((splitSize, splitIndex) => {
+
+          const {
+            startIndex: startIdx,
+            endIndex: endIdx,
+            objInfo: objConfig,
+          } = splitSize
+
+          let partIndex = splitIndex + 1 // part index starts from 1.
+          const totalUploads = Array.from(startIdx)
+
+          const headers = sourceObjList[splitIndex].getHeaders()
+
+          totalUploads.forEach((splitStart, upldCtrIdx) => {
+            let splitEnd = endIdx[upldCtrIdx]
+
+            const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
+            headers['x-amz-copy-source'] = `${sourceObj}`
+            headers["x-amz-copy-source-range"] = `bytes=${splitStart}-${splitEnd}`
+
+            const uploadPartConfig = {
+              bucketName: destObjConfig.Bucket,
+              objectName: destObjConfig.Object,
+              uploadID: uploadId,
+              partNumber: partIndex,
+              headers: headers,
+              sourceObj: sourceObj
+            }
+
+            uploadPartConfigList.push(uploadPartConfig)
+          })
+
+        })
+
+        return uploadPartConfigList
+      }
+
+      const performUploadParts = (uploadId) =>{
+
+        const uploadList = getUploadPartConfigList(uploadId)
+
+        async.map(uploadList, me.uploadPartCopy.bind(me), (err, res)=>{
+          if(err){
+            return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, cb)
+          }
+          const partsDone = res.map((partCopy)=>({etag:partCopy.etag, part:partCopy.part}))
+          return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
+        })
+
+      }
+
+      const newUploadHeaders = destObjConfig.getHeaders()
+
+      me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders, (err, uploadId)=>{
+        if(err){
+          return cb(err, null)
+        }
+        performUploadParts(uploadId)
+      })
+
+    })
+      .catch((error)=>{
+        cb(error, null)
+      })
+
+  }
   get extensions() {
     if(!this.clientExtensions)
     {
@@ -3125,6 +3415,7 @@ Client.prototype.getBucketReplication =promisify(Client.prototype.getBucketRepli
 Client.prototype.removeBucketReplication=promisify(Client.prototype.removeBucketReplication)
 Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHold)
 Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
+Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 export class CopyConditions {
   constructor() {
