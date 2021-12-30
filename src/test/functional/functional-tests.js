@@ -2717,4 +2717,130 @@ describe('functional tests', function() {
     })
 
   })
+
+  describe('Put Object Response test with multipart on an Un versioned bucket:', ()=> {
+
+    const bucketToTestMultipart = "minio-js-test-put-multiuv-" + uuid.v4()
+
+    before((done) => client.makeBucket(bucketToTestMultipart, '', done))
+    after((done) => client.removeBucket(bucketToTestMultipart, done))
+
+    // Non multipart Test
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}, stream:100KB`, done => {
+      const stream = readableStream(_100kb)
+      client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
+        if(e) done(e)
+        if(res.versionId===null && res.etag) {
+          done()
+        }
+        else{
+          done(new Error(`Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
+        }
+      })
+    })
+    step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`, done => {
+      client.removeObject(bucketToTestMultipart, _100kbObjectName)
+        .then(() => done())
+        .catch(done)
+    })
+
+
+    // Multipart Test
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}, stream:65MB`, done => {
+      const stream = readableStream(_65mb)
+      client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
+        if(e) done(e)
+        if(res.versionId===null && res.etag) {
+          done()
+        }
+        else{
+          done(new Error(`Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
+        }
+      })
+    })
+    step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`, done => {
+      client.removeObject(bucketToTestMultipart, _65mbObjectName)
+        .then(() => done())
+        .catch(done)
+    })
+  })
+
+  describe('Put Object Response test with multipart on Versioned bucket:', ()=> {
+
+    const bucketToTestMultipart = "minio-js-test-put-multiv-" + uuid.v4()
+    let isVersioningSupported=false
+    let versionedObjectRes = null
+    let versionedMultiPartObjectRes = null
+
+    before((done) => client.makeBucket(bucketToTestMultipart, '', ()=>{
+      client.setBucketVersioning(bucketToTestMultipart,{Status:"Enabled"},(err)=>{
+        if (err && err.code === 'NotImplemented') return done()
+        if (err) return done(err)
+        isVersioningSupported = true
+        done()
+      })
+
+    }))
+    after((done) => client.removeBucket(bucketToTestMultipart, done))
+
+
+
+    // Non multipart Test
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}, stream:100KB`, done => {
+
+      if(isVersioningSupported) {
+        const stream = readableStream(_100kb)
+        client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
+          if (e) done(e)
+          if (res.versionId && res.etag) {
+            versionedObjectRes = res
+            done()
+          } else {
+            done(new Error(`Incorrect response format, expected: {versionId:'some-version-hash', etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
+          }
+        })
+      } else {
+        done()
+      }
+
+    })
+    step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`, done => {
+      if(isVersioningSupported) {
+        client.removeObject(bucketToTestMultipart, _100kbObjectName, {versionId: versionedObjectRes.versionId})
+          .then(() => done())
+          .catch(done)
+      } else {
+        done()
+      }
+    })
+
+
+    // Multipart Test
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}, stream:65MB`, done => {
+      if(isVersioningSupported) {
+        const stream = readableStream(_65mb)
+        client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
+          if (e) done(e)
+          if (res.versionId && res.etag) {
+            versionedMultiPartObjectRes = res
+            done()
+          } else {
+            done(new Error(`Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
+          }
+        })
+      } else {
+        done()
+      }
+    })
+    step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`, done => {
+      if(isVersioningSupported) {
+        client.removeObject(bucketToTestMultipart, _65mbObjectName, {versionId: versionedMultiPartObjectRes.versionId})
+          .then(() => done())
+          .catch(done)
+      } else {
+        done()
+      }
+    })
+  })
+
 })

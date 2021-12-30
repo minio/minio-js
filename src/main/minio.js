@@ -1974,7 +1974,11 @@ export class Client {
             // Multipart Complete API returns an error XML after a 200 http status
             cb(new errors.S3Error(result.errMessage))
           } else {
-            cb(null, result.etag)
+            const completeMultipartResult = {
+              etag: result.etag,
+              versionId:getVersionId(response.headers)
+            }
+            cb(null, completeMultipartResult)
           }
         })
     })
