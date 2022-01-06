@@ -96,7 +96,7 @@ export function parseListMultipart(xml) {
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(prefix => {
-      result.prefixes.push({prefix: toArray(prefix)[0]})
+      result.prefixes.push({prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0])})
     })
   }
 
@@ -319,8 +319,7 @@ export function parseListObjects(xml) {
   const parseCommonPrefixesEntity = responseEntity => {
     if(responseEntity){
       toArray(responseEntity).forEach((commonPrefix) => {
-        const prefix = toArray(commonPrefix.Prefix)[0]
-        result.objects.push({prefix, size: 0})
+        result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0})
       })
     }
   }
@@ -404,9 +403,7 @@ export function parseListObjectsV2(xml) {
   }
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
-      var prefix = toArray(commonPrefix.Prefix)[0]
-      var size = 0
-      result.objects.push({prefix, size})
+      result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size:0})
     })
   }
   return result
@@ -444,9 +441,7 @@ export function parseListObjectsV2WithMetadata(xml) {
 
   if (xmlobj.CommonPrefixes) {
     toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
-      var prefix = toArray(commonPrefix.Prefix)[0]
-      var size = 0
-      result.objects.push({prefix, size})
+      result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size:0})
     })
   }
   return result
