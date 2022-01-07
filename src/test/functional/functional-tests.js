@@ -2860,7 +2860,12 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
 
     const specialCharPrefix = "SpecialMenùäöüexPrefix/"
-    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+
+    let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    if(isWindowsPlatform){
+      objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
+    }
+
 
     const objectNameWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
 
