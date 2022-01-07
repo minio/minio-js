@@ -41,3 +41,4 @@ jobs:
           npm run lint
           npm run browserify
           npm run test
+
