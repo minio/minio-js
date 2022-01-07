@@ -2976,4 +2976,162 @@ describe('functional tests', function() {
 
   })
 
+  describe('Special Characters test on a prefix and an object', ()=> {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const bucketNameForSpCharObjects = "minio-js-test-obj-sppre" + uuid.v4()
+    before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
+    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+
+    const specialCharPrefix = "SpecialMenùäöüexPrefix/"
+    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+
+    const objectNameWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
+
+    const objectContents = Buffer.alloc(100 * 1024, 0)
+
+    step(`putObject(bucketName, objectName, stream)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefix}, stream:100Kib`, done => {
+      client.putObject(bucketNameForSpCharObjects, objectNameWithPrefix, objectContents)
+        .then(() => {
+          done()
+        })
+        .catch(done)
+    })
+
+
+    step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
+      const listStream = client.listObjects(bucketNameForSpCharObjects,"", false )
+      let listedObject = null
+      listStream.on('data', function (obj) {
+        listedObject = obj
+      })
+      listStream.on('end',()=>{
+        if(listedObject.prefix === specialCharPrefix){
+          done()
+        }else{
+          return done(new Error(`Expected Prefix Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
+        }
+      })
+      listStream.on('error', function (e) {
+        done(e)
+      })
+    })
+
+    step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
+      const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", false )
+      let listedObject = null
+      listStream.on('data', function (obj) {
+        listedObject = obj
+      })
+      listStream.on('end',()=>{
+        // verify that the prefix special characters are handled
+        if(listedObject.prefix === specialCharPrefix){
+          done()
+        }else{
+          return done(new Error(`Expected object Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
+        }
+      })
+
+      listStream.on('error', function (e) {
+        done(e)
+      })
+    })
+
+    step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
+      const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", false )
+      let listedObject = null
+      listStream.on('data', function (obj) {
+        listedObject = obj
+      })
+      listStream.on('end',()=>{
+        if(listedObject.prefix === specialCharPrefix){
+          done()
+        }else{
+          return done(new Error(`Expected object Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
+        }
+      })
+
+      listStream.on('error', function (e) {
+        done(e)
+      })
+    })
+
+    step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefix}`, done => {
+      client.getObject(bucketNameForSpCharObjects, objectNameWithPrefix)
+        .then(stream => {
+          stream.on('data', function() {})
+          stream.on('end', done)
+        })
+        .catch(done)
+    })
+
+    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefix}`, done => {
+      client.statObject(bucketNameForSpCharObjects, objectNameWithPrefix, (e) => {
+        if (e) return done(e)
+        done()
+      })
+    })
+    step(`removeObject(bucketName, objectName)_bucketName:${objectNameWithPrefix}, _objectName:${objectNameWithPrefix}`, done => {
+      client.removeObject(bucketNameForSpCharObjects, objectNameWithPrefix)
+        .then(() => done())
+        .catch(done)
+    })
+
+  })
+  describe('Test listIncompleteUploads (Multipart listing) with special characters', () => {
+    const specialCharPrefix = "SpecialMenùäöüexPrefix/"
+    const objectNameSpecialChars="äöüex.pdf"
+    const spObjWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
+    const spBucketName =  "minio-js-test-lin-sppre" + uuid.v4()
+
+    before((done) => client.makeBucket(spBucketName, '', done))
+    after((done) => client.removeBucket(spBucketName , done))
+
+    step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`, done => {
+      client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData, done)
+    })
+
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}, recursive: true_`, function (done) {
+      // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
+      if (!client.host.includes('s3.amazonaws.com')) {
+        done()
+        return
+      }
+
+      var found = false
+      client.listIncompleteUploads(spBucketName, spObjWithPrefix, true)
+        .on('error', e => done(e))
+        .on('data', data => {
+          if (data.key === spObjWithPrefix) found = true
+        })
+        .on('end', () => {
+          if (found) return done()
+          done(new Error(`${spObjWithPrefix} not found during listIncompleteUploads`))
+        })
+    })
+
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, recursive: true_`, function (done) {
+      // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
+      if (!client.host.includes('s3.amazonaws.com')) {
+        done()
+        return
+      }
+
+      var found = false
+      client.listIncompleteUploads(spBucketName, "", false)
+        .on('error', e => done(e))
+        .on('data', data => {
+          // check the prefix
+          if (data.prefix === specialCharPrefix) found = true
+        })
+        .on('end', () => {
+          if (found) return done()
+          done(new Error(`${specialCharPrefix} not found during listIncompleteUploads`))
+        })
+    })
+    step(`removeIncompleteUploads(bucketName, prefix)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}_`, done => {
+      client.removeIncompleteUpload(spBucketName, spObjWithPrefix)
+        .then(done)
+        .catch(done)
+    })
+  })
 })
