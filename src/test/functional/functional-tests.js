@@ -48,6 +48,8 @@ const { getVersionId, isArray } = helpers
 
 require('source-map-support').install()
 
+const isWindowsPlatform = process.platform === "win32"
+
 describe('functional tests', function() {
   this.timeout(30 * 60 * 1000)
   var playConfig = {}
@@ -2536,7 +2538,12 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
 
     // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
-    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    // Host OS compatible File name characters/ file names.
+
+    let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    if(isWindowsPlatform){
+      objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
+    }
 
     const objectContents = Buffer.alloc(100 * 1024, 0)
 
@@ -2637,7 +2644,10 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
 
     // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
-    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    if(isWindowsPlatform){
+      objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
+    }
     const prefix="test"
     const objectNameWithPrefixForSpecialChars = `${prefix}/${objectNameSpecialChars}`
 
@@ -2866,7 +2876,12 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
 
     const specialCharPrefix = "SpecialMenùäöüexPrefix/"
-    const objectNameSpecialChars="äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+
+    let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
+    if(isWindowsPlatform){
+      objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
+    }
+
 
     const objectNameWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
 

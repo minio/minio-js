@@ -1,9 +1,10 @@
-name: CI - Linux
+name: CI- Windows
 
 on:
   pull_request:
     branches:
       - master
+
 jobs:
   build:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
@@ -12,17 +13,14 @@ jobs:
       max-parallel: 1
       matrix:
         node_version: [12.x, 14.x, 16.x]
-        os: [ubuntu-latest]
+        os: [windows-latest]
     steps:
       - uses: actions/checkout@v1
-        with:
-            fetch-depth: 0
-            ref: ''
       - name: Use Node.js ${{ matrix.node_version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node_version }}
-      - name: Start Server -> Run Unit and Functional Tests ( install, lint, browserify, test)
+      - name: Start MinIO Server -> Run Unit and Functional Tests ( install, lint, browserify, test)
         env:
           CI: true
           MINT_MODE: full
@@ -34,9 +32,8 @@ jobs:
           SECRET_KEY: minio123
           ENABLE_HTTPS: 0
         run: |
-          wget --quiet -O /tmp/minio https://dl.min.io/server/minio/release/linux-amd64/minio
-          chmod +x /tmp/minio
-          /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
+          Invoke-WebRequest -Uri https://dl.minio.io/server/minio/release/windows-amd64/minio.exe -OutFile $HOME/minio.exe
+          Start-Process -NoNewWindow -FilePath "$HOME/minio.exe" -ArgumentList "-C", "$env:temp/minio-config", "server", "$env:temp/data{1...4}"
           npm install
           npm run lint
           npm run browserify
