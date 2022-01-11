@@ -22,18 +22,10 @@ import {
   sanitizeETag,
   toArray,
   sanitizeObjectKey,
-  RETENTION_VALIDITY_UNITS
+  RETENTION_VALIDITY_UNITS,
+  parseXml
 } from "./helpers"
 
-var parseXml = (xml) => {
-  var result = null
-  result = fxp.parse(xml)
-  if (result.Error) {
-    throw result.Error
-  }
-
-  return result
-}
 
 // Parse XML and return information as Javascript types
 

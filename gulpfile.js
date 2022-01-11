@@ -29,7 +29,7 @@ const compileJS = (src, dest) => {
     .pipe(sourcemaps.init())
     .pipe(babel({
       presets: [['@babel/env', {
-        targets: { node: 4 }
+        targets: { node: 8 }
       }]]
     }))
     .pipe(sourcemaps.write('.'))

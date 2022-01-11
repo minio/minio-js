@@ -17,6 +17,7 @@
 import stream from 'stream'
 import mime from 'mime-types'
 var Crypto = require('crypto-browserify')
+import fxp from "fast-xml-parser"
 const ipaddr = require('ipaddr.js')
 import { isBrowser } from "browser-or-node"
 
@@ -89,8 +90,8 @@ export function uriResourceEscape(string) {
   return uriEscape(string).replace(/%2F/g, '/')
 }
 
-export function getScope(region, date) {
-  return `${makeDateShort(date)}/${region}/s3/aws4_request`
+export function getScope(region, date, serviceName="s3") {
+  return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
 }
 
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
@@ -734,4 +735,14 @@ export function removeDirAndFiles(dirPath, removeSelf) {
     }
   if (removeSelf)
     fs.rmdirSync(dirPath)
+}
+
+export const  parseXml = (xml) => {
+  let result = null
+  result = fxp.parse(xml)
+  if (result.Error) {
+    throw result.Error
+  }
+
+  return result
 }

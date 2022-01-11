@@ -56,6 +56,7 @@ import { getS3Endpoint } from './s3-endpoints.js'
 import { NotificationConfig, NotificationPoller } from './notification'
 
 import extensions from './extensions'
+import CredentialProvider from "./CredentialProvider"
 
 var Package = require('../../package.json')
 
@@ -140,6 +141,11 @@ export class Client {
     if (!this.accessKey) this.accessKey = ''
     if (!this.secretKey) this.secretKey = ''
     this.anonymous = !this.accessKey || !this.secretKey
+
+    if(params.credentialsProvider)  {
+      this.credentialsProvider = params.credentialsProvider
+      this.checkAndRefreshCreds()
+    }
 
     this.regionMap = {}
     if (params.region) {
@@ -458,6 +464,7 @@ export class Client {
           reqOptions.headers['x-amz-security-token'] = this.sessionToken
         }
 
+        this.checkAndRefreshCreds()
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
         reqOptions.headers.authorization = authorization
       }
@@ -1845,6 +1852,8 @@ export class Client {
                                                bucketName,
                                                objectName,
                                                query})
+
+      this.checkAndRefreshCreds()
       try {
         url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
                                  this.sessionToken, region, requestDate, expires)
@@ -1925,6 +1934,8 @@ export class Client {
       if (e) return cb(e)
       var date = new Date()
       var dateStr = makeDateLong(date)
+
+      this.checkAndRefreshCreds()
 
       if (!postPolicy.policy.expiration) {
         // 'expiration' is mandatory field for S3.
@@ -3131,6 +3142,34 @@ export class Client {
     headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200], '', false, cb)
+  }
+  async setCredentialsProvider(credentialsProvider){
+    if(!(credentialsProvider instanceof CredentialProvider)){
+      throw new Error("Unable to get  credentials. Expected instance of CredentialProvider")
+    }
+    this.credentialsProvider = credentialsProvider
+    await this.checkAndRefreshCreds()
+  }
+
+  async checkAndRefreshCreds(){
+    if(this.credentialsProvider ) {
+      return  await this.fetchCredentials()
+    }
+  }
+
+  async fetchCredentials(){
+    if(this.credentialsProvider ){
+      const credentialsConf = await this.credentialsProvider.getCredentials()
+      if(credentialsConf) {
+        this.accessKey = credentialsConf.getAccessKey()
+        this.secretKey = credentialsConf.getSecretKey()
+        this.sessionToken = credentialsConf.getSessionToken()
+      }else{
+        throw new Error("Unable to get  credentials. Expected instance of BaseCredentialsProvider")
+      }
+    }else{
+      throw new Error("Unable to get  credentials. Expected instance of BaseCredentialsProvider")
+    }
   }
 
   /**

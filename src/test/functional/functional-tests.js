@@ -37,6 +37,16 @@ try{
   helpers = require('minio/dist/main/helpers')
 }
 
+let AssumeRoleProvider
+try{
+  AssumeRoleProvider=  require("../../../dist/main/AssumeRoleProvider")
+}catch (err){
+  AssumeRoleProvider = require('minio/dist/main/AssumeRoleProvider')
+}
+
+AssumeRoleProvider=AssumeRoleProvider.default
+
+
 let minio
 
 try {
@@ -2745,6 +2755,59 @@ describe('functional tests', function() {
           .catch(done)
       })
     })
+
+  })
+
+  describe('Assume Role Tests', ()=>{
+    // Run only in local environment.
+    const bucketName = "minio-js-test-assume-role" + uuid.v4()
+    before((done) => client.makeBucket(bucketName, '', done))
+    after((done) => client.removeBucket(bucketName, done))
+
+
+    const objName = 'datafile-100-kB'
+    const objContent = Buffer.alloc(100 * 1024, 0)
+
+    const canRunAssumeRoleTest = playConfig.endPoint.includes("localhost")
+    const stsEndPoint = "http://localhost:9000"
+
+    try {
+      if (canRunAssumeRoleTest) {
+        // Creates a new Client with assume role provider for testing.
+        const assumeRoleProvider = new AssumeRoleProvider({
+          stsEndpoint: stsEndPoint,
+          accessKey: client.accessKey,
+          secretKey: client.secretKey
+        })
+
+        const aRoleConf = Object.assign({}, playConfig, {credentialsProvider: assumeRoleProvider})
+        const assumeRoleClient = new minio.Client(aRoleConf)
+
+        describe('Put an Object', function () {
+          step(`Put an object with assume role credentials:  bucket:_bucketName:${bucketName}, _objectName:${objName}`, done => {
+            const putObjPromise = assumeRoleClient.putObject(bucketName, objName, objContent)
+            putObjPromise.then(() => {
+              done()
+            })
+              .catch(done)
+          })
+
+          step(`Remove an Object with assume role credentials:${bucketName}, _objectName:${objName}`, done => {
+            const removeObjPromise = assumeRoleClient.removeObject(bucketName, objName)
+            removeObjPromise.then(() => {
+              done()
+            })
+              .catch(done)
+          })
+
+        })
+      }else{
+        this.skip()
+      }
+    }catch (err){
+      console.log("Error in Assume Role API.",err)
+
+    }
 
   })
 
