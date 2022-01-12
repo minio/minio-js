@@ -66,6 +66,7 @@
     "mocha-steps": "^1.1.0",
     "nock": "^10.0.6",
     "source-map-support": "^0.5.13",
+    "split-file": "^2.2.2",
     "superagent": "^5.1.0",
     "uuid": "^3.3.2"
   },

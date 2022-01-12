@@ -27,35 +27,31 @@ var s3Client = new Minio.Client({
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
-| Bucket operations       | Object operations      | Presigned operations | Bucket Policy & Notification operations | Custom Settings |
-| ------------- |-------------| -----| ----- | ----- |
-| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) | [`setS3TransferAccelerate`](#setS3TransferAccelerate)|
-| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) | |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) | |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | |
-| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy) |
-| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)| |
-| [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) | |
-| [`getBucketVersioning`](#getBucketVersioning)    |  [`removeObject`](#removeObject)    | |
-| [`setBucketVersioning`](#setBucketVersioning)     |  [`removeObjects`](#removeObjects)    | |
-| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload)  | |
-| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)  | |
-| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)  | |
-| [`setBucketLifecycle`](#setBucketLifecycle)  |  [`putObjectTagging`](#putObjectTagging)    | |
-| [`getBucketLifecycle`](#getBucketLifecycle)  |  [`removeObjectTagging`](#removeObjectTagging)    | |
-| [`removeBucketLifecycle`](#removeBucketLifecycle) |  [`getObjectTagging`](#getObjectTagging)    | |
-| [`setObjectLockConfig`](#setObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
-| [`getObjectLockConfig`](#getObjectLockConfig)    |   [`getObjectLegalHold`](#getObjectLegalHold) | |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold) | |
-| [`setBucketEncryption`](#setBucketEncryption)     |  | |
-| [`removeBucketEncryption`](#removeBucketEncryption)  |    | |
-| [`setBucketReplication`](#setBucketReplication)|  | |
-| [`getBucketReplication`](#getBucketReplication)|   | |
-| [`removeBucketReplication`](#removeBucketReplication)|  | |
-| [`setBucketEncryption`](#setBucketEncryption)     |  | |
-| [`getBucketEncryption`](#getBucketEncryption)     |  | |
-| [`removeBucketEncryption`](#removeBucketEncryption)  |    | |
+| Bucket operations       | Object operations                                   | Presigned operations | Bucket Policy & Notification operations | Custom Settings |
+| ------------- |-----------------------------------------------------| -----| ----- | ----- |
+| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject)                           | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) | [`setS3TransferAccelerate`](#setS3TransferAccelerate)|
+| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)             |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) | |
+| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)                         |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) | |
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)                           |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | |
+| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)                         |   |   [`setBucketPolicy`](#setBucketPolicy) |
+| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject)                         | | [`listenBucketNotification`](#listenBucketNotification)| |
+| [`listIncompleteUploads`](#listIncompleteUploads) | [`statObject`](#statObject)                         | |
+| [`getBucketVersioning`](#getBucketVersioning)    | [`removeObject`](#removeObject)                     | |
+| [`setBucketVersioning`](#setBucketVersioning)     | [`removeObjects`](#removeObjects)                   | |
+| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload) | |
+| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)         | |
+| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)         | |
+| [`setBucketLifecycle`](#setBucketLifecycle)  | [`putObjectTagging`](#putObjectTagging)             | |
+| [`getBucketLifecycle`](#getBucketLifecycle)  | [`removeObjectTagging`](#removeObjectTagging)       | |
+| [`removeBucketLifecycle`](#removeBucketLifecycle) | [`getObjectTagging`](#getObjectTagging)             | |
+| [`setObjectLockConfig`](#setObjectLockConfig)    | [`getObjectLegalHold`](#getObjectLegalHold)         | |
+| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold)         | |
+| [`getObjectLockConfig`](#getObjectLockConfig)    | [`composeObject`](#composeObject)         | |
+| [`setBucketEncryption`](#setBucketEncryption)     |               | |
+| [`removeBucketEncryption`](#removeBucketEncryption)  |                                                     | |
+| [`setBucketReplication`](#setBucketReplication)|                                                     | |
+| [`getBucketReplication`](#getBucketReplication)|                                                     | |
+| [`removeBucketReplication`](#removeBucketReplication)|                                                     | |
 
 
 ## 1.  Constructor
@@ -1676,6 +1672,58 @@ minioClient.setObjectLegalHold('bucketName', 'objectName', { Status:"ON", versio
   }
   console.log('Success')
 })
+```
+
+
+<a name="composeObject"></a>
+### composeObject(destObjConfig, sourceObjectList [, callback])
+
+Compose an object from parts
+
+__Parameters__
+
+
+| Param  |  Type | Description                                                                                                                                                                           |
+|---|---|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `destObjConfig`  |_object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                   |
+| `sourceObjectList`  | _object[]_  | Array of  object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
+| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                                |
+
+
+__Example 1__
+
+Compose an Object from its parts .
+
+```js
+const sourceList = [new Helpers.CopySourceOptions( {
+    Bucket:     "source-bucket",
+    Object:     "parta",
+}),new Helpers.CopySourceOptions({
+    Bucket:     "source-bucket",
+    Object:     "partb",
+}),new Helpers.CopySourceOptions({
+    Bucket:     "source-bucket",
+    Object:     "partc",
+
+}),new Helpers.CopySourceOptions({
+    Bucket:     "source-bucket",
+    Object:     "partd",
+})]
+
+const destOption = new Helpers.CopyDestinationOptions({
+    Bucket:     "dest-bucket",
+    Object:     "100MB.zip"
+})
+
+//using Promise style.
+const composePromise = minioClient.composeObject(destOption,sourceList)
+    composePromise.then((result) => {
+        console.log("Success...")
+    })
+    .catch((e)=>{
+        console.log("error",e)
+    })
+
 ```
 
 ## 4. Presigned operations
