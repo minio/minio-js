@@ -3398,27 +3398,27 @@ export class Client {
       })
 
   }
-  selectObjectContent(bucketName, objectName, selOpts={}, cb) {
+  selectObjectContent(bucketName, objectName, selectOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if(!_.isEmpty(selOpts)){
+    if(!_.isEmpty(selectOpts)){
 
-      if (!isString(selOpts.expression)) {
+      if (!isString(selectOpts.expression)) {
         throw new TypeError('sqlExpression should be of type "string"')
       }
-      if(!_.isEmpty(selOpts.inputSerialization)) {
-        if (!isObject(selOpts.inputSerialization)) {
+      if(!_.isEmpty(selectOpts.inputSerialization)) {
+        if (!isObject(selectOpts.inputSerialization)) {
           throw new TypeError('inputSerialization should be of type "object"')
         }
       }else{
         throw new TypeError('inputSerialization is required')
       }
-      if(!_.isEmpty(selOpts.outputSerialization)) {
-        if (!isObject(selOpts.outputSerialization)) {
+      if(!_.isEmpty(selectOpts.outputSerialization)) {
+        if (!isObject(selectOpts.outputSerialization)) {
           throw new TypeError('outputSerialization should be of type "object"')
         }
       }else{
@@ -3433,36 +3433,35 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
 
-    const headers = {}
     const method = 'POST'
     let query = `select`
     query += "&select-type=2"
 
     const config = [
       {
-        "Expression": selOpts.expression
+        "Expression": selectOpts.expression
       },
       {
-        "ExpressionType":selOpts.expressionType || "SQL"
+        "ExpressionType":selectOpts.expressionType || "SQL"
       },
       {
-        "InputSerialization": [selOpts.inputSerialization]
+        "InputSerialization": [selectOpts.inputSerialization]
       },
       {
-        "OutputSerialization": [selOpts.outputSerialization]
+        "OutputSerialization": [selectOpts.outputSerialization]
       }
     ]
 
     // Optional
-    if(selOpts.requestProgress){
+    if(selectOpts.requestProgress){
       config.push(
-        {"RequestProgress":selOpts.requestProgress}
+        {"RequestProgress":selectOpts.requestProgress}
       )
     }
     // Optional
-    if(selOpts.scanRange){
+    if(selectOpts.scanRange){
       config.push(
-        {"ScanRange": selOpts.scanRange}
+        {"ScanRange": selectOpts.scanRange}
 
       )
     }
@@ -3471,10 +3470,8 @@ export class Client {
     const builder = new xml2js.Builder({rootName:'SelectObjectContentRequest', renderOpts:{'pretty':false}, headless:true})
     const payload = builder.buildObject(config)
 
-    const md5digest = toMd5(payload)
-    headers['Content-MD5'] = md5digest.toString('base64')
 
-    this.makeRequest({method, bucketName, objectName, headers, query}, payload, [200], '', true, (e, response) => {
+    this.makeRequest({method, bucketName, objectName, query}, payload, [200], '', true, (e, response) => {
       if (e) return cb(e)
 
       let selectResult

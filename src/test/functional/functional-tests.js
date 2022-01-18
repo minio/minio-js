@@ -3255,8 +3255,9 @@ describe('functional tests', function() {
 
     })
 
-    step(`selectObjectContent(bucketName, objectName, selOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`, done => {
-      client.selectObjectContent(selObjContentBucket, selObject,{
+    step(`selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`, done => {
+
+      const selectOpts = {
         expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
         expressionType:"SQL",
         inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
@@ -3267,7 +3268,9 @@ describe('functional tests', function() {
         outputSerialization : {'CSV': {RecordDelimiter: "\n",
                                        FieldDelimiter:  ",",}},
         requestProgress:{Enabled:true}
-      })
+      }
+
+      client.selectObjectContent(selObjContentBucket, selObject, selectOpts)
         .then((result) => {
           // verify the select query result string.
           if(result.getRecords().toString() ==="Jane,(949) 123-45567,Chicago,Developer\n"){ // \n for csv line ending.

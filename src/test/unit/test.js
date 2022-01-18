@@ -1566,7 +1566,7 @@ describe('Client', function() {
     })
   })
   describe('Select Object Content APIs', ()=> {
-    describe('selectObjectContent(bucketName, objectName, selOpts={}, cb)', () => {
+    describe('selectObjectContent(bucketName, objectName, selectOpts={}, cb)', () => {
       it('should fail on null bucket', (done) => {
         try {
           client.selectObjectContent(null, function () {

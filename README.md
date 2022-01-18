@@ -147,6 +147,8 @@ The full API Reference is available here.
 * [`removeObject`](https://docs.min.io/docs/javascript-client-api-reference#removeObject)
 * [`removeObjects`](https://docs.min.io/docs/javascript-client-api-reference#removeObjects)
 * [`removeIncompleteUpload`](https://docs.min.io/docs/javascript-client-api-reference#removeIncompleteUpload)
+* [`selectObjectContent`](https://docs.min.io/docs/javascript-client-api-reference#selectObjectContent)
+
 
 ### API Reference : Presigned Operations
 

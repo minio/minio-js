@@ -1710,23 +1710,23 @@ const composePromise = minioClient.composeObject(destOption,sourceList)
 ```
 
 <a name="selectObjectContent"></a>
-### selectObjectContent(bucketName, objectName, selOpts[, callback])
+### selectObjectContent(bucketName, objectName, selectOpts[, callback])
 
 Select contents of an object (S3 Select).
 
 __Parameters__
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `selOpts`  | _object_  |  |
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned, with the `SelectResults` type |
+| Param           | Type       | Description                                                                                                                                          |
+|-----------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                  |
+| `objectName`    | _string_   | Name of the object.                                                                                                                                  |
+| `selectOpts`    | _object_   |                                                                                                                                                      |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned, with the `SelectResults` type |
 
 __Example 1__
 Select all values
 ```js
-const selectRequestConfig = {
+const selectOpts = {
     expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
     expressionType:"SQL",
     inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
@@ -1739,7 +1739,7 @@ const selectRequestConfig = {
     requestProgress:{Enabled:true},
 }
 
-minioClient.selectObjectContent('bucketName', 'objectName', selectRequestConfig, function(err, res) {
+minioClient.selectObjectContent('bucketName', 'objectName', selectOpts, function(err, res) {
   if (err) {
     return console.log('Unable to process select object content.', err.message)
   }

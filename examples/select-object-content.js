@@ -18,7 +18,7 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("../dist/main/minio")
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -39,7 +39,7 @@ const selectRequestConfig = {
   outputSerialization : {'CSV': {RecordDelimiter: "\n",
                                  FieldDelimiter:  ",",}},
   requestProgress:{Enabled:true},
-  //scanRange:{ start:50, end:100 }
+  // scanRange:{ start:50, end:100 }
 }
 
 s3Client.selectObjectContent('my-bucketname', 'my-objectname', selectRequestConfig, function(e, stat) {
