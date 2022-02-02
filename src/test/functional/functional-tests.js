@@ -629,7 +629,8 @@ describe('functional tests', function() {
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`, function(done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
-      if (!client.host.includes('s3.amazonaws.com')) {
+      let hostSkipList = ['s3.amazonaws.com']
+      if (!hostSkipList.includes(client.host)) {
         this.skip()
       }
 
@@ -647,7 +648,8 @@ describe('functional tests', function() {
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function(done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
-      if (!client.host.includes('s3.amazonaws.com')) {
+      let hostSkipList = ['s3.amazonaws.com']
+      if (!hostSkipList.includes(client.host)) {
         this.skip()
       }
 
@@ -1230,7 +1232,8 @@ describe('functional tests', function() {
       before(function() {
         // listenBucketNotification only works on MinIO, so skip if
         // the host is Amazon.
-        if (client.host.includes('s3.amazonaws.com')) {
+        let hostSkipList = ['s3.amazonaws.com']
+        if (hostSkipList.includes(client.host)) {
           this.skip()
         }
       })
@@ -3186,7 +3189,8 @@ describe('functional tests', function() {
 
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}, recursive: true_`, function (done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
-      if (!client.host.includes('s3.amazonaws.com')) {
+      let hostSkipList = ['s3.amazonaws.com']
+      if (!hostSkipList.includes(client.host)) {
         done()
         return
       }
@@ -3205,7 +3209,8 @@ describe('functional tests', function() {
 
     step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, recursive: true_`, function (done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
-      if (!client.host.includes('s3.amazonaws.com')) {
+      let hostSkipList = ['s3.amazonaws.com']
+      if (!hostSkipList.includes(client.host)) {
         done()
         return
       }
