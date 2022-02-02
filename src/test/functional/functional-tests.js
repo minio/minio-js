@@ -2804,12 +2804,10 @@ describe('functional tests', function() {
           })
 
         })
-      }else{
-        this.skip()
       }
     }catch (err){
-      console.log("Error in Assume Role API.",err)
-
+      // eslint-disable-next-line no-console
+      console.error("Error in Assume Role API.",err)
     }
 
   })
