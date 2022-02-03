@@ -46,7 +46,10 @@ exports.browserify = gulp.series(compile, () => {
     standalone: 'MinIO'
   })
     .bundle()
-    .on('error', (err) => console.log('Error : ' + err.message))
+    .on('error', (err) => {
+      // eslint-disable-next-line no-console
+      console.log('Error : ' + err.message)
+    })
     .pipe(fs.createWriteStream('./dist/main/minio-browser.js'))
 })
 
