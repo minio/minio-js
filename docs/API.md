@@ -115,7 +115,7 @@ var s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-TEMP-ACCESSKEYID',
     secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
-	sessionToken: 'YOUR-TEMP-SESSIONTOKEN'
+    sessionToken: 'YOUR-TEMP-SESSIONTOKEN'
 })
 ```
 
