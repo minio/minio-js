@@ -27,33 +27,32 @@ var s3Client = new Minio.Client({
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
-| Bucket operations       | Object operations                                   | Presigned operations | Bucket Policy & Notification operations | Custom Settings |
-| ------------- |-----------------------------------------------------| -----| ----- | ----- |
-| [`makeBucket`](#makeBucket)    | [`getObject`](#getObject)                           | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) | [`setS3TransferAccelerate`](#setS3TransferAccelerate)|
-| [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)             |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) | |
-| [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)                         |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) | |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject)                           |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | |
-| [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)                         |   |   [`setBucketPolicy`](#setBucketPolicy) |
-| [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject)                         | | [`listenBucketNotification`](#listenBucketNotification)| |
-| [`listIncompleteUploads`](#listIncompleteUploads) | [`statObject`](#statObject)                         | |
-| [`getBucketVersioning`](#getBucketVersioning)    | [`removeObject`](#removeObject)                     | |
-| [`setBucketVersioning`](#setBucketVersioning)     | [`removeObjects`](#removeObjects)                   | |
-| [`getBucketTagging`](#getBucketTagging)    | [`removeIncompleteUpload`](#removeIncompleteUpload) | |
-| [`setBucketTagging`](#setBucketTagging)  | [`putObjectRetention`](#putObjectRetention)         | |
-| [`removeBucketTagging`](#removeBucketTagging)  | [`getObjectRetention`](#getObjectRetention)         | |
-| [`setBucketLifecycle`](#setBucketLifecycle)  | [`putObjectTagging`](#putObjectTagging)             | |
-| [`getBucketLifecycle`](#getBucketLifecycle)  | [`removeObjectTagging`](#removeObjectTagging)       | |
-| [`removeBucketLifecycle`](#removeBucketLifecycle) | [`getObjectTagging`](#getObjectTagging)             | |
-| [`setObjectLockConfig`](#setObjectLockConfig)    | [`getObjectLegalHold`](#getObjectLegalHold)         | |
-| [`getBucketEncryption`](#getBucketEncryption)     | [`setObjectLegalHold`](#setObjectLegalHold)         | |
-| [`getObjectLockConfig`](#getObjectLockConfig)    | [`composeObject`](#composeObject)         | |
-| [`setBucketEncryption`](#setBucketEncryption)     |               | |
-| [`removeBucketEncryption`](#removeBucketEncryption)  |                                                     | |
-| [`setBucketReplication`](#setBucketReplication)|                                                     | |
-| [`getBucketReplication`](#getBucketReplication)|                                                     | |
-| [`removeBucketReplication`](#removeBucketReplication)|                                                     | |
 
-
+| Bucket operations                                     | Object operations                                   | Presigned operations                          | Bucket Policy & Notification operations                       | Custom Settings                                       |   |
+|-------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------|---------------------------------------------------------------|-------------------------------------------------------|---|
+| [`makeBucket`](#makeBucket)                           | [`getObject`](#getObject)                           | [`presignedUrl`](#presignedUrl)               | [`getBucketNotification`](#getBucketNotification)             | [`setS3TransferAccelerate`](#setS3TransferAccelerate) |   |
+| [`listBuckets`](#listBuckets)                         | [`getPartialObject`](#getPartialObject)             | [`presignedGetObject`](#presignedGetObject)   | [`setBucketNotification`](#setBucketNotification)             |                                                       |   |
+| [`bucketExists`](#bucketExists)                       | [`fGetObject`](#fGetObject)                         | [`presignedPutObject`](#presignedPutObject)   | [`removeAllBucketNotification`](#removeAllBucketNotification) |                                                       |   |
+| [`removeBucket`](#removeBucket)                       | [`putObject`](#putObject)                           | [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy)                         |                                                       |   |
+| [`listObjects`](#listObjects)                         | [`fPutObject`](#fPutObject)                         |                                               | [`setBucketPolicy`](#setBucketPolicy)                         |                                                       |   |
+| [`listObjectsV2`](#listObjectsV2)                     | [`copyObject`](#copyObject)                         |                                               | [`listenBucketNotification`](#listenBucketNotification)       |                                                       |   |
+| [`listIncompleteUploads`](#listIncompleteUploads)     | [`statObject`](#statObject)                         |                                               |                                                               |                                                       |   |
+| [`getBucketVersioning`](#getBucketVersioning)         | [`removeObject`](#removeObject)                     |                                               |                                                               |                                                       |   |
+| [`setBucketVersioning`](#setBucketVersioning)         | [`removeObjects`](#removeObjects)                   |                                               |                                                               |                                                       |   |
+| [`getBucketTagging`](#getBucketTagging)               | [`removeIncompleteUpload`](#removeIncompleteUpload) |                                               |                                                               |                                                       |   |
+| [`setBucketTagging`](#setBucketTagging)               | [`putObjectRetention`](#putObjectRetention)         |                                               |                                                               |                                                       |   |
+| [`removeBucketTagging`](#removeBucketTagging)         | [`getObjectRetention`](#getObjectRetention)         |                                               |                                                               |                                                       |   |
+| [`setBucketLifecycle`](#setBucketLifecycle)           | [`putObjectTagging`](#putObjectTagging)             |                                               |                                                               |                                                       |   |
+| [`getBucketLifecycle`](#getBucketLifecycle)           | [`removeObjectTagging`](#removeObjectTagging)       |                                               |                                                               |                                                       |   |
+| [`removeBucketLifecycle`](#removeBucketLifecycle)     | [`getObjectTagging`](#getObjectTagging)             |                                               |                                                               |                                                       |   |
+| [`setObjectLockConfig`](#setObjectLockConfig)         | [`getObjectLegalHold`](#getObjectLegalHold)         |                                               |                                                               |                                                       |   |
+| [`getBucketEncryption`](#getBucketEncryption)         | [`setObjectLegalHold`](#setObjectLegalHold)         |                                               |                                                               |                                                       |   |
+| [`getObjectLockConfig`](#getObjectLockConfig)         | [`composeObject`](#composeObject)                   |                                               |                                                               |                                                       |   |
+| [`setBucketEncryption`](#setBucketEncryption)         |                                                     |                                               |                                                               |                                                       |   |
+| [`removeBucketEncryption`](#removeBucketEncryption)   |                                                     |                                               |                                                               |                                                       |   |
+| [`setBucketReplication`](#setBucketReplication)       |                                                     |                                               |                                                               |                                                       |   |
+| [`getBucketReplication`](#getBucketReplication)       |                                                     |                                               |                                                               |                                                       |   |
+| [`removeBucketReplication`](#removeBucketReplication) |                                                     |                                               |                                                               |                                                       |   |
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
@@ -66,18 +65,18 @@ var s3Client = new Minio.Client({
 
 __Parameters__
 
-| Param  | Type  | Description  |
-|---|---|---|
-| `endPoint`  |  _string_ | endPoint is a host name or an IP address. |
-| `port` | _number_  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs. |
-|`useSSL`    | _bool_    |If set to true, https is used instead of http. Default is true. |
-|`accessKey`   | _string_   |accessKey is like user-id that uniquely identifies your account. |
-|`secretKey`  |  _string_   | secretKey is the password to your account.|
-|`region`    | _string_  |Set this value to override region cache. (Optional)|
-|`transport`    | _string_  |Set this value to pass in a custom transport. (Optional)|
-|`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)|
-|`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional)|
-|`pathStyle`    | _bool_  |Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional)|
+| Param          | Type     | Description                                                                                                  |
+|----------------|----------|--------------------------------------------------------------------------------------------------------------|
+| `endPoint`     | _string_ | endPoint is a host name or an IP address.                                                                    |
+| `port`         | _number_ | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.              |
+| `useSSL`       | _bool_   | If set to true, https is used instead of http. Default is true.                                              |
+| `accessKey`    | _string_ | accessKey is like user-id that uniquely identifies your account.                                             |
+| `secretKey`    | _string_ | secretKey is the password to your account.                                                                   |
+| `sessionToken` | _string_ | Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)                                 |
+| `region`       | _string_ | Set this value to override region cache. (Optional)                                                          |
+| `transport`    | _string_ | Set this value to pass in a custom transport. (Optional)                                                     |
+| `partSize`     | _number_ | Set this value to override default part size of 64MB for multipart uploads. (Optional)                       |
+| `pathStyle`    | _bool_   | Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional) |
 
 __Example__
 
@@ -97,7 +96,6 @@ var minioClient = new Minio.Client({
 
 ## Create client for AWS S3
 
-
 ```js
 var Minio = require('minio')
 
@@ -108,18 +106,16 @@ var s3Client = new Minio.Client({
 })
 ```
 
-## Ali OSS 
+## Create client with temporary credentials
 
 ```js
 var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-    endPoint:  'oss-cn-hangzhou.aliyuncs.com',
-    accessKey: 'YOUR-ACCESSKEYID',
-    secretKey: 'YOUR-SECRETACCESSKEY',
-    bucket: 'YOUR-BUCKET',
-    pathStyle: false,
-    region: 'oss-cn-hangzhou'
+    endPoint:  's3.amazonaws.com',
+    accessKey: 'YOUR-TEMP-ACCESSKEYID',
+    secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
+	sessionToken: 'YOUR-TEMP-SESSIONTOKEN'
 })
 ```
 
@@ -132,16 +128,14 @@ Creates a new bucket.
 
 __Parameters__
 
-| Param  | Type  | Description  |
-|---|---|---|
-|`bucketName`  | _string_  | Name of the bucket. |
-| `region`  |  _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
-| `makeOpts` | _object_  | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)
-|`callback(err)`  |_function_   | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
-
+| Param           | Type       | Description                                                                                                                                                 |
+|-----------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                         |
+| `region`        | _string_   | Region where the bucket is created. This parameter is optional. Default value is us-east-1.                                                                 |
+| `makeOpts`      | _object_   | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                                                                                           |
+| `callback(err)` | _function_ | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
 
 __Example__
-
 
 ```js
 minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
@@ -175,10 +169,10 @@ __Parameters__
 
 bucketStream emits Object with the format:-
 
-| Param  | Type  | Description  |
-|---|---|---|
-|`bucket.name`  | _string_ |bucket name |
-|`bucket.creationDate`| _Date_ |date when bucket was created.  |
+| Param                 | Type     | Description                   |
+|-----------------------|----------|-------------------------------|
+| `bucket.name`         | _string_ | bucket name                   |
+| `bucket.creationDate` | _Date_   | date when bucket was created. |
 
 
 
@@ -197,14 +191,13 @@ minioClient.listBuckets(function(err, buckets) {
 
 Checks if a bucket exists.
 
-
 __Parameters__
 
 
-| Param  | Type  | Description  |
-|---|---|---|
-| `bucketName`  |  _string_ | Name of the bucket.  |
-| `callback(err, exists)`  | _function_  | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
+| Param                   | Type       | Description                                                                                                                                                                          |
+|-------------------------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`            | _string_   | Name of the bucket.                                                                                                                                                                  |
+| `callback(err, exists)` | _function_ | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -228,10 +221,10 @@ Removes a bucket.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `callback(err)`  | _function_  |  `err` is `null` if the bucket is removed successfully. If no callback is passed, a `Promise` is returned. |
+| Param           | Type       | Description                                                                                               |
+|-----------------|------------|-----------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                       |
+| `callback(err)` | _function_ | `err` is `null` if the bucket is removed successfully. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -251,12 +244,12 @@ Lists all objects in a bucket.
 __Parameters__
 
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `bucketName` | _string_ | Name of the bucket. |
-| `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
-| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-| `listOpts`  | _object_  | query params to list object which can have `{IncludeVersion: _bool_ }` (optional)|
+| Param        | Type     | Description                                                                                                                           |
+|--------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                   |
+| `prefix`     | _string_ | The prefix of the objects that should be listed (optional, default `''`).                                                             |
+| `recursive`  | _bool_   | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`). |
+| `listOpts`   | _object_ | query params to list object which can have `{IncludeVersion: _bool_ }` (optional)                                                     |
 
 __Return Value__
 
@@ -267,15 +260,15 @@ __Return Value__
 
 The object is of the format:
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `obj.name` | _string_ | name of the object. |
-| `obj.prefix` | _string_ | name of the object prefix. |
-| `obj.size` | _number_ | size of the object. |
-| `obj.etag` | _string_ | etag of the object. |
-| `obj.versionId` | _string_ | versionId of the object. |
+| Param                | Type      | Description                    |
+|----------------------|-----------|--------------------------------|
+| `obj.name`           | _string_  | name of the object.            |
+| `obj.prefix`         | _string_  | name of the object prefix.     |
+| `obj.size`           | _number_  | size of the object.            |
+| `obj.etag`           | _string_  | etag of the object.            |
+| `obj.versionId`      | _string_  | versionId of the object.       |
 | `obj.isDeleteMarker` | _boolean_ | true if it is a delete marker. |
-| `obj.lastModified` | _Date_ | modified time stamp. |
+| `obj.lastModified`   | _Date_    | modified time stamp.           |
 
 __Example__
 
@@ -299,7 +292,6 @@ stream.on("end", function (obj) { console.log(data) })
 stream.on('error', function(err) { console.log(err) } )
 ```
 
-
 <a name="listObjectsV2"></a>
 ### listObjectsV2(bucketName, prefix, recursive, startAfter)
 
@@ -308,33 +300,32 @@ Lists all objects in a bucket using S3 listing objects V2 API
 __Parameters__
 
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `bucketName` | _string_ | Name of the bucket. |
-| `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
-| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-| `startAfter`  | _string_  |  Specifies the object name to start after when listing objects in a bucket. (optional, default `''`). |
+| Param        | Type     | Description                                                                                                                           |
+|--------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                   |
+| `prefix`     | _string_ | The prefix of the objects that should be listed (optional, default `''`).                                                             |
+| `recursive`  | _bool_   | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`). |
+| `startAfter` | _string_ | Specifies the object name to start after when listing objects in a bucket. (optional, default `''`).                                  |
 
 
 __Return Value__
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
+| Param    | Type     | Description                                |
+|----------|----------|--------------------------------------------|
 | `stream` | _Stream_ | Stream emitting the objects in the bucket. |
 
 The object is of the format:
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `obj.name` | _string_ | name of the object. |
-| `obj.prefix` | _string_ | name of the object prefix. |
-| `obj.size` | _number_ | size of the object. |
-| `obj.etag` | _string_ |etag of the object. |
-| `obj.lastModified` | _Date_ | modified time stamp. |
+| Param              | Type     | Description                |
+|--------------------|----------|----------------------------|
+| `obj.name`         | _string_ | name of the object.        |
+| `obj.prefix`       | _string_ | name of the object prefix. |
+| `obj.size`         | _number_ | size of the object.        |
+| `obj.etag`         | _string_ | etag of the object.        |
+| `obj.lastModified` | _Date_   | modified time stamp.       |
 
 
 __Example__
-
 
 ```js
 var stream = minioClient.listObjectsV2('mybucket','', true,'')
@@ -350,31 +341,30 @@ Lists all objects and their metadata in a bucket using S3 listing objects V2 API
 __Parameters__
 
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `bucketName` | _string_ | Name of the bucket. |
-| `prefix`  | _string_  |  The prefix of the objects that should be listed (optional, default `''`). |
-| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-| `startAfter`  | _string_  |  Specifies the object name to start after when listing objects in a bucket. (optional, default `''`). |
+| Param        | Type     | Description                                                                                                                           |
+|--------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                   |
+| `prefix`     | _string_ | The prefix of the objects that should be listed (optional, default `''`).                                                             |
+| `recursive`  | _bool_   | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`). |
+| `startAfter` | _string_ | Specifies the object name to start after when listing objects in a bucket. (optional, default `''`).                                  |
 
 
 __Return Value__
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
+| Param    | Type     | Description                                |
+|----------|----------|--------------------------------------------|
 | `stream` | _Stream_ | Stream emitting the objects in the bucket. |
 
 The object is of the format:
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `obj.name` | _string_ | name of the object. |
-| `obj.prefix` | _string_ | name of the object prefix. |
-| `obj.size` | _number_ | size of the object. |
-| `obj.etag` | _string_ |etag of the object. |
-| `obj.lastModified` | _Date_ | modified time stamp. |
-| `obj.metadata` | _object_ | metadata of the object. |
-
+| Param              | Type     | Description                |
+|--------------------|----------|----------------------------|
+| `obj.name`         | _string_ | name of the object.        |
+| `obj.prefix`       | _string_ | name of the object prefix. |
+| `obj.size`         | _number_ | size of the object.        |
+| `obj.etag`         | _string_ | etag of the object.        |
+| `obj.lastModified` | _Date_   | modified time stamp.       |
+| `obj.metadata`     | _object_ | metadata of the object.    |
 
 __Example__
 
@@ -393,25 +383,24 @@ Lists partially uploaded objects in a bucket.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `prefix`  | _string_  | Prefix of the object names that are partially uploaded. (optional, default `''`)  |
-| `recursive`  | _bool_  | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`).  |
-
+| Param        | Type     | Description                                                                                                                           |
+|--------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketname` | _string_ | Name of the bucket.                                                                                                                   |
+| `prefix`     | _string_ | Prefix of the object names that are partially uploaded. (optional, default `''`)                                                      |
+| `recursive`  | _bool_   | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`). |
 
 __Return Value__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `stream`  | _Stream_  |  Emits objects of the format listed below:|
+| Param    | Type     | Description                               |
+|----------|----------|-------------------------------------------|
+| `stream` | _Stream_ | Emits objects of the format listed below: |
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `part.key`  | _string_  | name of the object.|
-| `part.uploadId`  | _string_  | upload ID of the object.|
-| `part.size`  | _Integer_  | size of the partially uploaded object.|
+| Param           | Type      | Description                            |
+|-----------------|-----------|----------------------------------------|
+| `part.key`      | _string_  | name of the object.                    |
+| `part.uploadId` | _string_  | upload ID of the object.               |
+| `part.size`     | _Integer_ | size of the partially uploaded object. |
 
 __Example__
 
@@ -436,11 +425,10 @@ Get Versioning state of a Bucket
 
 __Parameters__
 
-
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+| Param                | Type       | Description                                                                                                                      |
+|----------------------|------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `bucketname`         | _string_   | Name of the bucket.                                                                                                              |
+| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 ```js
@@ -461,11 +449,11 @@ Set Versioning state on a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `versioningConfig`  | _object_  |  Versioning Configuration e.g: `{Status:"Enabled"}` |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param              | Type       | Description                                        |
+|--------------------|------------|----------------------------------------------------|
+| `bucketname`       | _string_   | Name of the bucket.                                |
+| `versioningConfig` | _object_   | Versioning Configuration e.g: `{Status:"Enabled"}` |
+| `callback(err)`    | _function_ | Callback is called with `err` in case of error.    |
 
 __Example__
 ```js
@@ -487,11 +475,11 @@ Set replication config on a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `replicationConfig`  | _object_  |  replicationConfig Configuration as a JSON Object |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param               | Type       | Description                                      |
+|---------------------|------------|--------------------------------------------------|
+| `bucketname`        | _string_   | Name of the bucket.                              |
+| `replicationConfig` | _object_   | replicationConfig Configuration as a JSON Object |
+| `callback(err)`     | _function_ | Callback is called with `err` in case of error.  |
 
 __Example__
 ```js
@@ -532,10 +520,10 @@ Get replication config of a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err, replicationConfig)` | _function_ | Callback is called with `err` in case of error. else returns the info in`replicationConfig` ,which contains`{role: __string__, rules:__Array__ }`. |
+| Param                              | Type       | Description                                                                                                                                        |
+|------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketname`                       | _string_   | Name of the bucket.                                                                                                                                |
+| `callback(err, replicationConfig)` | _function_ | Callback is called with `err` in case of error. else returns the info in`replicationConfig` ,which contains`{role: __string__, rules:__Array__ }`. |
 
 __Example__
 ```js
@@ -548,7 +536,6 @@ minioClient.getBucketReplication('bucketname', function (err,replicationConfig){
 
 ```
 
-
 <a name="removeBucketReplication"></a>
 ### removeBucketReplication(bucketName, callback)
 
@@ -556,11 +543,10 @@ Remove replication config of a Bucket
 
 __Parameters__
 
-
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param           | Type       | Description                                     |
+|-----------------|------------|-------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                             |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
 ```js
@@ -580,11 +566,11 @@ Set Tags on a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `tags`  | _object_  |  Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                               |
+|-----------------|------------|-----------------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                                       |
+| `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.           |
 
 __Example__
 ```js
@@ -603,10 +589,10 @@ Remove Tags on a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                     |
+|-----------------|------------|-------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                             |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
 ```js
@@ -625,10 +611,10 @@ Remove Tags on a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error.|
+| Param                     | Type       | Description                                     |
+|---------------------------|------------|-------------------------------------------------|
+| `bucketname`              | _string_   | Name of the bucket.                             |
+| `callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
 ```js
@@ -648,11 +634,11 @@ Set Lifecycle Configuration on a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `lifecycleConfig`  | _object_  | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param             | Type       | Description                                                                        |
+|-------------------|------------|------------------------------------------------------------------------------------|
+| `bucketname`      | _string_   | Name of the bucket.                                                                |
+| `lifecycleConfig` | _object_   | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
+| `callback(err)`   | _function_ | Callback is called with `err` in case of error.                                    |
 
 __Example__
 ```js
@@ -687,10 +673,10 @@ Get Lifecycle Configuration of a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. Otherwise it is called with `error`|
+| Param                              | Type       | Description                                                                                       |
+|------------------------------------|------------|---------------------------------------------------------------------------------------------------|
+| `bucketname`                       | _string_   | Name of the bucket.                                                                               |
+| `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. Otherwise it is called with `error` |
 
 __Example__
 ```js
@@ -709,10 +695,10 @@ Remove Lifecycle Configuration of a Bucket
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                     |
+|-----------------|------------|-------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                             |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
 ```js
@@ -734,11 +720,11 @@ Set Object lock config on a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `lockConfig`  | _object_  |  Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                                                                                                                                                                            |
+|-----------------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                                                                                                                                                                                    |
+| `lockConfig`    | _object_   | Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.                                                                                                                                                        |
 
 __Example 1__
 
@@ -772,10 +758,10 @@ Get Lock config on a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+| Param                       | Type       | Description                                                                               |
+|-----------------------------|------------|-------------------------------------------------------------------------------------------|
+| `bucketname`                | _string_   | Name of the bucket.                                                                       |
+| `callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
 
 __Example __
 Get object lock configuration on a Bucket
@@ -797,11 +783,11 @@ Set encryption configuration on a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `encryptionConfig`  | _object_  |  Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied.
-|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param              | Type       | Description                                                                                                                                                                                        |
+|--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketname`       | _string_   | Name of the bucket.                                                                                                                                                                                |
+| `encryptionConfig` | _object_   | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
+| `callback(err)`    | _function_ | Callback is called with `err` in case of error.                                                                                                                                                    |
 
 __Example __
 Set Encryption configuration on a Bucket
@@ -835,10 +821,10 @@ Get encryption configuration of a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+| Param                      | Type       | Description                                                                               |
+|----------------------------|------------|-------------------------------------------------------------------------------------------|
+| `bucketname`               | _string_   | Name of the bucket.                                                                       |
+| `callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
 
 __Example __
 Get Encryption configuration of a Bucket
@@ -860,10 +846,10 @@ Remove encryption configuration of a Bucket
 __Parameters__
 
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param           | Type       | Description                                     |
+|-----------------|------------|-------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                             |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example __
 Remove Encryption configuration of a Bucket
@@ -887,17 +873,17 @@ Downloads an object as a stream.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-|`bucketName` | _string_ | Name of the bucket. | 
-|`objectName` | _string_ | Name of the object. |
-|`getOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
-|`callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+| Param                   | Type       | Description                                                                                                                               |
+|-------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`            | _string_   | Name of the bucket.                                                                                                                       |
+| `objectName`            | _string_   | Name of the object.                                                                                                                       |
+| `getOpts`               | _object_   | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)                                               |
+| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 __Return Value__
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
+| Param    | Type     | Description                         |
+|----------|----------|-------------------------------------|
 | `stream` | _Stream_ | Stream emitting the object content. |
 
 __Example__
@@ -950,14 +936,14 @@ Downloads the specified range bytes of an object as a stream.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-|  `bucketName` | _string_  | Name of the bucket.  |
-| `objectName`   | _string_  | Name of the object.  |
-| `offset`   | _number_  | `offset` of the object from where the stream will start.  |
-| `length`  | _number_  | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).  |
-| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
-|`callback(err, stream)` | _function_  | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+| Param                   | Type       | Description                                                                                                                               |
+|-------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`            | _string_   | Name of the bucket.                                                                                                                       |
+| `objectName`            | _string_   | Name of the object.                                                                                                                       |
+| `offset`                | _number_   | `offset` of the object from where the stream will start.                                                                                  |
+| `length`                | _number_   | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).         |
+| `getOpts`               | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)                                               |
+| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 
 __Return Value__
@@ -1017,13 +1003,13 @@ Downloads and saves the object as a file in the local filesystem.
 
 __Parameters__
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_   | Name of the bucket.  |
-| `objectName`  |_string_   | Name of the object.  |
-| `filePath`  |  _string_ | Path on the local filesystem to which the object data will be written.  |
-| `getOpts` | _object_ | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional) |
-| `callback(err)`  | _function_  | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
+| Param           | Type       | Description                                                                                        |
+|-----------------|------------|----------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                |
+| `objectName`    | _string_   | Name of the object.                                                                                |
+| `filePath`      | _string_   | Path on the local filesystem to which the object data will be written.                             |
+| `getOpts`       | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)        |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 __Return Value__
 
@@ -1069,23 +1055,23 @@ Uploads an object from a stream/Buffer.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  |_string_   | Name of the object.  |
-| `stream`  | _Stream_  |Readable stream.   |
-| `size`   | _number_  | Size of the object (optional).  |
-| `metaData`   | _Javascript Object_  | metaData of the object (optional).  |
-| `callback(err, objInfo)` | _function_ | Non-null `err` indicates error, in case of Success,`objInfo` contains `etag` _string_ and `versionId` _string_ of the object. If no callback is passed, a `Promise` is returned. |
+| Param                    | Type                | Description                                                                                                                                                                      |
+|--------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`             | _string_            | Name of the bucket.                                                                                                                                                              |
+| `objectName`             | _string_            | Name of the object.                                                                                                                                                              |
+| `stream`                 | _Stream_            | Readable stream.                                                                                                                                                                 |
+| `size`                   | _number_            | Size of the object (optional).                                                                                                                                                   |
+| `metaData`               | _Javascript Object_ | metaData of the object (optional).                                                                                                                                               |
+| `callback(err, objInfo)` | _function_          | Non-null `err` indicates error, in case of Success,`objInfo` contains `etag` _string_ and `versionId` _string_ of the object. If no callback is passed, a `Promise` is returned. |
 
 
 __Return Value__
 
-| Value  |  Type | Description  |
-|---|---|---|
-| `err` | _object_ | Error in case of any failures
-| `objInfo.etag`  | _string_  | `etag` of an object  |
-| `objInfo.versionId`  | _string_  | `versionId` of an object (optional)  |
+| Value               | Type     | Description                         |
+|---------------------|----------|-------------------------------------|
+| `err`               | _object_ | Error in case of any failures       |
+| `objInfo.etag`      | _string_ | `etag` of an object                 |
+| `objInfo.versionId` | _string_ | `versionId` of an object (optional) |
 
 
 __Example__
@@ -1114,13 +1100,13 @@ var fileStat = Fs.stat(file, function(err, stats) {
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  |_string_   | Name of the object.  |
-|`string or Buffer`   | _Stream_ or _Buffer_  |Readable stream.   |
-| `metaData`  | _Javascript Object_   | metaData of the object (optional).  |
-| `callback(err, etag)`  | _function_  |Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded.   |
+| Param                 | Type                 | Description                                                                         |
+|-----------------------|----------------------|-------------------------------------------------------------------------------------|
+| `bucketName`          | _string_             | Name of the bucket.                                                                 |
+| `objectName`          | _string_             | Name of the object.                                                                 |
+| `string or Buffer`    | _Stream_ or _Buffer_ | Readable stream.                                                                    |
+| `metaData`            | _Javascript Object_  | metaData of the object (optional).                                                  |
+| `callback(err, etag)` | _function_           | Non-null `err` indicates error, `etag` _string_ is the etag of the object uploaded. |
 
 
 __Example__
@@ -1132,6 +1118,7 @@ minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
 ```
+
 <a name="fPutObject"></a>
 ### fPutObject(bucketName, objectName, filePath, metaData[, callback])
 
@@ -1140,25 +1127,23 @@ Uploads contents from a file to objectName.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `objectName`   |_string_   | Name of the object.  |
-| `filePath`  | _string_  | Path of the file to be uploaded.  |
-| `metaData`  | _Javascript Object_  | Metadata of the object.  |
-| `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which contains `versionId` string and `etag` string.
+| Param                                                                                                                                                                                     | Type                | Description                      |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|----------------------------------|
+| `bucketName`                                                                                                                                                                              | _string_            | Name of the bucket.              |
+| `objectName`                                                                                                                                                                              | _string_            | Name of the object.              |
+| `filePath`                                                                                                                                                                                | _string_            | Path of the file to be uploaded. |
+| `metaData`                                                                                                                                                                                | _Javascript Object_ | Metadata of the object.          |
+| `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ is the information about the object uploaded which contains `versionId` string and `etag` string. |                     |                                  |
 
 __Return Value__
 
-| Value  |  Type | Description  |
-|---|---|---|
-| `err` | _object_ | Error in case of any failures
-| `objInfo.etag`  | _string_  | `etag` of an object  |
-| `objInfo.versionId`  | _string_  | `versionId` of an object (optional)  |
-
+| Value               | Type     | Description                         |
+|---------------------|----------|-------------------------------------|
+| `err`               | _object_ | Error in case of any failures       |
+| `objInfo.etag`      | _string_ | `etag` of an object                 |
+| `objInfo.versionId` | _string_ | `versionId` of an object (optional) |
 
 __Example__
-
 
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
@@ -1186,13 +1171,13 @@ Copy a source object into a new object in the specified bucket.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-|`objectName`   |_string_   | Name of the object.  |
-| `sourceObject`  | _string_  | Path of the file to be copied.  |
-| `conditions`  | _CopyConditions_  | Conditions to be satisfied before allowing object copy.  |
-| `callback(err, {etag, lastModified})`  |  _function_ | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
+| Param                                 | Type             | Description                                                                                                                                                                                    |
+|---------------------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`                          | _string_         | Name of the bucket.                                                                                                                                                                            |
+| `objectName`                          | _string_         | Name of the object.                                                                                                                                                                            |
+| `sourceObject`                        | _string_         | Path of the file to be copied.                                                                                                                                                                 |
+| `conditions`                          | _CopyConditions_ | Conditions to be satisfied before allowing object copy.                                                                                                                                        |
+| `callback(err, {etag, lastModified})` | _function_       | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
 
 __Example__
 
@@ -1217,22 +1202,22 @@ Gets metadata of an object.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `statOpts`  | _object_  | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
-| `callback(err, stat)`  | _function_  |`err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
+| Param                 | Type       | Description                                                                                                                                   |
+|-----------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`          | _string_   | Name of the bucket.                                                                                                                           |
+| `objectName`          | _string_   | Name of the object.                                                                                                                           |
+| `statOpts`            | _object_   | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)                                                   |
+| `callback(err, stat)` | _function_ | `err` is not `null` in case of error, `stat` contains the object information listed below. If no callback is passed, a `Promise` is returned. |
 
 __Return Value__
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `stat.size`  | _number_  | size of the object.  |
-| `stat.etag`  | _string_  | etag of the object.  |
-| `stat.versionId`  | _string_  | version of the object.  |
-| `stat.metaData`  | _Javascript Object_  | metadata of the object.|
-| `stat.lastModified`  | _Date_  | Last Modified time stamp.|
+| Param               | Type                | Description               |
+|---------------------|---------------------|---------------------------|
+| `stat.size`         | _number_            | size of the object.       |
+| `stat.etag`         | _string_            | etag of the object.       |
+| `stat.versionId`    | _string_            | version of the object.    |
+| `stat.metaData`     | _Javascript Object_ | metadata of the object.   |
+| `stat.lastModified` | _Date_              | Last Modified time stamp. |
 
 
 __Example__
@@ -1267,13 +1252,12 @@ Removes an object.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-|`bucketName`   |  _string_ | Name of the bucket.  |
-| objectName  |  _string_ | Name of the object.  |
-| removeOpts  |  _object_ | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional)|
-| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
-
+| Param           | Type       | Description                                                                                                                   |
+|-----------------|------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                           |
+| `objectName`    | _string_   | Name of the object.                                                                                                           |
+| `removeOpts`    | _object_   | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional) |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.        |
 
 __Example 1__
 
@@ -1319,11 +1303,11 @@ Remove all objects in the objectsList.
 __Parameters__
 
 
-| Param | Type | Description |
-| ---- | ---- | ---- |
-| `bucketName` | _string_ | Name of the bucket. |
-| `objectsList`  | _object_  |  list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{name:"my-obj-name",versionId:"my-versionId"}] |
-| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. |
+| Param           | Type       | Description                                                                                                                                                                                                                                                                   |
+|-----------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                                                                                                                           |
+| `objectsList`   | _object_   | list of objects in the bucket to be removed.  any one of the formats: 1. List of Object names as array of strings which are object keys:  `['objectname1','objectname2']` 2. List of Object name and VersionId as an object:  [{name:"my-obj-name",versionId:"my-versionId"}] |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error.                                                                                                                                                                                                           |
 
 
 __Example__
@@ -1394,11 +1378,11 @@ Removes a partially uploaded object.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
+| Param           | Type       | Description                                                                                                            |
+|-----------------|------------|------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                    |
+| `objectName`    | _string_   | Name of the object.                                                                                                    |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -1421,12 +1405,12 @@ Apply retention on an object.
 
 __Parameters__
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `retentionOpts` | _object_ | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }`  Default is `{}` (Optional)|
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
+| Param           | Type       | Description                                                                                                                                                                |
+|-----------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                        |
+| `objectName`    | _string_   | Name of the object.                                                                                                                                                        |
+| `retentionOpts` | _object_   | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }`  Default is `{}` (Optional) |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                     |
 
 
 __Example__
@@ -1460,11 +1444,11 @@ Get retention config of an object
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `getOpts` | _object_ | Options for retention like : `{ versionId:"my-versionId" }`  Default is `{}` (Optional)|
+| Param                | Type       | Description                                                                                                                      |
+|----------------------|------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
+| `objectName`         | _string_   | Name of the object.                                                                                                              |
+| `getOpts`            | _object_   | Options for retention like : `{ versionId:"my-versionId" }`  Default is `{}` (Optional)                                          |
 | `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -1487,13 +1471,13 @@ Put Tags on an Object
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `objectName`  | _string_  |  Name of the object. |
-| `tags`  | _object_  |  Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
-| `putOpts`  | _object_  | Default is {}.  e.g `{versionId:"my-version-id"}`. (Optional)|
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                                   |
+|-----------------|------------|---------------------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `objectName`    | _string_   | Name of the object.                                           |
+| `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}`     |
+| `putOpts`       | _object_   | Default is {}.  e.g `{versionId:"my-version-id"}`. (Optional) |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
 
 __Example__
 ```js
@@ -1524,12 +1508,12 @@ Remove Tags on an Object
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `objectName`  | _string_  |  Name of the object. |
-| `removeOpts`  | _object_  |  Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                                   |
+|-----------------|------------|---------------------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `objectName`    | _string_   | Name of the object.                                           |
+| `removeOpts`    | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
 
 __Example__
 ```js
@@ -1561,12 +1545,12 @@ Get Tags of an Object
 
 __Parameters__
 
-| Param  |  Type | Description  |
-| ---| ---|---|
-| `bucketname`  | _string_  |  Name of the bucket. |
-| `objectName`  | _string_  |  Name of the object. |
-| `getOpts`  | _object_  | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-|`callback(err)` | _function_ | Callback is called with `err` in case of error.|
+| Param           | Type       | Description                                                   |
+|-----------------|------------|---------------------------------------------------------------|
+| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `objectName`    | _string_   | Name of the object.                                           |
+| `getOpts`       | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
+| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
 
 __Example__
 ```js
@@ -1599,12 +1583,12 @@ Get legal hold on an object.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `getOpts`  | _object_  | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}` defaults to `{}` . |
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
+| Param           | Type       | Description                                                                                                            |
+|-----------------|------------|------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                    |
+| `objectName`    | _string_   | Name of the object.                                                                                                    |
+| `getOpts`       | _object_   | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}` defaults to `{}` .                               |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example 1__
@@ -1642,13 +1626,12 @@ Set legal hold on an object.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  |_string_   | Name of the bucket.  |
-| `objectName`  | _string_  | Name of the object.  |
-| `setOpts`  | _object_  | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{status:'ON'}` if not passed. |
-| `callback(err)`  | _function_  |Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.  |
-
+| Param           | Type       | Description                                                                                                                                 |
+|-----------------|------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                         |
+| `objectName`    | _string_   | Name of the object.                                                                                                                         |
+| `setOpts`       | _object_   | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{status:'ON'}` if not passed. |
+| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                      |
 
 __Example 1__
 
@@ -1683,11 +1666,11 @@ Compose an object from parts
 __Parameters__
 
 
-| Param  |  Type | Description                                                                                                                                                                           |
-|---|---|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `destObjConfig`  |_object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                   |
-| `sourceObjectList`  | _object[]_  | Array of  object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
-| `callback(err)`  | _function_  | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                                |
+| Param              | Type       | Description                                                                                                                                                                           |
+|--------------------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `destObjConfig`    | _object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                   |
+| `sourceObjectList` | _object[]_ | Array of  object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
+| `callback(err)`    | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                                |
 
 
 __Example 1__
@@ -1740,14 +1723,14 @@ __Parameters__
 
 
 
-| Param | Type | Description  |
-|---|---|---|
-|`bucketName` | _string_ | Name of the bucket. |
-|`objectName` | _string_ | Name of the object. |
-|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
-|`reqParams`  | _object_ | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}|
-|`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
-|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+| Param                         | Type       | Description                                                                                                                                                                                                           |
+|-------------------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                   |
+| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                   |
+| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days. (optional)                                                                                                                                                           |
+| `reqParams`                   | _object_   | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}                                                                                                                                 |
+| `requestDate`                 | _Date_     | A date object, the url will be issued at. Default value is now. (optional)                                                                                                                                            |
+| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example1__
@@ -1797,14 +1780,14 @@ __Parameters__
 
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-|`bucketName` | _string_ | Name of the bucket. |
-|`objectName` | _string_ | Name of the object. |
-|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. (optional) |
-|`respHeaders`  | _object_ | response headers to override (optional) |
-|`requestDate`  | _Date_ | A date object, the url will be issued at. Default value is now. (optional) |
-|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+| Param                         | Type       | Description                                                                                                                                                                                                           |
+|-------------------------------|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                   |
+| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                   |
+| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days. (optional)                                                                                                                                                           |
+| `respHeaders`                 | _object_   | response headers to override (optional)                                                                                                                                                                               |
+| `requestDate`                 | _Date_     | A date object, the url will be issued at. Default value is now. (optional)                                                                                                                                            |
+| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -1827,12 +1810,12 @@ Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may p
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-|`bucketName` | _string_ | Name of the bucket. |
-|`objectName` | _string_ | Name of the object. |
-|`expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
-|`callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
+| Param                         | Type       | Description                                                                                                                                                                                                         |
+|-------------------------------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                 |
+| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                 |
+| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days.                                                                                                                                                                    |
+| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -1854,10 +1837,10 @@ Allows setting policy conditions to a presigned URL for POST operations. Policie
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `policy`  | _object_  | Policy object created by minioClient.newPostPolicy() |
-| `callback(err, {postURL, formData})`  | _function_  | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
+| Param                                | Type       | Description                                                                                                                                                                                                                                                                                     |
+|--------------------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `policy`                             | _object_   | Policy object created by minioClient.newPostPolicy()                                                                                                                                                                                                                                            |
+| `callback(err, {postURL, formData})` | _function_ | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
 
 
 Create policy:
@@ -1931,10 +1914,10 @@ __Parameters__
 
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `callback(err, bucketNotificationConfig)`  | _function_  | Callback function is called with non `null` err value in case of error. `bucketNotificationConfig` will be the object that carries all notification configurations associated to bucketName. If no callback is passed, a `Promise` is returned. |
+| Param                                     | Type       | Description                                                                                                                                                                                                                                     |
+|-------------------------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`                              | _string_   | Name of the bucket.                                                                                                                                                                                                                             |
+| `callback(err, bucketNotificationConfig)` | _function_ | Callback function is called with non `null` err value in case of error. `bucketNotificationConfig` will be the object that carries all notification configurations associated to bucketName. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -1956,11 +1939,11 @@ Upload a user-created notification configuration and associate it to the specifi
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket.  |
-| `bucketNotificationConfig`  | _BucketNotification_   | Javascript object that carries the notification configuration.  |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param                      | Type                 | Description                                                                                                                |
+|----------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`               | _string_             | Name of the bucket.                                                                                                        |
+| `bucketNotificationConfig` | _BucketNotification_ | Javascript object that carries the notification configuration.                                                             |
+| `callback(err)`            | _function_           | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 __Example__
@@ -1994,10 +1977,10 @@ Remove the bucket notification configuration associated to the specified bucket.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param           | Type       | Description                                                                                                                |
+|-----------------|------------|----------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket                                                                                                         |
+| `callback(err)` | _function_ | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -2023,12 +2006,12 @@ To stop listening, call `.stop()` on the returned `EventEmitter`.
 
 __Parameters__
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket |
-| `prefix`  | _string_  | Object key prefix to filter notifications for. |
-| `suffix`  | _string_  | Object key suffix to filter notifications for. |
-| `events`  | _Array_ | Enables notifications for specific event types. |
+| Param        | Type     | Description                                     |
+|--------------|----------|-------------------------------------------------|
+| `bucketName` | _string_ | Name of the bucket                              |
+| `prefix`     | _string_ | Object key prefix to filter notifications for.  |
+| `suffix`     | _string_ | Object key suffix to filter notifications for.  |
+| `events`     | _Array_  | Enables notifications for specific event types. |
 
 See [here](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) for a full example.
 
@@ -2051,10 +2034,10 @@ as well.
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket |
-| `callback(err, policy)`  | _function_  | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
+| Param                   | Type       | Description                                                                                                                                                                                                                           |
+|-------------------------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`            | _string_   | Name of the bucket                                                                                                                                                                                                                    |
+| `callback(err, policy)` | _function_ | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -2074,11 +2057,11 @@ Set the bucket policy on the specified bucket. [bucketPolicy](https://docs.aws.a
 __Parameters__
 
 
-| Param  |  Type | Description  |
-|---|---|---|
-| `bucketName`  | _string_  | Name of the bucket. |
-| `bucketPolicy` | _string_ | bucket policy. |
-| `callback(err)`  | _function_  | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param           | Type       | Description                                                                                                                |
+|-----------------|------------|----------------------------------------------------------------------------------------------------------------------------|
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                        |
+| `bucketPolicy`  | _string_   | bucket policy.                                                                                                             |
+| `callback(err)` | _function_ | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
 
 
 ```js
@@ -2098,9 +2081,9 @@ NOTE: This API applies only to AWS S3 and is a no operation for S3 compatible ob
 
 __Parameters__
 
-| Param  | Type  | Description  |
-|---|---|---|
-|`endpoint`  | _string_  | Set to new S3 transfer acceleration endpoint.|
+| Param      | Type     | Description                                   |
+|------------|----------|-----------------------------------------------|
+| `endpoint` | _string_ | Set to new S3 transfer acceleration endpoint. |
 
 
 ## 7. HTTP request options
@@ -2115,6 +2098,5 @@ minioClient.setRequestOptions({rejectUnauthorized: false})
 
 
 ## 7. Explore Further
-
 
 - [Build your own Shopping App Example](https://github.com/minio/minio-js-store-app)
