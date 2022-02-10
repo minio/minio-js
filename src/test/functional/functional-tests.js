@@ -3231,4 +3231,63 @@ describe('functional tests', function() {
         .catch(done)
     })
   })
+  describe('Select Object content API Test', function () {
+    const selObjContentBucket = "minio-js-test-sel-object-" + uuid.v4()
+    const selObject = "SelectObjectContent"
+    // Isolate the bucket/object for easy debugging and tracking.
+    before((done) => client.makeBucket(selObjContentBucket, '', done))
+    after((done) => client.removeBucket(selObjContentBucket, done))
+
+    step(`putObject(bucketName, objectName, stream)_bucketName:${selObjContentBucket}, objectName:${selObject}, stream:csv`, done => {
+      // Save a CSV file so that we can query later to test the results.
+      client.putObject(selObjContentBucket, selObject,"Name,PhoneNumber,City,Occupation\n" +
+          "Sam,(949) 123-45567,Irvine,Solutions Architect\n" +
+          "Vinod,(949) 123-4556,Los Angeles,Solutions Architect\n" +
+          "Jeff,(949) 123-45567,Seattle,AWS Evangelist\n" +
+          "Jane,(949) 123-45567,Chicago,Developer\n" +
+          "Sean,(949) 123-45567,Chicago,Developer\n" +
+          "Mary,(949) 123-45567,Chicago,Developer\n" +
+          "Kate,(949) 123-45567,Chicago,Developer", {})
+        .then(() => {
+          done()
+        })
+        .catch(done)
+
+    })
+
+    step(`selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`, done => {
+
+      const selectOpts = {
+        expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
+        expressionType:"SQL",
+        inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
+                                      RecordDelimiter: "\n",
+                                      FieldDelimiter:  ",",
+        },
+                              'CompressionType': 'NONE'},
+        outputSerialization : {'CSV': {RecordDelimiter: "\n",
+                                       FieldDelimiter:  ",",}},
+        requestProgress:{Enabled:true}
+      }
+
+      client.selectObjectContent(selObjContentBucket, selObject, selectOpts)
+        .then((result) => {
+          // verify the select query result string.
+          if(result.getRecords().toString() ==="Jane,(949) 123-45567,Chicago,Developer\n"){ // \n for csv line ending.
+            done()
+          }
+          else{
+            return done(new Error(`Expected Result did not match received:${result.getRecords().toString()} expected:"Jane,(949) 123-45567,Chicago,Developer\n"`))
+          }
+        })
+        .catch(done)
+    })
+
+    step(`Remove Object post select of content:_bucketName:${selObjContentBucket},objectName:${selObject}`, (done)=>{
+      client.removeObject(selObjContentBucket, selObject)
+        .then(() => done())
+        .catch(done)
+    })
+  })
+
 })

@@ -746,3 +746,48 @@ export const  parseXml = (xml) => {
 
   return result
 }
+
+export class SelectResults {
+  constructor({
+    records, // parsed data as stream
+    response,// original response stream
+    stats, // stats as xml
+    progress // stats as xml
+  }) {
+
+    this.records= records
+    this.response = response
+    this.stats= stats
+    this.progress = progress
+  }
+
+  setStats(stats){
+    this.stats = stats
+  }
+  getStats () {
+    return this.stats
+  }
+
+  setProgress(progress){
+    this.progress = progress
+  }
+  getProgress (){
+    return this.progress
+  }
+
+  setResponse(response){
+    this.response = response
+  }
+  getResponse (){
+    return this.response
+  }
+
+  setRecords(records){
+    this.records = records
+  }
+
+  getRecords(){
+    return this.records
+  }
+
+}
