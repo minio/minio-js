@@ -25,6 +25,7 @@ jobs:
       - name: Start Server -> Run Unit and Functional Tests ( install, lint, browserify, test)
         env:
           CI: true
+          MINIO_CI_CD: true
           MINT_MODE: full
           SERVER_ENDPOINT: localhost:9000
           MINIO_ROOT_USER: minio
