@@ -2982,7 +2982,7 @@ describe('functional tests', function() {
       if(isSplitSuccess){
 
         const fileSysToBucket = partFilesNamesWithPath.map((partFileName)=>{
-          const partObjName =partFileName.substr((tmpSubDir+"/").length)
+          const partObjName =partFileName.slice((tmpSubDir+"/").length)
           partObjNameList.push(partObjName)
           return client.fPutObject(composeObjectTestBucket, partObjName, partFileName, {})
         })

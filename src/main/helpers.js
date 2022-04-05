@@ -129,11 +129,11 @@ export function isValidDomain(host) {
     return false
   }
   // Host cannot start or end with a '-'
-  if (host[0] === '-' || host.substr(-1) === '-') {
+  if (host[0] === '-' || host.slice(-1) === '-') {
     return false
   }
   // Host cannot start or end with a '_'
-  if (host[0] === '_' || host.substr(-1) === '_') {
+  if (host[0] === '_' || host.slice(-1) === '_') {
     return false
   }
   // Host cannot start with a '.'
@@ -262,11 +262,11 @@ export function makeDateLong(date) {
   // Gives format like: '2017-08-07T16:28:59.889Z'
   date = date.toISOString()
 
-  return date.substr(0, 4) +
-    date.substr(5, 2) +
-    date.substr(8, 5) +
-    date.substr(14, 2) +
-    date.substr(17, 2) + 'Z'
+  return date.slice(0, 4) +
+    date.slice(5, 7) +
+    date.slice(8, 13) +
+    date.slice(14, 16) +
+    date.slice(17, 19) + 'Z'
 }
 
 // Create a Date string with format:
@@ -277,9 +277,9 @@ export function makeDateShort(date) {
   // Gives format like: '2017-08-07T16:28:59.889Z'
   date = date.toISOString()
 
-  return date.substr(0, 4) +
-    date.substr(5, 2) +
-    date.substr(8, 2)
+  return date.slice(0, 4) +
+    date.slice(5, 7) +
+    date.slice(8, 10)
 }
 
 // pipesetup sets up pipe() from left to right os streams array

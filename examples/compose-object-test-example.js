@@ -65,7 +65,7 @@ function sampleRunComposeObject() {
       .then((names) => {
         console.log("Split and write 100 MB File(s) ", names)
         const putPartRequests = names.map((partFileName) => {
-          const partObjName = partFileName.substr((tmpSubDir + "/").length)
+          const partObjName = partFileName.slice((tmpSubDir + "/").length)
           partObjNameList.push(partObjName)
           return s3Client.fPutObject(bucketName, partObjName, partFileName, {})
         })
