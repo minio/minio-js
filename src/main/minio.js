@@ -665,7 +665,7 @@ export class Client {
   // Returns a stream that emits objects that are partially uploaded.
   //
   // __Arguments__
-  // * `bucketname` _string_: name of the bucket
+  // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
   // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
   //
