@@ -417,7 +417,7 @@ export const toSha256=(payload)=>{
 // So, it makes sure param is always an array
 export const toArray = (param) => {
   if (!Array.isArray(param)) {
-    return Array(param)
+    return [param]
   }
   return param
 }
