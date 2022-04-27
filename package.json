@@ -1,6 +1,6 @@
 {
   "name": "minio",
-  "version": "7.0.28",
+  "version": "7.0.29",
   "description": "S3 Compatible Cloud Storage client",
   "main": "./dist/main/minio.js",
   "scripts": {
@@ -23,7 +23,7 @@
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">8  <16.8.0"
+    "node": ">8  <=18"
   },
   "license": "Apache-2.0",
   "bugs": {
