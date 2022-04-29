@@ -919,7 +919,7 @@ describe('functional tests', function() {
       var respHeaders = {
         'response-content-type': 'text/html',
         'response-content-language': 'en',
-        'response-expires': 'Sun, 07 Jun 2020 16:07:58 GMT',
+        'response-expires': 'Sun, 07 Jun 2030 16:07:58 GMT',
         'response-cache-control': 'No-cache',
         'response-content-disposition': 'attachment; filename=testing.txt',
         'response-content-encoding': 'gzip'
@@ -928,9 +928,11 @@ describe('functional tests', function() {
         if (e) return done(e)
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+
         options.method = 'GET'
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
+
           if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
           if (respHeaders['response-content-type'] !== response.headers['content-type']) {
             return done(new Error(`content-type header mismatch`))

@@ -20,12 +20,11 @@ var Crypto = require('crypto-browserify')
 import fxp from "fast-xml-parser"
 const ipaddr = require('ipaddr.js')
 import { isBrowser } from "browser-or-node"
-
+const {URLSearchParams} = require('url')
 const fs = require('fs')
 const path = require("path")
 import _ from 'lodash'
 import * as errors from './errors.js'
-import querystring from "querystring"
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -611,7 +610,7 @@ export class CopyDestinationOptions {
     const userTags= this.UserTags
     if (!_.isEmpty(userTags)) {
       headerOptions["X-Amz-Tagging-Directive"]=replaceDirective
-      headerOptions["X-Amz-Tagging"]=isObject(userTags)? querystring.stringify(userTags):isString(userTags)?userTags:""
+      headerOptions["X-Amz-Tagging"]=isObject(userTags)? new URLSearchParams(userTags).toString():isString(userTags)?userTags:""
     }
 
     if (!_.isEmpty(this.Mode)) {

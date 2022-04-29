@@ -16,9 +16,8 @@
 
 import { Transform } from 'stream'
 import Crypto from 'crypto'
-import * as querystring from 'querystring'
 import { getVersionId, sanitizeETag } from "./helpers"
-
+const {URLSearchParams} = require('url')
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
   constructor(client, bucketName, objectName, partSize, metaData, callback) {
@@ -178,10 +177,10 @@ export default class ObjectUploader extends Transform {
     }
 
     // Write the chunk with an uploader.
-    let query = querystring.stringify({
+    let query = new URLSearchParams({
       partNumber: partNumber,
       uploadId: this.id
-    })
+    }).toString()
 
     let options = {
       method, query, headers,

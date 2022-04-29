@@ -22,12 +22,11 @@ import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 import async from 'async'
-import querystring from 'querystring'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 import { TextEncoder } from "web-encoding"
-
+const {URLSearchParams} = require('url')
 import {
   extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
   isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
@@ -964,7 +963,7 @@ export class Client {
     }
     var method = 'GET'
 
-    var query = querystring.stringify(getOpts)
+    var query = new URLSearchParams(getOpts).toString()
     this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatusCodes, '', true, cb)
   }
 
@@ -1614,7 +1613,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
 
-    var query = querystring.stringify(statOpts)
+    var query = new URLSearchParams(statOpts).toString()
     var method = 'HEAD'
     this.makeRequest({method, bucketName, objectName, query},'' , [200], '', true, (e, response) => {
       if (e) return cb(e)
@@ -1672,7 +1671,7 @@ export class Client {
       headers["X-Amz-Bypass-Governance-Retention"]=true
     }
 
-    const query = querystring.stringify( queryParams )
+    var query = new URLSearchParams(queryParams).toString()
 
     let requestOptions = {method, bucketName, objectName, headers}
     if(query){
@@ -1843,7 +1842,8 @@ export class Client {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var query = querystring.stringify(reqParams)
+    console.log("::Request params:", reqParams)
+    var query =  new URLSearchParams(reqParams).toString()
     this.getBucketRegion(bucketName, (e, region) => {
       if (e) return cb(e)
       // This statement is added to ensure that we send error through
