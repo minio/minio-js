@@ -3258,9 +3258,13 @@ export class Client {
     }
 
     const getStatOptions = (srcConfig) =>{
-      return {
-        versionId: srcConfig.VersionID
+      let statOpts = {}
+      if(!_.isEmpty(srcConfig.VersionID)) {
+        statOpts= {
+          versionId: srcConfig.VersionID
+        }
       }
+      return statOpts
     }
     const srcObjectSizes=[]
     let totalSize=0
