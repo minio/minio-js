@@ -90,15 +90,6 @@ describe('functional tests', function () {
   } else {
     playConfig.useSSL = true
   }
-
-  playConfig= {
-    useSSL:false,
-    endPoint:"localhost",
-    port:9000,
-    accessKey:"minio",
-    secretKey:"minio123",
-    region: TEST_SERVER_REGION  // use it to test locally if any
-  }
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
