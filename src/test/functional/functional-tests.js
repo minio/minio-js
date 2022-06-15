@@ -60,48 +60,82 @@ const {
   CopyDestinationOptions,
   CopySourceOptions,
   removeDirAndFiles,
-  DEFAULT_REGION // comment/un comment for any testing.
+  DEFAULT_REGION
 } = helpers
 
 require('source-map-support').install()
 
 const isWindowsPlatform = process.platform === "win32"
-const TEST_SERVER_REGION = DEFAULT_REGION  // use it for local testing.
 
 describe('functional tests', function () {
   this.timeout(30 * 60 * 1000)
-  var playConfig = {}
-  // If credentials aren't given, default to play.min.io.
+  var clientConfigParams = {}
+  var region_conf_env=process.env['MINIO_REGION']
+
   if (process.env['SERVER_ENDPOINT']) {
     var res = process.env['SERVER_ENDPOINT'].split(":")
-    playConfig.endPoint = res[0]
-    playConfig.port = parseInt(res[1])
-  } else {
-    playConfig.endPoint = 'play.min.io'
-    playConfig.port = 9000
-  }
-  playConfig.accessKey = process.env['ACCESS_KEY'] || 'Q3AM3UQ867SPQQA43P2F'
-  playConfig.secretKey = process.env['SECRET_KEY'] || 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+    clientConfigParams.endPoint = res[0]
+    clientConfigParams.port = parseInt(res[1])
+    var access_Key_env= process.env['ACCESS_KEY']
+    var secret_key_env=process.env['SECRET_KEY']
 
-  // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
-  // Otherwise default useSSL as true.
-  if (process.env['ENABLE_HTTPS'] !== undefined) {
-    playConfig.useSSL = (process.env['ENABLE_HTTPS'] == '1')
+    // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
+    // Otherwise default useSSL as true.
+    var enable_https_env = process.env['ENABLE_HTTPS']
+    // Get the credentials from env vars, error out if they don't exist
+    if (access_Key_env) {
+      clientConfigParams.accessKey = access_Key_env
+    } else {
+      return new Error(`ACCESS_KEY Environment variable is not set`)
+    }
+    if (secret_key_env) {
+      clientConfigParams.secretKey = secret_key_env
+    } else {
+      return new Error(`SECRET_KEY Environment variable is not set`)
+    }
+    clientConfigParams.useSSL = (enable_https_env == '1')
+
   } else {
-    playConfig.useSSL = true
+    // If credentials aren't given, default to play.min.io.
+    clientConfigParams.endPoint = 'play.min.io'
+    clientConfigParams.port = 9000
+    clientConfigParams.accessKey = 'Q3AM3UQ867SPQQA43P2F'
+    clientConfigParams.secretKey = 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+    clientConfigParams.useSSL = true
   }
+  const server_region = region_conf_env || DEFAULT_REGION
+
+  clientConfigParams.region = server_region
+  // set the partSize to ensure multipart upload chunk size.
+  // if not set, putObject with stream data and undefined length will use about 500Mb chunkSize (5Tb/10000).
+  clientConfigParams.partSize = 64 * 1024 * 1024
+
+
+  JSON.stringify(clientConfigParams)
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
 
-  // set the partSize to ensure multipart upload chunk size.
-  // if not set, putObject with stream data and undefined length will use about 500Mb chunkSize (5Tb/10000).
-  playConfig.partSize = 64 * 1024 * 1024
-
-  var client = new minio.Client(playConfig)
-  var usEastConfig = playConfig
-  usEastConfig.region = TEST_SERVER_REGION
+  var client = new minio.Client(clientConfigParams)
+  var usEastConfig = clientConfigParams
+  usEastConfig.region = server_region
   var clientUsEastRegion = new minio.Client(usEastConfig)
+
+
+  var traceStream
+  // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
+  // will be logged. Set it to /dev/stdout log to the stdout.
+  var trace_func_test_file_path = process.env['FUNCTIONAL_TEST_TRACE']
+  if (trace_func_test_file_path) {
+    // This is necessary for windows.
+    if (trace_func_test_file_path === 'process.stdout') {
+      traceStream = process.stdout
+    } else {
+      traceStream = fs.createWriteStream(trace_func_test_file_path, {flags: 'a'})
+    }
+    traceStream.write('====================================\n')
+    client.traceOn(traceStream)
+  }
 
   var bucketName = "minio-js-test-" + uuid.v4()
   var objectName = uuid.v4()
@@ -128,7 +162,7 @@ describe('functional tests', function () {
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   // create new http agent to check requests release sockets
-  var httpAgent = (playConfig.useSSL ? https : http).Agent({keepAlive: true})
+  var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({keepAlive: true})
   client.setRequestOptions({agent: httpAgent})
 
   var metaData = {
@@ -149,21 +183,6 @@ describe('functional tests', function () {
     return s
   }
 
-  var traceStream
-
-  // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
-  // will be logged. Set it to /dev/stdout log to the stdout.
-  if (process.env['FUNCTIONAL_TEST_TRACE']) {
-    var filePath = process.env['FUNCTIONAL_TEST_TRACE']
-    // This is necessary for windows.
-    if (filePath === 'process.stdout') {
-      traceStream = process.stdout
-    } else {
-      traceStream = fs.createWriteStream(filePath, {flags: 'a'})
-    }
-    traceStream.write('====================================\n')
-    client.traceOn(traceStream)
-  }
 
   before(done => client.makeBucket(bucketName, '', done))
   after(done => client.removeBucket(bucketName, done))
@@ -171,14 +190,14 @@ describe('functional tests', function () {
   if (traceStream) {
     after(() => {
       client.traceOff()
-      if (filePath !== 'process.stdout') {
+      if (trace_func_test_file_path !== 'process.stdout') {
         traceStream.end()
       }
     })
   }
 
   describe('makeBucket with period and region', () => {
-    if (playConfig.endPoint === 's3.amazonaws.com') {
+    if (clientConfigParams.endPoint === 's3.amazonaws.com') {
       step('makeBucket(bucketName, region, cb)_region:eu-central-1_', done => client.makeBucket(`${bucketName}.sec.period`,
                                                                                                 'eu-central-1', done))
       step('removeBucket(bucketName, cb)__', done => client.removeBucket(`${bucketName}.sec.period`, done))
@@ -2801,7 +2820,7 @@ describe('functional tests', function () {
     const objName = 'datafile-100-kB'
     const objContent = Buffer.alloc(100 * 1024, 0)
 
-    const canRunAssumeRoleTest = playConfig.endPoint.includes("localhost")
+    const canRunAssumeRoleTest = clientConfigParams.endPoint.includes("localhost")
     const stsEndPoint = "http://localhost:9000"
 
     try {
@@ -2813,10 +2832,10 @@ describe('functional tests', function () {
           secretKey: client.secretKey,
         })
 
-        const aRoleConf = Object.assign({}, playConfig, {credentialsProvider: assumeRoleProvider})
+        const aRoleConf = Object.assign({}, clientConfigParams, {credentialsProvider: assumeRoleProvider})
 
         const assumeRoleClient = new minio.Client(aRoleConf)
-        // assumeRoleClient.region= TEST_SERVER_REGION // uncomment and update for local testing if any.
+        assumeRoleClient.region= server_region
 
         describe('Put an Object', function () {
           step(`Put an object with assume role credentials:  bucket:_bucketName:${bucketName}, _objectName:${objName}`, done => {

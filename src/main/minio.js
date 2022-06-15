@@ -605,6 +605,13 @@ export class Client {
 
     var payload = ''
 
+    // Region already set in constructor, validate if
+    // caller requested bucket location is same.
+    if (region && this.region) {
+      if (region !== this.region) {
+        throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
+      }
+    }
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
