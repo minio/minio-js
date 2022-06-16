@@ -43,12 +43,9 @@ try {
 } catch (err) {
   AssumeRoleProvider = require('minio/dist/main/AssumeRoleProvider')
 }
-
 AssumeRoleProvider = AssumeRoleProvider.default
 
-
 let minio
-
 try {
   minio = require('../../../dist/main/minio')
 } catch (err) {
@@ -86,12 +83,16 @@ describe('functional tests', function () {
     if (access_Key_env) {
       clientConfigParams.accessKey = access_Key_env
     } else {
-      return new Error(`ACCESS_KEY Environment variable is not set`)
+      // eslint-disable-next-line no-console
+      console.error(`Error: ACCESS_KEY Environment variable is not set`)
+      process.exit(1)
     }
     if (secret_key_env) {
       clientConfigParams.secretKey = secret_key_env
     } else {
-      return new Error(`SECRET_KEY Environment variable is not set`)
+      // eslint-disable-next-line no-console
+      console.error(`Error:  SECRET_KEY Environment variable is not set`)
+      process.exit(1)
     }
     clientConfigParams.useSSL = (enable_https_env == '1')
 
@@ -111,7 +112,6 @@ describe('functional tests', function () {
   clientConfigParams.partSize = 64 * 1024 * 1024
 
 
-  JSON.stringify(clientConfigParams)
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
@@ -164,7 +164,6 @@ describe('functional tests', function () {
   // create new http agent to check requests release sockets
   var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({keepAlive: true})
   client.setRequestOptions({agent: httpAgent})
-
   var metaData = {
     'Content-Type': 'text/html',
     'Content-Language': 'en',
@@ -176,15 +175,13 @@ describe('functional tests', function () {
 
   function readableStream(data) {
     var s = new stream.Readable()
-    s._read = () => {
-    }
+    s._read = () => {}
     s.push(data)
     s.push(null)
     return s
   }
 
-
-  before(done => client.makeBucket(bucketName, '', done))
+  before(done => client.makeBucket(bucketName, server_region, done))
   after(done => client.removeBucket(bucketName, done))
 
   if (traceStream) {
@@ -224,32 +221,48 @@ describe('functional tests', function () {
   })
 
   describe('makeBucket with region', () => {
-    // When custom region is set, these tests are expected to fail.
-    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:${usEastConfig.region}_`, done => {
-      clientUsEastRegion.makeBucket(`${bucketName}-region`, `${usEastConfig.region}`, done)
+    let isDifferentServerRegion = false
+    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-2_`, done => {
+      try {
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-2', assert.fail)
+      } catch (e) {
+        isDifferentServerRegion = true
+        done()
+      }
     })
-
-    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:${usEastConfig.region}_`, done => {
-      clientUsEastRegion.makeBucket(`${bucketName}-region-1`, usEastConfig.region, done)
+    step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+      }
+      done()
     })
     step(`removeBucket(bucketName, cb)_bucketName:${bucketName}-region_`, done => {
-      clientUsEastRegion.removeBucket(`${bucketName}-region-1`, done)
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.removeBucket(`${bucketName}-region`, done)
+      }
+      done()
     })
-    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region, region:${usEastConfig.region}_`, done => {
-      clientUsEastRegion.makeBucket(`${bucketName}-region-2`, usEastConfig.region, (e) => {
-        if (e) {
-          // Some object storage servers like Azure, might not delete a bucket rightaway
-          // Add a sleep of 40 seconds and retry
-          setTimeout(() => {
-            clientUsEastRegion.makeBucket(`${bucketName}-region-2`, usEastConfig.region, done)
-          }, 40 * 1000)
-        } else done()
-      })
+    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', (e) => {
+          if (e) {
+            // Some object storage servers like Azure, might not delete a bucket rightaway
+            // Add a sleep of 40 seconds and retry
+            setTimeout(() => {
+              clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+            }, 40 * 1000)
+          } else done()
+        })
+      }
+      done()
     })
-    step(`removeBucket(bucketName)_bucketName:${bucketName}-region-2_`, done => {
-      clientUsEastRegion.removeBucket(`${bucketName}-region-2`)
-        .then(() => done())
-        .catch(done)
+    step(`removeBucket(bucketName)_bucketName:${bucketName}-region_`, done => {
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.removeBucket(`${bucketName}-region`)
+          .then(() => done())
+          .catch(done)
+      }
+      done()
     })
   })
 
@@ -276,8 +289,8 @@ describe('functional tests', function () {
         done(new Error())
       })
     })
-    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region-1, region:${client.region}_`, done => {
-      client.makeBucket(`${bucketName}-region-1`, client.region)
+    step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region-1, region:us-east-1_`, done => {
+      client.makeBucket(`${bucketName}-region-1`, '')
         .then(() => client.removeBucket(`${bucketName}-region-1`))
         .then(() => done())
         .catch(done)
@@ -413,8 +426,7 @@ describe('functional tests', function () {
     step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:0, length=1024_`, done => {
       client.getPartialObject(bucketName, _100kbObjectBufferName, 0, 1024)
         .then(stream => {
-          stream.on('data', function () {
-          })
+          stream.on('data', function() {})
           stream.on('end', done)
         })
         .catch(done)
@@ -450,8 +462,7 @@ describe('functional tests', function () {
     step(`getObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}_`, done => {
       client.getObject(bucketName, _100kbObjectBufferName)
         .then(stream => {
-          stream.on('data', function () {
-          })
+          stream.on('data', function() {})
           stream.on('end', done)
         })
         .catch(done)
@@ -463,8 +474,9 @@ describe('functional tests', function () {
         setTimeout(() => {
           if (Object.values(httpAgent.sockets).length === 0) return done()
           done(new Error('http request did not release network socket'))
-        }, 0)
+        }, 100)
       })
+
     })
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
@@ -705,7 +717,7 @@ describe('functional tests', function () {
         setTimeout(() => {
           if (Object.values(httpAgent.sockets).length === 0) return done()
           done(new Error('http request did not release network socket'))
-        }, 0)
+        }, 100)
       })
     })
 
@@ -815,8 +827,7 @@ describe('functional tests', function () {
           if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
           response.on('error', e => done(e))
           response.on('end', () => done())
-          response.on('data', () => {
-          })
+          response.on('data', () => {})
         })
         request.on('error', e => done(e))
         request.write(_1byte)
@@ -975,8 +986,7 @@ describe('functional tests', function () {
           if (respHeaders['response-content-encoding'] !== response.headers['content-encoding']) {
             return done(new Error(`content-encoding header mismatch`))
           }
-          response.on('data', () => {
-          })
+          response.on('data', () => {})
           done()
         })
         request.on('error', e => done(e))
@@ -1039,15 +1049,13 @@ describe('functional tests', function () {
     })
 
     step(`presignedUrl(httpMethod, bucketName, objectName, expires, reqParams, cb)_httpMethod:GET, bucketName:${bucketName}, expires:1000_`, done => {
-      client.presignedUrl('GET', bucketName, '', 1000, {
-        'prefix': 'data',
-        'max-keys': 1000
-      }, (e, presignedUrl) => {
+      client.presignedUrl('GET', bucketName, '', 1000, {'prefix': 'data', 'max-keys': 1000}, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'GET'
-        options.headers = {}
+        options.headers = {
+        }
         var str = ''
         if (options.protocol === 'https:') transport = https
         var callback = function (response) {
@@ -1074,14 +1082,14 @@ describe('functional tests', function () {
         var transport = http
         var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
         options.method = 'DELETE'
-        options.headers = {}
+        options.headers = {
+        }
         if (options.protocol === 'https:') transport = https
         var request = transport.request(options, (response) => {
           if (response.statusCode !== 204) return done(new Error(`error on put : ${response.statusCode}`))
           response.on('error', e => done(e))
           response.on('end', () => done())
-          response.on('data', () => {
-          })
+          response.on('data', () => {})
         })
         request.on('error', e => done(e))
         request.end()
@@ -1844,8 +1852,7 @@ describe('functional tests', function () {
             if (isArray(tagList)) {
               done()
             }
-          })
-        } else {
+          })}else{
           done()
         }
       })
@@ -1892,8 +1899,7 @@ describe('functional tests', function () {
             "Expiration": {
               "Days": "3650"
             }
-          }]
-        }
+          }]}
         client.setBucketLifecycle(bucketName, lifecycleConfig, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
@@ -1923,14 +1929,14 @@ describe('functional tests', function () {
 
   describe('Versioning Supported preSignedUrl Get, Put Tests', function () {
     /**
-         * Test Steps
-         * 1. Create Versioned Bucket
-         * 2. presignedPutObject of 2 Versions of different size
-         * 3. List and ensure that there are two versions
-         * 4. presignedGetObject with versionId to ensure that we are able to get
-         * 5. Remove all object versions at once
-         * 6. Cleanup bucket.
-         */
+     * Test Steps
+     * 1. Create Versioned Bucket
+     * 2. presignedPutObject of 2 Versions of different size
+     * 3. List and ensure that there are two versions
+     * 4. presignedGetObject with versionId to ensure that we are able to get
+     * 5. Remove all object versions at once
+     * 6. Cleanup bucket.
+     */
 
     const versionedBucketName = "minio-js-test-ver-presign-" + uuid.v4()
     const versionedPresignObjName = 'datafile-1-b'
@@ -2169,11 +2175,7 @@ describe('functional tests', function () {
       })
       step(`Update or replace lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
         if (isFeatureSupported) {
-          client.setObjectLockConfig(lockConfigBucketName, {
-            mode: "GOVERNANCE",
-            unit: 'Years',
-            validity: 2
-          }, (err) => {
+          client.setObjectLockConfig(lockConfigBucketName, {mode:"GOVERNANCE",unit:'Years', validity:2 }, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
@@ -2309,10 +2311,7 @@ describe('functional tests', function () {
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
         if (isFeatureSupported) {
-          client.removeObject(objRetentionBucket, retentionObjName, {
-            versionId: versionId,
-            governanceBypass: true
-          }, () => {
+          client.removeObject(objRetentionBucket, retentionObjName, {versionId:versionId, governanceBypass:true}, () => {
             done()
           })
         } else {
@@ -2520,10 +2519,7 @@ describe('functional tests', function () {
 
       step(`setObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
         if (isFeatureSupported) {
-          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {
-            status: "ON",
-            versionId: versionId
-          }, () => {
+          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {status:"ON", versionId:versionId}, () => {
             done()
           })
         } else {
@@ -2544,10 +2540,7 @@ describe('functional tests', function () {
 
       step(`setObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
         if (isFeatureSupported) {
-          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {
-            status: "OFF",
-            versionId: versionId
-          }, () => {
+          client.setObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {status:"OFF", versionId:versionId}, () => {
             done()
           })
         } else {
@@ -2569,10 +2562,7 @@ describe('functional tests', function () {
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
         if (isFeatureSupported) {
-          client.removeObject(objLegalHoldBucketName, objLegalHoldObjName, {
-            versionId: versionId,
-            governanceBypass: true
-          }, () => {
+          client.removeObject(objLegalHoldBucketName, objLegalHoldObjName, {versionId:versionId, governanceBypass:true}, () => {
             done()
           })
         } else {
@@ -2592,8 +2582,7 @@ describe('functional tests', function () {
 
       })
 
-    })
-  })
+    })})
 
   describe('Object Name special characters test without Prefix', () => {
     // Isolate the bucket/object for easy debugging and tracking.
@@ -2679,8 +2668,7 @@ describe('functional tests', function () {
       step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}`, done => {
         client.getObject(bucketNameForSpCharObjects, objectNameSpecialChars)
           .then(stream => {
-            stream.on('data', function () {
-            })
+            stream.on('data', function() {})
             stream.on('end', done)
           })
           .catch(done)
@@ -2787,8 +2775,7 @@ describe('functional tests', function () {
       step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName_:${objectNameWithPrefixForSpecialChars}`, done => {
         client.getObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars)
           .then(stream => {
-            stream.on('data', function () {
-            })
+            stream.on('data', function() {})
             stream.on('end', done)
           })
           .catch(done)
@@ -2877,7 +2864,8 @@ describe('functional tests', function () {
         if (e) done(e)
         if (res.versionId === null && res.etag) {
           done()
-        } else {
+        }
+        else{
           done(new Error(`Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
         }
       })
@@ -2896,7 +2884,8 @@ describe('functional tests', function () {
         if (e) done(e)
         if (res.versionId === null && res.etag) {
           done()
-        } else {
+        }
+        else{
           done(new Error(`Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(res)}`))
         }
       })
@@ -2925,6 +2914,7 @@ describe('functional tests', function () {
 
     }))
     after((done) => client.removeBucket(bucketToTestMultipart, done))
+
 
 
     // Non multipart Test
@@ -2986,15 +2976,15 @@ describe('functional tests', function () {
   })
   describe("Compose Object API Tests", () => {
     /**
-         * Steps:
-         * 1. Generate a 100MB file in temp dir
-         * 2. Split into 26 MB parts in temp dir
-         * 3. Upload parts to bucket
-         * 4. Compose into a single object in the same bucket.
-         * 5. Remove the file parts (Clean up)
-         * 6. Remove the file itself (Clean up)
-         * 7. Remove bucket. (Clean up)
-         */
+     * Steps:
+     * 1. Generate a 100MB file in temp dir
+     * 2. Split into 26 MB parts in temp dir
+     * 3. Upload parts to bucket
+     * 4. Compose into a single object in the same bucket.
+     * 5. Remove the file parts (Clean up)
+     * 6. Remove the file itself (Clean up)
+     * 7. Remove bucket. (Clean up)
+     */
 
     var _100mbFileToBeSplitAndComposed = Buffer.alloc(100 * 1024 * 1024, 0)
     let composeObjectTestBucket = "minio-js-test-compose-obj-" + uuid.v4()
@@ -3201,8 +3191,7 @@ describe('functional tests', function () {
     step(`getObject(bucketName, objectName)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefix}`, done => {
       client.getObject(bucketNameForSpCharObjects, objectNameWithPrefix)
         .then(stream => {
-          stream.on('data', function () {
-          })
+          stream.on('data', function() {})
           stream.on('end', done)
         })
         .catch(done)
@@ -3290,13 +3279,13 @@ describe('functional tests', function () {
     step(`putObject(bucketName, objectName, stream)_bucketName:${selObjContentBucket}, objectName:${selObject}, stream:csv`, done => {
       // Save a CSV file so that we can query later to test the results.
       client.putObject(selObjContentBucket, selObject, "Name,PhoneNumber,City,Occupation\n" +
-                "Sam,(949) 123-45567,Irvine,Solutions Architect\n" +
-                "Vinod,(949) 123-4556,Los Angeles,Solutions Architect\n" +
-                "Jeff,(949) 123-45567,Seattle,AWS Evangelist\n" +
-                "Jane,(949) 123-45567,Chicago,Developer\n" +
-                "Sean,(949) 123-45567,Chicago,Developer\n" +
-                "Mary,(949) 123-45567,Chicago,Developer\n" +
-                "Kate,(949) 123-45567,Chicago,Developer", {})
+          "Sam,(949) 123-45567,Irvine,Solutions Architect\n" +
+          "Vinod,(949) 123-4556,Los Angeles,Solutions Architect\n" +
+          "Jeff,(949) 123-45567,Seattle,AWS Evangelist\n" +
+          "Jane,(949) 123-45567,Chicago,Developer\n" +
+          "Sean,(949) 123-45567,Chicago,Developer\n" +
+          "Mary,(949) 123-45567,Chicago,Developer\n" +
+          "Kate,(949) 123-45567,Chicago,Developer", {})
         .then(() => {
           done()
         })
@@ -3309,20 +3298,13 @@ describe('functional tests', function () {
       const selectOpts = {
         expression: "SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
         expressionType: "SQL",
-        inputSerialization: {
-          'CSV': {
-            "FileHeaderInfo": "Use",
-            RecordDelimiter: "\n",
-            FieldDelimiter: ",",
-          },
-          'CompressionType': 'NONE'
+        inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
+                                      RecordDelimiter: "\n",
+                                      FieldDelimiter: ",",
         },
-        outputSerialization: {
-          'CSV': {
-            RecordDelimiter: "\n",
-            FieldDelimiter: ",",
-          }
-        },
+                              'CompressionType': 'NONE'},
+        outputSerialization : {'CSV': {RecordDelimiter: "\n",
+                                       FieldDelimiter:  ",",}},
         requestProgress: {Enabled: true}
       }
 
@@ -3331,7 +3313,8 @@ describe('functional tests', function () {
           // verify the select query result string.
           if (result.getRecords().toString() === "Jane,(949) 123-45567,Chicago,Developer\n") { // \n for csv line ending.
             done()
-          } else {
+          }
+          else{
             return done(new Error(`Expected Result did not match received:${result.getRecords().toString()} expected:"Jane,(949) 123-45567,Chicago,Developer\n"`))
           }
         })

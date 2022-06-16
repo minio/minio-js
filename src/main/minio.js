@@ -63,7 +63,6 @@ import { parseSelectObjectContentResponse} from "./xml-parsers"
 
 var Package = require('../../package.json')
 
-
 export class Client {
   constructor(params) {
     if (typeof params.secure !== 'undefined') throw new Error('"secure" option deprecated, "useSSL" should be used instead')
@@ -134,7 +133,6 @@ export class Client {
     this.secretKey = params.secretKey
     this.sessionToken = params.sessionToken
     this.userAgent = `${libraryAgent}`
-    this.region = DEFAULT_REGION
 
     // Default path style is true
     if (params.pathStyle === undefined) {
@@ -548,7 +546,7 @@ export class Client {
     //   obtained region.
     var pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], this.region, true, (e, response) => {
+    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
@@ -572,7 +570,7 @@ export class Client {
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
   // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region="", makeOpts={}, cb) {
+  makeBucket(bucketName, region, makeOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -636,8 +634,20 @@ export class Client {
       headers["x-amz-bucket-object-lock-enabled"]=true
     }
 
-    if (!region) region = this.region
-    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, cb)
+    if (!region) region = DEFAULT_REGION
+
+    const processWithRetry = (err) =>{
+      if (err && (region === "" || region === DEFAULT_REGION)) {
+        if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
+          // Retry with region returned as part of error
+          this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
+        }
+        return
+      }
+      cb && cb()
+    }
+
+    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
 
   // List of buckets created.
@@ -653,7 +663,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', [200], this.region, true, (e, response) => {
+    this.makeRequest({method}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
@@ -765,7 +775,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName}, '', [204], this.region, false, (e) => {
+    this.makeRequest({method, bucketName}, '', [204], '', false, (e) => {
       // If the bucket was successfully removed, remove the region map entry.
       if (!e) delete(this.regionMap[bucketName])
       cb(e)
