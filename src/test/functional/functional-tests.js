@@ -957,7 +957,7 @@ describe('functional tests', function () {
         'response-content-language': 'en',
         'response-expires': 'Sun, 07 Jun 2020 16:07:58 GMT',
         'response-cache-control': 'No-cache',
-        'response-content-disposition': 'attachment; filename=testing.txt',
+        'response-content-disposition': 'attachment; filename="t!st ng.txt"; filename*=UTF-8\'\'t&21st&20ng.txt',
         'response-content-encoding': 'gzip'
       }
       client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
