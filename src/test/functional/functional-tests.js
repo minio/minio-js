@@ -31,73 +31,111 @@ const splitFile = require('split-file')
 const step = require("mocha-steps").step
 
 let helpers
-try{
-  helpers=  require("../../../dist/main/helpers")
-}catch (err){
+try {
+  helpers = require("../../../dist/main/helpers")
+} catch (err) {
   helpers = require('minio/dist/main/helpers')
 }
 
 let AssumeRoleProvider
-try{
-  AssumeRoleProvider=  require("../../../dist/main/AssumeRoleProvider")
-}catch (err){
+try {
+  AssumeRoleProvider = require("../../../dist/main/AssumeRoleProvider")
+} catch (err) {
   AssumeRoleProvider = require('minio/dist/main/AssumeRoleProvider')
 }
-
-AssumeRoleProvider=AssumeRoleProvider.default
-
+AssumeRoleProvider = AssumeRoleProvider.default
 
 let minio
-
 try {
   minio = require('../../../dist/main/minio')
 } catch (err) {
   minio = require('minio')
 }
 
-const { getVersionId, isArray,
-        CopyDestinationOptions,
-        CopySourceOptions,
-        removeDirAndFiles } = helpers
+const {
+  getVersionId, isArray,
+  CopyDestinationOptions,
+  CopySourceOptions,
+  removeDirAndFiles,
+  DEFAULT_REGION
+} = helpers
 
 require('source-map-support').install()
 
 const isWindowsPlatform = process.platform === "win32"
 
-describe('functional tests', function() {
+describe('functional tests', function () {
   this.timeout(30 * 60 * 1000)
-  var playConfig = {}
-  // If credentials aren't given, default to play.min.io.
+  var clientConfigParams = {}
+  var region_conf_env=process.env['MINIO_REGION']
+
   if (process.env['SERVER_ENDPOINT']) {
     var res = process.env['SERVER_ENDPOINT'].split(":")
-    playConfig.endPoint = res[0]
-    playConfig.port = parseInt(res[1])
-  } else {
-    playConfig.endPoint = 'play.min.io'
-    playConfig.port = 9000
-  }
-  playConfig.accessKey = process.env['ACCESS_KEY'] || 'Q3AM3UQ867SPQQA43P2F'
-  playConfig.secretKey = process.env['SECRET_KEY'] || 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+    clientConfigParams.endPoint = res[0]
+    clientConfigParams.port = parseInt(res[1])
+    var access_Key_env= process.env['ACCESS_KEY']
+    var secret_key_env=process.env['SECRET_KEY']
 
-  // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
-  // Otherwise default useSSL as true.
-  if (process.env['ENABLE_HTTPS'] !== undefined) {
-    playConfig.useSSL = (process.env['ENABLE_HTTPS'] == '1')
+    // If the user provides ENABLE_HTTPS, 1 = secure, anything else = unsecure.
+    // Otherwise default useSSL as true.
+    var enable_https_env = process.env['ENABLE_HTTPS']
+    // Get the credentials from env vars, error out if they don't exist
+    if (access_Key_env) {
+      clientConfigParams.accessKey = access_Key_env
+    } else {
+      // eslint-disable-next-line no-console
+      console.error(`Error: ACCESS_KEY Environment variable is not set`)
+      process.exit(1)
+    }
+    if (secret_key_env) {
+      clientConfigParams.secretKey = secret_key_env
+    } else {
+      // eslint-disable-next-line no-console
+      console.error(`Error:  SECRET_KEY Environment variable is not set`)
+      process.exit(1)
+    }
+    clientConfigParams.useSSL = (enable_https_env == '1')
+
   } else {
-    playConfig.useSSL = true
+    // If credentials aren't given, default to play.min.io.
+    clientConfigParams.endPoint = 'play.min.io'
+    clientConfigParams.port = 9000
+    clientConfigParams.accessKey = 'Q3AM3UQ867SPQQA43P2F'
+    clientConfigParams.secretKey = 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'
+    clientConfigParams.useSSL = true
   }
+  const server_region = region_conf_env || DEFAULT_REGION
+
+  clientConfigParams.region = server_region
+  // set the partSize to ensure multipart upload chunk size.
+  // if not set, putObject with stream data and undefined length will use about 500Mb chunkSize (5Tb/10000).
+  clientConfigParams.partSize = 64 * 1024 * 1024
+
+
   // dataDir is falsy if we need to generate data on the fly. Otherwise, it will be
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
 
-  // set the partSize to ensure multipart upload chunk size.
-  // if not set, putObject with stream data and undefined length will use about 500Mb chunkSize (5Tb/10000).
-  playConfig.partSize = 64 * 1024 * 1024
-
-  var client = new minio.Client(playConfig)
-  var usEastConfig = playConfig
-  usEastConfig.region = 'us-east-1'
+  var client = new minio.Client(clientConfigParams)
+  var usEastConfig = clientConfigParams
+  usEastConfig.region = server_region
   var clientUsEastRegion = new minio.Client(usEastConfig)
+
+
+  var traceStream
+  // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
+  // will be logged. Set it to /dev/stdout log to the stdout.
+  var trace_func_test_file_path = process.env['FUNCTIONAL_TEST_TRACE']
+  if (trace_func_test_file_path) {
+    // This is necessary for windows.
+    if (trace_func_test_file_path === 'process.stdout') {
+      traceStream = process.stdout
+    } else {
+      traceStream = fs.createWriteStream(trace_func_test_file_path, {flags: 'a'})
+    }
+    traceStream.write('====================================\n')
+    client.traceOn(traceStream)
+  }
 
   var bucketName = "minio-js-test-" + uuid.v4()
   var objectName = uuid.v4()
@@ -124,9 +162,8 @@ describe('functional tests', function() {
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   // create new http agent to check requests release sockets
-  var httpAgent = (playConfig.useSSL ? https : http).Agent({ keepAlive: true })
-  client.setRequestOptions({ agent: httpAgent })
-
+  var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({keepAlive: true})
+  client.setRequestOptions({agent: httpAgent})
   var metaData = {
     'Content-Type': 'text/html',
     'Content-Language': 'en',
@@ -144,36 +181,20 @@ describe('functional tests', function() {
     return s
   }
 
-  var traceStream
-
-  // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
-  // will be logged. Set it to /dev/stdout log to the stdout.
-  if (process.env['FUNCTIONAL_TEST_TRACE']) {
-    var filePath = process.env['FUNCTIONAL_TEST_TRACE']
-    // This is necessary for windows.
-    if (filePath === 'process.stdout') {
-      traceStream = process.stdout
-    } else {
-      traceStream = fs.createWriteStream(filePath, { flags: 'a' })
-    }
-    traceStream.write('====================================\n')
-    client.traceOn(traceStream)
-  }
-
-  before(done => client.makeBucket(bucketName, '', done))
+  before(done => client.makeBucket(bucketName, server_region, done))
   after(done => client.removeBucket(bucketName, done))
 
   if (traceStream) {
     after(() => {
       client.traceOff()
-      if (filePath !== 'process.stdout') {
+      if (trace_func_test_file_path !== 'process.stdout') {
         traceStream.end()
       }
     })
   }
 
   describe('makeBucket with period and region', () => {
-    if (playConfig.endPoint === 's3.amazonaws.com') {
+    if (clientConfigParams.endPoint === 's3.amazonaws.com') {
       step('makeBucket(bucketName, region, cb)_region:eu-central-1_', done => client.makeBucket(`${bucketName}.sec.period`,
                                                                                                 'eu-central-1', done))
       step('removeBucket(bucketName, cb)__', done => client.removeBucket(`${bucketName}.sec.period`, done))
@@ -184,14 +205,14 @@ describe('functional tests', function() {
     step('listBuckets(cb)__', done => {
       client.listBuckets((e, buckets) => {
         if (e) return done(e)
-        if (_.find(buckets, { name: bucketName })) return done()
+        if (_.find(buckets, {name: bucketName})) return done()
         done(new Error('bucket not found'))
       })
     })
     step('listBuckets()__', done => {
       client.listBuckets()
         .then(buckets => {
-          if (!_.find(buckets, { name: bucketName }))
+          if (!_.find(buckets, {name: bucketName}))
             return done(new Error('bucket not found'))
         })
         .then(() => done())
@@ -200,34 +221,48 @@ describe('functional tests', function() {
   })
 
   describe('makeBucket with region', () => {
+    let isDifferentServerRegion = false
     step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-2_`, done => {
       try {
         clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-2', assert.fail)
       } catch (e) {
+        isDifferentServerRegion = true
         done()
       }
     })
     step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
-      clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+      }
+      done()
     })
     step(`removeBucket(bucketName, cb)_bucketName:${bucketName}-region_`, done => {
-      clientUsEastRegion.removeBucket(`${bucketName}-region`, done)
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.removeBucket(`${bucketName}-region`, done)
+      }
+      done()
     })
     step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region, region:us-east-1_`, done => {
-      clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', (e)=>{
-        if (e) {
-          // Some object storage servers like Azure, might not delete a bucket rightaway
-          // Add a sleep of 40 seconds and retry
-          setTimeout(() => {
-            clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
-          }, 40 * 1000)
-        } else done()
-      })
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', (e) => {
+          if (e) {
+            // Some object storage servers like Azure, might not delete a bucket rightaway
+            // Add a sleep of 40 seconds and retry
+            setTimeout(() => {
+              clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
+            }, 40 * 1000)
+          } else done()
+        })
+      }
+      done()
     })
     step(`removeBucket(bucketName)_bucketName:${bucketName}-region_`, done => {
-      clientUsEastRegion.removeBucket(`${bucketName}-region`)
-        .then(() => done())
-        .catch(done)
+      if(!isDifferentServerRegion) {
+        clientUsEastRegion.removeBucket(`${bucketName}-region`)
+          .then(() => done())
+          .catch(done)
+      }
+      done()
     })
   })
 
@@ -255,13 +290,13 @@ describe('functional tests', function() {
       })
     })
     step(`makeBucket(bucketName, region)_bucketName:${bucketName}-region-1, region:us-east-1_`, done => {
-      client.makeBucket(`${bucketName}-region-1`, 'us-east-1')
+      client.makeBucket(`${bucketName}-region-1`, '')
         .then(() => client.removeBucket(`${bucketName}-region-1`))
         .then(() => done())
         .catch(done)
     })
   })
-  describe('tests for putObject getObject removeObject with multipath', function() {
+  describe('tests for putObject getObject removeObject with multipath', function () {
     step(`putObject(bucketName, objectName, stream)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}, stream:100Kib_`, done => {
       client.putObject(bucketName, _MultiPath100kbObjectBufferName, _100kb)
         .then(() => done())
@@ -288,11 +323,11 @@ describe('functional tests', function() {
     })
 
   })
-  describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function() {
+  describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function () {
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`
     step(`fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUpload}_`, done => {
       fs.writeFileSync(tmpFileUpload, _100kb)
-      client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload,done)
+      client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload, done)
     })
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
@@ -398,7 +433,7 @@ describe('functional tests', function() {
     })
 
     step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:1024, length=1024_`, done => {
-      var expectedHash = crypto.createHash('md5').update(_100kb.slice(1024,2048)).digest('hex')
+      var expectedHash = crypto.createHash('md5').update(_100kb.slice(1024, 2048)).digest('hex')
       var hash = crypto.createHash('md5')
       client.getPartialObject(bucketName, _100kbObjectBufferName, 1024, 1024)
         .then(stream => {
@@ -439,8 +474,9 @@ describe('functional tests', function() {
         setTimeout(() => {
           if (Object.values(httpAgent.sockets).length === 0) return done()
           done(new Error('http request did not release network socket'))
-        }, 0)
+        }, 100)
       })
+
     })
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, done => {
@@ -467,8 +503,8 @@ describe('functional tests', function() {
 
     step(`getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, offset:0, length:100*1024_`, done => {
       var hash = crypto.createHash('md5')
-      var expectedHash = crypto.createHash('md5').update(_65mb.slice(0,100*1024)).digest('hex')
-      client.getPartialObject(bucketName, _65mbObjectName, 0, 100*1024, (e, stream) => {
+      var expectedHash = crypto.createHash('md5').update(_65mb.slice(0, 100 * 1024)).digest('hex')
+      client.getPartialObject(bucketName, _65mbObjectName, 0, 100 * 1024, (e, stream) => {
         if (e) return done(e)
         stream.on('data', data => hash.update(data))
         stream.on('error', done)
@@ -516,7 +552,7 @@ describe('functional tests', function() {
 
     step(`removeObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, done => {
       client.removeObject(bucketName, _100kbObjectName)
-        .then(function() {
+        .then(function () {
           async.map([_100kbObjectBufferName, _65mbObjectName, _65mbObjectNameCopy], (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
         })
         .catch(done)
@@ -524,7 +560,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('tests for copyObject statObject', function() {
+  describe('tests for copyObject statObject', function () {
     var etag
     var modifiedDate
     step(`putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream: 100kb, metaData:${metaData}_`, done => {
@@ -626,7 +662,7 @@ describe('functional tests', function() {
     step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, metaData:${metaData}`, done => {
       client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData, done)
     })
-    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`, function(done) {
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`, function (done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       let hostSkipList = ['s3.amazonaws.com']
@@ -645,7 +681,7 @@ describe('functional tests', function() {
           done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
         })
     })
-    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function(done) {
+    step(`listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`, function (done) {
       // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
       // See: https://github.com/minio/minio/commit/75c43bfb6c4a2ace
       let hostSkipList = ['s3.amazonaws.com']
@@ -671,7 +707,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('fPutObject fGetObject', function() {
+  describe('fPutObject fGetObject', function () {
     var tmpFileUpload = `${tmpDir}/${_65mbObjectName}`
     var tmpFileDownload = `${tmpDir}/${_65mbObjectName}.download`
 
@@ -681,7 +717,7 @@ describe('functional tests', function() {
         setTimeout(() => {
           if (Object.values(httpAgent.sockets).length === 0) return done()
           done(new Error('http request did not release network socket'))
-        }, 0)
+        }, 100)
       })
     })
 
@@ -863,7 +899,7 @@ describe('functional tests', function() {
 
     step(`presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:GET, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:86400, requestDate:StartOfDay_`, done => {
       var requestDate = new Date()
-      requestDate.setHours(0,0,0,0)
+      requestDate.setHours(0, 0, 0, 0)
       client.presignedUrl('GET', bucketName, _1byteObjectName, 86400, requestDate, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -960,7 +996,7 @@ describe('functional tests', function() {
 
     step(`presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:86400, requestDate:StartOfDay_`, done => {
       var requestDate = new Date()
-      requestDate.setHours(0,0,0,0)
+      requestDate.setHours(0, 0, 0, 0)
       client.presignedGetObject(bucketName, _1byteObjectName, 86400, {}, requestDate, (e, presignedUrl) => {
         if (e) return done(e)
         var transport = http
@@ -996,7 +1032,7 @@ describe('functional tests', function() {
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
-        req.end(function(e) {
+        req.end(function (e) {
           if (e) return done(e)
           done()
         })
@@ -1061,7 +1097,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('listObjects', function() {
+  describe('listObjects', function () {
     var listObjectPrefix = 'miniojsPrefix'
     var listObjectsNum = 10
     var objArray = []
@@ -1121,7 +1157,7 @@ describe('functional tests', function() {
 
     step(`listObjectsV2(bucketName, prefix, recursive, startAfter)_bucketName:${bucketName}, recursive:true_`, done => {
       listArray = []
-      client.listObjectsV2(bucketName, '', true,'')
+      client.listObjectsV2(bucketName, '', true, '')
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
@@ -1134,7 +1170,7 @@ describe('functional tests', function() {
 
     step(`listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter)_bucketName:${bucketName}, recursive:true_`, done => {
       listArray = []
-      client.extensions.listObjectsV2WithMetadata(bucketName, '', true,'')
+      client.extensions.listObjectsV2WithMetadata(bucketName, '', true, '')
         .on('error', done)
         .on('end', () => {
           if (_.isEqual(objArray, listArray)) return done()
@@ -1155,7 +1191,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('removeObjects', function() {
+  describe('removeObjects', function () {
     var listObjectPrefix = 'miniojsPrefix'
     var listObjectsNum = 10
     var objArray = []
@@ -1177,7 +1213,7 @@ describe('functional tests', function() {
         .on('error', done)
         .on('end', () => {
           try {
-            client.removeObjects(bucketName, '',function(e) {
+            client.removeObjects(bucketName, '', function (e) {
               if (e) {
                 done()
               }
@@ -1199,7 +1235,7 @@ describe('functional tests', function() {
       client.listObjects(bucketName, listObjectPrefix, false)
         .on('error', done)
         .on('end', () => {
-          client.removeObjects(bucketName, objectsList,function(e) {
+          client.removeObjects(bucketName, objectsList, function (e) {
             if (e) {
               done(e)
             }
@@ -1229,7 +1265,7 @@ describe('functional tests', function() {
 
   describe('bucket notifications', () => {
     describe('#listenBucketNotification', () => {
-      before(function() {
+      before(function () {
         // listenBucketNotification only works on MinIO, so skip if
         // the host is Amazon.
         let hostSkipList = ['s3.amazonaws.com']
@@ -1282,7 +1318,7 @@ describe('functional tests', function() {
               })
             }, 10 * 1000)
           })
-        }, 10*1000)
+        }, 10 * 1000)
       })
 
       // This test is very similar to that above, except it does not include
@@ -1310,9 +1346,9 @@ describe('functional tests', function() {
     })
   })
 
-  describe('Bucket Versioning API', ()=>{
+  describe('Bucket Versioning API', () => {
     // Isolate the bucket/object for easy debugging and tracking.
-    const  versionedBucketName = "minio-js-test-version-" + uuid.v4()
+    const versionedBucketName = "minio-js-test-version-" + uuid.v4()
     before((done) => client.makeBucket(versionedBucketName, '', done))
     after((done) => client.removeBucket(versionedBucketName, done))
 
@@ -1363,8 +1399,8 @@ describe('functional tests', function() {
     describe('Versioning Steps test', function () {
       let versionId
 
-      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,(done)=>{
-        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `, (done) => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1378,20 +1414,20 @@ describe('functional tests', function() {
       })
 
       step(`statObject(bucketName, objectName, statOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
-        client.statObject(versionedBucketName, versioned_100kbObjectName, {}, (e, res)=>{
+        client.statObject(versionedBucketName, versioned_100kbObjectName, {}, (e, res) => {
           versionId = res.versionId
           done()
         })
       })
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
-        client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId:versionId}, ()=>{
+        client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId: versionId}, () => {
           done()
         })
       })
 
-      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done)=>{
-        client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done) => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Suspended"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1411,9 +1447,9 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(versionedBucketName, done))
 
     describe('Versioning Test for  getObject, getPartialObject, putObject, removeObject with versionId support', function () {
-      let versionId=null
-      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${versionedBucketName},{Status:"Enabled"}`,(done)=>{
-        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+      let versionId = null
+      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${versionedBucketName},{Status:"Enabled"}`, (done) => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1422,8 +1458,8 @@ describe('functional tests', function() {
 
       step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
         client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
-          .then((res={}) => {
-            if(res.versionId){
+          .then((res = {}) => {
+            if (res.versionId) {
               versionId = res.versionId // In gateway mode versionId will not be returned.
             }
             done()
@@ -1432,7 +1468,7 @@ describe('functional tests', function() {
       })
 
       step(`getObject(bucketName, objectName, getOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
-        if(versionId) {
+        if (versionId) {
           client.getObject(versionedBucketName, versioned_100kbObjectName, {versionId: versionId}, function (e, dataStream) {
             const objVersion = getVersionId(dataStream.headers)
             if (objVersion) {
@@ -1441,26 +1477,26 @@ describe('functional tests', function() {
               done(new Error('versionId not found in getObject response'))
             }
           })
-        }else{
+        } else {
           done()
         }
       })
 
 
       step(`fGetObject(bucketName, objectName, filePath, getOpts={})_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
-        if(versionId) {
+        if (versionId) {
           var tmpFileDownload = `${tmpDir}/${versioned_100kbObjectName}.download`
           client.fGetObject(versionedBucketName, versioned_100kbObjectName, tmpFileDownload, {versionId: versionId}, function () {
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
 
 
       step(`getPartialObject(bucketName, objectName, offset, length, getOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}`, done => {
-        if(versionId) {
+        if (versionId) {
           client.getPartialObject(versionedBucketName, versioned_100kbObjectName, 10, 30, {versionId: versionId}, function (e, dataStream) {
             const objVersion = getVersionId(dataStream.headers)
             if (objVersion) {
@@ -1469,17 +1505,17 @@ describe('functional tests', function() {
               done(new Error('versionId not found in getPartialObject response'))
             }
           })
-        }else{
+        } else {
           done()
         }
       })
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName},removeOpts:{versionId:${versionId}`, done => {
-        if(versionId) {
+        if (versionId) {
           client.removeObject(versionedBucketName, versioned_100kbObjectName, {versionId: versionId}, () => {
             done()
           })
-        }else{
+        } else {
           // In gateway mode, use regular delete to remove an object so that the bucket can be cleaned up.
           client.removeObject(versionedBucketName, versioned_100kbObjectName, () => {
             done()
@@ -1487,8 +1523,8 @@ describe('functional tests', function() {
         }
       })
 
-      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done)=>{
-        client.setBucketVersioning(versionedBucketName,{Status:"Suspended"},(err)=>{
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`, (done) => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Suspended"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1498,20 +1534,20 @@ describe('functional tests', function() {
     })
   })
 
-  describe('Versioning Supported listObjects', function() {
+  describe('Versioning Supported listObjects', function () {
     const versionedBucketName = "minio-js-test-version-list" + uuid.v4()
-    const prefixName  = "Prefix1"
-    const versionedObjectName ="datafile-100-kB"
-    const objVersionIdCounter = [1,2,3,4,5] // This should track adding 5 versions of the same object.
+    const prefixName = "Prefix1"
+    const versionedObjectName = "datafile-100-kB"
+    const objVersionIdCounter = [1, 2, 3, 4, 5] // This should track adding 5 versions of the same object.
     let listObjectsNum = objVersionIdCounter.length
     let objArray = []
     let listPrefixArray = []
-    let isVersioningSupported=false
+    let isVersioningSupported = false
 
     const objNameWithPrefix = `${prefixName}/${versionedObjectName}`
 
-    before((done) => client.makeBucket(versionedBucketName, '', ()=>{
-      client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+    before((done) => client.makeBucket(versionedBucketName, '', () => {
+      client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
         if (err && err.code === 'NotImplemented') return done()
         if (err) return done(err)
         isVersioningSupported = true
@@ -1523,24 +1559,24 @@ describe('functional tests', function() {
 
 
     step(`putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${versionedBucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`, done => {
-      if(isVersioningSupported) {
-        let count=1
-        objVersionIdCounter.forEach(()=>{
-          client.putObject(versionedBucketName, objNameWithPrefix, readableStream(_1byte), _1byte.length, {}, (e,data)=>{
+      if (isVersioningSupported) {
+        let count = 1
+        objVersionIdCounter.forEach(() => {
+          client.putObject(versionedBucketName, objNameWithPrefix, readableStream(_1byte), _1byte.length, {}, (e, data) => {
             objArray.push(data)
-            if(count === objVersionIdCounter.length) {
+            if (count === objVersionIdCounter.length) {
               done()
             }
-            count +=1
+            count += 1
           })
         })
-      }else {
+      } else {
         done()
       }
     })
 
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`, done => {
-      if(isVersioningSupported) {
+      if (isVersioningSupported) {
         client.listObjects(versionedBucketName, '', true, {IncludeVersion: true})
           .on('error', done)
           .on('end', () => {
@@ -1556,8 +1592,8 @@ describe('functional tests', function() {
     })
 
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: ${prefixName}, recursive:true_`, done => {
-      if(isVersioningSupported) {
-        listPrefixArray=[]
+      if (isVersioningSupported) {
+        listPrefixArray = []
         client.listObjects(versionedBucketName, prefixName, true, {IncludeVersion: true})
           .on('error', done)
           .on('end', () => {
@@ -1574,17 +1610,17 @@ describe('functional tests', function() {
 
 
     step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}_Remove ${listObjectsNum} objects`, done => {
-      if(isVersioningSupported) {
-        let count=1
-        listPrefixArray.forEach((item)=>{
-          client.removeObject(versionedBucketName ,item.name, {versionId: item.versionId}, ()=>{
+      if (isVersioningSupported) {
+        let count = 1
+        listPrefixArray.forEach((item) => {
+          client.removeObject(versionedBucketName, item.name, {versionId: item.versionId}, () => {
             if (count === listPrefixArray.length) {
               done()
             }
-            count +=1
+            count += 1
           })
         })
-      }else {
+      } else {
         done()
       }
     })
@@ -1601,23 +1637,23 @@ describe('functional tests', function() {
 
 
     describe('Test for removal of multiple versions', function () {
-      let isVersioningSupported=false
-      const objVersionList=[]
-      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,(done)=>{
-        client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+      let isVersioningSupported = false
+      const objVersionList = []
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `, (done) => {
+        client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
-          isVersioningSupported=true
+          isVersioningSupported = true
           done()
         })
       })
 
       step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
-        if(isVersioningSupported) {
+        if (isVersioningSupported) {
           client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
             .then(() => done())
             .catch(done)
-        }else{
+        } else {
           done()
         }
 
@@ -1625,17 +1661,17 @@ describe('functional tests', function() {
       // Put two versions of the same object.
       step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
         // Put two versions of the same object.
-        if(isVersioningSupported) {
+        if (isVersioningSupported) {
           client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
             .then(() => done())
             .catch(done)
-        }else{
+        } else {
           done()
         }
       })
 
       step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`, done => {
-        if(isVersioningSupported) {
+        if (isVersioningSupported) {
           client.listObjects(versionedBucketName, '', true, {IncludeVersion: true})
             .on('error', done)
             .on('end', () => {
@@ -1652,18 +1688,18 @@ describe('functional tests', function() {
       })
 
       step(`removeObjects(bucketName, objectList, removeOpts)_bucketName:${versionedBucketName}_Remove ${objVersionList.length} objects`, done => {
-        if(isVersioningSupported) {
-          let count=1
-          objVersionList.forEach(()=>{
+        if (isVersioningSupported) {
+          let count = 1
+          objVersionList.forEach(() => {
             // remove multiple versions of the object.
-            client.removeObjects(versionedBucketName, objVersionList, ()=>{
+            client.removeObjects(versionedBucketName, objVersionList, () => {
               if (count === objVersionList.length) {
                 done()
               }
-              count +=1
+              count += 1
             })
           })
-        }else {
+        } else {
           done()
         }
       })
@@ -1671,7 +1707,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('Bucket Tags API', ()=>{
+  describe('Bucket Tags API', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsBucketName = "minio-js-test-tags-" + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
@@ -1679,7 +1715,7 @@ describe('functional tests', function() {
 
     describe('set, get and remove Tags on a bucket', function () {
       step(`Set tags on a bucket_bucketName:${tagsBucketName}`, done => {
-        client.setBucketTagging(tagsBucketName, {'test-tag-key':'test-tag-value'}, (err) => {
+        client.setBucketTagging(tagsBucketName, {'test-tag-key': 'test-tag-value'}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1689,7 +1725,7 @@ describe('functional tests', function() {
         client.getBucketTagging(tagsBucketName, (err, tagList) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
-          if(isArray(tagList)) {
+          if (isArray(tagList)) {
             done()
           }
         })
@@ -1707,7 +1743,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Object Tags API', ()=>{
+  describe('Object Tags API', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsBucketName = "minio-js-test-tags-" + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
@@ -1727,7 +1763,7 @@ describe('functional tests', function() {
       })
 
       step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, done => {
-        client.setObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, (err) => {
+        client.setObjectTagging(tagsBucketName, tagObjName, {'test-tag-key-obj': 'test-tag-value-obj'}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
           done()
@@ -1738,7 +1774,7 @@ describe('functional tests', function() {
         client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
-          if(isArray(tagList)) {
+          if (isArray(tagList)) {
             done()
           }
         })
@@ -1760,7 +1796,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Object Tags API with Versioning support', ()=>{
+  describe('Object Tags API with Versioning support', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsVersionedBucketName = "minio-js-test-tags-version-" + uuid.v4()
     before((done) => client.makeBucket(tagsVersionedBucketName, '', done))
@@ -1769,51 +1805,51 @@ describe('functional tests', function() {
 
     const tagObjName = 'datafile-100-kB'
     const tagObject = Buffer.alloc(100 * 1024, 0)
-    let isVersioningSupported=false
-    let versionId=null
+    let isVersioningSupported = false
+    let versionId = null
 
     describe('set, get and remove Tags on a versioned object', function () {
 
-      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${tagsVersionedBucketName},{Status:"Enabled"}`,(done)=>{
-        client.setBucketVersioning(tagsVersionedBucketName,{Status:"Enabled"},(err)=>{
+      step(`Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${tagsVersionedBucketName},{Status:"Enabled"}`, (done) => {
+        client.setBucketVersioning(tagsVersionedBucketName, {Status: "Enabled"}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
           if (err) return done(err)
-          isVersioningSupported=true
+          isVersioningSupported = true
           done()
         })
       })
 
       step(`putObject(bucketName, objectName, stream)_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName}, stream:100Kib_`, done => {
-        if(isVersioningSupported) {
+        if (isVersioningSupported) {
           client.putObject(tagsVersionedBucketName, tagObjName, tagObject)
-            .then((res={}) => {
-              if(res.versionId){
+            .then((res = {}) => {
+              if (res.versionId) {
                 versionId = res.versionId // In gateway mode versionId will not be returned.
               }
               done()
             })
             .catch(done)
-        }else{
+        } else {
           done()
         }
       })
 
       step(`Set tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
-        if(isVersioningSupported) {
-          client.setObjectTagging(tagsVersionedBucketName, tagObjName, {'test-tag-key-obj':'test-tag-value-obj'}, {versionId:versionId}, (err) => {
+        if (isVersioningSupported) {
+          client.setObjectTagging(tagsVersionedBucketName, tagObjName, {'test-tag-key-obj': 'test-tag-value-obj'}, {versionId: versionId}, (err) => {
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
 
       step(`Get tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
-        if(isVersioningSupported) {
-          client.getObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err, tagList) => {
+        if (isVersioningSupported) {
+          client.getObjectTagging(tagsVersionedBucketName, tagObjName, {versionId: versionId}, (err, tagList) => {
             if (err) return done(err)
-            if(isArray(tagList)) {
+            if (isArray(tagList)) {
               done()
             }
           })}else{
@@ -1823,22 +1859,22 @@ describe('functional tests', function() {
 
       step(`remove Tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
 
-        if(isVersioningSupported) {
-          client.removeObjectTagging(tagsVersionedBucketName, tagObjName,  {versionId:versionId},(err) => {
+        if (isVersioningSupported) {
+          client.removeObjectTagging(tagsVersionedBucketName, tagObjName, {versionId: versionId}, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
       step(`remove Tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, done => {
-        if(isVersioningSupported) {
-          client.removeObject(tagsVersionedBucketName, tagObjName,  {versionId:versionId},() => {
+        if (isVersioningSupported) {
+          client.removeObject(tagsVersionedBucketName, tagObjName, {versionId: versionId}, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
@@ -1846,7 +1882,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Bucket Lifecycle API', ()=> {
+  describe('Bucket Lifecycle API', () => {
     const bucketName = "minio-js-test-lifecycle-" + uuid.v4()
     before((done) => client.makeBucket(bucketName, '', done))
     after((done) => client.removeBucket(bucketName, done))
@@ -1858,7 +1894,7 @@ describe('functional tests', function() {
             "ID": "Transition and Expiration Rule",
             "Status": "Enabled",
             "Filter": {
-              "Prefix":"",
+              "Prefix": "",
             },
             "Expiration": {
               "Days": "3650"
@@ -1891,7 +1927,7 @@ describe('functional tests', function() {
   })
 
 
-  describe('Versioning Supported preSignedUrl Get, Put Tests', function() {
+  describe('Versioning Supported preSignedUrl Get, Put Tests', function () {
     /**
      * Test Steps
      * 1. Create Versioned Bucket
@@ -1904,15 +1940,15 @@ describe('functional tests', function() {
 
     const versionedBucketName = "minio-js-test-ver-presign-" + uuid.v4()
     const versionedPresignObjName = 'datafile-1-b'
-    const _100_byte=Buffer.alloc(100 * 1024, 0)
-    const _200_byte=Buffer.alloc(200 * 1024, 0)
-    let isVersioningSupported=false
+    const _100_byte = Buffer.alloc(100 * 1024, 0)
+    const _200_byte = Buffer.alloc(200 * 1024, 0)
+    let isVersioningSupported = false
     const objectsList = []
     const expectedVersionsCount = 2
 
 
-    before((done) => client.makeBucket(versionedBucketName, '', ()=>{
-      client.setBucketVersioning(versionedBucketName,{Status:"Enabled"},(err)=>{
+    before((done) => client.makeBucket(versionedBucketName, '', () => {
+      client.setBucketVersioning(versionedBucketName, {Status: "Enabled"}, (err) => {
         if (err && err.code === 'NotImplemented') return done()
         if (err) return done(err)
         isVersioningSupported = true
@@ -1924,8 +1960,8 @@ describe('functional tests', function() {
 
     step(`presignedPutObject(bucketName, objectName, expires=1000, cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version:1`, done => {
 
-      if(isVersioningSupported) {
-        client.presignedPutObject(versionedBucketName,versionedPresignObjName,1000, (e, presignedUrl) => {
+      if (isVersioningSupported) {
+        client.presignedPutObject(versionedBucketName, versionedPresignObjName, 1000, (e, presignedUrl) => {
           if (e) {
             done(e)
           }
@@ -1958,15 +1994,15 @@ describe('functional tests', function() {
           uploadRequest.write(_100_byte)
           uploadRequest.end()
         })
-      }else {
+      } else {
         done()
       }
 
     })
 
     step(`presignedPutObject(bucketName, objectName, expires=1000, cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version:2`, done => {
-      if(isVersioningSupported) {
-        client.presignedPutObject(versionedBucketName,versionedPresignObjName,1000, (e, presignedUrl) => {
+      if (isVersioningSupported) {
+        client.presignedPutObject(versionedBucketName, versionedPresignObjName, 1000, (e, presignedUrl) => {
           if (e) {
             done(e)
           }
@@ -1999,37 +2035,37 @@ describe('functional tests', function() {
           uploadRequest.write(_200_byte)
           uploadRequest.end()
         })
-      }else {
+      } else {
         done()
       }
     })
 
     step(`listObjects(bucketName, '', true, {IncludeVersion: true}, cb)_bucketName:${versionedBucketName}  _prefix:""`, done => {
-      if(isVersioningSupported) {
-        const objectsStream = client.listObjects(versionedBucketName, '', true,{IncludeVersion: true})
-        objectsStream.on('data', function(obj) {
-          objectsList.push({versionId:obj.versionId, name:obj.name})
+      if (isVersioningSupported) {
+        const objectsStream = client.listObjects(versionedBucketName, '', true, {IncludeVersion: true})
+        objectsStream.on('data', function (obj) {
+          objectsList.push({versionId: obj.versionId, name: obj.name})
         })
 
-        objectsStream.on('error', function() {
+        objectsStream.on('error', function () {
           return done()
         })
-        objectsStream.on('end', function() {
+        objectsStream.on('end', function () {
           const objectListCount = objectsList.length
-          if(objectListCount === expectedVersionsCount) {
+          if (objectListCount === expectedVersionsCount) {
             done()
-          }else{
-            return  done(new Error(`Version count does not match for versioned presigned url test. ${expectedVersionsCount}`))
+          } else {
+            return done(new Error(`Version count does not match for versioned presigned url test. ${expectedVersionsCount}`))
           }
         })
-      }else {
+      } else {
         done()
       }
     })
 
     step(`presignedGetObject(bucketName, objectName, 1000, respHeaders, requestDate, cb)_bucketName:${versionedBucketName} _objectName:${versionedPresignObjName} _version:(2/2)`, done => {
-      if(isVersioningSupported) {
-        client.presignedGetObject(versionedBucketName, objectsList[1].name, 1000, {versionId: objectsList[1].versionId},new Date(), (e, presignedUrl) => {
+      if (isVersioningSupported) {
+        client.presignedGetObject(versionedBucketName, objectsList[1].name, 1000, {versionId: objectsList[1].versionId}, new Date(), (e, presignedUrl) => {
           if (e) {
             return done()
           }
@@ -2049,10 +2085,10 @@ describe('functional tests', function() {
               return done()
             })
             response.on('end', () => {
-              const hashValue =hash.digest('hex')
-              if ( hashValue === _100kbmd5) {
+              const hashValue = hash.digest('hex')
+              if (hashValue === _100kbmd5) {
                 done()
-              }else{
+              } else {
                 return done(new Error("Unable to retrieve version of an object using presignedGetObject"))
               }
             })
@@ -2060,31 +2096,31 @@ describe('functional tests', function() {
               hash.update(data)
             })
           })
-          request.on('error', () =>{
+          request.on('error', () => {
             return done()
           })
           request.end()
         })
-      }else {
+      } else {
         done()
       }
     })
 
     step(`removeObjects(bucketName, objectsList)_bucketName:${versionedBucketName}`, done => {
-      if(isVersioningSupported) {
-        client.removeObjects(versionedBucketName, objectsList,function(e) {
+      if (isVersioningSupported) {
+        client.removeObjects(versionedBucketName, objectsList, function (e) {
           if (e) {
             done(e)
           }
           done()
         })
-      }else {
+      } else {
         done()
       }
     })
   })
 
-  describe('Object Lock API Bucket Options Test', ()=>{
+  describe('Object Lock API Bucket Options Test', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     // Gateway mode does not support this header.
 
@@ -2092,33 +2128,33 @@ describe('functional tests', function() {
       const lockEnabledBucketName = "minio-js-test-lock-mb-" + uuid.v4()
       let isFeatureSupported = false
       step(`Check if bucket with object lock can be created:_bucketName:${lockEnabledBucketName}`, done => {
-        client.makeBucket(lockEnabledBucketName, { ObjectLocking: true }, (err) => {
+        client.makeBucket(lockEnabledBucketName, {ObjectLocking: true}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
-          isFeatureSupported= true
+          isFeatureSupported = true
           if (err) return done(err)
           done()
         })
       })
 
       step(`Get lock config on a bucket:_bucketName:${lockEnabledBucketName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.getObjectLockConfig(lockEnabledBucketName, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
 
       step(`Check if bucket can be deleted:_bucketName:${lockEnabledBucketName}`, done => {
         client.removeBucket(lockEnabledBucketName, (err) => {
-          if(isFeatureSupported) {
+          if (isFeatureSupported) {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
-          }else{
+          } else {
             done()
           }
         })
@@ -2127,69 +2163,69 @@ describe('functional tests', function() {
     })
 
     describe('Object Lock support Set/Get API Tests', function () {
-      const  lockConfigBucketName = "minio-js-test-lock-conf-" + uuid.v4()
+      const lockConfigBucketName = "minio-js-test-lock-conf-" + uuid.v4()
       let isFeatureSupported = false
       step(`Check if bucket with object lock can be created:_bucketName:${lockConfigBucketName}`, done => {
-        client.makeBucket(lockConfigBucketName, { ObjectLocking: true }, (err) => {
+        client.makeBucket(lockConfigBucketName, {ObjectLocking: true}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
-          isFeatureSupported= true
+          isFeatureSupported = true
           if (err) return done(err)
           done()
         })
       })
       step(`Update or replace lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.setObjectLockConfig(lockConfigBucketName, {mode:"GOVERNANCE",unit:'Years', validity:2 }, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
       step(`Get lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.getObjectLockConfig(lockConfigBucketName, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
 
       step(`Set lock config on a bucket:_bucketName:${lockConfigBucketName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.setObjectLockConfig(lockConfigBucketName, {}, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
       step(`Get and verify lock config on a bucket after reset/update:_bucketName:${lockConfigBucketName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.getObjectLockConfig(lockConfigBucketName, (err) => {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
           })
-        }else{
+        } else {
           done()
         }
       })
 
       step(`Check if bucket can be deleted:_bucketName:${lockConfigBucketName}`, done => {
         client.removeBucket(lockConfigBucketName, (err) => {
-          if(isFeatureSupported) {
+          if (isFeatureSupported) {
             if (err && err.code === 'NotImplemented') return done()
             if (err) return done(err)
             done()
-          }else{
+          } else {
             done()
           }
         })
@@ -2199,7 +2235,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Object retention API Tests', ()=>{
+  describe('Object retention API Tests', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     // Gateway mode does not support this header.
 
@@ -2210,9 +2246,9 @@ describe('functional tests', function() {
       let versionId = null
 
       step(`Check if bucket with object lock can be created:_bucketName:${objRetentionBucket}`, done => {
-        client.makeBucket(objRetentionBucket, { ObjectLocking: true }, (err) => {
+        client.makeBucket(objRetentionBucket, {ObjectLocking: true}, (err) => {
           if (err && err.code === 'NotImplemented') return done()
-          isFeatureSupported= true
+          isFeatureSupported = true
           if (err) return done(err)
           done()
         })
@@ -2220,22 +2256,22 @@ describe('functional tests', function() {
 
       step(`putObject(bucketName, objectName, stream)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}, stream:100Kib_`, done => {
         // Put two versions of the same object.
-        if(isFeatureSupported) {
-          client.putObject(objRetentionBucket, retentionObjName,  readableStream(_1byte), _1byte.length, {})
+        if (isFeatureSupported) {
+          client.putObject(objRetentionBucket, retentionObjName, readableStream(_1byte), _1byte.length, {})
             .then(() => done())
             .catch(done)
-        }else{
+        } else {
           done()
         }
       })
 
       step(`statObject(bucketName, objectName, statOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.statObject(objRetentionBucket, retentionObjName, {}, (e, res) => {
             versionId = res.versionId
             done()
           })
-        }else{
+        } else {
           done()
         }
 
@@ -2243,53 +2279,53 @@ describe('functional tests', function() {
 
       step(`putObjectRetention(bucketName, objectName, putOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
         // Put two versions of the same object.
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           let expirationDate = new Date()
           // set expiry to start of next day.
           expirationDate.setDate(expirationDate.getDate() + 1)
-          expirationDate.setUTCHours(0,0,0,0) // Should be start of the day.(midnight)
+          expirationDate.setUTCHours(0, 0, 0, 0) // Should be start of the day.(midnight)
 
-          client.putObjectRetention(objRetentionBucket, retentionObjName,  {
-            governanceBypass:true,
-            mode:"GOVERNANCE",
-            retainUntilDate:expirationDate.toISOString(),
-            versionId:versionId
+          client.putObjectRetention(objRetentionBucket, retentionObjName, {
+            governanceBypass: true,
+            mode: "GOVERNANCE",
+            retainUntilDate: expirationDate.toISOString(),
+            versionId: versionId
           })
             .then(() => done())
             .catch(done)
-        }else{
+        } else {
           done()
         }
       })
 
       step(`getObjectRetention(bucketName, objectName, getOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-        if(isFeatureSupported) {
-          client.getObjectRetention(objRetentionBucket, retentionObjName, {versionId:versionId}, () => {
+        if (isFeatureSupported) {
+          client.getObjectRetention(objRetentionBucket, retentionObjName, {versionId: versionId}, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
 
       })
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objRetentionBucket}, objectName:${retentionObjName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.removeObject(objRetentionBucket, retentionObjName, {versionId:versionId, governanceBypass:true}, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
 
       })
 
       step(`removeBucket(bucketName, )_bucketName:${objRetentionBucket}`, done => {
-        if(isFeatureSupported) {
-          client.removeBucket(objRetentionBucket,  () => {
+        if (isFeatureSupported) {
+          client.removeBucket(objRetentionBucket, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
 
@@ -2298,7 +2334,7 @@ describe('functional tests', function() {
     })
   })
 
-  describe('Bucket Encryption Related APIs', ()=> {
+  describe('Bucket Encryption Related APIs', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     // this is not supported in gateway mode.
     const encBucketName = "minio-js-test-bucket-enc-" + uuid.v4()
@@ -2340,21 +2376,21 @@ describe('functional tests', function() {
     })
 
     step(`Put an object to check for default encryption bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
-      if(isEncryptionSupported) {
-        const putObjPromise =  client.putObject(encBucketName, encObjName, encObjFileContent)
+      if (isEncryptionSupported) {
+        const putObjPromise = client.putObject(encBucketName, encObjName, encObjFileContent)
         putObjPromise.then(() => {
           done()
         })
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
 
     step(`Stat of an object to check for default encryption applied on a bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
-      if(isEncryptionSupported) {
+      if (isEncryptionSupported) {
         const statObjPromise = client.statObject(encBucketName, encObjName)
         statObjPromise.then(() => {
           done()
@@ -2362,13 +2398,13 @@ describe('functional tests', function() {
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
 
     step(`Stat of an object to check for default encryption applied on a bucket:_bucketName:${encBucketName}`, done => {
-      if(isEncryptionSupported) {
+      if (isEncryptionSupported) {
         const getBuckEnc = client.getBucketEncryption(encBucketName)
         getBuckEnc.then(() => {
           done()
@@ -2376,27 +2412,27 @@ describe('functional tests', function() {
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
 
     step(`Remove object on a bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, done => {
-      if(isEncryptionSupported) {
-        const removeObj = client.removeObject(encBucketName,encObjName)
+      if (isEncryptionSupported) {
+        const removeObj = client.removeObject(encBucketName, encObjName)
         removeObj.then(() => {
           done()
         })
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
 
     step(`Remove encryption on a bucket:_bucketName:${encBucketName}`, done => {
-      if(isEncryptionSupported) {
+      if (isEncryptionSupported) {
         const removeObj = client.removeBucketEncryption(encBucketName)
         removeObj.then(() => {
           done()
@@ -2404,12 +2440,12 @@ describe('functional tests', function() {
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
     step(`Get encryption on a bucket:_bucketName:${encBucketName}`, done => {
-      if(isEncryptionSupported) {
+      if (isEncryptionSupported) {
         const getBuckEnc = client.getBucketEncryption(encBucketName)
         getBuckEnc.then(() => {
           done()
@@ -2417,21 +2453,21 @@ describe('functional tests', function() {
           .catch(() => {
             done()
           })
-      }else{
+      } else {
         done()
       }
     })
 
   })
 
-  describe('Bucket Replication API Tests', ()=> {
+  describe('Bucket Replication API Tests', () => {
     // TODO - As of now, there is no api to get arn programmatically to setup replication through APIs and verify.
     // Please refer to minio server documentation and mc cli.
     // https://docs.min.io/docs/minio-bucket-replication-guide.html
     // https://docs.min.io/minio/baremetal/replication/replication-overview.html#minio-bucket-replication-clientside
   })
 
-  describe('Object Legal hold API Tests', ()=>{
+  describe('Object Legal hold API Tests', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     // Gateway mode does not support this header.
     let versionId = null
@@ -2515,7 +2551,7 @@ describe('functional tests', function() {
 
       step(`getObjectLegalHold(bucketName, objectName, setOpts={})_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
         if (isFeatureSupported) {
-          client.getObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {versionId:versionId}, () => {
+          client.getObjectLegalHold(objLegalHoldBucketName, objLegalHoldObjName, {versionId: versionId}, () => {
             done()
           })
         } else {
@@ -2525,22 +2561,22 @@ describe('functional tests', function() {
       })
 
       step(`removeObject(bucketName, objectName, removeOpts)_bucketName:${objLegalHoldBucketName}, objectName:${objLegalHoldObjName}`, done => {
-        if(isFeatureSupported) {
+        if (isFeatureSupported) {
           client.removeObject(objLegalHoldBucketName, objLegalHoldObjName, {versionId:versionId, governanceBypass:true}, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
 
       })
 
       step(`removeBucket(bucketName, )_bucketName:${objLegalHoldBucketName}`, done => {
-        if(isFeatureSupported) {
-          client.removeBucket(objLegalHoldBucketName,  () => {
+        if (isFeatureSupported) {
+          client.removeBucket(objLegalHoldBucketName, () => {
             done()
           })
-        }else{
+        } else {
           done()
         }
 
@@ -2548,7 +2584,7 @@ describe('functional tests', function() {
 
     })})
 
-  describe('Object Name special characters test without Prefix', ()=> {
+  describe('Object Name special characters test without Prefix', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = "minio-js-test-obj-spwpre-" + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
@@ -2558,7 +2594,7 @@ describe('functional tests', function() {
     // Host OS compatible File name characters/ file names.
 
     let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
-    if(isWindowsPlatform){
+    if (isWindowsPlatform) {
       objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
     }
 
@@ -2575,15 +2611,15 @@ describe('functional tests', function() {
       })
 
       step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
-        const listStream = client.listObjects(bucketNameForSpCharObjects, "", true )
+        const listStream = client.listObjects(bucketNameForSpCharObjects, "", true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2593,15 +2629,15 @@ describe('functional tests', function() {
       })
 
       step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
-        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", true )
+        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2611,15 +2647,15 @@ describe('functional tests', function() {
         })
       })
       step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`, done => {
-        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", true )
+        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2654,7 +2690,7 @@ describe('functional tests', function() {
 
 
   })
-  describe('Object Name special characters test with a Prefix', ()=> {
+  describe('Object Name special characters test with a Prefix', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = "minio-js-test-obj-spnpre-" + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
@@ -2662,10 +2698,10 @@ describe('functional tests', function() {
 
     // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
     let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
-    if(isWindowsPlatform){
+    if (isWindowsPlatform) {
       objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
     }
-    const prefix="test"
+    const prefix = "test"
     const objectNameWithPrefixForSpecialChars = `${prefix}/${objectNameSpecialChars}`
 
     const objectContents = Buffer.alloc(100 * 1024, 0)
@@ -2682,16 +2718,16 @@ describe('functional tests', function() {
       })
 
       step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
-        const listStream = client.listObjects(bucketNameForSpCharObjects, prefix, true )
+        const listStream = client.listObjects(bucketNameForSpCharObjects, prefix, true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
 
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameWithPrefixForSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2701,15 +2737,15 @@ describe('functional tests', function() {
       })
 
       step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
-        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, prefix, true )
+        const listStream = client.listObjectsV2(bucketNameForSpCharObjects, prefix, true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameWithPrefixForSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2719,15 +2755,15 @@ describe('functional tests', function() {
       })
 
       step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:${prefix}, recursive:true`, done => {
-        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, prefix, true )
+        const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, prefix, true)
         let listedObject = null
         listStream.on('data', function (obj) {
-          listedObject =obj
+          listedObject = obj
         })
-        listStream.on('end',()=>{
-          if(listedObject.name === objectNameWithPrefixForSpecialChars){
+        listStream.on('end', () => {
+          if (listedObject.name === objectNameWithPrefixForSpecialChars) {
             done()
-          }else{
+          } else {
             return done(new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`))
           }
         })
@@ -2761,7 +2797,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Assume Role Tests', ()=>{
+  describe('Assume Role Tests', () => {
     // Run only in local environment.
     const bucketName = "minio-js-test-assume-role" + uuid.v4()
     before((done) => client.makeBucket(bucketName, '', done))
@@ -2771,7 +2807,7 @@ describe('functional tests', function() {
     const objName = 'datafile-100-kB'
     const objContent = Buffer.alloc(100 * 1024, 0)
 
-    const canRunAssumeRoleTest = playConfig.endPoint.includes("localhost")
+    const canRunAssumeRoleTest = clientConfigParams.endPoint.includes("localhost")
     const stsEndPoint = "http://localhost:9000"
 
     try {
@@ -2780,11 +2816,13 @@ describe('functional tests', function() {
         const assumeRoleProvider = new AssumeRoleProvider({
           stsEndpoint: stsEndPoint,
           accessKey: client.accessKey,
-          secretKey: client.secretKey
+          secretKey: client.secretKey,
         })
 
-        const aRoleConf = Object.assign({}, playConfig, {credentialsProvider: assumeRoleProvider})
+        const aRoleConf = Object.assign({}, clientConfigParams, {credentialsProvider: assumeRoleProvider})
+
         const assumeRoleClient = new minio.Client(aRoleConf)
+        assumeRoleClient.region= server_region
 
         describe('Put an Object', function () {
           step(`Put an object with assume role credentials:  bucket:_bucketName:${bucketName}, _objectName:${objName}`, done => {
@@ -2805,14 +2843,14 @@ describe('functional tests', function() {
 
         })
       }
-    }catch (err){
+    } catch (err) {
       // eslint-disable-next-line no-console
-      console.error("Error in Assume Role API.",err)
+      console.error("Error in Assume Role API.", err)
     }
 
   })
 
-  describe('Put Object Response test with multipart on an Un versioned bucket:', ()=> {
+  describe('Put Object Response test with multipart on an Un versioned bucket:', () => {
 
     const bucketToTestMultipart = "minio-js-test-put-multiuv-" + uuid.v4()
 
@@ -2823,8 +2861,8 @@ describe('functional tests', function() {
     step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}, stream:100KB`, done => {
       const stream = readableStream(_100kb)
       client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
-        if(e) done(e)
-        if(res.versionId===null && res.etag) {
+        if (e) done(e)
+        if (res.versionId === null && res.etag) {
           done()
         }
         else{
@@ -2843,8 +2881,8 @@ describe('functional tests', function() {
     step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}, stream:65MB`, done => {
       const stream = readableStream(_65mb)
       client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
-        if(e) done(e)
-        if(res.versionId===null && res.etag) {
+        if (e) done(e)
+        if (res.versionId === null && res.etag) {
           done()
         }
         else{
@@ -2859,15 +2897,15 @@ describe('functional tests', function() {
     })
   })
 
-  describe('Put Object Response test with multipart on Versioned bucket:', ()=> {
+  describe('Put Object Response test with multipart on Versioned bucket:', () => {
 
     const bucketToTestMultipart = "minio-js-test-put-multiv-" + uuid.v4()
-    let isVersioningSupported=false
+    let isVersioningSupported = false
     let versionedObjectRes = null
     let versionedMultiPartObjectRes = null
 
-    before((done) => client.makeBucket(bucketToTestMultipart, '', ()=>{
-      client.setBucketVersioning(bucketToTestMultipart,{Status:"Enabled"},(err)=>{
+    before((done) => client.makeBucket(bucketToTestMultipart, '', () => {
+      client.setBucketVersioning(bucketToTestMultipart, {Status: "Enabled"}, (err) => {
         if (err && err.code === 'NotImplemented') return done()
         if (err) return done(err)
         isVersioningSupported = true
@@ -2882,7 +2920,7 @@ describe('functional tests', function() {
     // Non multipart Test
     step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}, stream:100KB`, done => {
 
-      if(isVersioningSupported) {
+      if (isVersioningSupported) {
         const stream = readableStream(_100kb)
         client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
           if (e) done(e)
@@ -2899,7 +2937,7 @@ describe('functional tests', function() {
 
     })
     step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`, done => {
-      if(isVersioningSupported) {
+      if (isVersioningSupported) {
         client.removeObject(bucketToTestMultipart, _100kbObjectName, {versionId: versionedObjectRes.versionId})
           .then(() => done())
           .catch(done)
@@ -2911,7 +2949,7 @@ describe('functional tests', function() {
 
     // Multipart Test
     step(`putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}, stream:65MB`, done => {
-      if(isVersioningSupported) {
+      if (isVersioningSupported) {
         const stream = readableStream(_65mb)
         client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
           if (e) done(e)
@@ -2927,7 +2965,7 @@ describe('functional tests', function() {
       }
     })
     step(`removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`, done => {
-      if(isVersioningSupported) {
+      if (isVersioningSupported) {
         client.removeObject(bucketToTestMultipart, _65mbObjectName, {versionId: versionedMultiPartObjectRes.versionId})
           .then(() => done())
           .catch(done)
@@ -2936,7 +2974,7 @@ describe('functional tests', function() {
       }
     })
   })
-  describe("Compose Object API Tests", ()=>{
+  describe("Compose Object API Tests", () => {
     /**
      * Steps:
      * 1. Generate a 100MB file in temp dir
@@ -2954,7 +2992,7 @@ describe('functional tests', function() {
     after((done) => client.removeBucket(composeObjectTestBucket, done))
 
     const composedObjName = '_100-mb-file-to-test-compose'
-    const tmpSubDir =  `${tmpDir}/compose`
+    const tmpSubDir = `${tmpDir}/compose`
     var fileToSplit = `${tmpSubDir}/${composedObjName}`
     let partFilesNamesWithPath = []
     let partObjNameList = []
@@ -2963,42 +3001,42 @@ describe('functional tests', function() {
       try {
         fs.writeFileSync(fileToSplit, _100mbFileToBeSplitAndComposed)
         // 100 MB split into 26 MB part size.
-        splitFile.splitFileBySize(fileToSplit, (26*1024*1024))
+        splitFile.splitFileBySize(fileToSplit, (26 * 1024 * 1024))
           .then((names) => {
-            partFilesNamesWithPath= names
+            partFilesNamesWithPath = names
             isSplitSuccess = true
             done()
           })
           .catch(() => {
             done()
           })
-      }catch (err){
+      } catch (err) {
         done()
       }
     })
 
-    step(`Upload parts to Bucket_bucketName:${composeObjectTestBucket}, _objectName:${partObjNameList}`, (done)=>{
+    step(`Upload parts to Bucket_bucketName:${composeObjectTestBucket}, _objectName:${partObjNameList}`, (done) => {
 
-      if(isSplitSuccess){
+      if (isSplitSuccess) {
 
-        const fileSysToBucket = partFilesNamesWithPath.map((partFileName)=>{
-          const partObjName =partFileName.substr((tmpSubDir+"/").length)
+        const fileSysToBucket = partFilesNamesWithPath.map((partFileName) => {
+          const partObjName = partFileName.substr((tmpSubDir + "/").length)
           partObjNameList.push(partObjName)
           return client.fPutObject(composeObjectTestBucket, partObjName, partFileName, {})
         })
 
-        Promise.all(fileSysToBucket).then(()=>{
+        Promise.all(fileSysToBucket).then(() => {
           done()
         }).catch(done)
 
-      }else{
+      } else {
         done()
       }
     })
 
-    step(`composeObject(destObjConfig, sourceObjList, cb)::_bucketName:${composeObjectTestBucket}, _objectName:${composedObjName}`, (done)=>{
+    step(`composeObject(destObjConfig, sourceObjList, cb)::_bucketName:${composeObjectTestBucket}, _objectName:${composedObjName}`, (done) => {
 
-      if(isSplitSuccess) {
+      if (isSplitSuccess) {
         const sourcePartObjList = partObjNameList.map((partObjName) => {
           return new CopySourceOptions({
             Bucket: composeObjectTestBucket,
@@ -3015,50 +3053,50 @@ describe('functional tests', function() {
           if (e) return done(e)
           done()
         })
-      }else{
+      } else {
         done()
       }
     })
 
     step(`statObject(bucketName, objectName, cb)::_bucketName:${composeObjectTestBucket}, _objectName:${composedObjName}`, done => {
-      if(isSplitSuccess) {
+      if (isSplitSuccess) {
         client.statObject(composeObjectTestBucket, composedObjName, (e) => {
           if (e) return done(e)
           done()
         })
 
-      }else{
+      } else {
         done()
       }
     })
 
-    step(`Remove Object Parts from Bucket::_bucketName:${composeObjectTestBucket}, _objectNames:${partObjNameList}`, (done)=>{
-      if(isSplitSuccess) {
+    step(`Remove Object Parts from Bucket::_bucketName:${composeObjectTestBucket}, _objectNames:${partObjNameList}`, (done) => {
+      if (isSplitSuccess) {
         const sourcePartObjList = partObjNameList.map((partObjName) => {
-          return  client.removeObject(composeObjectTestBucket, partObjName)
+          return client.removeObject(composeObjectTestBucket, partObjName)
         })
 
-        Promise.all(sourcePartObjList).then(()=>{
+        Promise.all(sourcePartObjList).then(() => {
           done()
         }).catch(done)
 
-      }else{
+      } else {
         done()
       }
     })
 
-    step(`Remove Composed target Object::_bucketName:${composeObjectTestBucket}, objectName:${composedObjName}`, (done)=>{
-      if(isSplitSuccess) {
-        client.removeObject(composeObjectTestBucket, composedObjName).then(()=>{
+    step(`Remove Composed target Object::_bucketName:${composeObjectTestBucket}, objectName:${composedObjName}`, (done) => {
+      if (isSplitSuccess) {
+        client.removeObject(composeObjectTestBucket, composedObjName).then(() => {
           done()
         }).catch(done)
-      }else{
+      } else {
         done()
       }
     })
 
-    step("Clean up temp directory part files", (done)=>{
-      if(isSplitSuccess) {
+    step("Clean up temp directory part files", (done) => {
+      if (isSplitSuccess) {
         removeDirAndFiles(tmpSubDir)
       }
       done()
@@ -3066,7 +3104,7 @@ describe('functional tests', function() {
 
   })
 
-  describe('Special Characters test on a prefix and an object', ()=> {
+  describe('Special Characters test on a prefix and an object', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = "minio-js-test-obj-sppre" + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
@@ -3075,7 +3113,7 @@ describe('functional tests', function() {
     const specialCharPrefix = "SpecialMenùäöüexPrefix/"
 
     let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
-    if(isWindowsPlatform){
+    if (isWindowsPlatform) {
       objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 u0040 amȡȹɆple&0a!-_.'()&$@=;+,.pdf"
     }
 
@@ -3094,15 +3132,15 @@ describe('functional tests', function() {
 
 
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
-      const listStream = client.listObjects(bucketNameForSpCharObjects,"", false )
+      const listStream = client.listObjects(bucketNameForSpCharObjects, "", false)
       let listedObject = null
       listStream.on('data', function (obj) {
         listedObject = obj
       })
-      listStream.on('end',()=>{
-        if(listedObject.prefix === specialCharPrefix){
+      listStream.on('end', () => {
+        if (listedObject.prefix === specialCharPrefix) {
           done()
-        }else{
+        } else {
           return done(new Error(`Expected Prefix Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
         }
       })
@@ -3112,16 +3150,16 @@ describe('functional tests', function() {
     })
 
     step(`listObjectsV2(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
-      const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", false )
+      const listStream = client.listObjectsV2(bucketNameForSpCharObjects, "", false)
       let listedObject = null
       listStream.on('data', function (obj) {
         listedObject = obj
       })
-      listStream.on('end',()=>{
+      listStream.on('end', () => {
         // verify that the prefix special characters are handled
-        if(listedObject.prefix === specialCharPrefix){
+        if (listedObject.prefix === specialCharPrefix) {
           done()
-        }else{
+        } else {
           return done(new Error(`Expected object Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
         }
       })
@@ -3132,15 +3170,15 @@ describe('functional tests', function() {
     })
 
     step(`extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", false`, done => {
-      const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", false )
+      const listStream = client.extensions.listObjectsV2WithMetadata(bucketNameForSpCharObjects, "", false)
       let listedObject = null
       listStream.on('data', function (obj) {
         listedObject = obj
       })
-      listStream.on('end',()=>{
-        if(listedObject.prefix === specialCharPrefix){
+      listStream.on('end', () => {
+        if (listedObject.prefix === specialCharPrefix) {
           done()
-        }else{
+        } else {
           return done(new Error(`Expected object Name: ${specialCharPrefix}: received:${listedObject.prefix}`))
         }
       })
@@ -3174,12 +3212,12 @@ describe('functional tests', function() {
   })
   describe('Test listIncompleteUploads (Multipart listing) with special characters', () => {
     const specialCharPrefix = "SpecialMenùäöüexPrefix/"
-    const objectNameSpecialChars="äöüex.pdf"
+    const objectNameSpecialChars = "äöüex.pdf"
     const spObjWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
-    const spBucketName =  "minio-js-test-lin-sppre" + uuid.v4()
+    const spBucketName = "minio-js-test-lin-sppre" + uuid.v4()
 
     before((done) => client.makeBucket(spBucketName, '', done))
-    after((done) => client.removeBucket(spBucketName , done))
+    after((done) => client.removeBucket(spBucketName, done))
 
     step(`initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`, done => {
       client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData, done)
@@ -3240,7 +3278,7 @@ describe('functional tests', function() {
 
     step(`putObject(bucketName, objectName, stream)_bucketName:${selObjContentBucket}, objectName:${selObject}, stream:csv`, done => {
       // Save a CSV file so that we can query later to test the results.
-      client.putObject(selObjContentBucket, selObject,"Name,PhoneNumber,City,Occupation\n" +
+      client.putObject(selObjContentBucket, selObject, "Name,PhoneNumber,City,Occupation\n" +
           "Sam,(949) 123-45567,Irvine,Solutions Architect\n" +
           "Vinod,(949) 123-4556,Los Angeles,Solutions Architect\n" +
           "Jeff,(949) 123-45567,Seattle,AWS Evangelist\n" +
@@ -3258,22 +3296,22 @@ describe('functional tests', function() {
     step(`selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`, done => {
 
       const selectOpts = {
-        expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
-        expressionType:"SQL",
+        expression: "SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
+        expressionType: "SQL",
         inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
                                       RecordDelimiter: "\n",
-                                      FieldDelimiter:  ",",
+                                      FieldDelimiter: ",",
         },
                               'CompressionType': 'NONE'},
         outputSerialization : {'CSV': {RecordDelimiter: "\n",
                                        FieldDelimiter:  ",",}},
-        requestProgress:{Enabled:true}
+        requestProgress: {Enabled: true}
       }
 
       client.selectObjectContent(selObjContentBucket, selObject, selectOpts)
         .then((result) => {
           // verify the select query result string.
-          if(result.getRecords().toString() ==="Jane,(949) 123-45567,Chicago,Developer\n"){ // \n for csv line ending.
+          if (result.getRecords().toString() === "Jane,(949) 123-45567,Chicago,Developer\n") { // \n for csv line ending.
             done()
           }
           else{
@@ -3283,7 +3321,7 @@ describe('functional tests', function() {
         .catch(done)
     })
 
-    step(`Remove Object post select of content:_bucketName:${selObjContentBucket},objectName:${selObject}`, (done)=>{
+    step(`Remove Object post select of content:_bucketName:${selObjContentBucket},objectName:${selObject}`, (done) => {
       client.removeObject(selObjContentBucket, selObject)
         .then(() => done())
         .catch(done)

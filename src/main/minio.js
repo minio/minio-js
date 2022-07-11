@@ -40,7 +40,8 @@ import {
   LEGAL_HOLD_STATUS, CopySourceOptions, CopyDestinationOptions, getSourceVersionId,
   PART_CONSTRAINTS,
   partsRequired,
-  calculateEvenSplits
+  calculateEvenSplits,
+  DEFAULT_REGION
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -517,7 +518,7 @@ export class Client {
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
     var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
-      var region = 'us-east-1'
+      var region = DEFAULT_REGION
       pipesetup(response, transformer)
         .on('error', cb)
         .on('data', data => {
@@ -545,7 +546,7 @@ export class Client {
     //   obtained region.
     var pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], 'us-east-1', true, (e, response) => {
+    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
@@ -609,10 +610,9 @@ export class Client {
         throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
       }
     }
-
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
-    if (region && region !== 'us-east-1') {
+    if (region && region !== DEFAULT_REGION) {
       var createBucketConfiguration = []
       createBucketConfiguration.push({
         _attr: {
@@ -634,8 +634,20 @@ export class Client {
       headers["x-amz-bucket-object-lock-enabled"]=true
     }
 
-    if (!region) region = 'us-east-1'
-    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, cb)
+    if (!region) region = DEFAULT_REGION
+
+    const processWithRetry = (err) =>{
+      if (err && (region === "" || region === DEFAULT_REGION)) {
+        if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
+          // Retry with region returned as part of error
+          this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
+        }
+        return
+      }
+      cb && cb()
+    }
+
+    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
 
   // List of buckets created.
@@ -651,7 +663,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', [200], 'us-east-1', true, (e, response) => {
+    this.makeRequest({method}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets

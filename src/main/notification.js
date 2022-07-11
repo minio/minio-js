@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events'
 import * as transformers from './transformers'
-import { pipesetup, uriEscape } from './helpers'
+import {DEFAULT_REGION, pipesetup, uriEscape} from './helpers'
 
 // Notification config - array of target configs.
 // Target configs can be
@@ -151,7 +151,7 @@ export class NotificationPoller extends EventEmitter {
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
-    const region = this.client.region || 'us-east-1'
+    const region = this.client.region || DEFAULT_REGION
     this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', [200], region, true, (e, response) => {
       if (e) return this.emit('error', e)
 
