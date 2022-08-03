@@ -1019,6 +1019,15 @@ export class Client {
       cb => fs.stat(filePath, cb),
       (stats, cb) => {
         size = stats.size
+        var cbTriggered = false
+        var origCb = cb
+        cb = function () {
+          if (cbTriggered) {
+            return
+          }
+          cbTriggered = true
+          return origCb.apply(this, arguments)
+        }
         if (size > this.maxObjectSize) {
           return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
         }
@@ -1071,6 +1080,15 @@ export class Client {
         async.whilst(
           cb => { cb(null, uploadedSize < size) },
           cb => {
+            var cbTriggered = false
+            var origCb = cb
+            cb = function () {
+              if (cbTriggered) {
+                return
+              }
+              cbTriggered = true
+              return origCb.apply(this, arguments)
+            }
             var part = parts[partNumber]
             var hash = transformers.getHashSummer(this.enableSHA256)
             var length = partSize
