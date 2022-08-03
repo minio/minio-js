@@ -994,6 +994,29 @@ describe('functional tests', function () {
       })
     })
 
+    step(`presignedGetObject(bucketName, objectName, respHeaders, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, contentDisposition special chars`, done => {
+      var respHeaders = {
+        'response-content-disposition': 'attachment; filename="abc|"@#$%&/(<>)/=?!{[\']}+*-_:,;def.png"; filename*=UTF-8\'\'t&21st&20ng.png',
+      }
+      client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
+        if (e) return done(e)
+        var transport = http
+        var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
+        options.method = 'GET'
+        if (options.protocol === 'https:') transport = https
+        var request = transport.request(options, (response) => {
+          if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
+          if (respHeaders['response-content-disposition'] !== response.headers['content-disposition']) {
+            return done(new Error(`content-disposition header mismatch`))
+          }
+          response.on('data', () => {})
+          done()
+        })
+        request.on('error', e => done(e))
+        request.end()
+      })
+    })
+
     step(`presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:86400, requestDate:StartOfDay_`, done => {
       var requestDate = new Date()
       requestDate.setHours(0, 0, 0, 0)
