@@ -22,7 +22,7 @@ import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 import async from 'async'
-import querystring from 'querystring'
+import querystring from 'query-string'
 import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
@@ -40,7 +40,8 @@ import {
   LEGAL_HOLD_STATUS, CopySourceOptions, CopyDestinationOptions, getSourceVersionId,
   PART_CONSTRAINTS,
   partsRequired,
-  calculateEvenSplits
+  calculateEvenSplits,
+  DEFAULT_REGION
 } from './helpers.js'
 
 import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
@@ -517,7 +518,7 @@ export class Client {
     if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
     var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
-      var region = 'us-east-1'
+      var region = DEFAULT_REGION
       pipesetup(response, transformer)
         .on('error', cb)
         .on('data', data => {
@@ -545,7 +546,7 @@ export class Client {
     //   obtained region.
     var pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], 'us-east-1', true, (e, response) => {
+    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
@@ -609,10 +610,9 @@ export class Client {
         throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
       }
     }
-
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
-    if (region && region !== 'us-east-1') {
+    if (region && region !== DEFAULT_REGION) {
       var createBucketConfiguration = []
       createBucketConfiguration.push({
         _attr: {
@@ -634,8 +634,20 @@ export class Client {
       headers["x-amz-bucket-object-lock-enabled"]=true
     }
 
-    if (!region) region = 'us-east-1'
-    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, cb)
+    if (!region) region = DEFAULT_REGION
+
+    const processWithRetry = (err) =>{
+      if (err && (region === "" || region === DEFAULT_REGION)) {
+        if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
+          // Retry with region returned as part of error
+          this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
+        }
+        return
+      }
+      cb && cb()
+    }
+
+    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
 
   // List of buckets created.
@@ -651,7 +663,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', [200], 'us-east-1', true, (e, response) => {
+    this.makeRequest({method}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) return cb(e)
       var transformer = transformers.getListBucketTransformer()
       var buckets
@@ -665,7 +677,7 @@ export class Client {
   // Returns a stream that emits objects that are partially uploaded.
   //
   // __Arguments__
-  // * `bucketname` _string_: name of the bucket
+  // * `bucketName` _string_: name of the bucket
   // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
   // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
   //
@@ -1007,6 +1019,15 @@ export class Client {
       cb => fs.stat(filePath, cb),
       (stats, cb) => {
         size = stats.size
+        var cbTriggered = false
+        var origCb = cb
+        cb = function () {
+          if (cbTriggered) {
+            return
+          }
+          cbTriggered = true
+          return origCb.apply(this, arguments)
+        }
         if (size > this.maxObjectSize) {
           return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
         }
@@ -1059,6 +1080,15 @@ export class Client {
         async.whilst(
           cb => { cb(null, uploadedSize < size) },
           cb => {
+            var cbTriggered = false
+            var origCb = cb
+            cb = function () {
+              if (cbTriggered) {
+                return
+              }
+              cbTriggered = true
+              return origCb.apply(this, arguments)
+            }
             var part = parts[partNumber]
             var hash = transformers.getHashSummer(this.enableSHA256)
             var length = partSize
@@ -3258,9 +3288,13 @@ export class Client {
     }
 
     const getStatOptions = (srcConfig) =>{
-      return {
-        versionId: srcConfig.VersionID
+      let statOpts = {}
+      if(!_.isEmpty(srcConfig.VersionID)) {
+        statOpts= {
+          versionId: srcConfig.VersionID
+        }
       }
+      return statOpts
     }
     const srcObjectSizes=[]
     let totalSize=0
@@ -3629,6 +3663,15 @@ export class PostPolicy {
     }
     this.policy.conditions.push(['eq', '$Content-Type', type])
     this.formData['Content-Type'] = type
+  }
+
+  // set Content-Type prefix, i.e image/ allows any image
+  setContentTypeStartsWith(prefix) {
+    if (!prefix) {
+      throw new Error('content-type cannot be null')
+    }
+    this.policy.conditions.push(['starts-with', '$Content-Type', prefix])
+    this.formData['Content-Type'] = prefix
   }
 
   // set minimum/maximum length of what Content-Length can be.

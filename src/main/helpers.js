@@ -25,7 +25,7 @@ const fs = require('fs')
 const path = require("path")
 import _ from 'lodash'
 import * as errors from './errors.js'
-import querystring from "querystring"
+import querystring from 'query-string'
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -791,3 +791,5 @@ export class SelectResults {
   }
 
 }
+
+export const DEFAULT_REGION = 'us-east-1'

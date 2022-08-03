@@ -29,7 +29,7 @@ var s3Client = new Minio.Client({
 })
 
 var config = new Minio.NotificationConfig()
-var arn = Minio.buildARN('minio', 'sqs', '', 1, 'webhook')
+var arn = Minio.buildARN('minio', 'sqs', '','1', 'webhook')
 var queue = new Minio.QueueConfig(arn)
 
 queue.addFilterSuffix('.jpg')
