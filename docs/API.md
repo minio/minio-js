@@ -385,7 +385,7 @@ __Parameters__
 
 | Param        | Type     | Description                                                                                                                           |
 |--------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `bucketname` | _string_ | Name of the bucket.                                                                                                                   |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                   |
 | `prefix`     | _string_ | Prefix of the object names that are partially uploaded. (optional, default `''`)                                                      |
 | `recursive`  | _bool_   | `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`). |
 
@@ -427,7 +427,7 @@ __Parameters__
 
 | Param                | Type       | Description                                                                                                                      |
 |----------------------|------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `bucketname`         | _string_   | Name of the bucket.                                                                                                              |
+| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
 | `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
 
 __Example__
@@ -451,7 +451,7 @@ __Parameters__
 
 | Param              | Type       | Description                                        |
 |--------------------|------------|----------------------------------------------------|
-| `bucketname`       | _string_   | Name of the bucket.                                |
+| `bucketName`       | _string_   | Name of the bucket.                                |
 | `versioningConfig` | _object_   | Versioning Configuration e.g: `{Status:"Enabled"}` |
 | `callback(err)`    | _function_ | Callback is called with `err` in case of error.    |
 
@@ -477,7 +477,7 @@ __Parameters__
 
 | Param               | Type       | Description                                      |
 |---------------------|------------|--------------------------------------------------|
-| `bucketname`        | _string_   | Name of the bucket.                              |
+| `bucketName`        | _string_   | Name of the bucket.                              |
 | `replicationConfig` | _object_   | replicationConfig Configuration as a JSON Object |
 | `callback(err)`     | _function_ | Callback is called with `err` in case of error.  |
 
@@ -522,7 +522,7 @@ __Parameters__
 
 | Param                              | Type       | Description                                                                                                                                        |
 |------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `bucketname`                       | _string_   | Name of the bucket.                                                                                                                                |
+| `bucketName`                       | _string_   | Name of the bucket.                                                                                                                                |
 | `callback(err, replicationConfig)` | _function_ | Callback is called with `err` in case of error. else returns the info in`replicationConfig` ,which contains`{role: __string__, rules:__Array__ }`. |
 
 __Example__
@@ -545,7 +545,7 @@ __Parameters__
 
 | Param           | Type       | Description                                     |
 |-----------------|------------|-------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                             |
+| `bucketName`    | _string_   | Name of the bucket.                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
@@ -568,7 +568,7 @@ __Parameters__
 
 | Param           | Type       | Description                                               |
 |-----------------|------------|-----------------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                                       |
+| `bucketName`    | _string_   | Name of the bucket.                                       |
 | `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error.           |
 
@@ -591,7 +591,7 @@ __Parameters__
 
 | Param           | Type       | Description                                     |
 |-----------------|------------|-------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                             |
+| `bucketName`    | _string_   | Name of the bucket.                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
@@ -613,7 +613,7 @@ __Parameters__
 
 | Param                     | Type       | Description                                     |
 |---------------------------|------------|-------------------------------------------------|
-| `bucketname`              | _string_   | Name of the bucket.                             |
+| `bucketName`              | _string_   | Name of the bucket.                             |
 | `callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
@@ -636,7 +636,7 @@ __Parameters__
 
 | Param             | Type       | Description                                                                        |
 |-------------------|------------|------------------------------------------------------------------------------------|
-| `bucketname`      | _string_   | Name of the bucket.                                                                |
+| `bucketName`      | _string_   | Name of the bucket.                                                                |
 | `lifecycleConfig` | _object_   | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
 | `callback(err)`   | _function_ | Callback is called with `err` in case of error.                                    |
 
@@ -675,7 +675,7 @@ __Parameters__
 
 | Param                              | Type       | Description                                                                                       |
 |------------------------------------|------------|---------------------------------------------------------------------------------------------------|
-| `bucketname`                       | _string_   | Name of the bucket.                                                                               |
+| `bucketName`                       | _string_   | Name of the bucket.                                                                               |
 | `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. Otherwise it is called with `error` |
 
 __Example__
@@ -697,7 +697,7 @@ __Parameters__
 
 | Param           | Type       | Description                                     |
 |-----------------|------------|-------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                             |
+| `bucketName`    | _string_   | Name of the bucket.                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example__
@@ -722,7 +722,7 @@ __Parameters__
 
 | Param           | Type       | Description                                                                                                                                                                                            |
 |-----------------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                                                                                                                                                                                    |
+| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                                                    |
 | `lockConfig`    | _object_   | Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error.                                                                                                                                                        |
 
@@ -760,7 +760,7 @@ __Parameters__
 
 | Param                       | Type       | Description                                                                               |
 |-----------------------------|------------|-------------------------------------------------------------------------------------------|
-| `bucketname`                | _string_   | Name of the bucket.                                                                       |
+| `bucketName`                | _string_   | Name of the bucket.                                                                       |
 | `callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
 
 __Example __
@@ -785,7 +785,7 @@ __Parameters__
 
 | Param              | Type       | Description                                                                                                                                                                                        |
 |--------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `bucketname`       | _string_   | Name of the bucket.                                                                                                                                                                                |
+| `bucketName`       | _string_   | Name of the bucket.                                                                                                                                                                                |
 | `encryptionConfig` | _object_   | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
 | `callback(err)`    | _function_ | Callback is called with `err` in case of error.                                                                                                                                                    |
 
@@ -823,7 +823,7 @@ __Parameters__
 
 | Param                      | Type       | Description                                                                               |
 |----------------------------|------------|-------------------------------------------------------------------------------------------|
-| `bucketname`               | _string_   | Name of the bucket.                                                                       |
+| `bucketName`               | _string_   | Name of the bucket.                                                                       |
 | `callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
 
 __Example __
@@ -848,7 +848,7 @@ __Parameters__
 
 | Param           | Type       | Description                                     |
 |-----------------|------------|-------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                             |
+| `bucketName`    | _string_   | Name of the bucket.                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. |
 
 __Example __
@@ -1473,7 +1473,7 @@ __Parameters__
 
 | Param           | Type       | Description                                                   |
 |-----------------|------------|---------------------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `bucketName`    | _string_   | Name of the bucket.                                           |
 | `objectName`    | _string_   | Name of the object.                                           |
 | `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}`     |
 | `putOpts`       | _object_   | Default is {}.  e.g `{versionId:"my-version-id"}`. (Optional) |
@@ -1510,7 +1510,7 @@ __Parameters__
 
 | Param           | Type       | Description                                                   |
 |-----------------|------------|---------------------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `bucketName`    | _string_   | Name of the bucket.                                           |
 | `objectName`    | _string_   | Name of the object.                                           |
 | `removeOpts`    | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
@@ -1547,7 +1547,7 @@ __Parameters__
 
 | Param           | Type       | Description                                                   |
 |-----------------|------------|---------------------------------------------------------------|
-| `bucketname`    | _string_   | Name of the bucket.                                           |
+| `bucketName`    | _string_   | Name of the bucket.                                           |
 | `objectName`    | _string_   | Name of the object.                                           |
 | `getOpts`       | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
