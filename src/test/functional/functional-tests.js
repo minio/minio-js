@@ -1063,6 +1063,44 @@ describe('functional tests', function () {
       })
     })
 
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:setContentType', done => {
+      var policy = client.newPostPolicy()
+      policy.setKey(_1byteObjectName)
+      policy.setBucket(bucketName)
+      policy.setContentType('text/plain')
+
+      client.presignedPostPolicy(policy, (e, data) => {
+        if (e) return done(e)
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
+        req.attach('file', Buffer.from([_1byte]), 'test')
+        req.end(function(e) {
+          if (e) return done(e)
+          done()
+        })
+        req.on('error', e => done(e))
+      })
+    })
+
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:setContentTypeStartsWith', done => {
+      var policy = client.newPostPolicy()
+      policy.setKey(_1byteObjectName)
+      policy.setBucket(bucketName)
+      policy.setContentTypeStartsWith('text/')
+
+      client.presignedPostPolicy(policy, (e, data) => {
+        if (e) return done(e)
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
+        req.attach('file', Buffer.from([_1byte]), 'test')
+        req.end(function(e) {
+          if (e) return done(e)
+          done()
+        })
+        req.on('error', e => done(e))
+      })
+    })
+
     step('presignedPostPolicy(postPolicy)_postPolicy: null_', done => {
       client.presignedPostPolicy(null)
         .then(() => {

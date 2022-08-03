@@ -3665,6 +3665,15 @@ export class PostPolicy {
     this.formData['Content-Type'] = type
   }
 
+  // set Content-Type prefix, i.e image/ allows any image
+  setContentTypeStartsWith(prefix) {
+    if (!prefix) {
+      throw new Error('content-type cannot be null')
+    }
+    this.policy.conditions.push(['starts-with', '$Content-Type', prefix])
+    this.formData['Content-Type'] = prefix
+  }
+
   // set minimum/maximum length of what Content-Length can be.
   setContentLengthRange(min, max) {
     if (min > max) {
