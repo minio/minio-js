@@ -1951,7 +1951,7 @@ export class Client {
 
   // presignedPostPolicy can be used in situations where we want more control on the upload than what
   // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
-  // on the object's `name` `bucket` `expiry` `Content-Type`
+  // on the object's `name` `bucket` `expiry` `Content-Type` `Content-Disposition` `metaData`
   presignedPostPolicy(postPolicy, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
@@ -3674,6 +3674,15 @@ export class PostPolicy {
     this.formData['Content-Type'] = prefix
   }
 
+  // set Content-Disposition
+  setContentDisposition(value) {
+    if (!value) {
+      throw new Error('content-disposition cannot be null')
+    }
+    this.policy.conditions.push(['eq', '$Content-Disposition', value])
+    this.formData['Content-Disposition'] = value
+  }
+
   // set minimum/maximum length of what Content-Length can be.
   setContentLengthRange(min, max) {
     if (min > max) {
@@ -3686,6 +3695,18 @@ export class PostPolicy {
       throw new Error('max should be > 0')
     }
     this.policy.conditions.push(['content-length-range', min, max])
+  }
+
+  // set user defined metadata
+  setUserMetaData(metaData) {
+    if (!isObject(metaData)) {
+      throw new TypeError('metadata should be of type "object"')
+    }
+    Object.entries(metaData).forEach(([key, value]) => {
+      const amzMetaDataKey = `x-amz-meta-${key}`
+      this.policy.conditions.push(['eq', `$${amzMetaDataKey}`, value])
+      this.formData[amzMetaDataKey] = value
+    })
   }
 }
 

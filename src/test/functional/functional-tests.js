@@ -1101,6 +1101,69 @@ describe('functional tests', function () {
       })
     })
 
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:setContentDisposition_inline', done => {
+      var policy = client.newPostPolicy()
+      var objectName = 'test-content-disposition' + uuid.v4()
+      policy.setKey(objectName)
+      policy.setBucket(bucketName)
+      policy.setContentDisposition('inline')
+
+      client.presignedPostPolicy(policy, (e, data) => {
+        if (e) return done(e)
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
+        req.attach('file', Buffer.from([_1byte]), 'test')
+        req.end(function(e) {
+          if (e) return done(e)
+          client.removeObject(bucketName, objectName, done)
+        })
+        req.on('error', e => done(e))
+      })
+    })
+
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:setContentDisposition_attachment', done => {
+      var policy = client.newPostPolicy()
+      var objectName = 'test-content-disposition' + uuid.v4()
+      policy.setKey(objectName)
+      policy.setBucket(bucketName)
+      policy.setContentDisposition('attachment; filename=  My* Docume!  nt.json')
+
+      client.presignedPostPolicy(policy, (e, data) => {
+        if (e) return done(e)
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
+        req.attach('file', Buffer.from([_1byte]), 'test')
+        req.end(function (e) {
+          if (e) return done(e)
+          client.removeObject(bucketName, objectName, done)
+        })
+        req.on('error', e => done(e))
+      })
+    })
+
+    step('presignedPostPolicy(postPolicy, cb)_postPolicy:setUserMetaData_', done => {
+      var policy = client.newPostPolicy()
+      var objectName = 'test-metadata' + uuid.v4()
+      policy.setKey(objectName)
+      policy.setBucket(bucketName)
+      policy.setUserMetaData({
+        key: 'my-value',
+        anotherKey: 'another-value'
+      })
+
+      client.presignedPostPolicy(policy, (e, data) => {
+        if (e) return done(e)
+        var req = superagent.post(data.postURL)
+        _.each(data.formData, (value, key) => req.field(key, value))
+        req.attach('file', Buffer.from([_1byte]), 'test')
+        req.end(function(e) {
+          if (e) return done(e)
+          client.removeObject(bucketName, objectName, done)
+        })
+        req.on('error', e => done(e))
+      })
+    })
+
     step('presignedPostPolicy(postPolicy)_postPolicy: null_', done => {
       client.presignedPostPolicy(null)
         .then(() => {
