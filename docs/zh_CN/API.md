@@ -817,8 +817,16 @@ policy.setExpires(expires)
 // Only allow 'text'.
 policy.setContentType('text/plain')
 
+// Set content disposition response header.
+policy.setContentDisposition('attachment; filename=text.txt')
+
 // Only allow content size in range 1KB to 1MB.
 policy.setContentLengthRange(1024, 1024*1024)
+
+// Set key-value user defined metadata
+policy.setUserMetaData({
+  key: 'value'
+})
 ```
 
 使用`superagent`通过浏览器POST你的数据：

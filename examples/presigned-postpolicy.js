@@ -39,6 +39,14 @@ policy.setExpires(expires)
 
 policy.setContentLengthRange(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB
 
+policy.setContentType('text/plain')
+
+policy.setContentDisposition('attachment; filename=text.txt')
+
+policy.setUserMetaData({
+  key: 'value'
+})
+
 s3Client.presignedPostPolicy(policy, function(e, data) {
   if (e) return console.log(e)
   var curl = []

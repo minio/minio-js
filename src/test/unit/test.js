@@ -376,6 +376,38 @@ describe('Client', function() {
         }
       })
     })
+    describe('presigned-post-policy', () => {
+      it('should not generate content type for undefined value', () => {
+        assert.throws(() => {
+          var policy = client.newPostPolicy()
+          policy.setContentType()
+        }, /content-type cannot be null/)
+      })
+      it('should not generate content disposition for undefined value', () => {
+        assert.throws(() => {
+          var policy = client.newPostPolicy()
+          policy.setContentDisposition()
+        }, /content-disposition cannot be null/)
+      })
+      it('should not generate user defined metadata for string value', () => {
+        assert.throws(() => {
+          var policy = client.newPostPolicy()
+          policy.setUserMetaData('123')
+        }, /metadata should be of type "object"/)
+      })
+      it('should not generate user defined metadata for null value', () => {
+        assert.throws(() => {
+          var policy = client.newPostPolicy()
+          policy.setUserMetaData(null)
+        }, /metadata should be of type "object"/)
+      })
+      it('should not generate user defined metadata for undefined value', () => {
+        assert.throws(() => {
+          var policy = client.newPostPolicy()
+          policy.setUserMetaData()
+        }, /metadata should be of type "object"/)
+      })
+    })
   })
   describe('User Agent', () => {
     it('should have a default user agent', () => {
