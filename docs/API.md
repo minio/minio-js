@@ -53,6 +53,7 @@ var s3Client = new Minio.Client({
 | [`setBucketReplication`](#setBucketReplication)       |                                                     |                                               |                                                               |                                                       |     |
 | [`getBucketReplication`](#getBucketReplication)       |                                                     |                                               |                                                               |                                                       |     |
 | [`removeBucketReplication`](#removeBucketReplication) |                                                     |                                               |                                                               |                                                       |     |
+
 ## 1.  Constructor
 
 <a name="MinioClient_endpoint"></a>
