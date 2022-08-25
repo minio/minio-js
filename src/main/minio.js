@@ -640,7 +640,7 @@ export class Client {
         if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
           // Retry with region returned as part of error
           this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
-        }else {
+        } else {
           cb && cb(err)
         }
       }
