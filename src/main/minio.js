@@ -641,10 +641,10 @@ export class Client {
           // Retry with region returned as part of error
           this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
         } else {
-          cb && cb(err)
+          return cb && cb(err)
         }
       }
-      cb && cb(err)
+      return cb && cb(err)
     }
     this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
