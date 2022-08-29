@@ -574,7 +574,6 @@ export class Client {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-
     // Backward Compatibility
     if(isObject(region)){
       cb= makeOpts
@@ -641,12 +640,12 @@ export class Client {
         if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
           // Retry with region returned as part of error
           this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
+        } else {
+          return cb && cb(err)
         }
-        return
       }
-      cb && cb()
+      return cb && cb(err)
     }
-
     this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
 
