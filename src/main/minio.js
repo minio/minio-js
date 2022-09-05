@@ -3518,6 +3518,9 @@ export class Client {
         })
     })
   }
+  enableVirtualStyleEndpoint() {
+    this.pathStyle = false;
+  }
 
   get extensions() {
     if(!this.clientExtensions)
@@ -3579,6 +3582,7 @@ Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHol
 Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
+Client.prototype.enableVirtualStyleEndpoint=promisify(Client.prototype.enableVirtualStyleEndpoint)
 
 export class CopyConditions {
   constructor() {
