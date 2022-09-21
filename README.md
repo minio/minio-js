@@ -4,7 +4,7 @@
 
 The MinIO JavaScript Client SDK provides simple APIs to access any Amazon S3 compatible object storage server.
 
-This quickstart guide will show you how to install the client SDK and execute an example JavaScript program. For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://docs.min.io/docs/javascript-client-api-reference) documentation.
+This quickstart guide will show you how to install the client SDK and execute an example JavaScript program. For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html) documentation.
 
 This document assumes that you have a working [nodejs](http://nodejs.org/) setup in place.
 
@@ -113,60 +113,60 @@ mc ls play/europetrip/
 
 The full API Reference is available here.
 
-* [Complete API Reference](https://docs.min.io/docs/javascript-client-api-reference)
+* [Complete API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html)
 
 ### API Reference : Bucket Operations
 
-* [`makeBucket`](https://docs.min.io/docs/javascript-client-api-reference#makeBucket)
-* [`listBuckets`](https://docs.min.io/docs/javascript-client-api-reference#listBuckets)
-* [`bucketExists`](https://docs.min.io/docs/javascript-client-api-reference#bucketExists)
-* [`removeBucket`](https://docs.min.io/docs/javascript-client-api-reference#removeBucket)
-* [`listObjects`](https://docs.min.io/docs/javascript-client-api-reference#listObjects)
-* [`listObjectsV2`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2)
-* [`listObjectsV2WithMetadata`](https://docs.min.io/docs/javascript-client-api-reference#listObjectsV2WithMetadata) (Extension)
-* [`listIncompleteUploads`](https://docs.min.io/docs/javascript-client-api-reference#listIncompleteUploads)
-* [`getBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#getBucketVersioning)
-* [`setBucketVersioning`](https://docs.min.io/docs/javascript-client-api-reference#setBucketVersioning)
-* [`setBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#setBucketLifecycle)
-* [`getBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#getBucketLifecycle)
-* [`removeBucketLifecycle`](https://docs.min.io/docs/javascript-client-api-reference#removeBucketLifecycle)
-* [`getObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#getObjectLockConfig)
-* [`setObjectLockConfig`](https://docs.min.io/docs/javascript-client-api-reference#setObjectLockConfig)
+* [`makeBucket`](https://min.io/docs/minio/linux/developers/javascript/API.html#makeBucket)
+* [`listBuckets`](https://min.io/docs/minio/linux/developers/javascript/API.html#listBuckets)
+* [`bucketExists`](https://min.io/docs/minio/linux/developers/javascript/API.html#bucketExists)
+* [`removeBucket`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeBucket)
+* [`listObjects`](https://min.io/docs/minio/linux/developers/javascript/API.html#listObjects)
+* [`listObjectsV2`](https://min.io/docs/minio/linux/developers/javascript/API.html#listObjectsV2)
+* [`listObjectsV2WithMetadata`](https://min.io/docs/minio/linux/developers/javascript/API.html#listObjectsV2WithMetadata) (Extension)
+* [`listIncompleteUploads`](https://min.io/docs/minio/linux/developers/javascript/API.html#listIncompleteUploads)
+* [`getBucketVersioning`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketVersioning)
+* [`setBucketVersioning`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketVersioning)
+* [`setBucketLifecycle`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketLifecycle)
+* [`getBucketLifecycle`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketLifecycle)
+* [`removeBucketLifecycle`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeBucketLifecycle)
+* [`getObjectLockConfig`](https://min.io/docs/minio/linux/developers/javascript/API.html#getObjectLockConfig)
+* [`setObjectLockConfig`](https://min.io/docs/minio/linux/developers/javascript/API.html#setObjectLockConfig)
 
 ### API Reference : File Object Operations
 
-* [`fPutObject`](https://docs.min.io/docs/javascript-client-api-reference#fPutObject)
-* [`fGetObject`](https://docs.min.io/docs/javascript-client-api-reference#fGetObject)
+* [`fPutObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#fPutObject)
+* [`fGetObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#fGetObject)
 
 ### API Reference : Object Operations
 
-* [`getObject`](https://docs.min.io/docs/javascript-client-api-reference#getObject)
-* [`putObject`](https://docs.min.io/docs/javascript-client-api-reference#putObject)
-* [`copyObject`](https://docs.min.io/docs/javascript-client-api-reference#copyObject)
-* [`statObject`](https://docs.min.io/docs/javascript-client-api-reference#statObject)
-* [`removeObject`](https://docs.min.io/docs/javascript-client-api-reference#removeObject)
-* [`removeObjects`](https://docs.min.io/docs/javascript-client-api-reference#removeObjects)
-* [`removeIncompleteUpload`](https://docs.min.io/docs/javascript-client-api-reference#removeIncompleteUpload)
-* [`selectObjectContent`](https://docs.min.io/docs/javascript-client-api-reference#selectObjectContent)
+* [`getObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#getObject)
+* [`putObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#putObject)
+* [`copyObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#copyObject)
+* [`statObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#statObject)
+* [`removeObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeObject)
+* [`removeObjects`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeObjects)
+* [`removeIncompleteUpload`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeIncompleteUpload)
+* [`selectObjectContent`](https://min.io/docs/minio/linux/developers/javascript/API.html#selectObjectContent)
 
 
 ### API Reference : Presigned Operations
 
-* [`presignedGetObject`](https://docs.min.io/docs/javascript-client-api-reference#presignedGetObject)
-* [`presignedPutObject`](https://docs.min.io/docs/javascript-client-api-reference#presignedPutObject)
-* [`presignedPostPolicy`](https://docs.min.io/docs/javascript-client-api-reference#presignedPostPolicy)
+* [`presignedGetObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedGetObject)
+* [`presignedPutObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPutObject)
+* [`presignedPostPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPostPolicy)
 
 ### API Reference : Bucket Notification Operations
 
-* [`getBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#getBucketNotification)
-* [`setBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#setBucketNotification)
-* [`removeAllBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#removeAllBucketNotification)
-* [`listenBucketNotification`](https://docs.min.io/docs/javascript-client-api-reference#listenBucketNotification) (MinIO Extension)
+* [`getBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketNotification)
+* [`setBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketNotification)
+* [`removeAllBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeAllBucketNotification)
+* [`listenBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#listenBucketNotification) (MinIO Extension)
 
 ### API Reference : Bucket Policy Operations
 
-* [`getBucketPolicy`](https://docs.min.io/docs/javascript-client-api-reference#getBucketPolicy)
-* [`setBucketPolicy`](https://docs.min.io/docs/javascript-client-api-reference#setBucketPolicy)
+* [`getBucketPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketPolicy)
+* [`setBucketPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketPolicy)
 
 
 ## Full Examples
@@ -236,8 +236,8 @@ The full API Reference is available here.
 * [setAccelerateEndPoint](https://github.com/minio/minio-js/blob/master/examples/set-accelerate-end-point.js)
 
 ## Explore Further
-* [Complete Documentation](https://docs.min.io)
-* [MinIO JavaScript Client SDK API Reference](https://docs.min.io/docs/javascript-client-api-reference)
+* [Complete Documentation](https://min.io/docs/minio/kubernetes/upstream/index.html)
+* [MinIO JavaScript Client SDK API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html)
 * [Build your own Shopping App Example- Full Application Example ](https://github.com/minio/minio-js-store-app)
 
 ## Contribute
