@@ -3582,7 +3582,6 @@ Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHol
 Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
-Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
 
 export class CopyConditions {
   constructor() {
