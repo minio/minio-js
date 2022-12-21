@@ -424,7 +424,7 @@ export const toArray = (param) => {
 
 export const sanitizeObjectKey=(objectName)=>{
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
-  let asStrName = (objectName ? objectName.toString() : "").replace(/\+/g, ' ');
+  let asStrName = (objectName ? objectName.toString() : "").replace(/\+/g, ' ')
   const sanitizedName = decodeURIComponent(asStrName)
   return sanitizedName
 }
