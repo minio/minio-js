@@ -3452,4 +3452,222 @@ describe('functional tests', function () {
     })
   })
 
+
+  describe('Force Deletion of objects with versions', function () {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const fdWithVerBucket = "minio-js-fd-version-" + uuid.v4()
+    const fdObjectName = 'datafile-100-kB'
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(fdWithVerBucket, '', done))
+    after((done) => client.removeBucket(fdWithVerBucket, done))
+
+    describe('Test for force removal of multiple versions', function () {
+      let isVersioningSupported = false
+      const objVersionList = []
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${fdWithVerBucket},versionConfig:{Status:"Enabled"} `, (done) => {
+        client.setBucketVersioning(fdWithVerBucket, {Status: "Enabled"}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          isVersioningSupported = true
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${fdWithVerBucket}, objectName:${fdObjectName}, stream:100Kib_`, done => {
+        if (isVersioningSupported) {
+          client.putObject(fdWithVerBucket, fdObjectName, fdObject)
+            .then(() => done())
+            .catch(done)
+        } else {
+          done()
+        }
+
+      })
+      // Put two versions of the same object.
+      step(`putObject(bucketName, objectName, stream)_bucketName:${fdWithVerBucket}, objectName:${fdObjectName}, stream:100Kib_`, done => {
+        if (isVersioningSupported) {
+          client.putObject(fdWithVerBucket, fdObjectName, fdObject)
+            .then(() => done())
+            .catch(done)
+        } else {
+          done()
+        }
+      })
+
+      step(`removeObject(bucketName, objectList, removeOpts)_bucketName:${fdWithVerBucket}_Remove ${objVersionList.length} objects`, done => {
+        if (isVersioningSupported) {
+          client.removeObject(fdWithVerBucket, fdObjectName,{forceDelete:true}, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${fdWithVerBucket}, prefix: '', recursive:true_`, done => {
+        if (isVersioningSupported) {
+          client.listObjects(fdWithVerBucket, '', true, {IncludeVersion: true})
+            .on('error', done)
+            .on('end', () => {
+              if (_.isEqual(0, objVersionList.length)) return done()
+              return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
+            })
+            .on('data', data => {
+              objVersionList.push(data)
+            })
+        } else {
+          done()
+        }
+      })
+    })
+  })
+
+  describe('Force Deletion of prefix with versions', function () {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const fdPrefixBucketName = "minio-js-fd-version-" + uuid.v4()
+    const fdPrefixObjName = 'my-prefix/datafile-100-kB'
+    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/' + fdPrefixObjName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(fdPrefixBucketName, '', done))
+    after((done) => client.removeBucket(fdPrefixBucketName, done))
+
+
+    describe('Test for removal of multiple versions', function () {
+      let isVersioningSupported = false
+      const objVersionList = []
+      step(`setBucketVersioning(bucketName, versionConfig):_bucketName:${fdPrefixBucketName},versionConfig:{Status:"Enabled"} `, (done) => {
+        client.setBucketVersioning(fdPrefixBucketName, {Status: "Enabled"}, (err) => {
+          if (err && err.code === 'NotImplemented') return done()
+          if (err) return done(err)
+          isVersioningSupported = true
+          done()
+        })
+      })
+
+      step(`putObject(bucketName, objectName, stream)_bucketName:${fdPrefixBucketName}, objectName:${fdPrefixObjName}, stream:100Kib_`, done => {
+        if (isVersioningSupported) {
+          client.putObject(fdPrefixBucketName, fdPrefixObjName, fdPrefixObject)
+            .then(() => done())
+            .catch(done)
+        } else {
+          done()
+        }
+
+      })
+      // Put two versions of the same object.
+      step(`putObject(bucketName, objectName, stream)_bucketName:${fdPrefixBucketName}, objectName:${fdPrefixObjName}, stream:100Kib_`, done => {
+        if (isVersioningSupported) {
+          client.putObject(fdPrefixBucketName, fdPrefixObjName, fdPrefixObject)
+            .then(() => done())
+            .catch(done)
+        } else {
+          done()
+        }
+      })
+
+      step(`removeObject(bucketName, objectList, removeOpts)_bucketName:${fdPrefixBucketName}_Remove ${objVersionList.length} objects`, done => {
+        if (isVersioningSupported) {
+          client.removeObject(fdPrefixBucketName, "my-prefix/",{forceDelete:true}, () => {
+            done()
+          })
+        } else {
+          done()
+        }
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${fdPrefixBucketName}, prefix: '', recursive:true_`, done => {
+        if (isVersioningSupported) {
+          client.listObjects(fdPrefixBucketName, '/my-prefix', true, {IncludeVersion: true})
+            .on('error', done)
+            .on('end', () => {
+              if (_.isEqual(0, objVersionList.length)) return done()
+              return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
+            })
+            .on('data', data => {
+              objVersionList.push(data)
+            })
+        } else {
+          done()
+        }
+      })
+    })
+  })
+
+  describe('Force Deletion of objects without versions', function () {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const versionedBucketName = "minio-js-fd-nv-" + uuid.v4()
+    const versioned_100kbObjectName = 'datafile-100-kB'
+    const versioned_100kb_Object = dataDir ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(versionedBucketName, '', done))
+    after((done) => client.removeBucket(versionedBucketName, done))
+
+
+    describe('Test force removal of an object', function () {
+      step(`putObject(bucketName, objectName, stream)_bucketName:${versionedBucketName}, objectName:${versioned_100kbObjectName}, stream:100Kib_`, done => {
+        client.putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
+          .then(() => done())
+          .catch(done)
+      })
+
+      step(`removeObject(bucketName, objectList, removeOpts)_bucketName:${versionedBucketName}_Remove 1 object`, done => {
+        client.removeObject(versionedBucketName, versioned_100kbObjectName,{forceDelete:true}, () => {
+          done()
+        })
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`, done => {
+        let objVersionList=[]
+        client.listObjects(versionedBucketName, '', true, {})
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(0, objVersionList.length)) return done()
+            return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
+          })
+          .on('data', data => {
+            objVersionList.push(data)
+          })
+      })
+    })
+  })
+
+  describe('Force Deletion of prefix', function () {
+    // Isolate the bucket/object for easy debugging and tracking.
+    const fdPrefixBucket = "minio-js-fd-nv-" + uuid.v4()
+    const fdObjectName = 'my-prefix/datafile-100-kB'
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+
+    before((done) => client.makeBucket(fdPrefixBucket, '', done))
+    after((done) => client.removeBucket(fdPrefixBucket, done))
+
+
+    describe('Test force removal of a prefix', function () {
+      step(`putObject(bucketName, objectName, stream)_bucketName:${fdPrefixBucket}, objectName:${fdObjectName}, stream:100Kib_`, done => {
+        client.putObject(fdPrefixBucket, fdObjectName, fdObject)
+          .then(() => done())
+          .catch(done)
+      })
+
+      step(`removeObject(bucketName, objectList, removeOpts)_bucketName:${fdPrefixBucket}_Remove 1 object`, done => {
+        client.removeObject(fdPrefixBucket, "/my-prefix",{forceDelete:true}, () => {
+          done()
+        })
+      })
+
+      step(`listObjects(bucketName, prefix, recursive)_bucketName:${fdPrefixBucket}, prefix: 'my-prefix', recursive:true_`, done => {
+        let objList=[]
+        client.listObjects(fdPrefixBucket, 'my-prefix', true, {})
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(0, objList.length)) return done()
+            return done(new Error(`listObjects lists ${objList.length} objects, expected 0`))
+          })
+          .on('data', data => {
+            objList.push(data)
+          })
+      })
+    })
+  })
+
 })
