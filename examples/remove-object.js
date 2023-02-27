@@ -48,3 +48,11 @@ s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId
   }
   console.log("Success")
 })
+
+// force delete object/prefix
+s3Client.removeObject('force-del-test', 'test/', {forceDelete:true}, function(e) {
+  if (e) {
+    return console.log(e)
+  }
+  console.log("Success")
+})
