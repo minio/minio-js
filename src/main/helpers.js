@@ -17,7 +17,7 @@
 import stream from 'stream'
 import mime from 'mime-types'
 var Crypto = require('crypto-browserify')
-const { XMLParser } = require("fast-xml-parser");
+const { XMLParser } = require("fast-xml-parser")
 const  fxp = new XMLParser()
 
 const ipaddr = require('ipaddr.js')
