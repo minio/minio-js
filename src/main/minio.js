@@ -1669,7 +1669,7 @@ export class Client {
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false}`. Default is `{}`. (optional)
+  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false, forceDelete:true|false}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucketName, objectName, removeOpts={} , cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1699,6 +1699,9 @@ export class Client {
     const headers = {}
     if(removeOpts.governanceBypass){
       headers["X-Amz-Bypass-Governance-Retention"]=true
+    }
+    if(removeOpts.forceDelete){
+      headers["x-minio-force-delete"]=true
     }
 
     const query = querystring.stringify( queryParams )
@@ -3710,3 +3713,4 @@ export class PostPolicy {
 }
 
 export * from './notification'
+export * from './helpers'
