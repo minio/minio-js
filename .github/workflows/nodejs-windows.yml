@@ -12,7 +12,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        node_version: [12.x, 14.x, 16.x, 17.x, 18.x]
+        node_version: [12.x, 14.x, 16.x, 17.x, 18.x, 19.x]
         os: [windows-latest]
     steps:
       - uses: actions/checkout@v1
