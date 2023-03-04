@@ -91,6 +91,7 @@ export class Client {
     var port = params.port
     var protocol = ''
     var transport
+    var transportAgent
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
     if (params.useSSL === false) {
@@ -99,6 +100,7 @@ export class Client {
       if (port === 0) {
         port = 80
       }
+      transportAgent = Http.globalAgent
     } else {
       // Defaults to secure.
       transport = Https
@@ -106,14 +108,24 @@ export class Client {
       if (port === 0) {
         port = 443
       }
+      transportAgent = Https.globalAgent
     }
 
     // if custom transport is set, use it.
     if (params.transport) {
       if (!isObject(params.transport)) {
-        throw new errors.InvalidArgumentError('Invalid transport type : ${params.transport}, expected to be type "object"')
+        throw new errors.InvalidArgumentError(`Invalid transport type : ${params.transport}, expected to be type "object"`)
       }
       transport = params.transport
+    }
+
+    // if custom transport agent is set, use it.
+    if (params.transportAgent) {
+      if (!isObject(params.transportAgent)) {
+        throw new errors.InvalidArgumentError(`Invalid transportAgent type: ${params.transportAgent}, expected to be type "object"`)
+      }
+
+      transportAgent = params.transportAgent
     }
 
     // User Agent should always following the below style.
@@ -126,6 +138,7 @@ export class Client {
     // User agent block ends.
 
     this.transport = transport
+    this.transportAgent = transportAgent
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -221,6 +234,9 @@ export class Client {
 
     var reqOptions = {method}
     reqOptions.headers = {}
+
+    // If custom transportAgent was supplied earlier, we'll inject it here
+    reqOptions.agent = this.transportAgent
 
     // Verify if virtual host supported.
     var virtualHostStyle
