@@ -78,6 +78,7 @@ __Parameters__
 | `transport`    | _string_ | Set this value to pass in a custom transport. (Optional)                                                     |
 | `partSize`     | _number_ | Set this value to override default part size of 64MB for multipart uploads. (Optional)                       |
 | `pathStyle`    | _bool_   | Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional) |
+| `transportAgent` | [Agent](https://nodejs.org/api/http.html#class-httpagent) | Set this value to provide a custom HTTP(s) agent to handle timeouts, TLS handling, and low-level socket configurations. (Optional) |
 
 __Example__
 
@@ -117,6 +118,29 @@ var s3Client = new Minio.Client({
     accessKey: 'YOUR-TEMP-ACCESSKEYID',
     secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
     sessionToken: 'YOUR-TEMP-SESSIONTOKEN'
+})
+```
+
+## Create client with custom HTTPS Agent
+
+```js
+var Minio = require('minio')
+var fs = require('fs')
+var https = require('https')
+
+var s3Client = new Minio.Client({
+    endPoint: 'play.min.io',
+    port: 9000,
+    useSSL: true,
+    accessKey: 'Q3AM3UQ867SPQQA43P2F',
+    secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
+    transportAgent: new https.Agent({
+      timeout: 10000,
+      ca: fs.readFileSync("path/to/ca.cert"),
+      cert: fs.readFileSync("path/to/public.cert"),
+      key: fs.readFileSync("path/to/secret.key"),
+      keepAlive: false,
+    })
 })
 ```
 
