@@ -45,7 +45,7 @@ objectsStreamWithVersions.on('error', function(e) {
 
 
 // Example to list only the prefixes of a bucket.
-//Non versioned bucket with Prefix listing.
+// Non versioned bucket with Prefix listing.
 function listPrefixesOfABucket(buckName) {
   var objectsStream=s3Client.listObjects(buckName, '', false , {})
   var counter = 0

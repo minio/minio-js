@@ -34,7 +34,7 @@ s3Client.statObject('my-bucketname', 'my-objectname', function(e, stat) {
 })
 
 // Get stat information for a specific version of 'my-objectname'
-//Bucket must be versioning enabled.
+// Bucket must be versioning enabled.
 s3Client.statObject('my-bucketname', 'my-objectname', {versionId:"my-uuid"},function(e, stat) {
   if (e) {
     return console.log(e)

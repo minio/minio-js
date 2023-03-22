@@ -2,15 +2,28 @@
   "name": "minio",
   "version": "7.0.33",
   "description": "S3 Compatible Cloud Storage client",
-  "main": "./dist/main/minio.js",
+  "main": "dist/main/minio.cjs",
+  "module": "dist/main/minio.mjs",
+  "types": "dist/main/minio.d.ts",
+  "browser": "dist/main/minio.iife.js",
+  "jsdelivr": "dist/main/minio.iife.js",
+  "unpkg": "dist/main/minio.iife.js",
+  "exports": {
+    ".": {
+      "import": "./dist/main/minio.mjs",
+      "require": "./dist/main/minio.cjs"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "scripts": {
-    "compile": "gulp compile",
-    "test": "gulp test",
-    "lint": "gulp lint",
-    "lint-fix": "gulp lint --fix",
-    "prepublishOnly": "gulp test",
-    "functional": "gulp functionalTest",
-    "browserify": "gulp browserify",
+    "compile": "rollup -c",
+    "test": "mocha test/**/*.js",
+    "lint": "eslint --ignore-path .gitignore .",
+    "lint-fix": "eslint --ignore-path .gitignore --fix .",
+    "prepublishOnly": "npm run test",
+    "functional": "mocha test/functional/*.js ",
+    "browserify": "npm run compile",
     "prepare": "npm run compile"
   },
   "repository": {
@@ -23,7 +36,7 @@
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">8  <=19"
+    "node": ">8"
   },
   "license": "Apache-2.0",
   "bugs": {
@@ -34,7 +47,6 @@
   "dependencies": {
     "async": "^3.1.0",
     "block-stream2": "^2.0.0",
-    "browser-or-node": "^1.3.0",
     "buffer-crc32": "^0.2.13",
     "crypto-browserify": "^3.12.0",
     "es6-error": "^4.1.1",
@@ -51,24 +63,21 @@
     "xml2js": "^0.4.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.10",
-    "@babel/preset-env": "^7.12.10",
-    "babelify": "^10.0.0",
-    "browserify": "^16.5.2",
+    "@rollup/plugin-terser": "^0.4.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@types/node": "^18.15.5",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
     "chai": "^4.2.0",
     "eslint": "^8.9.0",
-    "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
-    "gulp-eslint": "^4.0.2",
-    "gulp-if": "^3.0.0",
-    "gulp-mocha": "^8.0.0",
-    "gulp-sourcemaps": "^2.6.5",
     "mocha": "^9.2.0",
     "mocha-steps": "^1.1.0",
     "nock": "^13.2.2",
-    "source-map-support": "^0.5.13",
+    "rollup": "^2.79.1",
     "split-file": "^2.2.2",
     "superagent": "^5.1.0",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.2",
     "uuid": "^3.3.2"
   },
   "keywords": [

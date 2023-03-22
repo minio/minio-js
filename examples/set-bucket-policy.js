@@ -66,7 +66,7 @@ var policy = `
 `
 
 s3Client.setBucketPolicy('testbucket', policy, (err) => {
-	if (err) throw err
+  if (err) throw err
 
-	console.log('Set bucket policy')
+  console.log('Set bucket policy')
 })

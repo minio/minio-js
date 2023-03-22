@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-require('source-map-support').install()
 
 import { assert } from 'chai'
 import Nock from 'nock'
@@ -59,7 +58,7 @@ describe('Helpers', () => {
 
   // Adopted from minio-go sdk
   const oneGB =1024 * 1024 * 1024
-  const fiveGB = (5*oneGB)
+  const fiveGB = 5*oneGB
 
   const OBJ_SIZES = {
     gb1 : oneGB,

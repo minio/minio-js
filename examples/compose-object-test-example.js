@@ -61,7 +61,7 @@ function sampleRunComposeObject() {
     console.log("Written 100 MB File ")
     // 100 MB split into 26 MB part size. ( just to test unequal parts ). But change as required.
 
-    splitFile.splitFileBySize(fileToSplit, (26 * oneMB))
+    splitFile.splitFileBySize(fileToSplit, 26 * oneMB)
       .then((names) => {
         console.log("Split and write 100 MB File(s) ", names)
         const putPartRequests = names.map((partFileName) => {

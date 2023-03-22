@@ -47,10 +47,10 @@ s3Client.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
   console.log("Success")
 })
 
-//Example to demonstrate Expiration Date
+// Example to demonstrate Expiration Date
 const expirationDate = new Date()
 expirationDate.setDate(expirationDate.getDate() + 1) // Expire next day.
-expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+expirationDate.setUTCHours(0,0,0,0)// Should be start of the day.(midnight)
 
 const lifecycleConfigWithExpirationDate= {
   Rule: [{

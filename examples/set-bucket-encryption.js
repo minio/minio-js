@@ -26,7 +26,7 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-//Apply default encryption.
+// Apply default encryption.
 s3Client.setBucketEncryption("my-bucket", function (error){
   if (error) {
     return console.log(error)
@@ -35,7 +35,7 @@ s3Client.setBucketEncryption("my-bucket", function (error){
 })
 
 
-//Set Encryption Rule. Only one rule is allowed.
+// Set Encryption Rule. Only one rule is allowed.
 
 /**
  * The following rule is not supported.
@@ -93,7 +93,7 @@ const kmsIdEncryptionConfig = {
   Rule:[
     {
       ApplyServerSideEncryptionByDefault: {
-        KMSMasterKeyID:'my-minio-key', //as per env value
+        KMSMasterKeyID:'my-minio-key', // as per env value
         SSEAlgorithm:"aws:kms" // this is important
       }
     }

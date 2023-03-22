@@ -35,7 +35,7 @@ s3Client.setObjectTagging('bucketname', "object-name", tagsMap, function (err){
   console.log("Success")
 })
 
-//Put tags on a version of an object
+// Put tags on a version of an object
 s3Client.setObjectTagging('bucketname', "object-name", tagsMap, { versionId: "my-version-id" }, function (err){
   if (err) {
     return console.log(err)

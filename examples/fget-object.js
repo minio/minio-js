@@ -33,7 +33,7 @@ s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', function(e
   console.log('done')
 })
 
-//To get a specific version of an object 
+// To get a specific version of an object 
 s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
   if (e) {
     return console.log(e)

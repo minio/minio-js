@@ -33,7 +33,7 @@ s3Client.removeObjectTagging('bucketname', "object-name", function (err){
   console.log("Success")
 })
 
-//remove tags on a version of an object
+// remove tags on a version of an object
 s3Client.removeObjectTagging('bucketname', 'object-name', { versionId: "my-object-version-id" }, function (err){
   if (err) {
     return console.log(err)

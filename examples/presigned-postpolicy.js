@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-objectname and my-bucketname
- // are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-objectname and my-bucketname
+// are dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
@@ -34,7 +34,7 @@ policy.setKey("my-objectname")
 policy.setBucket("my-bucketname")
 
 var expires = new Date
-expires.setSeconds(24 * 60 * 60 * 10) //10 days
+expires.setSeconds(24 * 60 * 60 * 10) // 10 days
 policy.setExpires(expires)
 
 policy.setContentLengthRange(1024, 1024*1024) // Min upload length is 1KB Max upload size is 1MB

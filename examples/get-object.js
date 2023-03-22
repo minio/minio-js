@@ -42,7 +42,7 @@ s3Client.getObject('my-bucketname', 'my-objectname', function(e, dataStream) {
   })
 })
 
-//Get a specific version of an object
+// Get a specific version of an object
 var versionedObjSize = 0
 s3Client.getObject('my-versioned-bucket', 'my-versioned-object', {versionId:"my-versionId"}, function(err, dataStream) {
   if (err) {

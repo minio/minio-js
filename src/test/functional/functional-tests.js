@@ -60,7 +60,6 @@ const {
   DEFAULT_REGION
 } = helpers
 
-require('source-map-support').install()
 
 const isWindowsPlatform = process.platform === "win32"
 
@@ -94,7 +93,7 @@ describe('functional tests', function () {
       console.error(`Error:  SECRET_KEY Environment variable is not set`)
       process.exit(1)
     }
-    clientConfigParams.useSSL = (enable_https_env == '1')
+    clientConfigParams.useSSL = enable_https_env == '1'
 
   } else {
     // If credentials aren't given, default to play.min.io.
@@ -3125,7 +3124,7 @@ describe('functional tests', function () {
       try {
         fs.writeFileSync(fileToSplit, _100mbFileToBeSplitAndComposed)
         // 100 MB split into 26 MB part size.
-        splitFile.splitFileBySize(fileToSplit, (26 * 1024 * 1024))
+        splitFile.splitFileBySize(fileToSplit, 26 * 1024 * 1024)
           .then((names) => {
             partFilesNamesWithPath = names
             isSplitSuccess = true

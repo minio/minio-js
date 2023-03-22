@@ -27,7 +27,7 @@ import {
   readableStream,
   SelectResults
 } from "./helpers"
-var crc32 = require("buffer-crc32")
+import crc32 from "./internals/buffer-crc32"
 
 
 // Parse XML and return information as Javascript types

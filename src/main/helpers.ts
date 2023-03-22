@@ -19,13 +19,15 @@ import mime from 'mime-types'
 var Crypto = require('crypto-browserify')
 import fxp from "fast-xml-parser"
 const ipaddr = require('ipaddr.js')
-import { isBrowser } from "browser-or-node"
 
 const fs = require('fs')
 const path = require("path")
 import _ from 'lodash'
 import * as errors from './errors.js'
 import querystring from 'query-string'
+
+const isBrowser =
+  typeof window !== "undefined" && typeof window.document !== "undefined"
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.

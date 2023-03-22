@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname,
- // my-src-bucketname and my-src-objectname are dummy values, please replace
- // them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname,
+// my-src-bucketname and my-src-objectname are dummy values, please replace
+// them with original values.
 
 var Minio = require('minio')
 

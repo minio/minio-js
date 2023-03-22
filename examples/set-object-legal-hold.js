@@ -25,7 +25,7 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-//Set legal hold config of an object.
+// Set legal hold config of an object.
 s3Client.setObjectLegalHold('bucketName', 'objectName', {status:"ON"}, function(err, res) {
   if (err) {
     return console.log('Unable to set legal hold config for the object', err)
@@ -33,7 +33,7 @@ s3Client.setObjectLegalHold('bucketName', 'objectName', {status:"ON"}, function(
   console.log('Success')
 })
 
-//Set legal hold config of an object with versionId.
+// Set legal hold config of an object with versionId.
 s3Client.setObjectLegalHold('bucketName', 'objectName', { status:"ON", versionId:'my-obj-version-uuid' }, function(err, res) {
   if (err) {
     return console.log('Unable to set legal hold config for the object version', err)

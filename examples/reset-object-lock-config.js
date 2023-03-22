@@ -25,7 +25,7 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-//Example to reset/remove object lock config.
+// Example to reset/remove object lock config.
 s3Client.setObjectLockConfig('my-bucketname', {}, function (err){
   if (err) {
     return console.log(err)

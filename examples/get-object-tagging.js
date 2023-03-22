@@ -34,7 +34,7 @@ s3Client.getObjectTagging('bucketname', "objectName", function (err, tagsList){
   console.log("Success",tagsList)
 })
 
-//Get tags on a version of an object.
+// Get tags on a version of an object.
 
 s3Client.getObjectTagging('bucketname', "objectName", { versionId: "" }, function (err, tagsList){
   if (err) {

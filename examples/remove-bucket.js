@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname
- // are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname
+// are dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
