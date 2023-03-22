@@ -17,13 +17,12 @@
 import fs from 'fs'
 import Http from 'http'
 import Https from 'https'
-import Stream from 'stream'
+import Stream, { Writable } from 'stream'
 import BlockStream2 from 'block-stream2'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 import async from 'async'
 import querystring from 'query-string'
-import mkdirp from 'mkdirp'
 import path from 'path'
 import _ from 'lodash'
 import { TextEncoder } from 'web-encoding'
@@ -60,11 +59,54 @@ import extensions from './extensions'
 import CredentialProvider from './CredentialProvider'
 
 import { parseSelectObjectContentResponse} from './xml-parsers'
+import { Transport } from './transport.js'
 
 const Package = require('../../package.json')
 
+export type ClientOptions = {
+  /**
+   * @deprecated Use 'useSSL' instead
+   */
+  secure?: boolean,
+  useSSL?: boolean
+  port: number,
+  endPoint: string,
+  region?: string,
+  transport?: Transport,
+  accessKey: string,
+  secretKey: string,
+  sessionToken?: string,
+  pathStyle?: boolean,
+  credentialsProvider?: CredentialProvider,
+  partSize?: number,
+  s3AccelerateEndpoint?: string
+}
+
 export class Client {
-  constructor(params) {
+  private readonly transport: Transport
+  private readonly host: string
+  private readonly port: number
+  private readonly protocol: string
+  private readonly accessKey: string
+  private readonly secretKey: string
+  private readonly sessionToken?: string
+  private userAgent: string
+  private readonly pathStyle: boolean
+  private readonly anonymous: boolean
+  private readonly credentialsProvider?: CredentialProvider
+  private readonly region?: string
+  private readonly regionMap: Record<string, string>
+  private readonly partSize: number
+  private readonly overRidePartSize?: boolean
+  private readonly maximumPartSize: number
+  private readonly maxObjectSize: number
+  private readonly enableSHA256: boolean
+  private s3AccelerateEndpoint: string | null
+  private readonly reqOptions?: object
+  private logStream?: Writable
+
+
+  constructor(params: ClientOptions) {
     if (typeof params.secure !== 'undefined') throw new Error('"secure" option deprecated, "useSSL" should be used instead')
     // Default values if not specified.
     if (typeof params.useSSL === 'undefined') params.useSSL = true
@@ -76,13 +118,13 @@ export class Client {
     if (!isValidPort(params.port)) {
       throw new errors.InvalidArgumentError(`Invalid port : ${params.port}`)
     }
-    if (!isBoolean(params.useSSL)) {
+    if (!isBoolean(params.useSSL as never)) {
       throw new errors.InvalidArgumentError(`Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`)
     }
 
     // Validate region only if its set.
-    if (params.region) {
-      if (!isString(params.region)) {
+    if (params.region != null && params.region !== '') {
+      if (!isString(params.region as never)) {
         throw new errors.InvalidArgumentError(`Invalid region : ${params.region}`)
       }
     }
@@ -110,7 +152,7 @@ export class Client {
 
     // if custom transport is set, use it.
     if (params.transport) {
-      if (!isObject(params.transport)) {
+      if (!isObject(params.transport as never)) {
         throw new errors.InvalidArgumentError('Invalid transport type : ${params.transport}, expected to be type "object"')
       }
       transport = params.transport
@@ -179,8 +221,8 @@ export class Client {
   }
 
   // This is s3 Specific and does not hold validity in any other Object storage.
-  getAccelerateEndPointIfSet(bucketName, objectName) {
-    if (!_.isEmpty(this.s3AccelerateEndpoint) && !_.isEmpty(bucketName) && !_.isEmpty(objectName) ) {
+  getAccelerateEndPointIfSet(bucketName: string, objectName: string) {
+    if (this.s3AccelerateEndpoint !== null && this.s3AccelerateEndpoint !== '' && bucketName != null && bucketName !== '' && objectName != null && objectName !== '') {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
       // Disable transfer acceleration for non-compliant bucket names.
       if (bucketName.indexOf('.')!== -1) {
@@ -197,13 +239,13 @@ export class Client {
   /**
    * @param endPoint _string_ valid S3 acceleration end point
    */
-  setS3TransferAccelerate(endPoint) {
+  setS3TransferAccelerate(endPoint: string) {
     this.s3AccelerateEndpoint = endPoint
   }
 
   // Sets the supported request options.
-  setRequestOptions(options) {
-    if (!isObject(options)) {
+  setRequestOptions(options: Record<string, unknown>) {
+    if (!isObject(options as never)) {
       throw new TypeError('request options should be of type "object"')
     }
     this.reqOptions = _.pick(options, ['agent', 'ca', 'cert', 'ciphers', 'clientCertEngine', 'crl', 'dhparam', 'ecdhCurve', 'family', 'honorCipherOrder', 'key', 'passphrase', 'pfx', 'rejectUnauthorized', 'secureOptions', 'secureProtocol', 'servername', 'sessionIdContext'])
@@ -216,7 +258,7 @@ export class Client {
     const region = opts.region
     const bucketName = opts.bucketName
     let objectName = opts.objectName
-    const headers = opts.headers
+    let headers = opts.headers
     const query = opts.query
 
     let reqOptions = {method}
@@ -274,7 +316,7 @@ export class Client {
     reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
       // have all header keys in lower case - to make signing easy
-      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
+      headers = Object.entries(headers).map((v: string, k: unknown) => reqOptions.headers[k.toLowerCase()] = v)
     }
 
     // Use any request option specified in minioClient.setRequestOptions()
@@ -292,14 +334,14 @@ export class Client {
   // __Arguments__
   // * `appName` _string_ - Application name.
   // * `appVersion` _string_ - Application version.
-  setAppInfo(appName, appVersion) {
-    if (!isString(appName)) {
+  setAppInfo(appName: string, appVersion: string) {
+    if (!isString(appName as never)) {
       throw new TypeError(`Invalid appName: ${appName}`)
     }
     if (appName.trim() === '') {
       throw new errors.InvalidArgumentError('Input appName cannot be empty.')
     }
-    if (!isString(appVersion)) {
+    if (!isString(appVersion as never)) {
       throw new TypeError(`Invalid appVersion: ${appVersion}`)
     }
     if (appVersion.trim() === '') {
@@ -309,8 +351,8 @@ export class Client {
   }
 
   // Calculate part size given the object size. Part size will be atleast this.partSize
-  calculatePartSize(size) {
-    if (!isNumber(size)) {
+  calculatePartSize(size: number): number {
+    if (!isNumber(size as never)) {
       throw new TypeError('size should be of type "number"')
     }
     if (size > this.maxObjectSize) {
@@ -331,26 +373,29 @@ export class Client {
   }
 
   // log the request, response, error
-  logHTTP(reqOptions, response, err) {
+  logHTTP(reqOptions, response?: Record<string, unknown>, err?: any) {
     // if no logstreamer available return.
-    if (!this.logStream) return
-    if (!isObject(reqOptions)) {
+    if (this.logStream === undefined) return
+    if (!isObject(reqOptions as never)) {
       throw new TypeError('reqOptions should be of type "object"')
     }
-    if (response && !isReadableStream(response)) {
+    if (response && !isReadableStream(response as never)) {
       throw new TypeError('response should be of type "Stream"')
     }
     if (err && !(err instanceof Error)) {
       throw new TypeError('err should be of type "Error"')
     }
-    const logHeaders = (headers) => {
-      _.forEach(headers, (v, k) => {
+    const logHeaders = (headers: Record<string, unknown>) => {
+      if (this.logStream === undefined) return
+      Object.entries(headers).forEach(([v, k]) => {
+        if (this.logStream === undefined) return
         if (k == 'authorization') {
           const redacter = new RegExp('Signature=([0-9a-f]+)')
           v = v.replace(redacter, 'Signature=**REDACTED**')
         }
         this.logStream.write(`${k}: ${v}\n`)
       })
+
       this.logStream.write('\n')
     }
     this.logStream.write(`REQUEST: ${reqOptions.method} ${reqOptions.path}\n`)
@@ -367,14 +412,14 @@ export class Client {
   }
 
   // Enable tracing
-  traceOn(stream) {
+  traceOn(stream?: Writable) {
     if (!stream) stream = process.stdout
     this.logStream = stream
   }
 
   // Disable tracing
   traceOff() {
-    this.logStream = null
+    this.logStream = undefined
   }
 
   // makeRequest is the primitive used by the apis for making S3 requests.
@@ -383,26 +428,26 @@ export class Client {
   // we parse the XML error and call the callback with the error message.
   // A valid region is passed by the calls - listBuckets, makeBucket and
   // getBucketRegion.
-  makeRequest(options, payload, statusCodes, region, returnResponse, cb) {
-    if (!isObject(options)) {
+  makeRequest(options, payload: string | Buffer, statusCodes: number[], region: string, returnResponse: boolean, cb) {
+    if (!isObject(options as never)) {
       throw new TypeError('options should be of type "object"')
     }
-    if (!isString(payload) && !isObject(payload)) {
+    if (!isString(payload as never) && !isObject(payload as never)) {
       // Buffer is of type 'object'
       throw new TypeError('payload should be of type "string" or "Buffer"')
     }
     statusCodes.forEach(statusCode => {
-      if (!isNumber(statusCode)) {
+      if (!isNumber(statusCode as never)) {
         throw new TypeError('statusCode should be of type "number"')
       }
     })
-    if (!isString(region)) {
+    if (!isString(region as never)) {
       throw new TypeError('region should be of type "string"')
     }
-    if (!isBoolean(returnResponse)) {
+    if (!isBoolean(returnResponse as never)) {
       throw new TypeError('returnResponse should be of type "boolean"')
     }
-    if (!isFunction(cb)) {
+    if (!isFunction(cb as never)) {
       throw new TypeError('callback should be of type "function"')
     }
     if (!options.headers) options.headers = {}
@@ -417,28 +462,28 @@ export class Client {
 
   // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
-  makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb) {
-    if (!isObject(options)) {
+  makeRequestStream(options, stream: Stream.Readable, sha256sum: string, statusCodes: number[], region: string, returnResponse: boolean, cb: (err: Error | null) => void) {
+    if (!isObject(options as never)) {
       throw new TypeError('options should be of type "object"')
     }
-    if (!isReadableStream(stream)) {
+    if (!isReadableStream(stream as never)) {
       throw new errors.InvalidArgumentError('stream should be a readable Stream')
     }
-    if (!isString(sha256sum)) {
+    if (!isString(sha256sum as never)) {
       throw new TypeError('sha256sum should be of type "string"')
     }
     statusCodes.forEach(statusCode => {
-      if (!isNumber(statusCode)) {
+      if (!isNumber(statusCode as never)) {
         throw new TypeError('statusCode should be of type "number"')
       }
     })
-    if (!isString(region)) {
+    if (!isString(region as never)) {
       throw new TypeError('region should be of type "string"')
     }
-    if (!isBoolean(returnResponse)) {
+    if (!isBoolean(returnResponse as never)) {
       throw new TypeError('returnResponse should be of type "boolean"')
     }
-    if (!isFunction(cb)) {
+    if (!isFunction(cb as never)) {
       throw new TypeError('callback should be of type "function"')
     }
 
@@ -451,7 +496,7 @@ export class Client {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
-    const _makeRequest = (e, region) => {
+    const _makeRequest = (e: Error | null, region: string) => {
       if (e) return cb(e)
       options.region = region
       const reqOptions = this.getRequestOptions(options)
@@ -504,11 +549,11 @@ export class Client {
   }
 
   // gets the region of the bucket
-  getBucketRegion(bucketName, cb) {
+  getBucketRegion(bucketName: string, cb: (err?: Error | null, region?: string) => void) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
     }
-    if (!isFunction(cb)) {
+    if (!isFunction(cb as never)) {
       throw new TypeError('cb should be of type "function"')
     }
 
@@ -546,12 +591,12 @@ export class Client {
     //   obtained region.
     const pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e, response) => {
+    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e?: Error | null, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           const region = e.Region
           if (!region) return cb(e)
-          this.makeRequest({method, bucketName, query}, '', [200], region, true, (e, response) => {
+          this.makeRequest({method, bucketName, query}, '', [200], region, true, (e?: Error | null, response) => {
             if (e) return cb(e)
             extractRegion(response)
           })
@@ -570,33 +615,33 @@ export class Client {
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
   // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, makeOpts={}, cb) {
+  makeBucket(bucketName: string, region: string, makeOpts={}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     // Backward Compatibility
-    if (isObject(region)) {
+    if (isObject(region as never)) {
       cb= makeOpts
       makeOpts=region
       region = ''
     }
-    if (isFunction(region)) {
+    if (isFunction(region as never)) {
       cb = region
       region = ''
       makeOpts={}
     }
-    if (isFunction(makeOpts)) {
+    if (isFunction(makeOpts as never)) {
       cb=makeOpts
       makeOpts={}
     }
 
-    if (!isString(region)) {
+    if (!isString(region as never)) {
       throw new TypeError('region should be of type "string"')
     }
-    if (!isObject(makeOpts)) {
+    if (!isObject(makeOpts as never)) {
       throw new TypeError('makeOpts should be of type "object"')
     }
-    if (!isFunction(cb)) {
+    if (!isFunction(cb as never)) {
       throw new TypeError('callback should be of type "function"')
     }
 
@@ -635,16 +680,16 @@ export class Client {
 
     if (!region) region = DEFAULT_REGION
 
-    const processWithRetry = (err) =>{
+    const processWithRetry = (err?: Error) =>{
       if (err && (region === '' || region === DEFAULT_REGION)) {
         if (err.code === 'AuthorizationHeaderMalformed' && err.region !== '') {
           // Retry with region returned as part of error
           this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
         } else {
-          return cb && cb(err)
+          return cb?.(err)
         }
       }
-      return cb && cb(err)
+      return cb?.(err)
     }
     this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
   }
@@ -657,7 +702,7 @@ export class Client {
   // `buckets` array element:
   // * `bucket.name` _string_ : bucket name
   // * `bucket.creationDate` _Date_: date when bucket was created
-  listBuckets(cb) {
+  listBuckets(cb: (err?: Error | null, buckets?: Bucket[]) => void) {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
@@ -665,7 +710,7 @@ export class Client {
     this.makeRequest({method}, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) return cb(e)
       const transformer = transformers.getListBucketTransformer()
-      let buckets
+      let buckets: Bucket[] = []
       pipesetup(response, transformer)
         .on('data', result => buckets = result)
         .on('error', e => cb(e))
@@ -860,7 +905,7 @@ export class Client {
       (result, cb) => {
         objStat = result
         // Create any missing top level directories.
-        mkdirp(path.dirname(filePath), cb)
+        fs.mkdir(path.dirname(filePath), { recursive: true }, cb)
       },
       (ignore, cb) => {
         partFile = `${filePath}.${objStat.etag}.part.minio`
@@ -2700,7 +2745,7 @@ export class Client {
    * bucketName _string_
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  removeBucketLifecycle(bucketName, cb) {
+  removeBucketLifecycle(bucketName: string, cb: (err: Error | null) => void) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2714,11 +2759,11 @@ export class Client {
    * lifeCycleConfig _object_ one of the following values: (null or '') to remove the lifecycle configuration. or a valid lifecycle configuration
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  setBucketLifecycle(bucketName, lifeCycleConfig=null, cb) {
+  setBucketLifecycle(bucketName: string, lifeCycleConfig: string | null = null, cb: (err: Error | null) => void) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (_.isEmpty(lifeCycleConfig)) {
+    if (lifeCycleConfig != null && lifeCycleConfig !== '') {
       this.removeBucketLifecycle(bucketName, cb)
     } else {
       this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
@@ -2729,7 +2774,7 @@ export class Client {
    * bucketName _string_
    * `cb(config)` _function_ - callback function with lifecycle configuration as the error argument.
    */
-  getBucketLifecycle(bucketName, cb) {
+  getBucketLifecycle(bucketName: string, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }

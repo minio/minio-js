@@ -60,7 +60,7 @@ export function promisify(fn) {
 // All characters in string which are NOT unreserved should be percent encoded.
 // Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
-export function uriEscape(string) {
+export function uriEscape(string: string): string {
   return string.split('').reduce((acc, elem) => {
     const buf = Buffer.from(elem)
     if (buf.length === 1) {
@@ -88,16 +88,16 @@ export function uriEscape(string) {
   }, '')
 }
 
-export function uriResourceEscape(string) {
+export function uriResourceEscape(string: string): string {
   return uriEscape(string).replace(/%2F/g, '/')
 }
 
-export function getScope(region, date, serviceName='s3') {
+export function getScope(region: string, date: string, serviceName = 's3'): string {
   return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
 }
 
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
-export function isAmazonEndpoint(endpoint) {
+export function isAmazonEndpoint(endpoint: string): boolean {
   return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
@@ -106,7 +106,7 @@ export function isAmazonEndpoint(endpoint) {
 // style if the protocol is 'https:', this is due to SSL wildcard
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
-export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
+export function isVirtualHostStyle(endpoint: string, protocol: string, bucket: string, pathStyle: string): boolean {
   if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
@@ -114,18 +114,18 @@ export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
 }
 
 
-export function isValidIP(ip) {
+export function isValidIP(ip: string): boolean {
   return ipaddr.isValid(ip)
 }
 
 // isValidEndpoint - true if endpoint is valid domain.
-export function isValidEndpoint(endpoint) {
+export function isValidEndpoint(endpoint: string): boolean {
   return isValidDomain(endpoint) || isValidIP(endpoint)
 }
 
 // isValidDomain - true if input host is a valid domain.
-export function isValidDomain(host) {
-  if (!isString(host)) return false
+export function isValidDomain(host: string): boolean {
+  if (!isString(host as never)) return false
   // See RFC 1035, RFC 3696.
   if (host.length === 0 || host.length > 255) {
     return false
@@ -156,7 +156,7 @@ export function isValidDomain(host) {
 
 // Probes contentType using file extensions.
 // For example: probeContentType('file.png') returns 'image/png'.
-export function probeContentType(path) {
+export function probeContentType(path: string): string {
   let contentType = mime.lookup(path)
   if (!contentType) {
     contentType = 'application/octet-stream'
@@ -165,9 +165,9 @@ export function probeContentType(path) {
 }
 
 // isValidPort - is input port valid.
-export function isValidPort(port) {
+export function isValidPort(port: number): boolean {
   // verify if port is a number.
-  if (!isNumber(port)) return false
+  if (!isNumber(port as never)) return false
   // port cannot be negative.
   if (port < 0) return false
   // port '0' is valid and special case return true.
@@ -178,8 +178,8 @@ export function isValidPort(port) {
   return port >= min_port && port <= max_port
 }
 
-export function isValidBucketName(bucket) {
-  if (!isString(bucket)) return false
+export function isValidBucketName(bucket: string): boolean {
+  if (!isString(bucket as never)) return false
 
   // bucket length should be less than and no more than 63
   // characters long.
@@ -203,15 +203,15 @@ export function isValidBucketName(bucket) {
 }
 
 // check if objectName is a valid object name
-export function isValidObjectName(objectName) {
+export function isValidObjectName(objectName: string): boolean {
   if (!isValidPrefix(objectName)) return false
   if (objectName.length === 0) return false
   return true
 }
 
 // check if prefix is valid
-export function isValidPrefix(prefix) {
-  if (!isString(prefix)) return false
+export function isValidPrefix(prefix: string): boolean {
+  if (!isString(prefix as never)) return false
   if (prefix.length > 1024) return false
   return true
 }

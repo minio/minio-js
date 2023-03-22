@@ -23,6 +23,24 @@ export type AssumeRoleProviderOptions = {
 }
 
 class AssumeRoleProvider extends CredentialProvider {
+  private stsEndpoint: string;
+  private accessKey: string;
+  private secretKey: string;
+  private durationSeconds: number;
+  private sessionToken?: string;
+  private policy?: string;
+  private region: string;
+  private roleArn?: string;
+  private roleSessionName?: string;
+  private externalId?: string;
+  private token?: string;
+  private webIdentityToken?: string;
+  private action?: string;
+  private credentials: Credentials | null | undefined
+  private expirySeconds: number | null | undefined
+  private accessExpiredAt: number | null | undefined
+
+
   constructor({
     stsEndpoint,
     accessKey,

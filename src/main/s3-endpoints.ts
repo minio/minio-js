@@ -38,7 +38,7 @@ const awsS3Endpoint: Record<string, string> = {
 
 // getS3Endpoint get relevant endpoint for the region.
 export function getS3Endpoint(region: string) {
-  if (!isString(region)) {
+  if (!isString(region as never)) {
     throw new TypeError(`Invalid region: ${region}`)
   }
   const endpoint: string | undefined = awsS3Endpoint[region]
