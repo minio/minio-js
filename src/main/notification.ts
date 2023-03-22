@@ -45,17 +45,17 @@ class TargetConfig {
   setId(id) {
     this.Id = id
   }
-  addEvent(newevent){
+  addEvent(newevent) {
     if (!this.Event) this.Event = []
     this.Event.push(newevent)
   }
   addFilterSuffix(suffix) {
     if (!this.Filter) this.Filter = {S3Key : {FilterRule:[]}}
-    this.Filter.S3Key.FilterRule.push({Name:"suffix", Value:suffix})
+    this.Filter.S3Key.FilterRule.push({Name:'suffix', Value:suffix})
   }
   addFilterPrefix(prefix) {
     if (!this.Filter) this.Filter = {S3Key : {FilterRule:[]}}
-    this.Filter.S3Key.FilterRule.push({Name:"prefix", Value:prefix})
+    this.Filter.S3Key.FilterRule.push({Name:'prefix', Value:prefix})
   }
 }
 
@@ -84,19 +84,19 @@ export class CloudFunctionConfig extends TargetConfig {
 }
 
 export const buildARN = (partition, service, region, accountId, resource) => {
-  return "arn:" + partition + ":" + service + ":" + region + ":" + accountId + ":" + resource
+  return 'arn:' + partition + ':' + service + ':' + region + ':' + accountId + ':' + resource
 }
 
 
-export const ObjectCreatedAll                      = "s3:ObjectCreated:*"
-export const ObjectCreatedPut                      = "s3:ObjectCreated:Put"
-export const ObjectCreatedPost                     = "s3:ObjectCreated:Post"
-export const ObjectCreatedCopy                     = "s3:ObjectCreated:Copy"
-export const ObjectCreatedCompleteMultipartUpload  = "s3:ObjectCreated:CompleteMultipartUpload"
-export const ObjectRemovedAll                      = "s3:ObjectRemoved:*"
-export const ObjectRemovedDelete                   = "s3:ObjectRemoved:Delete"
-export const ObjectRemovedDeleteMarkerCreated      = "s3:ObjectRemoved:DeleteMarkerCreated"
-export const ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostObject"
+export const ObjectCreatedAll = 's3:ObjectCreated:*'
+export const ObjectCreatedPut = 's3:ObjectCreated:Put'
+export const ObjectCreatedPost = 's3:ObjectCreated:Post'
+export const ObjectCreatedCopy = 's3:ObjectCreated:Copy'
+export const ObjectCreatedCompleteMultipartUpload = 's3:ObjectCreated:CompleteMultipartUpload'
+export const ObjectRemovedAll = 's3:ObjectRemoved:*'
+export const ObjectRemovedDelete = 's3:ObjectRemoved:Delete'
+export const ObjectRemovedDeleteMarkerCreated = 's3:ObjectRemoved:DeleteMarkerCreated'
+export const ObjectReducedRedundancyLostObject = 's3:ReducedRedundancyLostObject'
 
 // Poll for notifications, used in #listenBucketNotification.
 // Listening constitutes repeatedly requesting s3 whether or not any
@@ -132,14 +132,14 @@ export class NotificationPoller extends EventEmitter {
     // Don't continue if we're looping again but are cancelled.
     if (this.ending) return
 
-    let method = 'GET'
-    var queries = []
+    const method = 'GET'
+    const queries = []
     if (this.prefix) {
-      var prefix = uriEscape(this.prefix)
+      const prefix = uriEscape(this.prefix)
       queries.push(`prefix=${prefix}`)
     }
     if (this.suffix) {
-      var suffix = uriEscape(this.suffix)
+      const suffix = uriEscape(this.suffix)
       queries.push(`suffix=${suffix}`)
     }
     if (this.events) {
@@ -147,7 +147,7 @@ export class NotificationPoller extends EventEmitter {
     }
     queries.sort()
 
-    var query = ''
+    let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
@@ -155,7 +155,7 @@ export class NotificationPoller extends EventEmitter {
     this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', [200], region, true, (e, response) => {
       if (e) return this.emit('error', e)
 
-      let transformer = transformers.getNotificationTransformer()
+      const transformer = transformers.getNotificationTransformer()
       pipesetup(response, transformer)
         .on('data', result => {
           // Data is flushed periodically (every 5 seconds), so we should

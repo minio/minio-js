@@ -17,15 +17,15 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 // List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjects('my-bucketname', '', true)
+const objectsStream = s3Client.listObjects('my-bucketname', '', true)
 objectsStream.on('data', function(obj) {
   console.log(obj)
 })
@@ -35,7 +35,7 @@ objectsStream.on('error', function(e) {
 
 
 // List all object versions in bucket my-bucketname.
-var objectsStreamWithVersions = s3Client.listObjects('my-bucketname', '', true, {IncludeVersion:true})
+const objectsStreamWithVersions = s3Client.listObjects('my-bucketname', '', true, {IncludeVersion:true})
 objectsStreamWithVersions.on('data', function(obj) {
   console.log(obj)
 })
@@ -47,18 +47,18 @@ objectsStreamWithVersions.on('error', function(e) {
 // Example to list only the prefixes of a bucket.
 // Non versioned bucket with Prefix listing.
 function listPrefixesOfABucket(buckName) {
-  var objectsStream=s3Client.listObjects(buckName, '', false , {})
-  var counter = 0
+  const objectsStream=s3Client.listObjects(buckName, '', false, {})
+  let counter = 0
   objectsStream.on('data', function (obj) {
-    if(obj.prefix) {
+    if (obj.prefix) {
       counter += 1
     }
   })
-  objectsStream.on('end',()=>{
-    console.log("Non Versioned Prefix Count:", counter)
+  objectsStream.on('end', ()=>{
+    console.log('Non Versioned Prefix Count:', counter)
   })
   objectsStream.on('error', function (e) {
-    console.log("::Error:",e)
+    console.log('::Error:', e)
   })
 
 }

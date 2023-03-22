@@ -18,9 +18,9 @@
 // dummy values, please replace them with original values.
 
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 'localhost',
   port: 9000,
   useSSL: false,
@@ -28,9 +28,9 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-var config = new Minio.NotificationConfig()
-var arn = Minio.buildARN('minio', 'sqs', '','1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const config = new Minio.NotificationConfig()
+const arn = Minio.buildARN('minio', 'sqs', '', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')
@@ -42,6 +42,6 @@ s3Client.setBucketNotification('my-bucketname', config, function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })
 

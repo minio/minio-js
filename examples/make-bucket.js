@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -29,7 +29,7 @@ s3Client.makeBucket('my-bucketname', 'us-west-1', function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 // Create a bucket with object locking enabled.

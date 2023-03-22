@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-objectname and my-bucketname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -27,13 +27,13 @@ var s3Client = new Minio.Client({
 })
 
 // Construct a new postPolicy.
-var policy = s3Client.newPostPolicy()
+const policy = s3Client.newPostPolicy()
 // Set the object name my-objectname.
-policy.setKey("my-objectname")
+policy.setKey('my-objectname')
 // Set the bucket to my-bucketname.
-policy.setBucket("my-bucketname")
+policy.setBucket('my-bucketname')
 
-var expires = new Date
+const expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10) // 10 days
 policy.setExpires(expires)
 
@@ -49,11 +49,11 @@ policy.setUserMetaData({
 
 s3Client.presignedPostPolicy(policy, function(e, data) {
   if (e) return console.log(e)
-  var curl = []
+  const curl = []
   curl.push(`curl ${data.postURL}`)
-  for (var key in data.formData) {
+  for (const key in data.formData) {
     if (data.formData.hasOwnProperty(key)) {
-      var value = data.formData[key]
+      const value = data.formData[key]
       curl.push(`-F ${key}=${value}`)
     }
   }

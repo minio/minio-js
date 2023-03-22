@@ -18,9 +18,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
 // my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -30,23 +30,23 @@ s3Client.removeObject('my-bucketname', 'my-objectname', function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 // Remove an object with name 'my-objectname' and a versionId.
-s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId"}, function(e) {
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:'my-versionId'}, function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 // Remove an object with name 'my-objectname' and a versionId with object renetion override with governanceBypass:true.
-s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true}, function(e) {
+s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:'my-versionId', governanceBypass:true}, function(e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 // force delete object/prefix
@@ -54,5 +54,5 @@ s3Client.removeObject('force-del-test', 'test/', {forceDelete:true}, function(e)
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })

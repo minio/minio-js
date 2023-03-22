@@ -18,9 +18,9 @@
 // dummy values, please replace them with original values.
 
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -31,6 +31,6 @@ s3Client.bucketExists('my-bucketname', function(err, exists) {
     return console.log(err)
   }
   if (exists) {
-    console.log("Bucket exists.")
+    console.log('Bucket exists.')
   }
 })

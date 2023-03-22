@@ -17,39 +17,39 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
 
-var Minio = require("../dist/main/minio")
-var Helpers = require("../dist/main/helpers")
+const Minio = require('../dist/main/minio')
+const Helpers = require('../dist/main/helpers')
 
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
-const bucketName = "source-bucket"
+const bucketName = 'source-bucket'
 
 const sourceList = [new Helpers.CopySourceOptions( {
   Bucket:     bucketName,
-  Object:     "parta",
+  Object:     'parta'
   // other options if any.
-}),new Helpers.CopySourceOptions({
+}), new Helpers.CopySourceOptions({
   Bucket:     bucketName,
-  Object:     "partb",
+  Object:     'partb'
   // other options if any.
   //    VersionID:""
-}),new Helpers.CopySourceOptions({
+}), new Helpers.CopySourceOptions({
   Bucket:     bucketName,
-  Object:     "partc",
+  Object:     'partc'
   
-}),new Helpers.CopySourceOptions({
+}), new Helpers.CopySourceOptions({
   Bucket:     bucketName,
-  Object:     "partd",
+  Object:     'partd'
 })]
 
 const destOption = new Helpers.CopyDestinationOptions({
   Bucket:     bucketName,
-  Object:     "100MB.zip",
+  Object:     '100MB.zip'
   /** Other possible options */
   /* Encryption:{
         type:Helpers.ENCRYPTION_TYPES.KMS,
@@ -66,10 +66,10 @@ const destOption = new Helpers.CopyDestinationOptions({
 })
 
 
-const composePromise = s3Client.composeObject(destOption,sourceList)
+const composePromise = s3Client.composeObject(destOption, sourceList)
 composePromise.then((result) => {
-  console.log("ComposeObject Success..." , result)
+  console.log('ComposeObject Success...', result)
 })
   .catch((e)=>{
-    console.log("composeObject Promise Error",e)
+    console.log('composeObject Promise Error', e)
   })

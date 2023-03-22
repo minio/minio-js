@@ -18,9 +18,9 @@
 // dummy values, please replace them with original values.
 
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -31,6 +31,6 @@ s3Client.getBucketNotification('my-bucketname', function(e, bucketNotification) 
     return console.log(e)
   }
   console.log(bucketNotification)
-  console.log("True")
+  console.log('True')
 })
 

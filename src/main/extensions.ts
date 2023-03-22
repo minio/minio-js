@@ -68,11 +68,11 @@ export default class extensions {
       throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
-    var delimiter = recursive ? '' : '/'
-    var continuationToken = ''
-    var objects = []
-    var ended = false
-    var readStream = Stream.Readable({objectMode: true})
+    const delimiter = recursive ? '' : '/'
+    let continuationToken = ''
+    let objects = []
+    let ended = false
+    const readStream = Stream.Readable({objectMode: true})
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
@@ -126,15 +126,15 @@ export default class extensions {
     if (!isString(startAfter)) {
       throw new TypeError('startAfter should be of type "string"')
     }
-    var queries = []
+    const queries = []
 
     // Call for listing objects v2 API
-    queries.push(`list-type=2`)
-    queries.push(`encoding-type=url`)
+    queries.push('list-type=2')
+    queries.push('encoding-type=url')
     // escape every value in query string, except maxKeys
     queries.push(`prefix=${uriEscape(prefix)}`)
     queries.push(`delimiter=${uriEscape(delimiter)}`)
-    queries.push(`metadata=true`)
+    queries.push('metadata=true')
 
     if (continuationToken) {
       continuationToken = uriEscape(continuationToken)
@@ -153,12 +153,12 @@ export default class extensions {
       queries.push(`max-keys=${maxKeys}`)
     }
     queries.sort()
-    var query = ''
+    let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
-    var method = 'GET'
-    var transformer = transformers.getListObjectsV2WithMetadataTransformer()
+    const method = 'GET'
+    const transformer = transformers.getListObjectsV2WithMetadataTransformer()
     this.client.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
       if (e) return transformer.emit('error', e)
       pipesetup(response, transformer)

@@ -28,8 +28,8 @@ import * as errors from './errors.js'
 // parser function is passed upon reaching the 'end' of the stream,
 // `parser(concatenated_data)` will be emitted.
 export function getConcater(parser, emitError) {
-  var objectMode = false
-  var bufs = []
+  let objectMode = false
+  const bufs = []
 
   if (parser && !isFunction(parser)) {
     throw new TypeError('parser should be of type "function"')
@@ -63,8 +63,8 @@ export function getConcater(parser, emitError) {
 
 // Generates an Error object depending on http statusCode and XML body
 export function getErrorTransformer(response) {
-  var statusCode = response.statusCode
-  var code, message
+  const statusCode = response.statusCode
+  let code, message
   if (statusCode === 301) {
     code = 'MovedPermanently'
     message = 'Moved Permanently'
@@ -88,7 +88,7 @@ export function getErrorTransformer(response) {
     message = `${statusCode}`
   }
 
-  var headerInfo = {}
+  const headerInfo = {}
   // A value created by S3 compatible server that uniquely identifies
   // the request.
   headerInfo.amzRequestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
@@ -99,9 +99,9 @@ export function getErrorTransformer(response) {
   headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
 
   return getConcater(xmlString => {
-    let getError = () => {
+    const getError = () => {
       // Message should be instantiated for each S3Errors.
-      var e = new errors.S3Error(message)
+      const e = new errors.S3Error(message)
       // S3 Error code.
       e.code = code
       _.each(headerInfo, (value, key) => {
@@ -124,8 +124,8 @@ export function getErrorTransformer(response) {
 
 // A through stream that calculates md5sum and sha256sum
 export function getHashSummer(enableSHA256) {
-  var md5 = Crypto.createHash('md5')
-  var sha256 = Crypto.createHash('sha256')
+  const md5 = Crypto.createHash('md5')
+  const sha256 = Crypto.createHash('sha256')
 
   return Through2.obj(function(chunk, enc, cb) {
     
@@ -136,14 +136,14 @@ export function getHashSummer(enableSHA256) {
     }
     cb()
   }, function(cb) {
-    var md5sum = ''
-    var sha256sum = ''
+    let md5sum = ''
+    let sha256sum = ''
     if (enableSHA256) {
       sha256sum = sha256.digest('hex')
     } else {
       md5sum = md5.digest('base64')
     }
-    var hashData = {md5sum, sha256sum}
+    const hashData = {md5sum, sha256sum}
     this.push(hashData)
     this.push(null)
     cb()
@@ -214,7 +214,7 @@ export function getNotificationTransformer() {
   return new JSONParser()
 }
 
-export function  bucketVersioningTransformer(){
+export function bucketVersioningTransformer() {
   return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
 
@@ -222,33 +222,33 @@ export function getTagsTransformer() {
   return getConcater( xmlParsers.parseTagging)
 }
 
-export function  lifecycleTransformer(){
+export function lifecycleTransformer() {
   return getConcater(xmlParsers.parseLifecycleConfig)
 }
 
 
-export function  objectLockTransformer(){
+export function objectLockTransformer() {
   return getConcater(xmlParsers.parseObjectLockConfig)
 }
 
-export function  objectRetentionTransformer(){
+export function objectRetentionTransformer() {
   return getConcater(xmlParsers.parseObjectRetentionConfig)
 }
-export function  bucketEncryptionTransformer(){
+export function bucketEncryptionTransformer() {
   return getConcater(xmlParsers.parseBucketEncryptionConfig)
 }
 
-export function  replicationConfigTransformer(){
+export function replicationConfigTransformer() {
   return getConcater(xmlParsers.parseReplicationConfig)
 }
 
-export function  objectLegalHoldTransformer(){
+export function objectLegalHoldTransformer() {
   return getConcater(xmlParsers.parseObjectLegalHoldConfig)
 }
 
-export function  uploadPartTransformer(){
+export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }
-export function  selectObjectContentTransformer(){
-  return  getConcater()
+export function selectObjectContentTransformer() {
+  return getConcater()
 }

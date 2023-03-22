@@ -17,16 +17,16 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 
-s3Client.getObjectLockConfig('my-bucketname', function (err,lockConfig){
+s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig) {
   if (err) {
     return console.log(err)
   }

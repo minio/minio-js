@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+const Minio = require('minio')
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY'
@@ -44,7 +44,7 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-vers
 // Promise based version:
 const objectLegalHoldPromise = s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' })
 objectLegalHoldPromise.then((data) => {
-  console.log("Success...", data)
+  console.log('Success...', data)
 })
   .catch((e)=>{
     // Print only the error message.  if called on an object without object lock config.

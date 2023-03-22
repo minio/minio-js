@@ -1,4 +1,4 @@
-import { Buffer } from "buffer";
+import { Buffer } from 'buffer'
 
 let CRC_TABLE: Int32Array | number[] = [
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419,
@@ -53,63 +53,63 @@ let CRC_TABLE: Int32Array | number[] = [
   0xcdd70693, 0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8,
   0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b,
   0x2d02ef8d
-];
+]
 
 if (typeof Int32Array !== 'undefined') {
-  CRC_TABLE = new Int32Array(CRC_TABLE);
+  CRC_TABLE = new Int32Array(CRC_TABLE)
 }
 
 function newEmptyBuffer(length: number) {
-  var buffer = Buffer.alloc(length);
-  buffer.fill(0x00);
-  return buffer;
+  const buffer = Buffer.alloc(length)
+  buffer.fill(0x00)
+  return buffer
 }
 
 function ensureBuffer(input: Buffer | string | number) {
   if (Buffer.isBuffer(input)) {
-    return input;
+    return input
   }
 
   const hasNewBufferAPI =
-      typeof Buffer.alloc === "function" &&
-      typeof Buffer.from === "function";
+      typeof Buffer.alloc === 'function' &&
+      typeof Buffer.from === 'function'
 
-  if (typeof input === "number") {
-    return hasNewBufferAPI ? Buffer.alloc(input) : newEmptyBuffer(input);
-  } else if (typeof input === "string") {
-    return hasNewBufferAPI ? Buffer.from(input) : new Buffer(input);
+  if (typeof input === 'number') {
+    return hasNewBufferAPI ? Buffer.alloc(input) : newEmptyBuffer(input)
+  } else if (typeof input === 'string') {
+    return hasNewBufferAPI ? Buffer.from(input) : new Buffer(input)
   } else {
-    throw new Error("input must be buffer, number, or string, received " +
-                    typeof input);
+    throw new Error('input must be buffer, number, or string, received ' +
+                    typeof input)
   }
 }
 
 function bufferizeInt(num: number) {
-  const tmp = ensureBuffer(4);
-  tmp.writeInt32BE(num, 0);
-  return tmp;
+  const tmp = ensureBuffer(4)
+  tmp.writeInt32BE(num, 0)
+  return tmp
 }
 
 function _crc32(buf: string | Buffer, previous?: Buffer | number): number {
-  buf = ensureBuffer(buf);
+  buf = ensureBuffer(buf)
   if (Buffer.isBuffer(previous)) {
-    previous = previous.readUInt32BE(0);
+    previous = previous.readUInt32BE(0)
   }
-  let crc = ~~previous ^ -1;
+  let crc = ~~previous ^ -1
   for (let n = 0; n < buf.length; n++) {
-    crc = CRC_TABLE[(crc ^ buf[n]) & 0xff] ^ (crc >>> 8);
+    crc = CRC_TABLE[(crc ^ buf[n]) & 0xff] ^ (crc >>> 8)
   }
-  return (crc ^ -1);
+  return crc ^ -1
 }
 
 function crc32() {
-  return bufferizeInt(_crc32.apply(null, arguments));
+  return bufferizeInt(_crc32.apply(null, arguments))
 }
 crc32.signed = function () {
-  return _crc32.apply(null, arguments);
-};
+  return _crc32.apply(null, arguments)
+}
 crc32.unsigned = function () {
-  return _crc32.apply(null, arguments) >>> 0;
-};
+  return _crc32.apply(null, arguments) >>> 0
+}
 
-export default crc32;
+export default crc32

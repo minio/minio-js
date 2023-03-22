@@ -50,7 +50,7 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
   }
   const headersArray = signedHeaders.reduce((acc, i) => {
     // Trim spaces from the value (required by V4 spec)
-    const val = `${headers[i]}`.replace(/ +/g, " ")
+    const val = `${headers[i]}`.replace(/ +/g, ' ')
     acc.push(`${i.toLowerCase()}:${val}`)
     return acc
   }, [])
@@ -78,7 +78,7 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
 }
 
 // generate a credential string
-function getCredential(accessKey, region, requestDate,serviceName="s3") {
+function getCredential(accessKey, region, requestDate, serviceName='s3') {
   if (!isString(accessKey)) {
     throw new TypeError('accessKey should be of type "string"')
   }
@@ -88,7 +88,7 @@ function getCredential(accessKey, region, requestDate,serviceName="s3") {
   if (!isObject(requestDate)) {
     throw new TypeError('requestDate should be of type "object"')
   }
-  return `${accessKey}/${getScope(region, requestDate,serviceName)}`
+  return `${accessKey}/${getScope(region, requestDate, serviceName)}`
 }
 
 // Returns signed headers array - alphabetically sorted
@@ -130,7 +130,7 @@ function getSignedHeaders(headers) {
 }
 
 // returns the key used for calculating signature
-function getSigningKey(date, region, secretKey,serviceName="s3") {
+function getSigningKey(date, region, secretKey, serviceName='s3') {
   if (!isObject(date)) {
     throw new TypeError('date should be of type "object"')
   }
@@ -141,14 +141,14 @@ function getSigningKey(date, region, secretKey,serviceName="s3") {
     throw new TypeError('secretKey should be of type "string"')
   }
   const dateLine = makeDateShort(date)
-  let hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest(),
+  const hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey).update(dateLine).digest(),
     hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest(),
     hmac3 = Crypto.createHmac('sha256', hmac2).update(serviceName).digest()
   return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest()
 }
 
 // returns the string that needs to be signed
-function getStringToSign(canonicalRequest, requestDate, region,serviceName="s3") {
+function getStringToSign(canonicalRequest, requestDate, region, serviceName='s3') {
   if (!isString(canonicalRequest)) {
     throw new TypeError('canonicalRequest should be of type "string"')
   }
@@ -188,7 +188,7 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
 }
 
 // Returns the authorization header
-export function signV4(request, accessKey, secretKey, region, requestDate, serviceName="s3") {
+export function signV4(request, accessKey, secretKey, region, requestDate, serviceName='s3') {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -214,17 +214,17 @@ export function signV4(request, accessKey, secretKey, region, requestDate, servi
   const signedHeaders = getSignedHeaders(request.headers)
   const canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers,
                                                signedHeaders, sha256sum)
-  const serviceIdentifier = serviceName || "s3"
-  const stringToSign = getStringToSign(canonicalRequest, requestDate, region,serviceIdentifier)
-  const signingKey = getSigningKey(requestDate, region, secretKey,serviceIdentifier)
+  const serviceIdentifier = serviceName || 's3'
+  const stringToSign = getStringToSign(canonicalRequest, requestDate, region, serviceIdentifier)
+  const signingKey = getSigningKey(requestDate, region, secretKey, serviceIdentifier)
   const credential = getCredential(accessKey, region, requestDate, serviceIdentifier)
   const signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
 
   return `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=${signature}`
 }
 
-export function signV4ByServiceName( request, accessKey, secretKey, region, requestDate, serviceName="s3") {
-  return signV4(request, accessKey, secretKey, region,requestDate, serviceName)
+export function signV4ByServiceName( request, accessKey, secretKey, region, requestDate, serviceName='s3') {
+  return signV4(request, accessKey, secretKey, region, requestDate, serviceName)
 }
 // returns a presigned URL string
 export function presignSignatureV4(request, accessKey, secretKey, sessionToken, region, requestDate, expires) {

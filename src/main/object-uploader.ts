@@ -17,7 +17,7 @@
 import { Transform } from 'stream'
 import Crypto from 'crypto'
 import * as querystring from 'query-string'
-import { getVersionId, sanitizeETag } from "./helpers"
+import { getVersionId, sanitizeETag } from './helpers'
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
@@ -59,8 +59,8 @@ export default class ObjectUploader extends Transform {
 
   _transform(chunk, encoding, callback) {
     this.emptyStream = false
-    let method = 'PUT'
-    let headers = {'Content-Length': chunk.length}
+    const method = 'PUT'
+    const headers = {'Content-Length': chunk.length}
     let md5digest = ''
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
@@ -74,7 +74,7 @@ export default class ObjectUploader extends Transform {
     // stream.
     if (this.partNumber == 1 && chunk.length < this.partSize) {
       // PUT the chunk in a single request — use an empty query.
-      let options = {
+      const options = {
         method,
         // Set user metadata as this is not a multipart upload
         headers: Object.assign({}, this.metaData, headers),
@@ -85,7 +85,7 @@ export default class ObjectUploader extends Transform {
 
       this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
         if (err) return callback(err)
-        let result = {
+        const result = {
           etag: sanitizeETag(response.headers.etag),
           versionId :getVersionId(response.headers)
         }
@@ -156,15 +156,15 @@ export default class ObjectUploader extends Transform {
     }
 
     // Continue uploading various parts if we have initiated multipart upload.
-    let partNumber = this.partNumber++
+    const partNumber = this.partNumber++
 
     // Check to see if we've already uploaded this chunk. If the hash sums match,
     // we can skip to the next chunk.
     if (this.oldParts) {
-      let oldPart = this.oldParts[partNumber]
+      const oldPart = this.oldParts[partNumber]
 
       // Calulcate the md5 hash, if it has not already been calculated.
-      if(!md5digest) {
+      if (!md5digest) {
         md5digest = Crypto.createHash('md5').update(chunk).digest()
       }
 
@@ -178,12 +178,12 @@ export default class ObjectUploader extends Transform {
     }
 
     // Write the chunk with an uploader.
-    let query = querystring.stringify({
+    const query = querystring.stringify({
       partNumber: partNumber,
       uploadId: this.id
     })
 
-    let options = {
+    const options = {
       method, query, headers,
       bucketName: this.bucketName,
       objectName: this.objectName
@@ -209,9 +209,9 @@ export default class ObjectUploader extends Transform {
 
   _flush(callback) {
     if (this.emptyStream) {
-      let method = 'PUT'
-      let headers = Object.assign({}, this.metaData, {'Content-Length': 0})
-      let options = {
+      const method = 'PUT'
+      const headers = Object.assign({}, this.metaData, {'Content-Length': 0})
+      const options = {
         method, headers,
         query: '',
         bucketName: this.bucketName,
@@ -221,7 +221,7 @@ export default class ObjectUploader extends Transform {
       this.client.makeRequest(options, '', [200], '', true, (err, response) => {
         if (err) return callback(err)
 
-        let result = {
+        const result = {
           etag: sanitizeETag(response.headers.etag),
           versionId: getVersionId(response.headers)
         }

@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-import stream from 'stream'
+import stream, { Stream } from 'stream'
 import mime from 'mime-types'
-var Crypto = require('crypto-browserify')
-import fxp from "fast-xml-parser"
+const Crypto = require('crypto-browserify')
+import fxp from 'fast-xml-parser'
 const ipaddr = require('ipaddr.js')
 
 const fs = require('fs')
-const path = require("path")
+const path = require('path')
 import _ from 'lodash'
 import * as errors from './errors.js'
 import querystring from 'query-string'
 
 const isBrowser =
-  typeof window !== "undefined" && typeof window.document !== "undefined"
+  typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
 export function promisify(fn) {
   return function() {
     // If the last argument is a function, assume its the callback.
-    let callback = arguments[arguments.length - 1]
+    const callback = arguments[arguments.length - 1]
 
     // If the callback is given, don't promisify, just pass straight in.
     if (typeof callback === 'function') return fn.apply(this, arguments)
 
     // Otherwise, create a new set of arguments, and wrap
     // it in a promise.
-    let args = [...arguments]
+    const args = [...arguments]
 
     return new Promise((resolve, reject) => {
       // Add the callback function.
@@ -62,7 +62,7 @@ export function promisify(fn) {
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
 export function uriEscape(string) {
   return string.split('').reduce((acc, elem) => {
-    let buf = Buffer.from(elem)
+    const buf = Buffer.from(elem)
     if (buf.length === 1) {
       // length 1 indicates that elem is not a unicode character.
       // Check if it is an unreserved characer.
@@ -81,8 +81,8 @@ export function uriEscape(string) {
     }
     // elem needs encoding - i.e elem should be encoded if it's not unreserved
     // character or if it's a unicode character.
-    for (var i = 0; i < buf.length; i++) {
-      acc = acc + "%" + buf[i].toString(16).toUpperCase()
+    for (let i = 0; i < buf.length; i++) {
+      acc = acc + '%' + buf[i].toString(16).toUpperCase()
     }
     return acc
   }, '')
@@ -92,7 +92,7 @@ export function uriResourceEscape(string) {
   return uriEscape(string).replace(/%2F/g, '/')
 }
 
-export function getScope(region, date, serviceName="s3") {
+export function getScope(region, date, serviceName='s3') {
   return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
 }
 
@@ -142,9 +142,9 @@ export function isValidDomain(host) {
   if (host[0] === '.') {
     return false
   }
-  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
+  const alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
   // All non alphanumeric characters are invalid.
-  for (var i in alphaNumerics) {
+  for (const i in alphaNumerics) {
     if (host.indexOf(alphaNumerics[i]) > -1) {
       return false
     }
@@ -172,8 +172,8 @@ export function isValidPort(port) {
   if (port < 0) return false
   // port '0' is valid and special case return true.
   if (port === 0) return true
-  var min_port = 1
-  var max_port = 65535
+  const min_port = 1
+  const max_port = 65535
   // Verify if port is in range.
   return port >= min_port && port <= max_port
 }
@@ -217,77 +217,77 @@ export function isValidPrefix(prefix) {
 }
 
 // check if typeof arg number
-export function isNumber(arg) {
-  return typeof(arg) === 'number'
+export function isNumber(arg: never) {
+  return typeof arg === 'number'
 }
 
 // check if typeof arg function
-export function isFunction(arg) {
-  return typeof(arg) === 'function'
+export function isFunction(arg: never) {
+  return typeof arg === 'function'
 }
 
 // check if typeof arg string
-export function isString(arg) {
-  return typeof(arg) === 'string'
+export function isString(arg: never) {
+  return typeof arg === 'string'
 }
 
 // check if typeof arg object
-export function isObject(arg) {
-  return typeof(arg) === 'object' && arg !== null
+export function isObject(arg: never) {
+  return typeof arg === 'object' && arg !== null
 }
 
 // check if object is readable stream
-export function isReadableStream(arg) {
+export function isReadableStream(arg: never) {
   return isObject(arg) && isFunction(arg._read)
 }
 
 // check if arg is boolean
-export function isBoolean(arg) {
-  return typeof(arg) === 'boolean'
+export function isBoolean(arg: never) {
+  return typeof arg === 'boolean'
 }
 
 // check if arg is array
-export function isArray(arg) {
+export function isArray(arg: never) {
   return Array.isArray(arg)
 }
 
 // check if arg is a valid date
-export function isValidDate(arg) {
+export function isValidDate(arg: unknown) {
   return arg instanceof Date && !isNaN(arg)
 }
 
 // Create a Date string with format:
 // 'YYYYMMDDTHHmmss' + Z
-export function makeDateLong(date) {
-  date = date || new Date()
+export function makeDateLong(date?: Date) {
+  const _date = date || new Date()
 
   // Gives format like: '2017-08-07T16:28:59.889Z'
-  date = date.toISOString()
+  const _dateString = _date.toISOString()
 
-  return date.slice(0, 4) +
-    date.slice(5, 7) +
-    date.slice(8, 13) +
-    date.slice(14, 16) +
-    date.slice(17, 19) + 'Z'
+  return _dateString.slice(0, 4) +
+    _dateString.slice(5, 7) +
+    _dateString.slice(8, 13) +
+    _dateString.slice(14, 16) +
+    _dateString.slice(17, 19) + 'Z'
 }
 
 // Create a Date string with format:
 // 'YYYYMMDD'
-export function makeDateShort(date) {
-  date = date || new Date()
+export function makeDateShort(date?: Date) {
+  const _date = date || new Date()
 
   // Gives format like: '2017-08-07T16:28:59.889Z'
-  date = date.toISOString()
+  const dateString = _date.toISOString()
 
-  return date.slice(0, 4) +
-    date.slice(5, 7) +
-    date.slice(8, 10)
+  return dateString.slice(0, 4) +
+    dateString.slice(5, 7) +
+    dateString.slice(8, 10)
 }
 
 // pipesetup sets up pipe() from left to right os streams array
 // pipesetup will also make sure that error emitted at any of the upstream Stream
 // will be emitted at the last stream. This makes error handling simple
-export function pipesetup(...streams) {
+export function pipesetup(...streams: Stream[]) {
   return streams.reduce((src, dst) => {
     src.on('error', err => dst.emit('error', err))
     return src.pipe(dst)
@@ -295,8 +295,8 @@ export function pipesetup(...streams) {
 }
 
 // return a Readable stream that emits data
-export function readableStream(data) {
-  var s = new stream.Readable()
+export function readableStream(data: any) {
+  const s = new stream.Readable()
   s._read = () => {}
   s.push(data)
   s.push(null)
@@ -306,24 +306,24 @@ export function readableStream(data) {
 // Process metadata to insert appropriate value to `content-type` attribute
 export function insertContentType(metaData, filePath) {
   // check if content-type attribute present in metaData
-  for (var key in metaData) {
+  for (const key in metaData) {
     if (key.toLowerCase() === 'content-type') {
       return metaData
     }
   }
   // if `content-type` attribute is not present in metadata,
   // then infer it from the extension in filePath
-  var newMetadata = Object.assign({}, metaData)
+  const newMetadata = Object.assign({}, metaData)
   newMetadata['content-type'] = probeContentType(filePath)
   return newMetadata
 }
 
 // Function prepends metadata with the appropriate prefix if it is not already on
 export function prependXAMZMeta(metaData) {
-  var newMetadata = Object.assign({}, metaData)
-  for (var key in metaData) {
-    if(!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
-      newMetadata["X-Amz-Meta-" + key ] = newMetadata[key]
+  const newMetadata = Object.assign({}, metaData)
+  for (const key in metaData) {
+    if (!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
+      newMetadata['X-Amz-Meta-' + key ] = newMetadata[key]
       delete newMetadata[key]
     }
   }
@@ -331,32 +331,32 @@ export function prependXAMZMeta(metaData) {
 }
 
 // Checks if it is a valid header according to the AmazonS3 API
-export function isAmzHeader(key) {
-  var temp = key.toLowerCase()
-  return temp.startsWith("x-amz-meta-") || temp === "x-amz-acl" || temp.startsWith("x-amz-server-side-encryption-") || temp === "x-amz-server-side-encryption"
+export function isAmzHeader(key: string) {
+  const temp = key.toLowerCase()
+  return temp.startsWith('x-amz-meta-') || temp === 'x-amz-acl' || temp.startsWith('x-amz-server-side-encryption-') || temp === 'x-amz-server-side-encryption'
 }
 // Checks if it is a supported Header
-export function isSupportedHeader(key) {
-  var supported_headers = [
+export function isSupportedHeader(key: string) {
+  const supported_headers = [
     'content-type',
     'cache-control',
     'content-encoding',
     'content-disposition',
     'content-language',
     'x-amz-website-redirect-location']
-  return (supported_headers.indexOf(key.toLowerCase()) > -1)
+  return supported_headers.indexOf(key.toLowerCase()) > -1
 }
 // Checks if it is a storage header
-export function isStorageclassHeader(key) {
-  return key.toLowerCase() === "x-amz-storage-class"
+export function isStorageclassHeader(key: string) {
+  return key.toLowerCase() === 'x-amz-storage-class'
 }
 
 export function extractMetadata(metaData) {
-  var newMetadata = {}
-  for (var key in metaData) {
-    if(isSupportedHeader(key) || isStorageclassHeader(key) || isAmzHeader(key)) {
-      if(key.toLowerCase().startsWith("x-amz-meta-")) {
-        newMetadata[key.slice(11,key.length)] = metaData[key]
+  const newMetadata = {}
+  for (const key in metaData) {
+    if (isSupportedHeader(key) || isStorageclassHeader(key) || isAmzHeader(key)) {
+      if (key.toLowerCase().startsWith('x-amz-meta-')) {
+        newMetadata[key.slice(11, key.length)] = metaData[key]
       } else {
         newMetadata[key] = metaData[key]
       }
@@ -366,35 +366,35 @@ export function extractMetadata(metaData) {
 }
 
 
-export function getVersionId(headers={}){
-  const versionIdValue = headers["x-amz-version-id"]
-  return  versionIdValue || null
+export function getVersionId(headers={}) {
+  const versionIdValue = headers['x-amz-version-id']
+  return versionIdValue || null
 }
 
-export function getSourceVersionId(headers={}){
-  const sourceVersionId = headers["x-amz-copy-source-version-id"]
-  return  sourceVersionId || null
+export function getSourceVersionId(headers={}) {
+  const sourceVersionId = headers['x-amz-copy-source-version-id']
+  return sourceVersionId || null
 }
 
 export function sanitizeETag(etag='') {
-  var replaceChars = {'"':'','&quot;':'','&#34;':'','&QUOT;':'','&#x00022':''}
+  const replaceChars = {'"':'', '&quot;':'', '&#34;':'', '&QUOT;':'', '&#x00022':''}
   return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, m => replaceChars[m])
     
 }
 
 export const RETENTION_MODES ={
-  GOVERNANCE:"GOVERNANCE",
-  COMPLIANCE:"COMPLIANCE"
+  GOVERNANCE: 'GOVERNANCE',
+  COMPLIANCE: 'COMPLIANCE'
 }
 
 export const RETENTION_VALIDITY_UNITS={
-  DAYS:"Days",
-  YEARS:"Years"
+  DAYS:'Days',
+  YEARS:'Years'
 }
 
 export const LEGAL_HOLD_STATUS={
-  ENABLED:"ON",
-  DISABLED:"OFF"
+  ENABLED:'ON',
+  DISABLED:'OFF'
 }
 
 const objectToBuffer = (payload) =>{
@@ -426,7 +426,7 @@ export const toArray = (param) => {
 
 export const sanitizeObjectKey=(objectName)=>{
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
-  let asStrName = (objectName ? objectName.toString() : "").replace(/\+/g, ' ')
+  const asStrName = (objectName ? objectName.toString() : '').replace(/\+/g, ' ')
   const sanitizedName = decodeURIComponent(asStrName)
   return sanitizedName
 }
@@ -452,18 +452,18 @@ export const PART_CONSTRAINTS ={
 
 export const ENCRYPTION_TYPES ={
   // SSEC represents server-side-encryption with customer provided keys
-  SSEC: "SSE-C",
+  SSEC: 'SSE-C',
   // KMS represents server-side-encryption with managed keys
-  KMS: "KMS"
+  KMS: 'KMS'
 
 }
-const GENERIC_SSE_HEADER="X-Amz-Server-Side-Encryption"
+const GENERIC_SSE_HEADER='X-Amz-Server-Side-Encryption'
 
 const ENCRYPTION_HEADERS ={
   // sseGenericHeader is the AWS SSE header used for SSE-S3 and SSE-KMS.
   sseGenericHeader : GENERIC_SSE_HEADER,
   // sseKmsKeyID is the AWS SSE-KMS key id.
-  sseKmsKeyID : GENERIC_SSE_HEADER + "-Aws-Kms-Key-Id",
+  sseKmsKeyID : GENERIC_SSE_HEADER + '-Aws-Kms-Key-Id'
 }
 
 /**
@@ -474,12 +474,12 @@ const ENCRYPTION_HEADERS ={
 function getEncryptionHeaders (encConfig) {
   const encType = encConfig.type
   const encHeaders = {}
-  if(!_.isEmpty(encType) ){
-    if( encType === ENCRYPTION_TYPES.SSEC) {
+  if (!_.isEmpty(encType) ) {
+    if ( encType === ENCRYPTION_TYPES.SSEC) {
       return {
-        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: "AES256"
+        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: 'AES256'
       }
-    } else if(encType === ENCRYPTION_TYPES.KMS){
+    } else if (encType === ENCRYPTION_TYPES.KMS) {
       return {
         [ENCRYPTION_HEADERS.sseGenericHeader]:encConfig.SSEAlgorithm,
         [ENCRYPTION_HEADERS.sseKmsKeyID]:encConfig.KMSMasterKeyID
@@ -506,17 +506,17 @@ export class CopySourceOptions {
      * @param Encryption
      */
   constructor({
-    Bucket="",
-    Object="",
-    VersionID="",
-    MatchETag="",
-    NoMatchETag="",
+    Bucket='',
+    Object='',
+    VersionID='',
+    MatchETag='',
+    NoMatchETag='',
     MatchModifiedSince=null,
     MatchUnmodifiedSince=null,
     MatchRange=false,
     Start=0,
     End=0,
-    Encryption= {},
+    Encryption= {}
   }={}) {
 
     this.Bucket=Bucket
@@ -532,7 +532,7 @@ export class CopySourceOptions {
     this.Encryption=Encryption
   }
 
-  validate(){
+  validate() {
     if (!isValidBucketName(this.Bucket)) {
       throw new errors.InvalidBucketNameError('Invalid Source bucket name: ' + this.Bucket)
     }
@@ -540,34 +540,34 @@ export class CopySourceOptions {
       throw new errors.InvalidObjectNameError(`Invalid Source object name: ${this.Object}`)
     }
     if (this.MatchRange && (this.Start !==-1 && this.End !==-1) && this.Start > this.End || this.Start < 0) {
-      throw  new errors.InvalidObjectNameError("Source start must be non-negative, and start must be at most end.")
-    } else if(this.MatchRange&& !isNumber(this.Start) || !isNumber(this.End) ){
-      throw  new errors.InvalidObjectNameError("MatchRange is specified. But  Invalid Start and End values are specified. ")
+      throw new errors.InvalidObjectNameError('Source start must be non-negative, and start must be at most end.')
+    } else if (this.MatchRange&& !isNumber(this.Start) || !isNumber(this.End) ) {
+      throw new errors.InvalidObjectNameError('MatchRange is specified. But  Invalid Start and End values are specified. ')
     }
 
     return true
   }
 
-  getHeaders (){
-    let headerOptions ={}
-    headerOptions["x-amz-copy-source"]=encodeURI(this.Bucket+"/"+this.Object)
+  getHeaders () {
+    const headerOptions ={}
+    headerOptions['x-amz-copy-source']=encodeURI(this.Bucket+'/'+this.Object)
 
     if (!_.isEmpty(this.VersionID)) {
-      headerOptions["x-amz-copy-source"]=encodeURI(this.Bucket+"/"+this.Object)+"?versionId="+this.VersionID
+      headerOptions['x-amz-copy-source']=encodeURI(this.Bucket+'/'+this.Object)+'?versionId='+this.VersionID
     }
 
     if (!_.isEmpty(this.MatchETag)) {
-      headerOptions["x-amz-copy-source-if-match"]=this.MatchETag
+      headerOptions['x-amz-copy-source-if-match']=this.MatchETag
     }
     if (!_.isEmpty(this.NoMatchETag)) {
-      headerOptions["x-amz-copy-source-if-none-match"]=this.NoMatchETag
+      headerOptions['x-amz-copy-source-if-none-match']=this.NoMatchETag
     }
 
     if (!_.isEmpty(this.MatchModifiedSince)) {
-      headerOptions["x-amz-copy-source-if-modified-since"]= this.MatchModifiedSince
+      headerOptions['x-amz-copy-source-if-modified-since']= this.MatchModifiedSince
     }
     if (!_.isEmpty(this.MatchUnmodifiedSince)) {
-      headerOptions["x-amz-copy-source-if-unmodified-since"]= this.MatchUnmodifiedSince
+      headerOptions['x-amz-copy-source-if-unmodified-since']= this.MatchUnmodifiedSince
     }
 
     return headerOptions
@@ -587,14 +587,14 @@ export class CopyDestinationOptions {
    * @param Mode
   */
   constructor({
-    Bucket="",
-    Object="",
+    Bucket='',
+    Object='',
     Encryption=null,
     UserMetadata=null,
     UserTags=null,
     LegalHold = null,
     RetainUntilDate=null,
-    Mode=null, //
+    Mode=null //
   }) {
     this.Bucket=Bucket
     this.Object=Object
@@ -606,29 +606,29 @@ export class CopyDestinationOptions {
     this.RetainUntilDate=RetainUntilDate
   }
 
-  getHeaders (){
-    const replaceDirective = "REPLACE"
+  getHeaders () {
+    const replaceDirective = 'REPLACE'
     const headerOptions ={}
 
     const userTags= this.UserTags
     if (!_.isEmpty(userTags)) {
-      headerOptions["X-Amz-Tagging-Directive"]=replaceDirective
-      headerOptions["X-Amz-Tagging"]=isObject(userTags)? querystring.stringify(userTags):isString(userTags)?userTags:""
+      headerOptions['X-Amz-Tagging-Directive']=replaceDirective
+      headerOptions['X-Amz-Tagging']=isObject(userTags)? querystring.stringify(userTags):isString(userTags)?userTags:''
     }
 
     if (!_.isEmpty(this.Mode)) {
-      headerOptions["X-Amz-Object-Lock-Mode"]=this.Mode // GOVERNANCE or COMPLIANCE
+      headerOptions['X-Amz-Object-Lock-Mode']=this.Mode // GOVERNANCE or COMPLIANCE
     }
 
     if (!_.isEmpty(this.RetainUntilDate)) {
-      headerOptions["X-Amz-Object-Lock-Retain-Until-Date"]=this.RetainUntilDate// needs to be UTC.
+      headerOptions['X-Amz-Object-Lock-Retain-Until-Date']=this.RetainUntilDate// needs to be UTC.
     }
 
-    if (!_.isEmpty(this.LegalHold) ){
-      headerOptions["X-Amz-Object-Lock-Legal-Hold"]= this.LegalHold// ON or OFF
+    if (!_.isEmpty(this.LegalHold) ) {
+      headerOptions['X-Amz-Object-Lock-Legal-Hold']= this.LegalHold// ON or OFF
     }
 
-    if(!_.isEmpty(this.UserMetadata)){
+    if (!_.isEmpty(this.UserMetadata)) {
       const headerKeys = Object.keys(this.UserMetadata)
       headerKeys.forEach((key)=>{
         headerOptions[`X-Amz-Meta-${key}`]=this.UserMetadata[key]
@@ -636,7 +636,7 @@ export class CopyDestinationOptions {
 
     }
 
-    if (!_.isEmpty(this.Encryption)){
+    if (!_.isEmpty(this.Encryption)) {
       const encryptionHeaders = getEncryptionHeaders(this.Encryption)
       Object.keys(encryptionHeaders).forEach((key)=>{
         headerOptions[key]=encryptionHeaders[key]
@@ -645,30 +645,30 @@ export class CopyDestinationOptions {
     }
     return headerOptions
   }
-  validate(){
+  validate() {
     if (!isValidBucketName(this.Bucket)) {
       throw new errors.InvalidBucketNameError('Invalid Destination bucket name: ' + this.Bucket)
     }
     if (!isValidObjectName(this.Object)) {
       throw new errors.InvalidObjectNameError(`Invalid Destination object name: ${this.Object}`)
     }
-    if(!_.isEmpty(this.UserMetadata) && !isObject(this.UserMetadata)){
-      throw new errors.InvalidObjectNameError(`Destination UserMetadata should be an object with key value pairs`)
+    if (!_.isEmpty(this.UserMetadata) && !isObject(this.UserMetadata)) {
+      throw new errors.InvalidObjectNameError('Destination UserMetadata should be an object with key value pairs')
     }
 
-    if(!_.isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)){
-      throw new errors.InvalidObjectNameError(`Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]`)
+    if (!_.isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)) {
+      throw new errors.InvalidObjectNameError('Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]')
     }
 
-    if (!_.isEmpty(this.Encryption) && _.isEmpty(this.Encryption) ){
-      throw new errors.InvalidObjectNameError(`Invalid Encryption configuration for destination object `)
+    if (!_.isEmpty(this.Encryption) && _.isEmpty(this.Encryption) ) {
+      throw new errors.InvalidObjectNameError('Invalid Encryption configuration for destination object ')
     }
     return true
   }
 }
 
-export const  partsRequired= (size) =>{
-  let maxPartSize =PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE/ (PART_CONSTRAINTS.MAX_PARTS_COUNT - 1)
+export const partsRequired= (size) =>{
+  const maxPartSize =PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE/ (PART_CONSTRAINTS.MAX_PARTS_COUNT - 1)
   let requiredPartSize = size /maxPartSize
   if ((size % maxPartSize) >0) {
     requiredPartSize++
@@ -684,7 +684,7 @@ export const  partsRequired= (size) =>{
 
 let startIndexParts = []
 let endIndexParts = []
-export function calculateEvenSplits(size , objInfo)  {
+export function calculateEvenSplits(size, objInfo) {
   if (size === 0) {
     return null
   }
@@ -693,7 +693,7 @@ export function calculateEvenSplits(size , objInfo)  {
   endIndexParts = new Array(reqParts)
 
   let start = objInfo.Start
-  if (_.isEmpty( objInfo.Start) || start === -1 ){
+  if (_.isEmpty( objInfo.Start) || start === -1 ) {
     start = 0
   }
   const divisorValue= Math.trunc(size/reqParts)
@@ -702,14 +702,14 @@ export function calculateEvenSplits(size , objInfo)  {
 
   let nextStart = start
 
-  for (let i =0; i < reqParts; i++ ){
+  for (let i =0; i < reqParts; i++ ) {
     let curPartSize= divisorValue
-    if (i < reminderValue ){
+    if (i < reminderValue ) {
       curPartSize++
     }
 
     const currentStart =nextStart
-    let currentEnd = currentStart + curPartSize - 1
+    const currentEnd = currentStart + curPartSize - 1
     nextStart = currentEnd + 1
 
     startIndexParts[i]= currentStart
@@ -726,10 +726,10 @@ export function removeDirAndFiles(dirPath, removeSelf) {
   if (removeSelf === undefined)
     removeSelf = true
   try { var files = fs.readdirSync(dirPath) }
-  catch(e) { return }
+  catch (e) { return }
   if (files.length > 0)
-    for (var i = 0; i < files.length; i++) {
-      var filePath = path.join(dirPath, files[i])
+    for (let i = 0; i < files.length; i++) {
+      const filePath = path.join(dirPath, files[i])
       if (fs.statSync(filePath).isFile())
         fs.unlinkSync(filePath)
       else
@@ -739,7 +739,7 @@ export function removeDirAndFiles(dirPath, removeSelf) {
     fs.rmdirSync(dirPath)
 }
 
-export const  parseXml = (xml) => {
+export const parseXml = (xml) => {
   let result = null
   result = fxp.parse(xml)
   if (result.Error) {
@@ -752,7 +752,7 @@ export const  parseXml = (xml) => {
 export class SelectResults {
   constructor({
     records, // parsed data as stream
-    response,// original response stream
+    response, // original response stream
     stats, // stats as xml
     progress // stats as xml
   }) {
@@ -763,32 +763,32 @@ export class SelectResults {
     this.progress = progress
   }
 
-  setStats(stats){
+  setStats(stats) {
     this.stats = stats
   }
   getStats () {
     return this.stats
   }
 
-  setProgress(progress){
+  setProgress(progress) {
     this.progress = progress
   }
-  getProgress (){
+  getProgress () {
     return this.progress
   }
 
-  setResponse(response){
+  setResponse(response) {
     this.response = response
   }
-  getResponse (){
+  getResponse () {
     return this.response
   }
 
-  setRecords(records){
+  setRecords(records) {
     this.records = records
   }
 
-  getRecords(){
+  getRecords() {
     return this.records
   }
 
