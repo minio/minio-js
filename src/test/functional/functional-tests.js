@@ -812,6 +812,51 @@ describe('functional tests', function () {
     })
   })
 
+  describe('Test Remove Objects Response in case of Errors', () => {
+
+    // Since functional tests are run with root credentials, it is not implemented.
+    // Test steps
+    // =============
+    // create a bucket
+    // add some objects
+    // create a  user
+    // assign the readonly policy to the user
+    // use the new user credentials to call remove objects API
+    // verify the response
+    // assign the readwrite policy to the user
+    // call remove objects API
+    // verify the response
+    // response.Error is an array
+    //   -[]- empty array indicates success for all objects
+
+    // Note: the response code is 200. so the consumer should inspect the response
+    // Sample Response format:
+    /**
+     * {
+     *     Code: 'AccessDenied',
+     *     Message: 'Access Denied.',
+     *     Key: '1.png',
+     *     VersionId: ''
+     *   }
+     *
+     *   or
+     *
+     *    {
+     *     Code: 'NoSuchVersion',
+     *     Message: 'The specified version does not exist. (invalid UUID length: 9)',
+     *     Key: '1.png',
+     *     VersionId: 'test-v-is'
+     *   }
+     */
+
+    /*
+    let readOnlyPolicy ='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetBucketLocation","s3:GetObject"],"Resource":["arn:aws:s3:::*"]}]}'
+    let readWritePolicy ='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:*"],"Resource":["arn:aws:s3:::*"]}]}'
+    */
+
+  })
+
+
   describe('presigned operations', () => {
     step(`presignedPutObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires: 1000_`, done => {
       client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {

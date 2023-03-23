@@ -531,6 +531,15 @@ export function uploadPartParser (xml){
   return respEl
 }
 
+export function removeObjectsParser(xml){
+  const xmlObj = parseXml(xml)
+  if(xmlObj.DeleteResult && xmlObj.DeleteResult.Error){
+    // return errors as array always. as the response is object in case of single object passed in removeObjects
+    return toArray(xmlObj.DeleteResult.Error)
+  }
+  return []
+}
+
 export function parseSelectObjectContentResponse(res){
 
   // extractHeaderType extracts the first half of the header message, the header type.

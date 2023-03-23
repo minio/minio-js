@@ -1752,7 +1752,7 @@ export class Client {
 
     const encoder = new TextEncoder()
 
-    async.eachSeries(result.listOfList, (list, callback) => {
+    async.eachSeries(result.listOfList, (list) => {
       var objects=[]
       list.forEach(function(value){
         if (isObject(value)) {
@@ -1769,9 +1769,17 @@ export class Client {
 
       headers['Content-MD5'] = toMd5(payload)
 
-      this.makeRequest({ method, bucketName, query, headers}, payload, [200], '', false, (e) => {
-        if (e) return callback(e)
-        callback(null)
+      this.makeRequest({ method, bucketName, query, headers}, payload, [200], '', true, (e, response) => {
+        if (e) return cb(e)
+        let removeObjectsResult
+        pipesetup(response, transformers.removeObjectsTransformer())
+          .on('data', data => {
+            removeObjectsResult = data
+          })
+          .on('error', cb)
+          .on('end', () => {
+            cb(null, removeObjectsResult)
+          })
       })
     }, cb)
   }
