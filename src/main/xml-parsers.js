@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import fxp from 'fast-xml-parser'
+const { XMLParser } = require("fast-xml-parser")
+const  fxp = new XMLParser()
 import _ from 'lodash'
 import * as errors from './errors.js'
 import {
@@ -529,6 +529,15 @@ export function uploadPartParser (xml){
   const xmlObj = parseXml(xml)
   const respEl = xmlObj.CopyPartResult
   return respEl
+}
+
+export function removeObjectsParser(xml){
+  const xmlObj = parseXml(xml)
+  if(xmlObj.DeleteResult && xmlObj.DeleteResult.Error){
+    // return errors as array always. as the response is object in case of single object passed in removeObjects
+    return toArray(xmlObj.DeleteResult.Error)
+  }
+  return []
 }
 
 export function parseSelectObjectContentResponse(res){
