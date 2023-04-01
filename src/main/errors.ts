@@ -177,3 +177,12 @@ export class S3Error extends Error {
     Error.captureStackTrace(this, this.constructor)
   }
 }
+
+export class MisbehavingServerError extends Error {
+  constructor(message: string) {
+    super(message);
+
+    this.name = 'MisbehavingServerError'
+    Error.captureStackTrace(this, this.constructor)
+  }
+}
