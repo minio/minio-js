@@ -40,6 +40,6 @@ jobs:
           /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
           npm install
           npm run lint
-          npm run browserify
+          npm run build
           npm run test
 
