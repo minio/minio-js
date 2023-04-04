@@ -16,13 +16,11 @@
 
 const babel = require('gulp-babel')
 const gulp = require('gulp')
-const gulpIf = require('gulp-if')
 const sourcemaps = require('gulp-sourcemaps')
 
 const fs = require('fs')
 const browserify = require('browserify')
 const mocha = require('gulp-mocha')
-const eslint = require('gulp-eslint')
 
 const compileJS = (src, dest) => {
   return gulp.src(src)
@@ -62,20 +60,6 @@ exports.test = gulp.series(testCompile, () => {
     ui: 'bdd',
   }))
 })
-
-function isFixed(file) {
-  return file.eslint != null && file.eslint.fixed
-}
-
-exports.lint = () => {
-  const hasFixFlag = process.argv.slice(2).includes('--fix')
-  return gulp.src(['src/**/*.js', 'gulpfile.js'])
-    .pipe(eslint({fix: hasFixFlag}))
-    .pipe(eslint.format())
-    .pipe(eslint.failAfterError())
-    // if fixed, write the file to dest
-    .pipe(gulpIf(isFixed, gulp.dest('src/')))
-}
 
 exports.functionalTest = gulp.series(testCompile, () => {
   return gulp.src('dist/test/functional/*.js', {

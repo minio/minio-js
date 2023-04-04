@@ -6,12 +6,15 @@
   "main": "./dist/main/minio.js",
   "module": "./dist/main/module.js",
   "scripts": {
+
     "watch": "parcel watch",
     "build": "parcel build",
     "compile": "gulp compile",
     "test": "gulp test",
-    "lint": "gulp lint",
-    "lint-fix": "gulp lint --fix",
+    "lint": "eslint ./src/",
+    "lint-fix": "eslint ./src/ --fix ",
+    "lint-examples": "eslint ./examples/",
+    "lint-fix-examples": "eslint ./examples/ --fix",
     "prepublishOnly": "gulp test",
     "functional": "gulp functionalTest"
   },
@@ -57,13 +60,15 @@
     "@babel/preset-env": "^7.12.10",
     "@parcel/compressor-brotli": "^2.8.3",
     "@parcel/compressor-gzip": "^2.8.3",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
     "babelify": "^10.0.0",
     "browserify": "^16.5.2",
     "chai": "^4.2.0",
-    "eslint": "^8.9.0",
+    "eslint": "^8.37.0",
+    "eslint-config-prettier": "^8.8.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
-    "gulp-eslint": "^4.0.2",
     "gulp-if": "^3.0.0",
     "gulp-mocha": "^8.0.0",
     "gulp-sourcemaps": "^2.6.5",
@@ -74,6 +79,7 @@
     "source-map-support": "^0.5.13",
     "split-file": "^2.2.2",
     "superagent": "^5.1.0",
+    "typescript": "^5.0.3",
     "uuid": "^3.3.2"
   },
   "keywords": [
