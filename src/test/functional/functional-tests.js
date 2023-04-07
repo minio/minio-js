@@ -2977,10 +2977,11 @@ describe('functional tests', function () {
     const objContent = Buffer.alloc(100 * 1024, 0)
 
     const canRunAssumeRoleTest = clientConfigParams.endPoint.includes("localhost")
-    const stsEndPoint = "http://localhost:9000"
+    // this test Can run only in localhost environment
+    const stsEndPoint = "http://"+clientConfigParams.endPoint +":"+ clientConfigParams.port
 
     try {
-      if (canRunAssumeRoleTest) {
+      if (canRunAssumeRoleTest ) {
         // Creates a new Client with assume role provider for testing.
         const assumeRoleProvider = new AssumeRoleProvider({
           stsEndpoint: stsEndPoint,

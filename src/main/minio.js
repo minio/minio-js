@@ -60,6 +60,8 @@ import extensions from './extensions'
 import CredentialProvider from "./CredentialProvider"
 
 import { parseSelectObjectContentResponse} from "./xml-parsers"
+import CopyConditions from "./CopyConditions"
+import PostPolicy from "./PostPolicy"
 
 var Package = require('../../package.json')
 
@@ -3591,134 +3593,10 @@ Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHol
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
 
-export class CopyConditions {
-  constructor() {
-    this.modified = ""
-    this.unmodified = ""
-    this.matchETag = ""
-    this.matchETagExcept = ""
-  }
-
-  setModified(date) {
-    if (!(date instanceof Date))
-      throw new TypeError('date must be of type Date')
-
-    this.modified = date.toUTCString()
-  }
-
-  setUnmodified(date) {
-    if (!(date instanceof Date))
-      throw new TypeError('date must be of type Date')
-
-    this.unmodified = date.toUTCString()
-  }
-
-  setMatchETag(etag) {
-    this.matchETag = etag
-  }
-
-  setMatchETagExcept(etag) {
-    this.matchETagExcept = etag
-  }
-}
-
-// Build PostPolicy object that can be signed by presignedPostPolicy
-export class PostPolicy {
-  constructor() {
-    this.policy = {
-      conditions: []
-    }
-    this.formData = {}
-  }
-
-  // set expiration date
-  setExpires(date) {
-    if (!date) {
-      throw new errors.InvalidDateError('Invalid date : cannot be null')
-    }
-    this.policy.expiration = date.toISOString()
-  }
-
-  // set object name
-  setKey(objectName) {
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name : ${objectName}`)
-    }
-    this.policy.conditions.push(['eq', '$key', objectName])
-    this.formData.key = objectName
-  }
-
-  // set object name prefix, i.e policy allows any keys with this prefix
-  setKeyStartsWith(prefix) {
-    if (!isValidPrefix(prefix)) {
-      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
-    }
-    this.policy.conditions.push(['starts-with', '$key', prefix])
-    this.formData.key = prefix
-  }
-
-  // set bucket name
-  setBucket(bucketName) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
-    }
-    this.policy.conditions.push(['eq', '$bucket', bucketName])
-    this.formData.bucket = bucketName
-  }
-
-  // set Content-Type
-  setContentType(type) {
-    if (!type) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Type', type])
-    this.formData['Content-Type'] = type
-  }
-
-  // set Content-Type prefix, i.e image/ allows any image
-  setContentTypeStartsWith(prefix) {
-    if (!prefix) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['starts-with', '$Content-Type', prefix])
-    this.formData['Content-Type'] = prefix
-  }
-
-  // set Content-Disposition
-  setContentDisposition(value) {
-    if (!value) {
-      throw new Error('content-disposition cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Disposition', value])
-    this.formData['Content-Disposition'] = value
-  }
-
-  // set minimum/maximum length of what Content-Length can be.
-  setContentLengthRange(min, max) {
-    if (min > max) {
-      throw new Error('min cannot be more than max')
-    }
-    if (min < 0) {
-      throw new Error('min should be > 0')
-    }
-    if (max < 0) {
-      throw new Error('max should be > 0')
-    }
-    this.policy.conditions.push(['content-length-range', min, max])
-  }
-
-  // set user defined metadata
-  setUserMetaData(metaData) {
-    if (!isObject(metaData)) {
-      throw new TypeError('metadata should be of type "object"')
-    }
-    Object.entries(metaData).forEach(([key, value]) => {
-      const amzMetaDataKey = `x-amz-meta-${key}`
-      this.policy.conditions.push(['eq', `$${amzMetaDataKey}`, value])
-      this.formData[amzMetaDataKey] = value
-    })
-  }
-}
 
 export * from './notification'
 export * from './helpers'
+
+export {
+  CopyConditions
+}
