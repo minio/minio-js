@@ -12,7 +12,7 @@ module.exports = {
     'prettier', // This should be the last entry.
   ],
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'simple-import-sort', 'import'],
+  plugins: ['@typescript-eslint', 'simple-import-sort'],
   parserOptions: {
     sourceType: 'module',
     ecmaVersion: 8,
@@ -34,7 +34,6 @@ module.exports = {
 
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
-    'import/extensions': ['error', 'never'],
     indent: 'off',
     'linebreak-style': ['error', 'unix'],
     semi: ['error', 'never'],

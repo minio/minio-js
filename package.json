@@ -82,7 +82,6 @@
     "chai": "^4.2.0",
     "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
