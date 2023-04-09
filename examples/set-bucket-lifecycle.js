@@ -17,30 +17,30 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("minio")
 
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
-
-const lifecycleConfig= {
-  Rule: [{
-    "ID": "Expiration Days Rule",
-    "Status": "Enabled",
-    "Filter": {
-      "Prefix":"",
+const lifecycleConfig = {
+  Rule: [
+    {
+      ID: "Expiration Days Rule",
+      Status: "Enabled",
+      Filter: {
+        Prefix: "",
+      },
+      Expiration: {
+        Days: "3650",
+      },
     },
-    "Expiration": {
-      "Days": "3650"
-    }
-  }
-  ]
+  ],
 }
 
-s3Client.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
+s3Client.setBucketLifecycle("bucketname", lifecycleConfig, function (err) {
   if (err) {
     return console.log(err)
   }
@@ -50,26 +50,26 @@ s3Client.setBucketLifecycle('bucketname',lifecycleConfig, function (err) {
 //Example to demonstrate Expiration Date
 const expirationDate = new Date()
 expirationDate.setDate(expirationDate.getDate() + 1) // Expire next day.
-expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
+expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
 
-const lifecycleConfigWithExpirationDate= {
-  Rule: [{
-    "ID": "Expiration Date Rule",
-    "Status": "Enabled",
-    "Filter": {
-      "Prefix":"",
+const lifecycleConfigWithExpirationDate = {
+  Rule: [
+    {
+      ID: "Expiration Date Rule",
+      Status: "Enabled",
+      Filter: {
+        Prefix: "",
+      },
+      Expiration: {
+        Date: expirationDate.toISOString(),
+      },
     },
-    "Expiration": {
-      Date:expirationDate.toISOString()
-    }
-  }
-  ]
+  ],
 }
 
-s3Client.setBucketLifecycle('bucketname',lifecycleConfigWithExpirationDate, function (err) {
+s3Client.setBucketLifecycle("bucketname", lifecycleConfigWithExpirationDate, function (err) {
   if (err) {
     return console.log(err)
   }
   console.log("Success")
 })
-

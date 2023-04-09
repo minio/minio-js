@@ -17,26 +17,32 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("minio")
 
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
 // Get a full object.
-s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', function(e) {
+s3Client.fGetObject("my-bucketname", "my-objectname", "/tmp/objfile", function (e) {
   if (e) {
     return console.log(e)
   }
-  console.log('done')
+  console.log("done")
 })
 
-//To get a specific version of an object 
-s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', {versionId:"03fd1247-90d9-4b71-a27e-209d484a234b"}, function(e) {
-  if (e) {
-    return console.log(e)
+//To get a specific version of an object
+s3Client.fGetObject(
+  "my-bucketname",
+  "my-objectname",
+  "/tmp/objfile",
+  { versionId: "03fd1247-90d9-4b71-a27e-209d484a234b" },
+  function (e) {
+    if (e) {
+      return console.log(e)
+    }
+    console.log("success")
   }
-  console.log('success')
-})
+)

@@ -1,10 +1,11 @@
-import Http from 'http'
-import Https from 'https'
-import {makeDateLong, parseXml, toSha256} from "./helpers"
-import {signV4ByServiceName} from "./signing"
+import Http from "http"
+import Https from "https"
+
 import CredentialProvider from "./CredentialProvider"
 import Credentials from "./Credentials"
-const {URLSearchParams, URL} = require('url')
+import { makeDateLong, parseXml, toSha256 } from "./helpers"
+import { signV4ByServiceName } from "./signing"
+const { URLSearchParams, URL } = require("url")
 
 class AssumeRoleProvider extends CredentialProvider {
   constructor({
@@ -14,13 +15,13 @@ class AssumeRoleProvider extends CredentialProvider {
     durationSeconds = 900,
     sessionToken,
     policy,
-    region = '',
+    region = "",
     roleArn,
     roleSessionName,
     externalId,
     token,
     webIdentityToken,
-    action = "AssumeRole"
+    action = "AssumeRole",
   }) {
     super({})
 
@@ -39,14 +40,12 @@ class AssumeRoleProvider extends CredentialProvider {
     this.sessionToken = sessionToken
 
     /**
-         * Internal Tracking variables
-         */
+     * Internal Tracking variables
+     */
     this.credentials = null
     this.expirySeconds = null
     this.accessExpiresAt = null
-
   }
-
 
   getRequestConfig() {
     const url = new URL(this.stsEndpoint)
@@ -88,15 +87,14 @@ class AssumeRoleProvider extends CredentialProvider {
       qryParams.set("ExternalId", this.externalId)
     }
 
-
     const urlParams = qryParams.toString()
     const contentSha256 = toSha256(urlParams)
 
     const date = new Date()
 
     /**
-         * Nodejs's Request Configuration.
-         */
+     * Nodejs's Request Configuration.
+     */
     const requestOptions = {
       hostname: hostValue,
       port: portValue,
@@ -106,10 +104,10 @@ class AssumeRoleProvider extends CredentialProvider {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         "content-length": urlParams.length,
-        "host": hostValue,
+        host: hostValue,
         "x-amz-date": makeDateLong(date),
-        'x-amz-content-sha256': contentSha256
-      }
+        "x-amz-content-sha256": contentSha256,
+      },
     }
 
     const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, "sts")
@@ -118,7 +116,7 @@ class AssumeRoleProvider extends CredentialProvider {
     return {
       requestOptions,
       requestData: urlParams,
-      isHttp: isHttp
+      isHttp: isHttp,
     }
   }
 
@@ -133,30 +131,29 @@ class AssumeRoleProvider extends CredentialProvider {
     const promise = new Promise((resolve, reject) => {
       const requestObj = Transport.request(requestOptions, (resp) => {
         let resChunks = []
-        resp.on('data', rChunk => {
+        resp.on("data", (rChunk) => {
           resChunks.push(rChunk)
         })
-        resp.on('end', () => {
+        resp.on("end", () => {
           let body = Buffer.concat(resChunks).toString()
           const xmlobj = parseXml(body)
           resolve(xmlobj)
         })
-        resp.on('error', (err) => {
+        resp.on("error", (err) => {
           reject(err)
         })
       })
-      requestObj.on('error', (e) => {
+      requestObj.on("error", (e) => {
         reject(e)
       })
       requestObj.write(requestData)
       requestObj.end()
     })
     return promise
-
   }
 
-  parseCredentials(respObj={}) {
-    if(respObj.ErrorResponse){
+  parseCredentials(respObj = {}) {
+    if (respObj.ErrorResponse) {
       throw new Error("Unable to obtain credentials:", respObj)
     }
     const {
@@ -166,26 +163,23 @@ class AssumeRoleProvider extends CredentialProvider {
             AccessKeyId: accessKey,
             SecretAccessKey: secretKey,
             SessionToken: sessionToken,
-            Expiration: expiresAt
-          } = {}
-        } = {}
-      } = {}
+            Expiration: expiresAt,
+          } = {},
+        } = {},
+      } = {},
     } = respObj
-
 
     this.accessExpiresAt = expiresAt
 
     const newCreds = new Credentials({
       accessKey,
       secretKey,
-      sessionToken
+      sessionToken,
     })
 
     this.setCredentials(newCreds)
     return this.credentials
-
   }
-
 
   async refreshCredentials() {
     try {

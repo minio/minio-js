@@ -20,36 +20,39 @@
 var Minio = require("../dist/main/minio")
 var Helpers = require("../dist/main/helpers")
 
-
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
 const bucketName = "source-bucket"
 
-const sourceList = [new Helpers.CopySourceOptions( {
-  Bucket:     bucketName,
-  Object:     "parta",
-  // other options if any.
-}),new Helpers.CopySourceOptions({
-  Bucket:     bucketName,
-  Object:     "partb",
-  // other options if any.
-  //    VersionID:""
-}),new Helpers.CopySourceOptions({
-  Bucket:     bucketName,
-  Object:     "partc",
-  
-}),new Helpers.CopySourceOptions({
-  Bucket:     bucketName,
-  Object:     "partd",
-})]
+const sourceList = [
+  new Helpers.CopySourceOptions({
+    Bucket: bucketName,
+    Object: "parta",
+    // other options if any.
+  }),
+  new Helpers.CopySourceOptions({
+    Bucket: bucketName,
+    Object: "partb",
+    // other options if any.
+    //    VersionID:""
+  }),
+  new Helpers.CopySourceOptions({
+    Bucket: bucketName,
+    Object: "partc",
+  }),
+  new Helpers.CopySourceOptions({
+    Bucket: bucketName,
+    Object: "partd",
+  }),
+]
 
 const destOption = new Helpers.CopyDestinationOptions({
-  Bucket:     bucketName,
-  Object:     "100MB.zip",
+  Bucket: bucketName,
+  Object: "100MB.zip",
   /** Other possible options */
   /* Encryption:{
         type:Helpers.ENCRYPTION_TYPES.KMS,
@@ -65,11 +68,11 @@ const destOption = new Helpers.CopyDestinationOptions({
   */
 })
 
-
-const composePromise = s3Client.composeObject(destOption,sourceList)
-composePromise.then((result) => {
-  console.log("ComposeObject Success..." , result)
-})
-  .catch((e)=>{
-    console.log("composeObject Promise Error",e)
+const composePromise = s3Client.composeObject(destOption, sourceList)
+composePromise
+  .then((result) => {
+    console.log("ComposeObject Success...", result)
+  })
+  .catch((e) => {
+    console.log("composeObject Promise Error", e)
   })

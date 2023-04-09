@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-import Stream from 'stream'
+import Stream from "stream"
 
-import * as transformers from './transformers'
-
-import * as errors from './errors.js'
-
-import { isValidPrefix, isValidBucketName, uriEscape,
-  isBoolean, isNumber, isString,
-  pipesetup } from './helpers.js'
+import * as errors from "./errors"
+import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from "./helpers"
+import * as transformers from "./transformers"
 
 export default class extensions {
-
-  constructor(client)
-  {
+  constructor(client) {
     this.client = client
   }
 
@@ -49,11 +43,11 @@ export default class extensions {
   //   * `obj.metadata` _object_: metadata of the object
 
   listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter) {
-    if (prefix === undefined) prefix = ''
+    if (prefix === undefined) prefix = ""
     if (recursive === undefined) recursive = false
-    if (startAfter === undefined) startAfter = ''
+    if (startAfter === undefined) startAfter = ""
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError("Invalid bucket name: " + bucketName)
     }
     if (!isValidPrefix(prefix)) {
       throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
@@ -68,11 +62,11 @@ export default class extensions {
       throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
-    var delimiter = recursive ? '' : '/'
-    var continuationToken = ''
+    var delimiter = recursive ? "" : "/"
+    var continuationToken = ""
     var objects = []
     var ended = false
-    var readStream = Stream.Readable({objectMode: true})
+    var readStream = Stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
@@ -82,8 +76,8 @@ export default class extensions {
       if (ended) return readStream.push(null)
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
-        .on('error', e => readStream.emit('error', e))
-        .on('data', result => {
+        .on("error", (e) => readStream.emit("error", e))
+        .on("data", (result) => {
           if (result.isTruncated) {
             continuationToken = result.nextContinuationToken
           } else {
@@ -109,7 +103,7 @@ export default class extensions {
 
   listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError("Invalid bucket name: " + bucketName)
     }
     if (!isString(prefix)) {
       throw new TypeError('prefix should be of type "string"')
@@ -153,14 +147,14 @@ export default class extensions {
       queries.push(`max-keys=${maxKeys}`)
     }
     queries.sort()
-    var query = ''
+    var query = ""
     if (queries.length > 0) {
-      query = `${queries.join('&')}`
+      query = `${queries.join("&")}`
     }
-    var method = 'GET'
+    var method = "GET"
     var transformer = transformers.getListObjectsV2WithMetadataTransformer()
-    this.client.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+    this.client.makeRequest({ method, bucketName, query }, "", [200], "", true, (e, response) => {
+      if (e) return transformer.emit("error", e)
       pipesetup(response, transformer)
     })
     return transformer

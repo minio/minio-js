@@ -17,27 +17,31 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("minio")
 
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
-
-const bucketName = 'my-bucket'
-const objectName ="my-object"
+const bucketName = "my-bucket"
+const objectName = "my-object"
 
 const expirationDate = new Date()
 expirationDate.setDate(expirationDate.getDate() + 1)
-expirationDate.setUTCHours(0,0,0,0)//Should be start of the day.(midnight)
-const versionId ="my-versionId"
+expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
+const versionId = "my-versionId"
 
-const objRetPromise = s3Client.putObjectRetention(bucketName, objectName, { mode:"GOVERNANCE", retainUntilDate:expirationDate.toISOString(), versionId:versionId} )
-objRetPromise.then(() => {
-  console.log("Success")
+const objRetPromise = s3Client.putObjectRetention(bucketName, objectName, {
+  mode: "GOVERNANCE",
+  retainUntilDate: expirationDate.toISOString(),
+  versionId: versionId,
 })
-  .catch((e)=>{
-    console.log(" Error",e)
+objRetPromise
+  .then(() => {
+    console.log("Success")
+  })
+  .catch((e) => {
+    console.log(" Error", e)
   })

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 const { XMLParser } = require("fast-xml-parser")
-const  fxp = new XMLParser()
-import _ from 'lodash'
-import * as errors from './errors.js'
+const fxp = new XMLParser()
+import _ from "lodash"
+
+import * as errors from "./errors"
 import {
   isObject,
-  sanitizeETag,
-  toArray,
-  sanitizeObjectKey,
-  RETENTION_VALIDITY_UNITS,
   parseXml,
   readableStream,
-  SelectResults
+  RETENTION_VALIDITY_UNITS,
+  sanitizeETag,
+  sanitizeObjectKey,
+  SelectResults,
+  toArray,
 } from "./helpers"
 var crc32 = require("buffer-crc32")
-
 
 // Parse XML and return information as Javascript types
 
@@ -37,7 +37,7 @@ export function parseError(xml, headerInfo) {
   var xmlErr = {}
   var xmlObj = fxp.parse(xml)
   if (xmlObj.Error) {
-    xmlErr =  xmlObj.Error
+    xmlErr = xmlObj.Error
   }
 
   var e = new errors.S3Error()
@@ -55,7 +55,7 @@ export function parseError(xml, headerInfo) {
 export function parseCopyObject(xml) {
   var result = {
     etag: "",
-    lastModified: ""
+    lastModified: "",
   }
 
   var xmlobj = parseXml(xml)
@@ -63,9 +63,13 @@ export function parseCopyObject(xml) {
     throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
   }
   xmlobj = xmlobj.CopyObjectResult
-  if (xmlobj.ETag) result.etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
-    .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-    .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+  if (xmlobj.ETag)
+    result.etag = xmlobj.ETag.replace(/^"/g, "")
+      .replace(/"$/g, "")
+      .replace(/^&quot;/g, "")
+      .replace(/&quot;$/g, "")
+      .replace(/^&#34;/g, "")
+      .replace(/&#34;$/g, "")
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified)
 
   return result
@@ -76,7 +80,7 @@ export function parseListMultipart(xml) {
   var result = {
     uploads: [],
     prefixes: [],
-    isTruncated: false
+    isTruncated: false,
   }
 
   var xmlobj = parseXml(xml)
@@ -86,24 +90,24 @@ export function parseListMultipart(xml) {
   }
   xmlobj = xmlobj.ListMultipartUploadsResult
   if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
-  if (xmlobj.NextKeyMarker) result.nextKeyMarker =  xmlobj.NextKeyMarker
+  if (xmlobj.NextKeyMarker) result.nextKeyMarker = xmlobj.NextKeyMarker
   if (xmlobj.NextUploadIdMarker) result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
 
   if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach(prefix => {
-      result.prefixes.push({prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0])})
+    toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
+      result.prefixes.push({ prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0]) })
     })
   }
 
   if (xmlobj.Upload) {
-    toArray(xmlobj.Upload).forEach(upload => {
+    toArray(xmlobj.Upload).forEach((upload) => {
       var key = upload.Key
       var uploadId = upload.UploadId
-      var initiator = {id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName}
-      var owner = {id: upload.Owner.ID, displayName: upload.Owner.DisplayName}
+      var initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      var owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
       var storageClass = upload.StorageClass
       var initiated = new Date(upload.Initiated)
-      result.uploads.push({key, uploadId, initiator, owner, storageClass, initiated})
+      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
     })
   }
   return result
@@ -121,10 +125,10 @@ export function parseListBucket(xml) {
 
   if (xmlobj.Buckets) {
     if (xmlobj.Buckets.Bucket) {
-      toArray(xmlobj.Buckets.Bucket).forEach(bucket => {
+      toArray(xmlobj.Buckets.Bucket).forEach((bucket) => {
         var name = bucket.Name
         var creationDate = new Date(bucket.CreationDate)
-        result.push({name, creationDate})
+        result.push({ name, creationDate })
       })
     }
   }
@@ -134,32 +138,32 @@ export function parseListBucket(xml) {
 // parse XML response for bucket notification
 export function parseBucketNotification(xml) {
   var result = {
-    TopicConfiguration  : [],
-    QueueConfiguration  : [],
-    CloudFunctionConfiguration : [],
+    TopicConfiguration: [],
+    QueueConfiguration: [],
+    CloudFunctionConfiguration: [],
   }
   // Parse the events list
-  var genEvents = function(events) {
+  var genEvents = function (events) {
     var result = []
     if (events) {
-      toArray(events).forEach(s3event => {
+      toArray(events).forEach((s3event) => {
         result.push(s3event)
       })
     }
     return result
   }
   // Parse all filter rules
-  var genFilterRules = function(filters) {
+  var genFilterRules = function (filters) {
     var result = []
     if (filters) {
       filters = toArray(filters)
       if (filters[0].S3Key) {
         filters[0].S3Key = toArray(filters[0].S3Key)
         if (filters[0].S3Key[0].FilterRule) {
-          toArray(filters[0].S3Key[0].FilterRule).forEach(rule => {
+          toArray(filters[0].S3Key[0].FilterRule).forEach((rule) => {
             var Name = toArray(rule.Name)[0]
             var Value = toArray(rule.Value)[0]
-            result.push({Name, Value})
+            result.push({ Name, Value })
           })
         }
       }
@@ -172,32 +176,32 @@ export function parseBucketNotification(xml) {
 
   // Parse all topic configurations in the xml
   if (xmlobj.TopicConfiguration) {
-    toArray(xmlobj.TopicConfiguration).forEach(config => {
+    toArray(xmlobj.TopicConfiguration).forEach((config) => {
       var Id = toArray(config.Id)[0]
       var Topic = toArray(config.Topic)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
-      result.TopicConfiguration.push({ Id, Topic, Event, Filter})
+      result.TopicConfiguration.push({ Id, Topic, Event, Filter })
     })
   }
   // Parse all topic configurations in the xml
   if (xmlobj.QueueConfiguration) {
-    toArray(xmlobj.QueueConfiguration).forEach(config => {
+    toArray(xmlobj.QueueConfiguration).forEach((config) => {
       var Id = toArray(config.Id)[0]
       var Queue = toArray(config.Queue)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
-      result.QueueConfiguration.push({ Id, Queue, Event, Filter})
+      result.QueueConfiguration.push({ Id, Queue, Event, Filter })
     })
   }
   // Parse all QueueConfiguration arrays
   if (xmlobj.CloudFunctionConfiguration) {
-    toArray(xmlobj.CloudFunctionConfiguration).forEach(config => {
+    toArray(xmlobj.CloudFunctionConfiguration).forEach((config) => {
       var Id = toArray(config.Id)[0]
       var CloudFunction = toArray(config.CloudFunction)[0]
       var Event = genEvents(config.Event)
       var Filter = genFilterRules(config.Filter)
-      result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter})
+      result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter })
     })
   }
 
@@ -216,7 +220,7 @@ export function parseListParts(xml) {
   var result = {
     isTruncated: false,
     parts: [],
-    marker: undefined
+    marker: undefined,
   }
   if (!xmlobj.ListPartsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')
@@ -225,13 +229,16 @@ export function parseListParts(xml) {
   if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
   if (xmlobj.NextPartNumberMarker) result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
   if (xmlobj.Part) {
-    toArray(xmlobj.Part).forEach(p => {
-      var part = + toArray(p.PartNumber)[0]
+    toArray(xmlobj.Part).forEach((p) => {
+      var part = +toArray(p.PartNumber)[0]
       var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, '').replace(/"$/g, '')
-        .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
-      result.parts.push({part, lastModified, etag})
+      var etag = p.ETag.replace(/^"/g, "")
+        .replace(/"$/g, "")
+        .replace(/^&quot;/g, "")
+        .replace(/&quot;$/g, "")
+        .replace(/^&#34;/g, "")
+        .replace(/&#34;$/g, "")
+      result.parts.push({ part, lastModified, etag })
     })
   }
   return result
@@ -257,32 +264,27 @@ export function parseCompleteMultipart(xml) {
     var location = toArray(xmlobj.Location)[0]
     var bucket = toArray(xmlobj.Bucket)[0]
     var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, '').replace(/"$/g, '')
-      .replace(/^&quot;/g, '').replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '').replace(/&#34;$/g, '')
+    var etag = xmlobj.ETag.replace(/^"/g, "")
+      .replace(/"$/g, "")
+      .replace(/^&quot;/g, "")
+      .replace(/&quot;$/g, "")
+      .replace(/^&#34;/g, "")
+      .replace(/&#34;$/g, "")
 
-    return {location, bucket, key, etag}
+    return { location, bucket, key, etag }
   }
   // Complete Multipart can return XML Error after a 200 OK response
   if (xmlobj.Code && xmlobj.Message) {
     var errCode = toArray(xmlobj.Code)[0]
     var errMessage = toArray(xmlobj.Message)[0]
-    return {errCode, errMessage}
+    return { errCode, errMessage }
   }
 }
 
-const formatObjInfo = (content, opts={}) => {
+const formatObjInfo = (content, opts = {}) => {
+  let { Key, LastModified, ETag, Size, VersionId, IsLatest } = content
 
-  let {
-    Key,
-    LastModified,
-    ETag,
-    Size,
-    VersionId,
-    IsLatest
-  } = content
-    
-  if(!isObject(opts)){
+  if (!isObject(opts)) {
     opts = {}
   }
 
@@ -294,10 +296,10 @@ const formatObjInfo = (content, opts={}) => {
     name,
     lastModified,
     etag,
-    size:Size,
-    versionId:VersionId,
-    isLatest:IsLatest,
-    isDeleteMarker:opts.IsDeleteMarker ? opts.IsDeleteMarker: false
+    size: Size,
+    versionId: VersionId,
+    isLatest: IsLatest,
+    isDeleteMarker: opts.IsDeleteMarker ? opts.IsDeleteMarker : false,
   }
 }
 
@@ -305,56 +307,56 @@ const formatObjInfo = (content, opts={}) => {
 export function parseListObjects(xml) {
   var result = {
     objects: [],
-    isTruncated: false
+    isTruncated: false,
   }
   let isTruncated = false
   let nextMarker, nextVersionKeyMarker
   const xmlobj = parseXml(xml)
 
-  const parseCommonPrefixesEntity = responseEntity => {
-    if(responseEntity){
+  const parseCommonPrefixesEntity = (responseEntity) => {
+    if (responseEntity) {
       toArray(responseEntity).forEach((commonPrefix) => {
-        result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0})
+        result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
       })
     }
   }
 
   const listBucketResult = xmlobj.ListBucketResult
-  const listVersionsResult=xmlobj.ListVersionsResult
+  const listVersionsResult = xmlobj.ListVersionsResult
 
-  if(listBucketResult){
-    if ( listBucketResult.IsTruncated) {
+  if (listBucketResult) {
+    if (listBucketResult.IsTruncated) {
       isTruncated = listBucketResult.IsTruncated
     }
     if (listBucketResult.Contents) {
-      toArray(listBucketResult.Contents).forEach(content => {
+      toArray(listBucketResult.Contents).forEach((content) => {
         const name = sanitizeObjectKey(toArray(content.Key)[0])
         const lastModified = new Date(toArray(content.LastModified)[0])
         const etag = sanitizeETag(toArray(content.ETag)[0])
         const size = content.Size
-        result.objects.push({name, lastModified, etag, size})
+        result.objects.push({ name, lastModified, etag, size })
       })
     }
-    
-    if( listBucketResult.NextMarker){
+
+    if (listBucketResult.NextMarker) {
       nextMarker = listBucketResult.NextMarker
     }
     parseCommonPrefixesEntity(listBucketResult.CommonPrefixes)
   }
-    
-  if(listVersionsResult){
-    if(listVersionsResult.IsTruncated){
+
+  if (listVersionsResult) {
+    if (listVersionsResult.IsTruncated) {
       isTruncated = listVersionsResult.IsTruncated
     }
 
     if (listVersionsResult.Version) {
-      toArray(listVersionsResult.Version).forEach(content => {
+      toArray(listVersionsResult.Version).forEach((content) => {
         result.objects.push(formatObjInfo(content))
       })
     }
     if (listVersionsResult.DeleteMarker) {
-      toArray(listVersionsResult.DeleteMarker).forEach(content => {
-        result.objects.push(formatObjInfo(content, {IsDeleteMarker:true}))
+      toArray(listVersionsResult.DeleteMarker).forEach((content) => {
+        result.objects.push(formatObjInfo(content, { IsDeleteMarker: true }))
       })
     }
 
@@ -367,7 +369,7 @@ export function parseListObjects(xml) {
     parseCommonPrefixesEntity(listVersionsResult.CommonPrefixes)
   }
 
-  result.isTruncated= isTruncated
+  result.isTruncated = isTruncated
   if (isTruncated) {
     result.nextMarker = nextVersionKeyMarker || nextMarker
   }
@@ -378,7 +380,7 @@ export function parseListObjects(xml) {
 export function parseListObjectsV2(xml) {
   var result = {
     objects: [],
-    isTruncated: false
+    isTruncated: false,
   }
   var xmlobj = parseXml(xml)
   if (!xmlobj.ListBucketResult) {
@@ -388,17 +390,17 @@ export function parseListObjectsV2(xml) {
   if (xmlobj.IsTruncated) result.isTruncated = xmlobj.IsTruncated
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken
   if (xmlobj.Contents) {
-    toArray(xmlobj.Contents).forEach(content => {
+    toArray(xmlobj.Contents).forEach((content) => {
       var name = sanitizeObjectKey(toArray(content.Key)[0])
       var lastModified = new Date(content.LastModified)
       var etag = sanitizeETag(content.ETag)
       var size = content.Size
-      result.objects.push({name, lastModified, etag, size})
+      result.objects.push({ name, lastModified, etag, size })
     })
   }
   if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
-      result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size:0})
+    toArray(xmlobj.CommonPrefixes).forEach((commonPrefix) => {
+      result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
     })
   }
   return result
@@ -408,7 +410,7 @@ export function parseListObjectsV2(xml) {
 export function parseListObjectsV2WithMetadata(xml) {
   var result = {
     objects: [],
-    isTruncated: false
+    isTruncated: false,
   }
   var xmlobj = parseXml(xml)
   if (!xmlobj.ListBucketResult) {
@@ -419,7 +421,7 @@ export function parseListObjectsV2WithMetadata(xml) {
   if (xmlobj.NextContinuationToken) result.nextContinuationToken = xmlobj.NextContinuationToken
 
   if (xmlobj.Contents) {
-    toArray(xmlobj.Contents).forEach(content => {
+    toArray(xmlobj.Contents).forEach((content) => {
       var name = sanitizeObjectKey(content.Key)
       var lastModified = new Date(content.LastModified)
       var etag = sanitizeETag(content.ETag)
@@ -430,57 +432,60 @@ export function parseListObjectsV2WithMetadata(xml) {
       } else {
         metadata = null
       }
-      result.objects.push({name, lastModified, etag, size, metadata})
+      result.objects.push({ name, lastModified, etag, size, metadata })
     })
   }
 
   if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach(commonPrefix => {
-      result.objects.push({prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size:0})
+    toArray(xmlobj.CommonPrefixes).forEach((commonPrefix) => {
+      result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
     })
   }
   return result
 }
 
-export function parseBucketVersioningConfig(xml){
+export function parseBucketVersioningConfig(xml) {
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
 }
 
-export function parseTagging(xml){
+export function parseTagging(xml) {
   const xmlObj = parseXml(xml)
-  let result =[]
-  if(xmlObj.Tagging && xmlObj.Tagging.TagSet&& xmlObj.Tagging.TagSet.Tag){
+  let result = []
+  if (xmlObj.Tagging && xmlObj.Tagging.TagSet && xmlObj.Tagging.TagSet.Tag) {
     const tagResult = xmlObj.Tagging.TagSet.Tag
     // if it is a single tag convert into an array so that the return value is always an array.
-    if(isObject(tagResult)){
+    if (isObject(tagResult)) {
       result.push(tagResult)
-    }else{
+    } else {
       result = tagResult
     }
   }
   return result
 }
 
-export function parseLifecycleConfig(xml){
+export function parseLifecycleConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LifecycleConfiguration
 }
 
-
-export function parseObjectLockConfig(xml){
+export function parseObjectLockConfig(xml) {
   const xmlObj = parseXml(xml)
-  let lockConfigResult={}
-  if(xmlObj.ObjectLockConfiguration) {
+  let lockConfigResult = {}
+  if (xmlObj.ObjectLockConfiguration) {
     lockConfigResult = {
-      objectLockEnabled:  xmlObj.ObjectLockConfiguration.ObjectLockEnabled
+      objectLockEnabled: xmlObj.ObjectLockConfiguration.ObjectLockEnabled,
     }
     let retentionResp
-    if(xmlObj.ObjectLockConfiguration && xmlObj.ObjectLockConfiguration.Rule && xmlObj.ObjectLockConfiguration.Rule.DefaultRetention){
+    if (
+      xmlObj.ObjectLockConfiguration &&
+      xmlObj.ObjectLockConfiguration.Rule &&
+      xmlObj.ObjectLockConfiguration.Rule.DefaultRetention
+    ) {
       retentionResp = xmlObj.ObjectLockConfiguration.Rule.DefaultRetention || {}
-      lockConfigResult.mode= retentionResp.Mode
+      lockConfigResult.mode = retentionResp.Mode
     }
-    if(retentionResp) {
+    if (retentionResp) {
       const isUnitYears = retentionResp.Years
       if (isUnitYears) {
         lockConfigResult.validity = isUnitYears
@@ -494,104 +499,102 @@ export function parseObjectLockConfig(xml){
   }
 }
 
-
-export function parseObjectRetentionConfig(xml){
+export function parseObjectRetentionConfig(xml) {
   const xmlObj = parseXml(xml)
   const retentionConfig = xmlObj.Retention
 
   return {
-    mode:retentionConfig.Mode,
-    retainUntilDate:retentionConfig.RetainUntilDate
+    mode: retentionConfig.Mode,
+    retainUntilDate: retentionConfig.RetainUntilDate,
   }
 }
 
-export function  parseBucketEncryptionConfig(xml){
+export function parseBucketEncryptionConfig(xml) {
   let encConfig = parseXml(xml)
   return encConfig
 }
-export function parseReplicationConfig(xml){
+export function parseReplicationConfig(xml) {
   const xmlObj = parseXml(xml)
   const replicationConfig = {
     ReplicationConfiguration: {
       role: xmlObj.ReplicationConfiguration.Role,
-      rules: toArray(xmlObj.ReplicationConfiguration.Rule)
-    }
+      rules: toArray(xmlObj.ReplicationConfiguration.Rule),
+    },
   }
   return replicationConfig
 }
 
-export function  parseObjectLegalHoldConfig(xml){
+export function parseObjectLegalHoldConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold
 }
 
-export function uploadPartParser (xml){
+export function uploadPartParser(xml) {
   const xmlObj = parseXml(xml)
   const respEl = xmlObj.CopyPartResult
   return respEl
 }
 
-export function removeObjectsParser(xml){
+export function removeObjectsParser(xml) {
   const xmlObj = parseXml(xml)
-  if(xmlObj.DeleteResult && xmlObj.DeleteResult.Error){
+  if (xmlObj.DeleteResult && xmlObj.DeleteResult.Error) {
     // return errors as array always. as the response is object in case of single object passed in removeObjects
     return toArray(xmlObj.DeleteResult.Error)
   }
   return []
 }
 
-export function parseSelectObjectContentResponse(res){
-
+export function parseSelectObjectContentResponse(res) {
   // extractHeaderType extracts the first half of the header message, the header type.
   function extractHeaderType(stream) {
-    const headerNameLen =  Buffer.from(stream.read(1)).readUInt8()
+    const headerNameLen = Buffer.from(stream.read(1)).readUInt8()
     const headerNameWithSeparator = Buffer.from(stream.read(headerNameLen)).toString()
-    const splitBySeparator = (headerNameWithSeparator|| "").split(":")
+    const splitBySeparator = (headerNameWithSeparator || "").split(":")
     const headerName = splitBySeparator.length >= 1 ? splitBySeparator[1] : ""
     return headerName
   }
 
-  function extractHeaderValue(stream){
-    const bodyLen= Buffer.from(stream.read(2)).readUInt16BE()
-    const bodyName= Buffer.from(stream.read(bodyLen)).toString()
+  function extractHeaderValue(stream) {
+    const bodyLen = Buffer.from(stream.read(2)).readUInt16BE()
+    const bodyName = Buffer.from(stream.read(bodyLen)).toString()
     return bodyName
   }
 
-
-  const selectResults = new SelectResults({})// will be returned
+  const selectResults = new SelectResults({}) // will be returned
 
   const responseStream = readableStream(res) // convert byte array to a readable responseStream
-  while( responseStream._readableState.length ) { // Top level responseStream read tracker.
+  while (responseStream._readableState.length) {
+    // Top level responseStream read tracker.
     let msgCrcAccumulator // accumulate from start of the message till the message crc start.
 
     const totalByteLengthBuffer = Buffer.from(responseStream.read(4))
     msgCrcAccumulator = crc32(totalByteLengthBuffer)
 
     const headerBytesBuffer = Buffer.from(responseStream.read(4))
-    msgCrcAccumulator = crc32(headerBytesBuffer,msgCrcAccumulator)
+    msgCrcAccumulator = crc32(headerBytesBuffer, msgCrcAccumulator)
 
     const calculatedPreludeCrc = msgCrcAccumulator.readInt32BE() // use it to check if any CRC mismatch in header itself.
 
-    const preludeCrcBuffer = Buffer.from(responseStream.read(4))// read 4 bytes    i.e 4+4 =8 + 4 = 12 ( prelude + prelude crc)
-    msgCrcAccumulator = crc32(preludeCrcBuffer,msgCrcAccumulator)
+    const preludeCrcBuffer = Buffer.from(responseStream.read(4)) // read 4 bytes    i.e 4+4 =8 + 4 = 12 ( prelude + prelude crc)
+    msgCrcAccumulator = crc32(preludeCrcBuffer, msgCrcAccumulator)
 
-    const totalMsgLength=totalByteLengthBuffer.readInt32BE()
-    const headerLength=headerBytesBuffer.readInt32BE()
+    const totalMsgLength = totalByteLengthBuffer.readInt32BE()
+    const headerLength = headerBytesBuffer.readInt32BE()
     const preludeCrcByteValue = preludeCrcBuffer.readInt32BE()
 
-    if(preludeCrcByteValue !== calculatedPreludeCrc){
+    if (preludeCrcByteValue !== calculatedPreludeCrc) {
       // Handle Header CRC mismatch Error
-      throw new Error(`Header Checksum Mismatch, Prelude CRC of ${preludeCrcByteValue} does not equal expected CRC of ${calculatedPreludeCrc}`)
+      throw new Error(
+        `Header Checksum Mismatch, Prelude CRC of ${preludeCrcByteValue} does not equal expected CRC of ${calculatedPreludeCrc}`
+      )
     }
 
     const headers = {}
     if (headerLength > 0) {
       const headerBytes = Buffer.from(responseStream.read(headerLength))
-      msgCrcAccumulator = crc32(headerBytes,msgCrcAccumulator)
+      msgCrcAccumulator = crc32(headerBytes, msgCrcAccumulator)
       const headerReaderStream = readableStream(headerBytes)
-      while (
-        headerReaderStream._readableState.length
-      ) {
+      while (headerReaderStream._readableState.length) {
         let headerTypeName = extractHeaderType(headerReaderStream)
         headerReaderStream.read(1) // just read and ignore it.
         headers[headerTypeName] = extractHeaderValue(headerReaderStream)
@@ -600,15 +603,17 @@ export function parseSelectObjectContentResponse(res){
 
     let payloadStream
     const payLoadLength = totalMsgLength - headerLength - 16
-    if(payLoadLength > 0) {
+    if (payLoadLength > 0) {
       const payLoadBuffer = Buffer.from(responseStream.read(payLoadLength))
       msgCrcAccumulator = crc32(payLoadBuffer, msgCrcAccumulator)
       // read the checksum early and detect any mismatch so we can avoid unnecessary further processing.
       const messageCrcByteValue = Buffer.from(responseStream.read(4)).readInt32BE()
       const calculatedCrc = msgCrcAccumulator.readInt32BE()
       // Handle message CRC Error
-      if(messageCrcByteValue !== calculatedCrc){
-        throw new Error(`Message Checksum Mismatch, Message CRC of ${messageCrcByteValue} does not equal expected CRC of ${calculatedCrc}`)
+      if (messageCrcByteValue !== calculatedCrc) {
+        throw new Error(
+          `Message Checksum Mismatch, Message CRC of ${messageCrcByteValue} does not equal expected CRC of ${calculatedCrc}`
+        )
       }
       payloadStream = readableStream(payLoadBuffer)
     }
@@ -616,64 +621,65 @@ export function parseSelectObjectContentResponse(res){
     const messageType = headers["message-type"]
 
     switch (messageType) {
-    case "error": {
-      const errorMessage = headers["error-code"] + ":\"" + headers["error-message"] + "\""
-      throw new Error(errorMessage)
-    }
-    case "event": {
-      const contentType = headers["content-type"]
-      const eventType = headers["event-type"]
+      case "error": {
+        const errorMessage = headers["error-code"] + ':"' + headers["error-message"] + '"'
+        throw new Error(errorMessage)
+      }
+      case "event": {
+        const contentType = headers["content-type"]
+        const eventType = headers["event-type"]
 
-      switch (eventType) {
-      case "End": {
-        selectResults.setResponse(res)
-        return selectResults
-      }
+        switch (eventType) {
+          case "End": {
+            selectResults.setResponse(res)
+            return selectResults
+          }
 
-      case "Records": {
-        const readData = payloadStream.read(payLoadLength)
-        selectResults.setRecords(readData)
-        break
-      }
+          case "Records": {
+            const readData = payloadStream.read(payLoadLength)
+            selectResults.setRecords(readData)
+            break
+          }
 
-      case "Progress": {
-        switch (contentType) {
-        case "text/xml": {
-          const progressData = payloadStream.read(payLoadLength)
-          selectResults.setProgress(progressData.toString())
-          break
-        }
-        default: {
-          const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
-          throw new Error(errorMessage)
-        }
-        }
-      }
-        break
-      case "Stats": {
-        switch (contentType) {
-        case "text/xml": {
-          const statsData = payloadStream.read(payLoadLength)
-          selectResults.setStats(statsData.toString())
-          break
-        }
-        default: {
-          const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
-          throw new Error(errorMessage)
-        }
-        }
-      }
-        break
-      default: {
-        // Continuation message: Not sure if it is supported. did not find a reference or any message in response.
-        // It does not have a payload.
-        const warningMessage = `Un implemented event detected  ${messageType}.`
-        // eslint-disable-next-line no-console
-        console.warn(warningMessage)
-      }
-      } // eventType End
-    } // Event End
+          case "Progress":
+            {
+              switch (contentType) {
+                case "text/xml": {
+                  const progressData = payloadStream.read(payLoadLength)
+                  selectResults.setProgress(progressData.toString())
+                  break
+                }
+                default: {
+                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Progress`
+                  throw new Error(errorMessage)
+                }
+              }
+            }
+            break
+          case "Stats":
+            {
+              switch (contentType) {
+                case "text/xml": {
+                  const statsData = payloadStream.read(payLoadLength)
+                  selectResults.setStats(statsData.toString())
+                  break
+                }
+                default: {
+                  const errorMessage = `Unexpected content-type ${contentType} sent for event-type Stats`
+                  throw new Error(errorMessage)
+                }
+              }
+            }
+            break
+          default: {
+            // Continuation message: Not sure if it is supported. did not find a reference or any message in response.
+            // It does not have a payload.
+            const warningMessage = `Un implemented event detected  ${messageType}.`
+            // eslint-disable-next-line no-console
+            console.warn(warningMessage)
+          }
+        } // eventType End
+      } // Event End
     } // messageType End
   } // Top Level Stream End
-
 }

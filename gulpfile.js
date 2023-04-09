@@ -14,53 +14,65 @@
  * limitations under the License.
  */
 
-const babel = require('gulp-babel')
-const gulp = require('gulp')
-const gulpIf = require('gulp-if')
-const sourcemaps = require('gulp-sourcemaps')
+const babel = require("gulp-babel")
+const gulp = require("gulp")
+const gulpIf = require("gulp-if")
+const sourcemaps = require("gulp-sourcemaps")
 
-const fs = require('fs')
-const browserify = require('browserify')
-const mocha = require('gulp-mocha')
-const eslint = require('gulp-eslint')
+const fs = require("fs")
+const browserify = require("browserify")
+const mocha = require("gulp-mocha")
+const eslint = require("gulp-eslint")
 
 const compileJS = (src, dest) => {
-  return gulp.src(src)
+  return gulp
+    .src(src)
     .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: [['@babel/env', {
-        targets: { node: 8 }
-      }]]
-    }))
-    .pipe(sourcemaps.write('.'))
+    .pipe(
+      babel({
+        presets: [
+          [
+            "@babel/env",
+            {
+              targets: { node: 8 },
+            },
+          ],
+        ],
+      })
+    )
+    .pipe(sourcemaps.write("."))
     .pipe(gulp.dest(dest))
 }
 
-const compile = () => compileJS('src/main/**/*.js', 'dist/main')
+const compile = () => compileJS("src/main/**/*.js", "dist/main")
 const testCompile = gulp.series(compile, () => {
-  return compileJS('src/test/**/*.js', 'dist/test')
+  return compileJS("src/test/**/*.js", "dist/test")
 })
 
 exports.browserify = gulp.series(compile, () => {
-  return browserify('./dist/main/minio.js', {
-    standalone: 'MinIO'
+  return browserify("./dist/main/minio.js", {
+    standalone: "MinIO",
   })
     .bundle()
-    .on('error', (err) => {
+    .on("error", (err) => {
       // eslint-disable-next-line no-console
-      console.log('Error : ' + err.message)
+      console.log("Error : " + err.message)
     })
-    .pipe(fs.createWriteStream('./dist/main/minio-browser.js'))
+    .pipe(fs.createWriteStream("./dist/main/minio-browser.js"))
 })
 
 exports.test = gulp.series(testCompile, () => {
-  return gulp.src('dist/test/**/*.js', {
-    read: false
-  }).pipe(mocha({
-    exit: true,
-    reporter: 'spec',
-    ui: 'bdd',
-  }))
+  return gulp
+    .src("dist/test/**/*.js", {
+      read: false,
+    })
+    .pipe(
+      mocha({
+        exit: true,
+        reporter: "spec",
+        ui: "bdd",
+      })
+    )
 })
 
 function isFixed(file) {
@@ -68,23 +80,30 @@ function isFixed(file) {
 }
 
 exports.lint = () => {
-  const hasFixFlag = process.argv.slice(2).includes('--fix')
-  return gulp.src(['src/**/*.js', 'gulpfile.js'])
-    .pipe(eslint({fix: hasFixFlag}))
-    .pipe(eslint.format())
-    .pipe(eslint.failAfterError())
-    // if fixed, write the file to dest
-    .pipe(gulpIf(isFixed, gulp.dest('src/')))
+  const hasFixFlag = process.argv.slice(2).includes("--fix")
+  return (
+    gulp
+      .src(["src/**/*.js", "gulpfile.js"])
+      .pipe(eslint({ fix: hasFixFlag }))
+      .pipe(eslint.format())
+      .pipe(eslint.failAfterError())
+      // if fixed, write the file to dest
+      .pipe(gulpIf(isFixed, gulp.dest("src/")))
+  )
 }
 
 exports.functionalTest = gulp.series(testCompile, () => {
-  return gulp.src('dist/test/functional/*.js', {
-    read: false
-  }).pipe(mocha({
-    exit: true,
-    reporter: 'spec',
-    ui: 'bdd',
-  }))
+  return gulp
+    .src("dist/test/functional/*.js", {
+      read: false,
+    })
+    .pipe(
+      mocha({
+        exit: true,
+        reporter: "spec",
+        ui: "bdd",
+      })
+    )
 })
 
 exports.compile = compile

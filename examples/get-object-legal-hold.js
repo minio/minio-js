@@ -17,38 +17,40 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("minio")
 
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
 //Get Legalhold config
-s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function(err, res) {
+s3Client.getObjectLegalHold("bucketName", "objectName", {}, function (err, res) {
   if (err) {
-    return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
+    return console.log("Unable to get legal hold config for the object", err.message) // Print only the message.
   }
   console.log(res)
 })
 
 //With versionId
-s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' }, function(err, res) {
+s3Client.getObjectLegalHold("bucketName", "objectName", { versionId: "my-obj-version-uuid" }, function (err, res) {
   if (err) {
-    return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
+    return console.log("Unable to get legal hold config for the object", err.message) // Print only the message.
   }
   console.log(res)
 })
 
 //Promise based version:
-const objectLegalHoldPromise = s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' })
-objectLegalHoldPromise.then((data) => {
-  console.log("Success...", data)
+const objectLegalHoldPromise = s3Client.getObjectLegalHold("bucketName", "objectName", {
+  versionId: "my-obj-version-uuid",
 })
-  .catch((e)=>{
+objectLegalHoldPromise
+  .then((data) => {
+    console.log("Success...", data)
+  })
+  .catch((e) => {
     // Print only the error message.  if called on an object without object lock config.
     // e.g: "The specified object does not have a ObjectLock configuration"
-    console.log(e.message) 
-      
+    console.log(e.message)
   })

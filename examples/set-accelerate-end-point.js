@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+var Minio = require("minio")
 
 var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  endPoint: "s3.amazonaws.com",
+  accessKey: "YOUR-ACCESSKEYID",
+  secretKey: "YOUR-SECRETACCESSKEY",
 })
 
 // Enable S3 transfer accelerate endpoint.
@@ -31,11 +30,10 @@ s3Client.SetS3TransferAccelerate("s3-accelerate.amazonaws.com")
 
 // Upload a buffer
 var buf = new Buffer(10)
-buf.fill('a')
-s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function(e) {
+buf.fill("a")
+s3Client.putObject("my-bucketname", "my-objectname2", buf, "application/octet-stream", function (e) {
   if (e) {
     return console.log(e.message)
   }
   console.log("Success")
 })
-
