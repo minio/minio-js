@@ -32,7 +32,7 @@ let awsS3Endpoint = {
   'ap-southeast-2': 's3-ap-southeast-2.amazonaws.com',
   'ap-northeast-1': 's3-ap-northeast-1.amazonaws.com',
   'cn-north-1': 's3.cn-north-1.amazonaws.com.cn',
-  'ap-east-1': 's3.ap-east-1.amazonaws.com'
+  'ap-east-1': 's3.ap-east-1.amazonaws.com',
   // Add new endpoints here.
 }
 

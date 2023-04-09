@@ -15,8 +15,9 @@
  */
 
 import { EventEmitter } from 'events'
+
+import { DEFAULT_REGION, pipesetup, uriEscape } from './helpers'
 import * as transformers from './transformers'
-import {DEFAULT_REGION, pipesetup, uriEscape} from './helpers'
 
 // Notification config - array of target configs.
 // Target configs can be
@@ -45,17 +46,17 @@ class TargetConfig {
   setId(id) {
     this.Id = id
   }
-  addEvent(newevent){
+  addEvent(newevent) {
     if (!this.Event) this.Event = []
     this.Event.push(newevent)
   }
   addFilterSuffix(suffix) {
-    if (!this.Filter) this.Filter = {S3Key : {FilterRule:[]}}
-    this.Filter.S3Key.FilterRule.push({Name:"suffix", Value:suffix})
+    if (!this.Filter) this.Filter = { S3Key: { FilterRule: [] } }
+    this.Filter.S3Key.FilterRule.push({ Name: 'suffix', Value: suffix })
   }
   addFilterPrefix(prefix) {
-    if (!this.Filter) this.Filter = {S3Key : {FilterRule:[]}}
-    this.Filter.S3Key.FilterRule.push({Name:"prefix", Value:prefix})
+    if (!this.Filter) this.Filter = { S3Key: { FilterRule: [] } }
+    this.Filter.S3Key.FilterRule.push({ Name: 'prefix', Value: prefix })
   }
 }
 
@@ -84,19 +85,18 @@ export class CloudFunctionConfig extends TargetConfig {
 }
 
 export const buildARN = (partition, service, region, accountId, resource) => {
-  return "arn:" + partition + ":" + service + ":" + region + ":" + accountId + ":" + resource
+  return 'arn:' + partition + ':' + service + ':' + region + ':' + accountId + ':' + resource
 }
 
-
-export const ObjectCreatedAll                      = "s3:ObjectCreated:*"
-export const ObjectCreatedPut                      = "s3:ObjectCreated:Put"
-export const ObjectCreatedPost                     = "s3:ObjectCreated:Post"
-export const ObjectCreatedCopy                     = "s3:ObjectCreated:Copy"
-export const ObjectCreatedCompleteMultipartUpload  = "s3:ObjectCreated:CompleteMultipartUpload"
-export const ObjectRemovedAll                      = "s3:ObjectRemoved:*"
-export const ObjectRemovedDelete                   = "s3:ObjectRemoved:Delete"
-export const ObjectRemovedDeleteMarkerCreated      = "s3:ObjectRemoved:DeleteMarkerCreated"
-export const ObjectReducedRedundancyLostObject     = "s3:ReducedRedundancyLostObject"
+export const ObjectCreatedAll = 's3:ObjectCreated:*'
+export const ObjectCreatedPut = 's3:ObjectCreated:Put'
+export const ObjectCreatedPost = 's3:ObjectCreated:Post'
+export const ObjectCreatedCopy = 's3:ObjectCreated:Copy'
+export const ObjectCreatedCompleteMultipartUpload = 's3:ObjectCreated:CompleteMultipartUpload'
+export const ObjectRemovedAll = 's3:ObjectRemoved:*'
+export const ObjectRemovedDelete = 's3:ObjectRemoved:Delete'
+export const ObjectRemovedDeleteMarkerCreated = 's3:ObjectRemoved:DeleteMarkerCreated'
+export const ObjectReducedRedundancyLostObject = 's3:ReducedRedundancyLostObject'
 
 // Poll for notifications, used in #listenBucketNotification.
 // Listening constitutes repeatedly requesting s3 whether or not any
@@ -143,7 +143,7 @@ export class NotificationPoller extends EventEmitter {
       queries.push(`suffix=${suffix}`)
     }
     if (this.events) {
-      this.events.forEach(s3event => queries.push('events='+uriEscape(s3event)))
+      this.events.forEach((s3event) => queries.push('events=' + uriEscape(s3event)))
     }
     queries.sort()
 
@@ -157,7 +157,7 @@ export class NotificationPoller extends EventEmitter {
 
       let transformer = transformers.getNotificationTransformer()
       pipesetup(response, transformer)
-        .on('data', result => {
+        .on('data', (result) => {
           // Data is flushed periodically (every 5 seconds), so we should
           // handle it after flushing from the JSON parser.
           let records = result.Records
@@ -165,14 +165,14 @@ export class NotificationPoller extends EventEmitter {
           if (!records) records = []
 
           // Iterate over the notifications and emit them individually.
-          records.forEach(record => {
+          records.forEach((record) => {
             this.emit('notification', record)
           })
 
           // If we're done, stop.
           if (this.ending) response.destroy()
         })
-        .on('error', e => this.emit('error', e))
+        .on('error', (e) => this.emit('error', e))
         .on('end', () => {
           // Do it again, if we haven't cancelled yet.
           process.nextTick(() => {
@@ -181,5 +181,4 @@ export class NotificationPoller extends EventEmitter {
         })
     })
   }
-
 }
