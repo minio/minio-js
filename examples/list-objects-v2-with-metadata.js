@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
-// dummy values, please replace them with original values.
+ // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+ // dummy values, please replace them with original values.
+ 
+ var Minio = require('minio')
 
-var Minio = require('minio')
-
-var s3Client = new Minio.Client({
-  endPoint: 's3.amazonaws.com',
-  accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY',
-})
-// List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.extensions.listObjectsV2WithMetadata('my-bucketname', '', true, '')
-objectsStream.on('data', function (obj) {
+ var s3Client = new Minio.Client({
+   endPoint: 's3.amazonaws.com',
+   accessKey: 'YOUR-ACCESSKEYID',
+   secretKey: 'YOUR-SECRETACCESSKEY'
+ })
+ // List all object paths in bucket my-bucketname.
+ var objectsStream = s3Client.extensions.listObjectsV2WithMetadata('my-bucketname', '', true,'');
+ objectsStream.on('data', function(obj) {
   console.log(obj)
 })
-objectsStream.on('error', function (e) {
+objectsStream.on('error', function(e) {
   console.log(e)
 })
+
+ 

@@ -22,7 +22,7 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY',
+  secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 // Bucket policy - GET requests on "testbucket" bucket will not need authentication.
@@ -66,7 +66,7 @@ var policy = `
 `
 
 s3Client.setBucketPolicy('testbucket', policy, (err) => {
-  if (err) throw err
+	if (err) throw err
 
-  console.log('Set bucket policy')
+	console.log('Set bucket policy')
 })

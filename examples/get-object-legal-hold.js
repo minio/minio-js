@@ -22,11 +22,11 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY',
+  secretKey: 'YOUR-SECRETACCESSKEY'
 })
 
 //Get Legalhold config
-s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function (err, res) {
+s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function(err, res) {
   if (err) {
     return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
   }
@@ -34,7 +34,7 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', {}, function (err, res) 
 })
 
 //With versionId
-s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId: 'my-obj-version-uuid' }, function (err, res) {
+s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' }, function(err, res) {
   if (err) {
     return console.log('Unable to get legal hold config for the object', err.message) // Print only the message.
   }
@@ -42,15 +42,13 @@ s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId: 'my-obj-ver
 })
 
 //Promise based version:
-const objectLegalHoldPromise = s3Client.getObjectLegalHold('bucketName', 'objectName', {
-  versionId: 'my-obj-version-uuid',
+const objectLegalHoldPromise = s3Client.getObjectLegalHold('bucketName', 'objectName', { versionId:'my-obj-version-uuid' })
+objectLegalHoldPromise.then((data) => {
+  console.log("Success...", data)
 })
-objectLegalHoldPromise
-  .then((data) => {
-    console.log('Success...', data)
-  })
-  .catch((e) => {
+  .catch((e)=>{
     // Print only the error message.  if called on an object without object lock config.
     // e.g: "The specified object does not have a ObjectLock configuration"
-    console.log(e.message)
+    console.log(e.message) 
+      
   })

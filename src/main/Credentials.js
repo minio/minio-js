@@ -1,36 +1,42 @@
-class Credentials {
-  constructor({ accessKey, secretKey, sessionToken }) {
+class Credentials{
+  constructor({
+    accessKey,
+    secretKey,
+    sessionToken
+  }) {
     this.accessKey = accessKey
     this.secretKey = secretKey
-    this.sessionToken = sessionToken
+    this.sessionToken=sessionToken
   }
 
-  setAccessKey(accessKey) {
+
+  setAccessKey(accessKey){
     this.accessKey = accessKey
   }
-  getAccessKey() {
+  getAccessKey(){
     return this.accessKey
   }
-  setSecretKey(secretKey) {
-    this.secretKey = secretKey
+  setSecretKey(secretKey){
+    this.secretKey=secretKey
   }
-  getSecretKey() {
+  getSecretKey(){
     return this.secretKey
   }
-  setSessionToken(sessionToken) {
+  setSessionToken (sessionToken){
     this.sessionToken = sessionToken
   }
-  getSessionToken() {
+  getSessionToken (){
     return this.sessionToken
   }
-
-  get() {
+  
+  get(){
     return {
-      accessKey: this.accessKey,
-      secretKey: this.secretKey,
-      sessionToken: this.sessionToken,
+      accessKey:this.accessKey,
+      secretKey:this.secretKey,
+      sessionToken:this.sessionToken
     }
   }
+
 }
 
 export default Credentials

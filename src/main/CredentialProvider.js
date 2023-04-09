@@ -1,11 +1,15 @@
-import Credentials from './Credentials'
+import Credentials from "./Credentials"
 
 class CredentialProvider {
-  constructor({ accessKey, secretKey, sessionToken }) {
+  constructor({
+    accessKey,
+    secretKey,
+    sessionToken
+  }) {
     this.credentials = new Credentials({
       accessKey,
       secretKey,
-      sessionToken,
+      sessionToken
     })
   }
 
@@ -17,9 +21,10 @@ class CredentialProvider {
     if (credentials instanceof Credentials) {
       this.credentials = credentials
     } else {
-      throw new Error('Unable to set Credentials . it should be an instance of Credentials class')
+      throw new Error("Unable to set Credentials . it should be an instance of Credentials class")
     }
   }
+
 
   setAccessKey(accessKey) {
     this.credentials.setAccessKey(accessKey)
@@ -44,6 +49,8 @@ class CredentialProvider {
   getSessionToken() {
     return this.credentials.getSessionToken()
   }
+
+
 }
 
 export default CredentialProvider
