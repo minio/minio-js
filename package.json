@@ -26,7 +26,7 @@
     "*.{js,cjs,mjs,ts,cts,mts,json,yaml,yml}": [
       "prettier --write"
     ],
-    "src/**/*.{js,cjs,mjs,ts,cts,mjs}": [
+    "src/**/*.{js,cjs,mjs,ts,cts,mts}": [
       "eslint --fix"
     ]
   },
