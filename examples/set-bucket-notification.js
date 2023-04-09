@@ -17,29 +17,29 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "localhost",
+  endPoint: 'localhost',
   port: 9000,
   useSSL: false,
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 var config = new Minio.NotificationConfig()
-var arn = Minio.buildARN("minio", "sqs", "", "1", "webhook")
+var arn = Minio.buildARN('minio', 'sqs', '', '1', 'webhook')
 var queue = new Minio.QueueConfig(arn)
 
-queue.addFilterSuffix(".jpg")
-queue.addFilterPrefix("myphotos/")
+queue.addFilterSuffix('.jpg')
+queue.addFilterPrefix('myphotos/')
 queue.addEvent(Minio.ObjectCreatedAll)
 
 config.add(queue)
 
-s3Client.setBucketNotification("my-bucketname", config, function (e) {
+s3Client.setBucketNotification('my-bucketname', config, function (e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Success")
+  console.log('Success')
 })

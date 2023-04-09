@@ -17,16 +17,16 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // are dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Retrieves the bucket policy and logs it to the console.
-s3Client.getBucketPolicy("testbucket", (err, policy) => {
+s3Client.getBucketPolicy('testbucket', (err, policy) => {
   if (err) throw err
 
   console.log(`Bucket policy: ${policy}`)

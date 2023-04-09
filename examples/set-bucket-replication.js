@@ -17,39 +17,39 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 const arnFromMcCli =
-  "arn:minio:replication::1277fcbe7df0bab76ab0c64cf7c45a0d27e01917ee5f11e913f3478417833660:destination"
+  'arn:minio:replication::1277fcbe7df0bab76ab0c64cf7c45a0d27e01917ee5f11e913f3478417833660:destination'
 
 var replicationConfig = {
   role: arnFromMcCli,
   rules: [
     {
       DeleteMarkerReplication: {
-        Status: "Disabled",
+        Status: 'Disabled',
       },
       DeleteReplication: {
         Status: [],
       },
       Destination: {
-        Bucket: "arn:aws:s3:::destination",
+        Bucket: 'arn:aws:s3:::destination',
       },
-      Priority: "1",
-      Status: "Enabled",
+      Priority: '1',
+      Status: 'Enabled',
     },
   ],
 }
 
-s3Client.setBucketReplication("bucketname", replicationConfig, function (err) {
+s3Client.setBucketReplication('bucketname', replicationConfig, function (err) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success")
+  console.log('Success')
 })

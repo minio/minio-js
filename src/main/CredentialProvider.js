@@ -1,4 +1,4 @@
-import Credentials from "./Credentials"
+import Credentials from './Credentials'
 
 class CredentialProvider {
   constructor({ accessKey, secretKey, sessionToken }) {
@@ -17,7 +17,7 @@ class CredentialProvider {
     if (credentials instanceof Credentials) {
       this.credentials = credentials
     } else {
-      throw new Error("Unable to set Credentials . it should be an instance of Credentials class")
+      throw new Error('Unable to set Credentials . it should be an instance of Credentials class')
     }
   }
 

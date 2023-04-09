@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import Crypto from "crypto"
-import JSONParser from "json-stream"
-import * as _ from "lodash"
-import Through2 from "through2"
+import Crypto from 'crypto'
+import JSONParser from 'json-stream'
+import * as _ from 'lodash'
+import Through2 from 'through2'
 
-import * as errors from "./errors"
-import { isFunction } from "./helpers"
-import * as xmlParsers from "./xml-parsers"
+import * as errors from './errors'
+import { isFunction } from './helpers'
+import * as xmlParsers from './xml-parsers'
 
 // getConcater returns a stream that concatenates the input and emits
 // the concatenated output when 'end' has reached. If an optional
@@ -69,37 +69,37 @@ export function getErrorTransformer(response) {
   var statusCode = response.statusCode
   var code, message
   if (statusCode === 301) {
-    code = "MovedPermanently"
-    message = "Moved Permanently"
+    code = 'MovedPermanently'
+    message = 'Moved Permanently'
   } else if (statusCode === 307) {
-    code = "TemporaryRedirect"
-    message = "Are you using the correct endpoint URL?"
+    code = 'TemporaryRedirect'
+    message = 'Are you using the correct endpoint URL?'
   } else if (statusCode === 403) {
-    code = "AccessDenied"
-    message = "Valid and authorized credentials required"
+    code = 'AccessDenied'
+    message = 'Valid and authorized credentials required'
   } else if (statusCode === 404) {
-    code = "NotFound"
-    message = "Not Found"
+    code = 'NotFound'
+    message = 'Not Found'
   } else if (statusCode === 405) {
-    code = "MethodNotAllowed"
-    message = "Method Not Allowed"
+    code = 'MethodNotAllowed'
+    message = 'Method Not Allowed'
   } else if (statusCode === 501) {
-    code = "MethodNotAllowed"
-    message = "Method Not Allowed"
+    code = 'MethodNotAllowed'
+    message = 'Method Not Allowed'
   } else {
-    code = "UnknownError"
+    code = 'UnknownError'
     message = `${statusCode}`
   }
 
   var headerInfo = {}
   // A value created by S3 compatible server that uniquely identifies
   // the request.
-  headerInfo.amzRequestid = response.headersSent ? response.getHeader("x-amz-request-id") : null
+  headerInfo.amzRequestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
   // A special token that helps troubleshoot API replies and issues.
-  headerInfo.amzId2 = response.headersSent ? response.getHeader("x-amz-id-2") : null
+  headerInfo.amzId2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
   // Region where the bucket is located. This header is returned only
   // in HEAD bucket and ListObjects response.
-  headerInfo.amzBucketRegion = response.headersSent ? response.getHeader("x-amz-bucket-region") : null
+  headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
 
   return getConcater((xmlString) => {
     let getError = () => {
@@ -127,8 +127,8 @@ export function getErrorTransformer(response) {
 
 // A through stream that calculates md5sum and sha256sum
 export function getHashSummer(enableSHA256) {
-  var md5 = Crypto.createHash("md5")
-  var sha256 = Crypto.createHash("sha256")
+  var md5 = Crypto.createHash('md5')
+  var sha256 = Crypto.createHash('sha256')
 
   return Through2.obj(
     function (chunk, enc, cb) {
@@ -140,12 +140,12 @@ export function getHashSummer(enableSHA256) {
       cb()
     },
     function (cb) {
-      var md5sum = ""
-      var sha256sum = ""
+      var md5sum = ''
+      var sha256sum = ''
       if (enableSHA256) {
-        sha256sum = sha256.digest("hex")
+        sha256sum = sha256.digest('hex')
       } else {
-        md5sum = md5.digest("base64")
+        md5sum = md5.digest('base64')
       }
       var hashData = { md5sum, sha256sum }
       this.push(hashData)

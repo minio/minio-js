@@ -18,27 +18,27 @@
 // my-src-bucketname and my-src-objectname are dummy values, please replace
 // them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 var conds = new Minio.CopyConditions()
-conds.setMatchETag("bd891862ea3e22c93ed53a098218791d")
+conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 
 s3Client.copyObject(
-  "my-bucketname",
-  "my-objectname",
-  "/my-src-bucketname/my-src-objectname",
+  'my-bucketname',
+  'my-objectname',
+  '/my-src-bucketname/my-src-objectname',
   conds,
   function (e, data) {
     if (e) {
       return console.log(e)
     }
-    console.log("Successfully copied the object:")
-    console.log("etag = " + data.etag + ", lastModified = " + data.lastModified)
+    console.log('Successfully copied the object:')
+    console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
   }
 )

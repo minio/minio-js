@@ -17,21 +17,21 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-objectname and my-bucketname
 // are dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
   useSSL: true, // Default is true.
 })
 
 // Construct a new postPolicy.
 var policy = s3Client.newPostPolicy()
 // Set the object name my-objectname.
-policy.setKey("my-objectname")
+policy.setKey('my-objectname')
 // Set the bucket to my-bucketname.
-policy.setBucket("my-bucketname")
+policy.setBucket('my-bucketname')
 
 var expires = new Date()
 expires.setSeconds(24 * 60 * 60 * 10) //10 days
@@ -39,12 +39,12 @@ policy.setExpires(expires)
 
 policy.setContentLengthRange(1024, 1024 * 1024) // Min upload length is 1KB Max upload size is 1MB
 
-policy.setContentType("text/plain")
+policy.setContentType('text/plain')
 
-policy.setContentDisposition("attachment; filename=text.txt")
+policy.setContentDisposition('attachment; filename=text.txt')
 
 policy.setUserMetaData({
-  key: "value",
+  key: 'value',
 })
 
 s3Client.presignedPostPolicy(policy, function (e, data) {
@@ -58,6 +58,6 @@ s3Client.presignedPostPolicy(policy, function (e, data) {
     }
   }
   // Print curl command to upload files.
-  curl.push("-F file=@<FILE>")
-  console.log(curl.join(" "))
+  curl.push('-F file=@<FILE>')
+  console.log(curl.join(' '))
 })

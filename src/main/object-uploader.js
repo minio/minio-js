@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import Crypto from "crypto"
-import * as querystring from "query-string"
-import { Transform } from "stream"
+import Crypto from 'crypto'
+import * as querystring from 'query-string'
+import { Transform } from 'stream'
 
-import { getVersionId, sanitizeETag } from "./helpers"
+import { getVersionId, sanitizeETag } from './helpers'
 
 // We extend Transform because Writable does not implement ._flush().
 export default class ObjectUploader extends Transform {
@@ -53,22 +53,22 @@ export default class ObjectUploader extends Transform {
     this.id = null
 
     // Handle errors.
-    this.on("error", (err) => {
+    this.on('error', (err) => {
       callback(err)
     })
   }
 
   _transform(chunk, encoding, callback) {
     this.emptyStream = false
-    let method = "PUT"
-    let headers = { "Content-Length": chunk.length }
-    let md5digest = ""
+    let method = 'PUT'
+    let headers = { 'Content-Length': chunk.length }
+    let md5digest = ''
 
     // Calculate and set Content-MD5 header if SHA256 is not set.
     // This will happen only when there is a secure connection to the s3 server.
     if (!this.client.enableSHA256) {
-      md5digest = Crypto.createHash("md5").update(chunk).digest()
-      headers["Content-MD5"] = md5digest.toString("base64")
+      md5digest = Crypto.createHash('md5').update(chunk).digest()
+      headers['Content-MD5'] = md5digest.toString('base64')
     }
     // We can flush the object in one packet if it fits in one chunk. This is true
     // if the chunk size is smaller than the part size, signifying the end of the
@@ -79,19 +79,19 @@ export default class ObjectUploader extends Transform {
         method,
         // Set user metadata as this is not a multipart upload
         headers: Object.assign({}, this.metaData, headers),
-        query: "",
+        query: '',
         bucketName: this.bucketName,
         objectName: this.objectName,
       }
 
-      this.client.makeRequest(options, chunk, [200], "", true, (err, response) => {
+      this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
         if (err) return callback(err)
         let result = {
           etag: sanitizeETag(response.headers.etag),
           versionId: getVersionId(response.headers),
         }
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-        response.on("data", () => {})
+        response.on('data', () => {})
 
         // Give the etag back, we're done!
 
@@ -110,13 +110,13 @@ export default class ObjectUploader extends Transform {
     // if it hasn't already been done. The write will be buffered until the upload has been
     // initiated.
     if (this.id === null) {
-      this.once("ready", () => {
+      this.once('ready', () => {
         this._transform(chunk, encoding, callback)
       })
 
       // Check for an incomplete previous upload.
       this.client.findUploadId(this.bucketName, this.objectName, (err, id) => {
-        if (err) return this.emit("error", err)
+        if (err) return this.emit('error', err)
 
         // If no upload ID exists, initiate a new one.
         if (!id) {
@@ -126,7 +126,7 @@ export default class ObjectUploader extends Transform {
             this.id = id
 
             // We are now ready to accept new chunks — this will flush the buffered chunk.
-            this.emit("ready")
+            this.emit('ready')
           })
 
           return
@@ -136,7 +136,7 @@ export default class ObjectUploader extends Transform {
 
         // Retrieve the pre-uploaded parts, if we need to resume the upload.
         this.client.listParts(this.bucketName, this.objectName, id, (err, etags) => {
-          if (err) return this.emit("error", err)
+          if (err) return this.emit('error', err)
 
           // It is possible for no parts to be already uploaded.
           if (!etags) etags = []
@@ -149,7 +149,7 @@ export default class ObjectUploader extends Transform {
             return prev
           }, {})
 
-          this.emit("ready")
+          this.emit('ready')
         })
       })
 
@@ -166,10 +166,10 @@ export default class ObjectUploader extends Transform {
 
       // Calulcate the md5 hash, if it has not already been calculated.
       if (!md5digest) {
-        md5digest = Crypto.createHash("md5").update(chunk).digest()
+        md5digest = Crypto.createHash('md5').update(chunk).digest()
       }
 
-      if (oldPart && md5digest.toString("hex") === oldPart.etag) {
+      if (oldPart && md5digest.toString('hex') === oldPart.etag) {
         // The md5 matches, the chunk has already been uploaded.
         this.etags.push({ part: partNumber, etag: oldPart.etag })
 
@@ -192,17 +192,17 @@ export default class ObjectUploader extends Transform {
       objectName: this.objectName,
     }
 
-    this.client.makeRequest(options, chunk, [200], "", true, (err, response) => {
+    this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
       if (err) return callback(err)
 
       // In order to aggregate the parts together, we need to collect the etags.
       let etag = response.headers.etag
-      if (etag) etag = etag.replace(/^"/, "").replace(/"$/, "")
+      if (etag) etag = etag.replace(/^"/, '').replace(/"$/, '')
 
       this.etags.push({ part: partNumber, etag })
 
       // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-      response.on("data", () => {})
+      response.on('data', () => {})
 
       // We're ready for the next chunk.
       callback()
@@ -211,17 +211,17 @@ export default class ObjectUploader extends Transform {
 
   _flush(callback) {
     if (this.emptyStream) {
-      let method = "PUT"
-      let headers = Object.assign({}, this.metaData, { "Content-Length": 0 })
+      let method = 'PUT'
+      let headers = Object.assign({}, this.metaData, { 'Content-Length': 0 })
       let options = {
         method,
         headers,
-        query: "",
+        query: '',
         bucketName: this.bucketName,
         objectName: this.objectName,
       }
 
-      this.client.makeRequest(options, "", [200], "", true, (err, response) => {
+      this.client.makeRequest(options, '', [200], '', true, (err, response) => {
         if (err) return callback(err)
 
         let result = {
@@ -230,7 +230,7 @@ export default class ObjectUploader extends Transform {
         }
 
         // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-        response.on("data", () => {})
+        response.on('data', () => {})
 
         // Give the etag back, we're done!
         process.nextTick(() => {

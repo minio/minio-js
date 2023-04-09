@@ -17,26 +17,26 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getObjectTagging("bucketname", "objectName", function (err, tagsList) {
+s3Client.getObjectTagging('bucketname', 'objectName', function (err, tagsList) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success", tagsList)
+  console.log('Success', tagsList)
 })
 
 //Get tags on a version of an object.
 
-s3Client.getObjectTagging("bucketname", "objectName", { versionId: "" }, function (err, tagsList) {
+s3Client.getObjectTagging('bucketname', 'objectName', { versionId: '' }, function (err, tagsList) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success", tagsList)
+  console.log('Success', tagsList)
 })

@@ -16,17 +16,17 @@
 
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
-const os = require("os")
-const splitFile = require("split-file")
-const fs = require("fs")
+const os = require('os')
+const splitFile = require('split-file')
+const fs = require('fs')
 
-var Minio = require("../dist/main/minio")
-var Helpers = require("../dist/main/helpers")
+var Minio = require('../dist/main/minio')
+var Helpers = require('../dist/main/helpers')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 const oneMB = 1024 * 1024
@@ -35,11 +35,11 @@ const oneMB = 1024 * 1024
 function sampleRunComposeObject() {
   var tmpDir = os.tmpdir()
 
-  const bucketName = "source-bucket"
+  const bucketName = 'source-bucket'
   // generate 100 MB buffer and write to a file.
   var local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
 
-  const composedObjName = "_100-mb-file-to-test-compose"
+  const composedObjName = '_100-mb-file-to-test-compose'
   const tmpSubDir = `${tmpDir}/compose`
   var fileToSplit = `${tmpSubDir}/${composedObjName}`
   let partObjNameList = []
@@ -48,28 +48,28 @@ function sampleRunComposeObject() {
     if (err) {
       console.log(err)
     } else {
-      console.log("New Temp directory successfully created.")
+      console.log('New Temp directory successfully created.')
     }
   })
 
   try {
     fs.writeFileSync(fileToSplit, local100mbFileToBeSplitAndComposed)
-    console.log("Written 100 MB File ")
+    console.log('Written 100 MB File ')
     // 100 MB split into 26 MB part size. ( just to test unequal parts ). But change as required.
 
     splitFile
       .splitFileBySize(fileToSplit, 26 * oneMB)
       .then((names) => {
-        console.log("Split and write 100 MB File(s) ", names)
+        console.log('Split and write 100 MB File(s) ', names)
         const putPartRequests = names.map((partFileName) => {
-          const partObjName = partFileName.slice((tmpSubDir + "/").length)
+          const partObjName = partFileName.slice((tmpSubDir + '/').length)
           partObjNameList.push(partObjName)
           return s3Client.fPutObject(bucketName, partObjName, partFileName, {})
         })
 
         Promise.all(putPartRequests)
           .then(() => {
-            console.log("Uploaded part Files: ", names)
+            console.log('Uploaded part Files: ', names)
             const sourcePartObjList = partObjNameList.map((partObjName) => {
               return new Helpers.CopySourceOptions({
                 Bucket: bucketName,
@@ -85,7 +85,7 @@ function sampleRunComposeObject() {
             s3Client
               .composeObject(destObjConfig, sourcePartObjList)
               .then(() => {
-                console.log("Composed to a single file: ", composedObjName)
+                console.log('Composed to a single file: ', composedObjName)
 
                 /** Begin Clean up ***/
                 // To verify that the parts are uploaded properly, comment the below code blocks and verify
@@ -95,7 +95,7 @@ function sampleRunComposeObject() {
 
                 Promise.all(sourcePartObjList)
                   .then(() => {
-                    console.log("Removed source parts: ")
+                    console.log('Removed source parts: ')
 
                     // Uncomment to remove the composed object itself. commented for verification.
                     /*
@@ -107,30 +107,30 @@ function sampleRunComposeObject() {
               */
                   })
                   .catch((er) => {
-                    console.log("Error removing parts used in composing", er)
+                    console.log('Error removing parts used in composing', er)
                   })
 
                 /** End Clean up **/
 
                 // Clean up generated parts locally
                 Helpers.removeDirAndFiles(tmpSubDir)
-                console.log("Clean up temp parts directory : ")
+                console.log('Clean up temp parts directory : ')
               })
               .catch((e) => {
-                console.log("Error Composing parts into an object", e)
+                console.log('Error Composing parts into an object', e)
               })
           })
           .catch((e) => {
-            console.log("Error Uploading parts ", e)
+            console.log('Error Uploading parts ', e)
           })
       })
       .catch((e) => {
         // this is a client error not related to compose object
-        console.log("Error Splitting files into parts ", e)
+        console.log('Error Splitting files into parts ', e)
       })
   } catch (err) {
     // this is a client error not related to compose object
-    console.log("Error Creating local files ", err)
+    console.log('Error Creating local files ', err)
   }
 }
 

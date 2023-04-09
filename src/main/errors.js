@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import ExtendableError from "es6-error"
+import ExtendableError from 'es6-error'
 
 // AnonymousRequestError is generated for anonymous keys on specific
 // APIs. NOTE: PresignedURL generation always requires access keys.

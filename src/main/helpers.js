@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import mime from "mime-types"
-import stream from "stream"
-var Crypto = require("crypto-browserify")
-const { XMLParser } = require("fast-xml-parser")
+import mime from 'mime-types'
+import stream from 'stream'
+var Crypto = require('crypto-browserify')
+const { XMLParser } = require('fast-xml-parser')
 const fxp = new XMLParser()
 
-const ipaddr = require("ipaddr.js")
-import { isBrowser } from "browser-or-node"
+const ipaddr = require('ipaddr.js')
+import { isBrowser } from 'browser-or-node'
 
-const fs = require("fs")
-const path = require("path")
-import _ from "lodash"
-import querystring from "query-string"
+const fs = require('fs')
+const path = require('path')
+import _ from 'lodash'
+import querystring from 'query-string'
 
-import * as errors from "./errors"
+import * as errors from './errors'
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.
@@ -38,7 +38,7 @@ export function promisify(fn) {
     let callback = arguments[arguments.length - 1]
 
     // If the callback is given, don't promisify, just pass straight in.
-    if (typeof callback === "function") return fn.apply(this, arguments)
+    if (typeof callback === 'function') return fn.apply(this, arguments)
 
     // Otherwise, create a new set of arguments, and wrap
     // it in a promise.
@@ -62,19 +62,19 @@ export function promisify(fn) {
 // Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
 // Reference https://tools.ietf.org/html/rfc3986#section-2.2
 export function uriEscape(string) {
-  return string.split("").reduce((acc, elem) => {
+  return string.split('').reduce((acc, elem) => {
     let buf = Buffer.from(elem)
     if (buf.length === 1) {
       // length 1 indicates that elem is not a unicode character.
       // Check if it is an unreserved characer.
       if (
-        ("A" <= elem && elem <= "Z") ||
-        ("a" <= elem && elem <= "z") ||
-        ("0" <= elem && elem <= "9") ||
-        elem === "_" ||
-        elem === "." ||
-        elem === "~" ||
-        elem === "-"
+        ('A' <= elem && elem <= 'Z') ||
+        ('a' <= elem && elem <= 'z') ||
+        ('0' <= elem && elem <= '9') ||
+        elem === '_' ||
+        elem === '.' ||
+        elem === '~' ||
+        elem === '-'
       ) {
         // Unreserved characer should not be encoded.
         acc = acc + elem
@@ -84,23 +84,23 @@ export function uriEscape(string) {
     // elem needs encoding - i.e elem should be encoded if it's not unreserved
     // character or if it's a unicode character.
     for (var i = 0; i < buf.length; i++) {
-      acc = acc + "%" + buf[i].toString(16).toUpperCase()
+      acc = acc + '%' + buf[i].toString(16).toUpperCase()
     }
     return acc
-  }, "")
+  }, '')
 }
 
 export function uriResourceEscape(string) {
-  return uriEscape(string).replace(/%2F/g, "/")
+  return uriEscape(string).replace(/%2F/g, '/')
 }
 
-export function getScope(region, date, serviceName = "s3") {
+export function getScope(region, date, serviceName = 's3') {
   return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
 }
 
 // isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
 export function isAmazonEndpoint(endpoint) {
-  return endpoint === "s3.amazonaws.com" || endpoint === "s3.cn-north-1.amazonaws.com.cn"
+  return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
 // isVirtualHostStyle - verify if bucket name is support with virtual
@@ -109,7 +109,7 @@ export function isAmazonEndpoint(endpoint) {
 // limitation. For all other buckets and Amazon S3 endpoint we will
 // default to virtual host style.
 export function isVirtualHostStyle(endpoint, protocol, bucket, pathStyle) {
-  if (protocol === "https:" && bucket.indexOf(".") > -1) {
+  if (protocol === 'https:' && bucket.indexOf('.') > -1) {
     return false
   }
   return isAmazonEndpoint(endpoint) || !pathStyle
@@ -132,18 +132,18 @@ export function isValidDomain(host) {
     return false
   }
   // Host cannot start or end with a '-'
-  if (host[0] === "-" || host.slice(-1) === "-") {
+  if (host[0] === '-' || host.slice(-1) === '-') {
     return false
   }
   // Host cannot start or end with a '_'
-  if (host[0] === "_" || host.slice(-1) === "_") {
+  if (host[0] === '_' || host.slice(-1) === '_') {
     return false
   }
   // Host cannot start with a '.'
-  if (host[0] === ".") {
+  if (host[0] === '.') {
     return false
   }
-  var alphaNumerics = "`~!@#$%^&*()+={}[]|\\\"';:><?/".split("")
+  var alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
   // All non alphanumeric characters are invalid.
   for (var i in alphaNumerics) {
     if (host.indexOf(alphaNumerics[i]) > -1) {
@@ -160,7 +160,7 @@ export function isValidDomain(host) {
 export function probeContentType(path) {
   let contentType = mime.lookup(path)
   if (!contentType) {
-    contentType = "application/octet-stream"
+    contentType = 'application/octet-stream'
   }
   return contentType
 }
@@ -188,7 +188,7 @@ export function isValidBucketName(bucket) {
     return false
   }
   // bucket with successive periods is invalid.
-  if (bucket.indexOf("..") > -1) {
+  if (bucket.indexOf('..') > -1) {
     return false
   }
   // bucket cannot have ip address style.
@@ -219,22 +219,22 @@ export function isValidPrefix(prefix) {
 
 // check if typeof arg number
 export function isNumber(arg) {
-  return typeof arg === "number"
+  return typeof arg === 'number'
 }
 
 // check if typeof arg function
 export function isFunction(arg) {
-  return typeof arg === "function"
+  return typeof arg === 'function'
 }
 
 // check if typeof arg string
 export function isString(arg) {
-  return typeof arg === "string"
+  return typeof arg === 'string'
 }
 
 // check if typeof arg object
 export function isObject(arg) {
-  return typeof arg === "object" && arg !== null
+  return typeof arg === 'object' && arg !== null
 }
 
 // check if object is readable stream
@@ -244,7 +244,7 @@ export function isReadableStream(arg) {
 
 // check if arg is boolean
 export function isBoolean(arg) {
-  return typeof arg === "boolean"
+  return typeof arg === 'boolean'
 }
 
 // check if arg is array
@@ -265,7 +265,7 @@ export function makeDateLong(date) {
   // Gives format like: '2017-08-07T16:28:59.889Z'
   date = date.toISOString()
 
-  return date.slice(0, 4) + date.slice(5, 7) + date.slice(8, 13) + date.slice(14, 16) + date.slice(17, 19) + "Z"
+  return date.slice(0, 4) + date.slice(5, 7) + date.slice(8, 13) + date.slice(14, 16) + date.slice(17, 19) + 'Z'
 }
 
 // Create a Date string with format:
@@ -284,7 +284,7 @@ export function makeDateShort(date) {
 // will be emitted at the last stream. This makes error handling simple
 export function pipesetup(...streams) {
   return streams.reduce((src, dst) => {
-    src.on("error", (err) => dst.emit("error", err))
+    src.on('error', (err) => dst.emit('error', err))
     return src.pipe(dst)
   })
 }
@@ -302,14 +302,14 @@ export function readableStream(data) {
 export function insertContentType(metaData, filePath) {
   // check if content-type attribute present in metaData
   for (var key in metaData) {
-    if (key.toLowerCase() === "content-type") {
+    if (key.toLowerCase() === 'content-type') {
       return metaData
     }
   }
   // if `content-type` attribute is not present in metadata,
   // then infer it from the extension in filePath
   var newMetadata = Object.assign({}, metaData)
-  newMetadata["content-type"] = probeContentType(filePath)
+  newMetadata['content-type'] = probeContentType(filePath)
   return newMetadata
 }
 
@@ -318,7 +318,7 @@ export function prependXAMZMeta(metaData) {
   var newMetadata = Object.assign({}, metaData)
   for (var key in metaData) {
     if (!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageclassHeader(key)) {
-      newMetadata["X-Amz-Meta-" + key] = newMetadata[key]
+      newMetadata['X-Amz-Meta-' + key] = newMetadata[key]
       delete newMetadata[key]
     }
   }
@@ -329,34 +329,34 @@ export function prependXAMZMeta(metaData) {
 export function isAmzHeader(key) {
   var temp = key.toLowerCase()
   return (
-    temp.startsWith("x-amz-meta-") ||
-    temp === "x-amz-acl" ||
-    temp.startsWith("x-amz-server-side-encryption-") ||
-    temp === "x-amz-server-side-encryption"
+    temp.startsWith('x-amz-meta-') ||
+    temp === 'x-amz-acl' ||
+    temp.startsWith('x-amz-server-side-encryption-') ||
+    temp === 'x-amz-server-side-encryption'
   )
 }
 // Checks if it is a supported Header
 export function isSupportedHeader(key) {
   var supported_headers = [
-    "content-type",
-    "cache-control",
-    "content-encoding",
-    "content-disposition",
-    "content-language",
-    "x-amz-website-redirect-location",
+    'content-type',
+    'cache-control',
+    'content-encoding',
+    'content-disposition',
+    'content-language',
+    'x-amz-website-redirect-location',
   ]
   return supported_headers.indexOf(key.toLowerCase()) > -1
 }
 // Checks if it is a storage header
 export function isStorageclassHeader(key) {
-  return key.toLowerCase() === "x-amz-storage-class"
+  return key.toLowerCase() === 'x-amz-storage-class'
 }
 
 export function extractMetadata(metaData) {
   var newMetadata = {}
   for (var key in metaData) {
     if (isSupportedHeader(key) || isStorageclassHeader(key) || isAmzHeader(key)) {
-      if (key.toLowerCase().startsWith("x-amz-meta-")) {
+      if (key.toLowerCase().startsWith('x-amz-meta-')) {
         newMetadata[key.slice(11, key.length)] = metaData[key]
       } else {
         newMetadata[key] = metaData[key]
@@ -367,33 +367,33 @@ export function extractMetadata(metaData) {
 }
 
 export function getVersionId(headers = {}) {
-  const versionIdValue = headers["x-amz-version-id"]
+  const versionIdValue = headers['x-amz-version-id']
   return versionIdValue || null
 }
 
 export function getSourceVersionId(headers = {}) {
-  const sourceVersionId = headers["x-amz-copy-source-version-id"]
+  const sourceVersionId = headers['x-amz-copy-source-version-id']
   return sourceVersionId || null
 }
 
-export function sanitizeETag(etag = "") {
-  var replaceChars = { '"': "", "&quot;": "", "&#34;": "", "&QUOT;": "", "&#x00022": "" }
+export function sanitizeETag(etag = '') {
+  var replaceChars = { '"': '', '&quot;': '', '&#34;': '', '&QUOT;': '', '&#x00022': '' }
   return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m])
 }
 
 export const RETENTION_MODES = {
-  GOVERNANCE: "GOVERNANCE",
-  COMPLIANCE: "COMPLIANCE",
+  GOVERNANCE: 'GOVERNANCE',
+  COMPLIANCE: 'COMPLIANCE',
 }
 
 export const RETENTION_VALIDITY_UNITS = {
-  DAYS: "Days",
-  YEARS: "Years",
+  DAYS: 'Days',
+  YEARS: 'Years',
 }
 
 export const LEGAL_HOLD_STATUS = {
-  ENABLED: "ON",
-  DISABLED: "OFF",
+  ENABLED: 'ON',
+  DISABLED: 'OFF',
 }
 
 const objectToBuffer = (payload) => {
@@ -406,11 +406,11 @@ export const toMd5 = (payload) => {
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
   payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
-  return Crypto.createHash("md5").update(payLoadBuf).digest().toString("base64")
+  return Crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
 
 export const toSha256 = (payload) => {
-  return Crypto.createHash("sha256").update(payload).digest("hex")
+  return Crypto.createHash('sha256').update(payload).digest('hex')
 }
 
 // toArray returns a single element array with param being the element,
@@ -425,7 +425,7 @@ export const toArray = (param) => {
 
 export const sanitizeObjectKey = (objectName) => {
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
-  let asStrName = (objectName ? objectName.toString() : "").replace(/\+/g, " ")
+  let asStrName = (objectName ? objectName.toString() : '').replace(/\+/g, ' ')
   const sanitizedName = decodeURIComponent(asStrName)
   return sanitizedName
 }
@@ -450,17 +450,17 @@ export const PART_CONSTRAINTS = {
 
 export const ENCRYPTION_TYPES = {
   // SSEC represents server-side-encryption with customer provided keys
-  SSEC: "SSE-C",
+  SSEC: 'SSE-C',
   // KMS represents server-side-encryption with managed keys
-  KMS: "KMS",
+  KMS: 'KMS',
 }
-const GENERIC_SSE_HEADER = "X-Amz-Server-Side-Encryption"
+const GENERIC_SSE_HEADER = 'X-Amz-Server-Side-Encryption'
 
 const ENCRYPTION_HEADERS = {
   // sseGenericHeader is the AWS SSE header used for SSE-S3 and SSE-KMS.
   sseGenericHeader: GENERIC_SSE_HEADER,
   // sseKmsKeyID is the AWS SSE-KMS key id.
-  sseKmsKeyID: GENERIC_SSE_HEADER + "-Aws-Kms-Key-Id",
+  sseKmsKeyID: GENERIC_SSE_HEADER + '-Aws-Kms-Key-Id',
 }
 
 /**
@@ -474,7 +474,7 @@ function getEncryptionHeaders(encConfig) {
   if (!_.isEmpty(encType)) {
     if (encType === ENCRYPTION_TYPES.SSEC) {
       return {
-        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: "AES256",
+        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: 'AES256',
       }
     } else if (encType === ENCRYPTION_TYPES.KMS) {
       return {
@@ -503,11 +503,11 @@ export class CopySourceOptions {
    * @param Encryption
    */
   constructor({
-    Bucket = "",
-    Object = "",
-    VersionID = "",
-    MatchETag = "",
-    NoMatchETag = "",
+    Bucket = '',
+    Object = '',
+    VersionID = '',
+    MatchETag = '',
+    NoMatchETag = '',
     MatchModifiedSince = null,
     MatchUnmodifiedSince = null,
     MatchRange = false,
@@ -530,16 +530,16 @@ export class CopySourceOptions {
 
   validate() {
     if (!isValidBucketName(this.Bucket)) {
-      throw new errors.InvalidBucketNameError("Invalid Source bucket name: " + this.Bucket)
+      throw new errors.InvalidBucketNameError('Invalid Source bucket name: ' + this.Bucket)
     }
     if (!isValidObjectName(this.Object)) {
       throw new errors.InvalidObjectNameError(`Invalid Source object name: ${this.Object}`)
     }
     if ((this.MatchRange && this.Start !== -1 && this.End !== -1 && this.Start > this.End) || this.Start < 0) {
-      throw new errors.InvalidObjectNameError("Source start must be non-negative, and start must be at most end.")
+      throw new errors.InvalidObjectNameError('Source start must be non-negative, and start must be at most end.')
     } else if ((this.MatchRange && !isNumber(this.Start)) || !isNumber(this.End)) {
       throw new errors.InvalidObjectNameError(
-        "MatchRange is specified. But  Invalid Start and End values are specified. "
+        'MatchRange is specified. But  Invalid Start and End values are specified. '
       )
     }
 
@@ -548,24 +548,24 @@ export class CopySourceOptions {
 
   getHeaders() {
     let headerOptions = {}
-    headerOptions["x-amz-copy-source"] = encodeURI(this.Bucket + "/" + this.Object)
+    headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object)
 
     if (!_.isEmpty(this.VersionID)) {
-      headerOptions["x-amz-copy-source"] = encodeURI(this.Bucket + "/" + this.Object) + "?versionId=" + this.VersionID
+      headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object) + '?versionId=' + this.VersionID
     }
 
     if (!_.isEmpty(this.MatchETag)) {
-      headerOptions["x-amz-copy-source-if-match"] = this.MatchETag
+      headerOptions['x-amz-copy-source-if-match'] = this.MatchETag
     }
     if (!_.isEmpty(this.NoMatchETag)) {
-      headerOptions["x-amz-copy-source-if-none-match"] = this.NoMatchETag
+      headerOptions['x-amz-copy-source-if-none-match'] = this.NoMatchETag
     }
 
     if (!_.isEmpty(this.MatchModifiedSince)) {
-      headerOptions["x-amz-copy-source-if-modified-since"] = this.MatchModifiedSince
+      headerOptions['x-amz-copy-source-if-modified-since'] = this.MatchModifiedSince
     }
     if (!_.isEmpty(this.MatchUnmodifiedSince)) {
-      headerOptions["x-amz-copy-source-if-unmodified-since"] = this.MatchUnmodifiedSince
+      headerOptions['x-amz-copy-source-if-unmodified-since'] = this.MatchUnmodifiedSince
     }
 
     return headerOptions
@@ -584,8 +584,8 @@ export class CopyDestinationOptions {
    * @param Mode
    */
   constructor({
-    Bucket = "",
-    Object = "",
+    Bucket = '',
+    Object = '',
     Encryption = null,
     UserMetadata = null,
     UserTags = null,
@@ -604,29 +604,29 @@ export class CopyDestinationOptions {
   }
 
   getHeaders() {
-    const replaceDirective = "REPLACE"
+    const replaceDirective = 'REPLACE'
     const headerOptions = {}
 
     const userTags = this.UserTags
     if (!_.isEmpty(userTags)) {
-      headerOptions["X-Amz-Tagging-Directive"] = replaceDirective
-      headerOptions["X-Amz-Tagging"] = isObject(userTags)
+      headerOptions['X-Amz-Tagging-Directive'] = replaceDirective
+      headerOptions['X-Amz-Tagging'] = isObject(userTags)
         ? querystring.stringify(userTags)
         : isString(userTags)
         ? userTags
-        : ""
+        : ''
     }
 
     if (!_.isEmpty(this.Mode)) {
-      headerOptions["X-Amz-Object-Lock-Mode"] = this.Mode // GOVERNANCE or COMPLIANCE
+      headerOptions['X-Amz-Object-Lock-Mode'] = this.Mode // GOVERNANCE or COMPLIANCE
     }
 
     if (!_.isEmpty(this.RetainUntilDate)) {
-      headerOptions["X-Amz-Object-Lock-Retain-Until-Date"] = this.RetainUntilDate // needs to be UTC.
+      headerOptions['X-Amz-Object-Lock-Retain-Until-Date'] = this.RetainUntilDate // needs to be UTC.
     }
 
     if (!_.isEmpty(this.LegalHold)) {
-      headerOptions["X-Amz-Object-Lock-Legal-Hold"] = this.LegalHold // ON or OFF
+      headerOptions['X-Amz-Object-Lock-Legal-Hold'] = this.LegalHold // ON or OFF
     }
 
     if (!_.isEmpty(this.UserMetadata)) {
@@ -646,7 +646,7 @@ export class CopyDestinationOptions {
   }
   validate() {
     if (!isValidBucketName(this.Bucket)) {
-      throw new errors.InvalidBucketNameError("Invalid Destination bucket name: " + this.Bucket)
+      throw new errors.InvalidBucketNameError('Invalid Destination bucket name: ' + this.Bucket)
     }
     if (!isValidObjectName(this.Object)) {
       throw new errors.InvalidObjectNameError(`Invalid Destination object name: ${this.Object}`)
@@ -789,4 +789,4 @@ export class SelectResults {
   }
 }
 
-export const DEFAULT_REGION = "us-east-1"
+export const DEFAULT_REGION = 'us-east-1'

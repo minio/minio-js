@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
-          cache: "npm"
+          node-version: '18.x'
+          cache: 'npm'
 
       - run: npm ci
 
@@ -27,8 +27,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
-          cache: "npm"
+          node-version: '18.x'
+          cache: 'npm'
 
       - run: npm ci
 
@@ -48,7 +48,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
-          cache: "npm"
+          cache: 'npm'
 
       - run: npm i
 
@@ -60,7 +60,7 @@ jobs:
           SERVER_ENDPOINT: localhost:9000
           MINIO_ROOT_USER: minio
           MINIO_ROOT_PASSWORD: minio123
-          MINIO_KMS_SECRET_KEY: "my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw="
+          MINIO_KMS_SECRET_KEY: 'my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw='
           ACCESS_KEY: minio
           SECRET_KEY: minio123
           ENABLE_HTTPS: 0

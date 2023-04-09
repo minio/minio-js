@@ -17,34 +17,34 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require("minio")
+var Minio = require('minio')
 
 var s3Client = new Minio.Client({
-  endPoint: "s3.amazonaws.com",
-  accessKey: "YOUR-ACCESSKEYID",
-  secretKey: "YOUR-SECRETACCESSKEY",
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 const lifecycleConfig = {
   Rule: [
     {
-      ID: "Expiration Days Rule",
-      Status: "Enabled",
+      ID: 'Expiration Days Rule',
+      Status: 'Enabled',
       Filter: {
-        Prefix: "",
+        Prefix: '',
       },
       Expiration: {
-        Days: "3650",
+        Days: '3650',
       },
     },
   ],
 }
 
-s3Client.setBucketLifecycle("bucketname", lifecycleConfig, function (err) {
+s3Client.setBucketLifecycle('bucketname', lifecycleConfig, function (err) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 //Example to demonstrate Expiration Date
@@ -55,10 +55,10 @@ expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
 const lifecycleConfigWithExpirationDate = {
   Rule: [
     {
-      ID: "Expiration Date Rule",
-      Status: "Enabled",
+      ID: 'Expiration Date Rule',
+      Status: 'Enabled',
       Filter: {
-        Prefix: "",
+        Prefix: '',
       },
       Expiration: {
         Date: expirationDate.toISOString(),
@@ -67,9 +67,9 @@ const lifecycleConfigWithExpirationDate = {
   ],
 }
 
-s3Client.setBucketLifecycle("bucketname", lifecycleConfigWithExpirationDate, function (err) {
+s3Client.setBucketLifecycle('bucketname', lifecycleConfigWithExpirationDate, function (err) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success")
+  console.log('Success')
 })

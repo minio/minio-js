@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-require("source-map-support").install()
+require('source-map-support').install()
 
-import { assert } from "chai"
-import Nock from "nock"
-import Stream from "stream"
+import { assert } from 'chai'
+import Nock from 'nock'
+import Stream from 'stream'
 
 import {
   calculateEvenSplits,
@@ -30,34 +30,34 @@ import {
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from "../../../dist/main/helpers"
-import * as Minio from "../../../dist/main/minio"
+} from '../../../dist/main/helpers'
+import * as Minio from '../../../dist/main/minio'
 
-var Package = require("../../../package")
+var Package = require('../../../package')
 
-describe("Helpers", () => {
-  it("should validate for s3 endpoint", () => {
-    assert.equal(isValidEndpoint("s3.amazonaws.com"), true)
+describe('Helpers', () => {
+  it('should validate for s3 endpoint', () => {
+    assert.equal(isValidEndpoint('s3.amazonaws.com'), true)
   })
-  it("should validate for s3 china", () => {
-    assert.equal(isValidEndpoint("s3.cn-north-1.amazonaws.com.cn"), true)
+  it('should validate for s3 china', () => {
+    assert.equal(isValidEndpoint('s3.cn-north-1.amazonaws.com.cn'), true)
   })
-  it("should validate for us-west-2", () => {
-    assert.equal(isValidEndpoint("s3-us-west-2.amazonaws.com"), true)
+  it('should validate for us-west-2', () => {
+    assert.equal(isValidEndpoint('s3-us-west-2.amazonaws.com'), true)
   })
-  it("should fail for invalid endpoint characters", () => {
-    assert.equal(isValidEndpoint("111.#2.11"), false)
+  it('should fail for invalid endpoint characters', () => {
+    assert.equal(isValidEndpoint('111.#2.11'), false)
   })
 
-  it("should make date short", () => {
-    let date = new Date("2012-12-03T17:25:36.331Z")
+  it('should make date short', () => {
+    let date = new Date('2012-12-03T17:25:36.331Z')
 
-    assert.equal(makeDateShort(date), "20121203")
+    assert.equal(makeDateShort(date), '20121203')
   })
-  it("should make date long", () => {
-    let date = new Date("2017-08-11T17:26:34.935Z")
+  it('should make date long', () => {
+    let date = new Date('2017-08-11T17:26:34.935Z')
 
-    assert.equal(makeDateLong(date), "20170811T172634Z")
+    assert.equal(makeDateLong(date), '20170811T172634Z')
   })
 
   // Adopted from minio-go sdk
@@ -74,7 +74,7 @@ describe("Helpers", () => {
 
   const maxMultipartPutObjectSize = 1024 * 1024 * 1024 * 1024 * 5
 
-  it("Parts Required Test cases ", () => {
+  it('Parts Required Test cases ', () => {
     const expectedPartsRequiredTestCases = [
       { value: 0, expected: 0 },
       { value: 1, expected: 1 },
@@ -92,7 +92,7 @@ describe("Helpers", () => {
       assert.equal(fnResult, testCase.expected)
     })
   })
-  it("Even split of Sizes Test cases ", () => {
+  it('Even split of Sizes Test cases ', () => {
     // Adopted from minio-go sdk
     const expectedSplitsTestCases = [
       { size: 0, sourceConfig: new CopySourceOptions({ Start: -1 }), expectedStart: null, expectedEnd: null },
@@ -188,49 +188,49 @@ describe("Helpers", () => {
   })
 })
 
-describe("CopyConditions", () => {
-  let date = "Fri, 11 Aug 2017 19:34:18 GMT"
+describe('CopyConditions', () => {
+  let date = 'Fri, 11 Aug 2017 19:34:18 GMT'
 
   let cc = new Minio.CopyConditions()
 
-  describe("#setModified", () => {
-    it("should take a date argument", () => {
+  describe('#setModified', () => {
+    it('should take a date argument', () => {
       cc.setModified(new Date(date))
 
       assert.equal(cc.modified, date)
     })
 
-    it("should throw without date", () => {
+    it('should throw without date', () => {
       assert.throws(() => {
         cc.setModified()
       }, /date must be of type Date/)
 
       assert.throws(() => {
-        cc.setModified({ hi: "there" })
+        cc.setModified({ hi: 'there' })
       }, /date must be of type Date/)
     })
   })
 
-  describe("#setUnmodified", () => {
-    it("should take a date argument", () => {
+  describe('#setUnmodified', () => {
+    it('should take a date argument', () => {
       cc.setUnmodified(new Date(date))
 
       assert.equal(cc.unmodified, date)
     })
 
-    it("should throw without date", () => {
+    it('should throw without date', () => {
       assert.throws(() => {
         cc.setUnmodified()
       }, /date must be of type Date/)
 
       assert.throws(() => {
-        cc.setUnmodified({ hi: "there" })
+        cc.setUnmodified({ hi: 'there' })
       }, /date must be of type Date/)
     })
   })
 })
 
-describe("Client", function () {
+describe('Client', function () {
   var nockRequests = []
   this.timeout(5000)
   beforeEach(() => {
@@ -245,189 +245,189 @@ describe("Client", function () {
     })
   })
   var client = new Minio.Client({
-    endPoint: "localhost",
+    endPoint: 'localhost',
     port: 9000,
-    accessKey: "accesskey",
-    secretKey: "secretkey",
+    accessKey: 'accesskey',
+    secretKey: 'secretkey',
     useSSL: false,
   })
-  describe("new client", () => {
-    it("should work with https", () => {
+  describe('new client', () => {
+    it('should work with https', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        endPoint: 'localhost',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
       })
       assert.equal(client.port, 443)
     })
-    it("should override port with http", () => {
+    it('should override port with http', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
+        endPoint: 'localhost',
         port: 9000,
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
         useSSL: false,
       })
       assert.equal(client.port, 9000)
     })
-    it("should work with http", () => {
+    it('should work with http', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        endPoint: 'localhost',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
         useSSL: false,
       })
       assert.equal(client.port, 80)
     })
-    it("should override port with https", () => {
+    it('should override port with https', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
+        endPoint: 'localhost',
         port: 9000,
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
       })
       assert.equal(client.port, 9000)
     })
-    it("should fail with url", (done) => {
+    it('should fail with url', (done) => {
       try {
         new Minio.Client({
-          endPoint: "http://localhost:9000",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'http://localhost:9000',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
-    it("should fail with alphanumeric", (done) => {
+    it('should fail with alphanumeric', (done) => {
       try {
         new Minio.Client({
-          endPoint: "localhost##$@3",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'localhost##$@3',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
-    it("should fail with no url", (done) => {
+    it('should fail with no url', (done) => {
       try {
         new Minio.Client({
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
-    it("should fail with bad port", (done) => {
+    it('should fail with bad port', (done) => {
       try {
         new Minio.Client({
-          endPoint: "localhost",
+          endPoint: 'localhost',
           port: -1,
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
-    it("should fail when secure param is passed", (done) => {
+    it('should fail when secure param is passed', (done) => {
       try {
         new Minio.Client({
-          endPoint: "localhost",
+          endPoint: 'localhost',
           secure: false,
           port: 9000,
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
-    it("should fail when secure param is passed", (done) => {
+    it('should fail when secure param is passed', (done) => {
       try {
         new Minio.Client({
-          endPoint: "localhost",
+          endPoint: 'localhost',
           secure: true,
           port: 9000,
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
       } catch (e) {
         done()
       }
     })
   })
-  describe("Presigned URL", () => {
-    describe("presigned-get", () => {
-      it("should not generate presigned url with no access key", (done) => {
+  describe('Presigned URL', () => {
+    describe('presigned-get', () => {
+      it('should not generate presigned url with no access key', (done) => {
         try {
           var client = new Minio.Client({
-            endPoint: "localhost",
+            endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedGetObject("bucket", "object", 1000, function () {})
+          client.presignedGetObject('bucket', 'object', 1000, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should not generate presigned url with wrong expires param", (done) => {
+      it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          client.presignedGetObject("bucket", "object", "0", function () {})
+          client.presignedGetObject('bucket', 'object', '0', function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("presigned-put", () => {
-      it("should not generate presigned url with no access key", (done) => {
+    describe('presigned-put', () => {
+      it('should not generate presigned url with no access key', (done) => {
         try {
           var client = new Minio.Client({
-            endPoint: "localhost",
+            endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedPutObject("bucket", "object", 1000, function () {})
+          client.presignedPutObject('bucket', 'object', 1000, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should not generate presigned url with wrong expires param", (done) => {
+      it('should not generate presigned url with wrong expires param', (done) => {
         try {
-          client.presignedPutObject("bucket", "object", "0", function () {})
+          client.presignedPutObject('bucket', 'object', '0', function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("presigned-post-policy", () => {
-      it("should not generate content type for undefined value", () => {
+    describe('presigned-post-policy', () => {
+      it('should not generate content type for undefined value', () => {
         assert.throws(() => {
           var policy = client.newPostPolicy()
           policy.setContentType()
         }, /content-type cannot be null/)
       })
-      it("should not generate content disposition for undefined value", () => {
+      it('should not generate content disposition for undefined value', () => {
         assert.throws(() => {
           var policy = client.newPostPolicy()
           policy.setContentDisposition()
         }, /content-disposition cannot be null/)
       })
-      it("should not generate user defined metadata for string value", () => {
+      it('should not generate user defined metadata for string value', () => {
         assert.throws(() => {
           var policy = client.newPostPolicy()
-          policy.setUserMetaData("123")
+          policy.setUserMetaData('123')
         }, /metadata should be of type "object"/)
       })
-      it("should not generate user defined metadata for null value", () => {
+      it('should not generate user defined metadata for null value', () => {
         assert.throws(() => {
           var policy = client.newPostPolicy()
           policy.setUserMetaData(null)
         }, /metadata should be of type "object"/)
       })
-      it("should not generate user defined metadata for undefined value", () => {
+      it('should not generate user defined metadata for undefined value', () => {
         assert.throws(() => {
           var policy = client.newPostPolicy()
           policy.setUserMetaData()
@@ -435,198 +435,198 @@ describe("Client", function () {
       })
     })
   })
-  describe("User Agent", () => {
-    it("should have a default user agent", () => {
+  describe('User Agent', () => {
+    it('should have a default user agent', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        endPoint: 'localhost',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
       })
       assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version}`, client.userAgent)
     })
-    it("should set user agent", () => {
+    it('should set user agent', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        endPoint: 'localhost',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
       })
-      client.setAppInfo("test", "3.2.1")
+      client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
         client.userAgent
       )
     })
-    it("should set user agent without comments", () => {
+    it('should set user agent without comments', () => {
       var client = new Minio.Client({
-        endPoint: "localhost",
-        accessKey: "accesskey",
-        secretKey: "secretkey",
+        endPoint: 'localhost',
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
       })
-      client.setAppInfo("test", "3.2.1")
+      client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
         client.userAgent
       )
     })
-    it("should not set user agent without name", (done) => {
+    it('should not set user agent without name', (done) => {
       try {
         var client = new Minio.Client({
-          endPoint: "localhost",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'localhost',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
-        client.setAppInfo(null, "3.2.1")
+        client.setAppInfo(null, '3.2.1')
       } catch (e) {
         done()
       }
     })
-    it("should not set user agent with empty name", (done) => {
+    it('should not set user agent with empty name', (done) => {
       try {
         var client = new Minio.Client({
-          endPoint: "localhost",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'localhost',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
-        client.setAppInfo("", "3.2.1")
+        client.setAppInfo('', '3.2.1')
       } catch (e) {
         done()
       }
     })
-    it("should not set user agent without version", (done) => {
+    it('should not set user agent without version', (done) => {
       try {
         var client = new Minio.Client({
-          endPoint: "localhost",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'localhost',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
-        client.setAppInfo("test", null)
+        client.setAppInfo('test', null)
       } catch (e) {
         done()
       }
     })
-    it("should not set user agent with empty version", (done) => {
+    it('should not set user agent with empty version', (done) => {
       try {
         var client = new Minio.Client({
-          endPoint: "localhost",
-          accessKey: "accesskey",
-          secretKey: "secretkey",
+          endPoint: 'localhost',
+          accessKey: 'accesskey',
+          secretKey: 'secretkey',
         })
-        client.setAppInfo("test", "")
+        client.setAppInfo('test', '')
       } catch (e) {
         done()
       }
     })
   })
 
-  describe("object level", () => {
-    describe("#getObject(bucket, object, callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('object level', () => {
+    describe('#getObject(bucket, object, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.getObject(null, "hello", function () {})
+          client.getObject(null, 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getObject("", "hello", function () {})
+          client.getObject('', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getObject("  \n  \t  ", "hello", function () {})
+          client.getObject('  \n  \t  ', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.getObject("hello", null, function () {})
+          client.getObject('hello', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.getObject("hello", "", function () {})
+          client.getObject('hello', '', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("#putObject(bucket, object, source, size, contentType, callback)", () => {
-      describe("with small objects using single put", () => {
-        it("should fail when data is smaller than specified", (done) => {
+    describe('#putObject(bucket, object, source, size, contentType, callback)', () => {
+      describe('with small objects using single put', () => {
+        it('should fail when data is smaller than specified', (done) => {
           var s = new Stream.Readable()
           s._read = function () {}
-          s.push("hello world")
+          s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", s, 12, "", (e) => {
+          client.putObject('bucket', 'object', s, 12, '', (e) => {
             if (e) {
               done()
             }
           })
         })
-        it("should fail when data is larger than specified", (done) => {
+        it('should fail when data is larger than specified', (done) => {
           var s = new Stream.Readable()
           s._read = function () {}
-          s.push("hello world")
+          s.push('hello world')
           s.push(null)
-          client.putObject("bucket", "object", s, 10, "", (e) => {
+          client.putObject('bucket', 'object', s, 10, '', (e) => {
             if (e) {
               done()
             }
           })
         })
-        it("should fail with invalid bucket name", () => {
+        it('should fail with invalid bucket name', () => {
           assert.throws(() => {
-            client.putObject("ab", "object", () => {})
+            client.putObject('ab', 'object', () => {})
           }, /Invalid bucket name/)
         })
-        it("should fail with invalid object name", () => {
+        it('should fail with invalid object name', () => {
           assert.throws(() => {
-            client.putObject("bucket", "", () => {})
+            client.putObject('bucket', '', () => {})
           }, /Invalid object name/)
         })
-        it("should error with size > maxObjectSize", () => {
+        it('should error with size > maxObjectSize', () => {
           assert.throws(() => {
-            client.putObject("bucket", "object", new Stream.Readable(), client.maxObjectSize + 1, () => {})
+            client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1, () => {})
           }, /size should not be more than/)
         })
-        it("should fail on null bucket", (done) => {
+        it('should fail on null bucket', (done) => {
           try {
-            client.putObject(null, "hello", null, 1, "", function () {})
+            client.putObject(null, 'hello', null, 1, '', function () {})
           } catch (e) {
             done()
           }
         })
-        it("should fail on empty bucket", (done) => {
+        it('should fail on empty bucket', (done) => {
           try {
-            client.putObject(" \n \t ", "hello", null, 1, "", function () {})
+            client.putObject(' \n \t ', 'hello', null, 1, '', function () {})
           } catch (e) {
             done()
           }
         })
-        it("should fail on empty bucket", (done) => {
+        it('should fail on empty bucket', (done) => {
           try {
-            client.putObject("", "hello", null, 1, "", function () {})
+            client.putObject('', 'hello', null, 1, '', function () {})
           } catch (e) {
             done()
           }
         })
-        it("should fail on null object", (done) => {
+        it('should fail on null object', (done) => {
           try {
-            client.putObject("hello", null, null, 1, "", function () {})
+            client.putObject('hello', null, null, 1, '', function () {})
           } catch (e) {
             done()
           }
         })
-        it("should fail on empty object", (done) => {
+        it('should fail on empty object', (done) => {
           try {
-            client.putObject("hello", "", null, 1, "", function () {})
+            client.putObject('hello', '', null, 1, '', function () {})
           } catch (e) {
             done()
           }
@@ -634,11 +634,11 @@ describe("Client", function () {
       })
     })
 
-    describe("#removeAllBucketNotification()", () => {
-      it("should error on invalid arguments", () => {
+    describe('#removeAllBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
         assert.throws(() => {
           client.removeAllBucketNotification(
-            "ab",
+            'ab',
             () => {},
             function () {}
           )
@@ -646,188 +646,188 @@ describe("Client", function () {
       })
     })
 
-    describe("#setBucketNotification()", () => {
-      it("should error on invalid arguments", () => {
+    describe('#setBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
         assert.throws(() => {
-          client.setBucketNotification("ab", () => {})
+          client.setBucketNotification('ab', () => {})
         }, /Invalid bucket name/)
         assert.throws(() => {
-          client.setBucketNotification("bucket", 49, () => {})
+          client.setBucketNotification('bucket', 49, () => {})
         }, /notification config should be of type "Object"/)
       })
     })
 
-    describe("#getBucketNotification()", () => {
-      it("should error on invalid arguments", () => {
+    describe('#getBucketNotification()', () => {
+      it('should error on invalid arguments', () => {
         assert.throws(() => {
-          client.getBucketNotification("ab", () => {})
+          client.getBucketNotification('ab', () => {})
         }, /Invalid bucket name/)
       })
     })
 
-    describe("#listenBucketNotification", () => {
-      it("should error on invalid arguments", () => {
+    describe('#listenBucketNotification', () => {
+      it('should error on invalid arguments', () => {
         assert.throws(() => {
-          client.listenBucketNotification("ab", "prefix", "suffix", ["events"])
+          client.listenBucketNotification('ab', 'prefix', 'suffix', ['events'])
         }, /Invalid bucket name/)
         assert.throws(() => {
-          client.listenBucketNotification("bucket", {}, "suffix", ["events"])
+          client.listenBucketNotification('bucket', {}, 'suffix', ['events'])
         }, /prefix must be of type string/)
         assert.throws(() => {
-          client.listenBucketNotification("bucket", "", {}, ["events"])
+          client.listenBucketNotification('bucket', '', {}, ['events'])
         }, /suffix must be of type string/)
         assert.throws(() => {
-          client.listenBucketNotification("bucket", "", "", {})
+          client.listenBucketNotification('bucket', '', '', {})
         }, /events must be of type Array/)
       })
     })
 
-    describe("#statObject(bucket, object, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('#statObject(bucket, object, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.statObject(null, "hello", function () {})
+          client.statObject(null, 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.statObject("", "hello", function () {})
+          client.statObject('', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.statObject("  \n  \t  ", "hello", function () {})
+          client.statObject('  \n  \t  ', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.statObject("hello", null, function () {})
+          client.statObject('hello', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.statObject("hello", "", function () {})
+          client.statObject('hello', '', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on incompatible argument type (number) for statOpts object", (done) => {
+      it('should fail on incompatible argument type (number) for statOpts object', (done) => {
         try {
-          client.statObject("hello", "testStatOpts", 1, function () {})
+          client.statObject('hello', 'testStatOpts', 1, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on incompatible argument type (null) for statOpts object", (done) => {
+      it('should fail on incompatible argument type (null) for statOpts object', (done) => {
         try {
-          client.statObject("hello", "testStatOpts", null, function () {})
+          client.statObject('hello', 'testStatOpts', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on incompatible argument type (sting) for statOpts object", (done) => {
+      it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
         try {
-          client.statObject("hello", "testStatOpts", "  ", function () {})
+          client.statObject('hello', 'testStatOpts', '  ', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("#removeObject(bucket, object, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('#removeObject(bucket, object, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.removeObject(null, "hello", function () {})
+          client.removeObject(null, 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeObject("", "hello", function () {})
+          client.removeObject('', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeObject("  \n  \t  ", "hello", function () {})
+          client.removeObject('  \n  \t  ', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.removeObject("hello", null, function () {})
+          client.removeObject('hello', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.removeObject("hello", "", function () {})
+          client.removeObject('hello', '', function () {})
         } catch (e) {
           done()
         }
       })
       // Versioning related options as removeOpts
-      it("should fail on empty (null) removeOpts object", (done) => {
+      it('should fail on empty (null) removeOpts object', (done) => {
         try {
-          client.removeObject("hello", "testRemoveOpts", null, function () {})
+          client.removeObject('hello', 'testRemoveOpts', null, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on empty (string) removeOpts", (done) => {
+      it('should fail on empty (string) removeOpts', (done) => {
         try {
-          client.removeObject("hello", "testRemoveOpts", "", function () {})
+          client.removeObject('hello', 'testRemoveOpts', '', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("#removeIncompleteUpload(bucket, object, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('#removeIncompleteUpload(bucket, object, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.removeIncompleteUpload(null, "hello", function () {})
+          client.removeIncompleteUpload(null, 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeIncompleteUpload("", "hello", function () {})
+          client.removeIncompleteUpload('', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeIncompleteUpload("  \n  \t  ", "hello", function () {})
+          client.removeIncompleteUpload('  \n  \t  ', 'hello', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.removeIncompleteUpload("hello", null, function () {})
+          client.removeIncompleteUpload('hello', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.removeIncompleteUpload("hello", "", function () {})
+          client.removeIncompleteUpload('hello', '', function () {})
         } catch (e) {
           done()
         }
@@ -835,43 +835,43 @@ describe("Client", function () {
     })
   })
 
-  describe("Bucket Versioning APIs", () => {
-    describe("getBucketVersioning(bucket, callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Bucket Versioning APIs', () => {
+    describe('getBucketVersioning(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getBucketVersioning(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketVersioning("", function () {})
+          client.getBucketVersioning('', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("setBucketVersioning(bucket, versionConfig, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('setBucketVersioning(bucket, versionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setBucketVersioning(null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketVersioning("", {}, function () {})
+          client.setBucketVersioning('', {}, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on empty versionConfig", (done) => {
+      it('should fail on empty versionConfig', (done) => {
         try {
-          client.setBucketVersioning("", null, function () {})
+          client.setBucketVersioning('', null, function () {})
         } catch (e) {
           done()
         }
@@ -879,171 +879,171 @@ describe("Client", function () {
     })
   })
 
-  describe("Bucket and Object Tags APIs", () => {
-    describe("Set Bucket Tags ", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Bucket and Object Tags APIs', () => {
+    describe('Set Bucket Tags ', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setBucketTagging(null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketTagging("", {}, function () {})
+          client.setBucketTagging('', {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail if tags are more than 50", (done) => {
+      it('should fail if tags are more than 50', (done) => {
         const _50_plus_key_tags = {}
         for (let i = 0; i < 51; i += 1) {
           _50_plus_key_tags[i] = i
         }
         try {
-          client.setBucketTagging("", _50_plus_key_tags, function () {})
+          client.setBucketTagging('', _50_plus_key_tags, function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("Get Bucket Tags", () => {
-      it("should fail on invalid bucket", (done) => {
+    describe('Get Bucket Tags', () => {
+      it('should fail on invalid bucket', (done) => {
         try {
-          client.getBucketTagging("nv", null, function () {})
+          client.getBucketTagging('nv', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null bucket", (done) => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getBucketTagging(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketTagging("", function () {})
+          client.getBucketTagging('', function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("Remove Bucket Tags", () => {
-      it("should fail on null object", (done) => {
+    describe('Remove Bucket Tags', () => {
+      it('should fail on null object', (done) => {
         try {
           client.removeBucketTagging(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketTagging("", function () {})
+          client.removeBucketTagging('', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on invalid bucket name", (done) => {
+      it('should fail on invalid bucket name', (done) => {
         try {
-          client.removeBucketTagging("198.51.100.24", function () {})
+          client.removeBucketTagging('198.51.100.24', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on invalid bucket name", (done) => {
+      it('should fail on invalid bucket name', (done) => {
         try {
-          client.removeBucketTagging("xy", function () {})
+          client.removeBucketTagging('xy', function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("Put Object Tags", () => {
-      it("should fail on null object", (done) => {
+    describe('Put Object Tags', () => {
+      it('should fail on null object', (done) => {
         try {
-          client.putObjectTagging("my-bucket-name", null, {}, function () {})
+          client.putObjectTagging('my-bucket-name', null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.putObjectTagging("my-bucket-name", null, {}, function () {})
+          client.putObjectTagging('my-bucket-name', null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on non object tags", (done) => {
+      it('should fail on non object tags', (done) => {
         try {
-          client.putObjectTagging("my-bucket-name", null, "non-obj-tag", function () {})
+          client.putObjectTagging('my-bucket-name', null, 'non-obj-tag', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail if tags are more than 50 on an object", (done) => {
+      it('should fail if tags are more than 50 on an object', (done) => {
         const _50_plus_key_tags = {}
         for (let i = 0; i < 51; i += 1) {
           _50_plus_key_tags[i] = i
         }
         try {
-          client.putObjectTagging("my-bucket-name", null, _50_plus_key_tags, function () {})
+          client.putObjectTagging('my-bucket-name', null, _50_plus_key_tags, function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("Get Object Tags", () => {
-      it("should fail on invalid bucket", (done) => {
+    describe('Get Object Tags', () => {
+      it('should fail on invalid bucket', (done) => {
         try {
-          client.getObjectTagging("nv", null, function () {})
+          client.getObjectTagging('nv', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.getObjectTagging("my-bucket-name", null, function () {})
+          client.getObjectTagging('my-bucket-name', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.getObjectTagging("my-bucket-name", null, function () {})
+          client.getObjectTagging('my-bucket-name', null, function () {})
         } catch (e) {
           done()
         }
       })
     })
-    describe("Remove Object Tags", () => {
-      it("should fail on null object", (done) => {
+    describe('Remove Object Tags', () => {
+      it('should fail on null object', (done) => {
         try {
-          client.removeObjectTagging("my-bucket", null, function () {})
+          client.removeObjectTagging('my-bucket', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeObjectTagging("my-bucket", "", function () {})
+          client.removeObjectTagging('my-bucket', '', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on invalid bucket name", (done) => {
+      it('should fail on invalid bucket name', (done) => {
         try {
-          client.removeObjectTagging("198.51.100.24", function () {})
+          client.removeObjectTagging('198.51.100.24', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on invalid bucket name", (done) => {
+      it('should fail on invalid bucket name', (done) => {
         try {
-          client.removeObjectTagging("xy", function () {})
+          client.removeObjectTagging('xy', function () {})
         } catch (e) {
           done()
         }
@@ -1051,8 +1051,8 @@ describe("Client", function () {
     })
   })
 
-  describe("setBucketLifecycle(bucket, lifecycleConfig, callback)", () => {
-    it("should fail on null bucket", (done) => {
+  describe('setBucketLifecycle(bucket, lifecycleConfig, callback)', () => {
+    it('should fail on null bucket', (done) => {
       try {
         client.setBucketLifecycle(null, null, function () {})
       } catch (e) {
@@ -1060,17 +1060,17 @@ describe("Client", function () {
       }
     })
 
-    it("should fail on empty bucket", (done) => {
+    it('should fail on empty bucket', (done) => {
       try {
-        client.setBucketLifecycle("", null, function () {})
+        client.setBucketLifecycle('', null, function () {})
       } catch (e) {
         done()
       }
     })
   })
 
-  describe("getBucketLifecycle(bucket, callback)", () => {
-    it("should fail on null bucket", (done) => {
+  describe('getBucketLifecycle(bucket, callback)', () => {
+    it('should fail on null bucket', (done) => {
       try {
         client.getBucketLifecycle(null, function () {})
       } catch (e) {
@@ -1078,16 +1078,16 @@ describe("Client", function () {
       }
     })
 
-    it("should fail on empty bucket", (done) => {
+    it('should fail on empty bucket', (done) => {
       try {
-        client.getBucketLifecycle("", function () {})
+        client.getBucketLifecycle('', function () {})
       } catch (e) {
         done()
       }
     })
   })
-  describe("removeBucketLifecycle(bucket, callback)", () => {
-    it("should fail on null bucket", (done) => {
+  describe('removeBucketLifecycle(bucket, callback)', () => {
+    it('should fail on null bucket', (done) => {
       try {
         client.removeBucketLifecycle(null, null, function () {})
       } catch (e) {
@@ -1095,78 +1095,78 @@ describe("Client", function () {
       }
     })
 
-    it("should fail on empty bucket", (done) => {
+    it('should fail on empty bucket', (done) => {
       try {
-        client.removeBucketLifecycle("", null, function () {})
+        client.removeBucketLifecycle('', null, function () {})
       } catch (e) {
         done()
       }
     })
   })
 
-  describe("Object Locking APIs", () => {
-    describe("getObjectLockConfig(bucket, callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Object Locking APIs', () => {
+    describe('getObjectLockConfig(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getObjectLockConfig(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectLockConfig("", function () {})
+          client.getObjectLockConfig('', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("setObjectLockConfig(bucket, lockConfig, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('setObjectLockConfig(bucket, lockConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setObjectLockConfig(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setObjectLockConfig("", function () {})
+          client.setObjectLockConfig('', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid mode ", (done) => {
+      it('should fail on passing invalid mode ', (done) => {
         try {
-          client.setObjectLockConfig("my-bucket", { mode: "invalid_mode" }, function () {})
+          client.setObjectLockConfig('my-bucket', { mode: 'invalid_mode' }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid unit ", (done) => {
+      it('should fail on passing invalid unit ', (done) => {
         try {
-          client.setObjectLockConfig("my-bucket", { mode: "COMPLIANCE", unit: "invalid_unit" }, function () {})
+          client.setObjectLockConfig('my-bucket', { mode: 'COMPLIANCE', unit: 'invalid_unit' }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid validity ", (done) => {
+      it('should fail on passing invalid validity ', (done) => {
         try {
           client.setObjectLockConfig(
-            "my-bucket",
-            { mode: "COMPLIANCE", unit: "invalid_unit", validity: "" },
+            'my-bucket',
+            { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
             function () {}
           )
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing  invalid config ", (done) => {
+      it('should fail on passing  invalid config ', (done) => {
         try {
           client.setObjectLockConfig(
-            "my-bucket",
-            { mode: "COMPLIANCE", randomProp: true, nonExisting: false },
+            'my-bucket',
+            { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
             function () {}
           )
         } catch (e) {
@@ -1176,92 +1176,92 @@ describe("Client", function () {
     })
   })
 
-  describe("Object retention APIs", () => {
-    describe("getObjectRetention(bucket, objectName, getRetentionOpts,callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Object retention APIs', () => {
+    describe('getObjectRetention(bucket, objectName, getRetentionOpts,callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.getObjectRetention(null, "", "", function () {})
+          client.getObjectRetention(null, '', '', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectRetention("", "", "", function () {})
+          client.getObjectRetention('', '', '', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on invalid  object name", (done) => {
+      it('should fail on invalid  object name', (done) => {
         try {
-          client.getObjectRetention("my-bucket", null, "", function () {})
+          client.getObjectRetention('my-bucket', null, '', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on invalid  versionId", (done) => {
+      it('should fail on invalid  versionId', (done) => {
         try {
-          client.getObjectRetention("my-bucket", "objectname", { versionId: 123 }, function () {})
+          client.getObjectRetention('my-bucket', 'objectname', { versionId: 123 }, function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("putObjectRetention(bucket, objectName, retentionConfig, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
-          client.putObjectRetention(null, "", {}, function () {})
+          client.putObjectRetention(null, '', {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.putObjectRetention("", "", {}, function () {})
+          client.putObjectRetention('', '', {}, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.putObjectRetention("my-bucket", null, {}, function () {})
+          client.putObjectRetention('my-bucket', null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.putObjectRetention("my-bucket", "", {}, function () {})
+          client.putObjectRetention('my-bucket', '', {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid mode ", (done) => {
+      it('should fail on passing invalid mode ', (done) => {
         try {
-          client.putObjectRetention("my-bucket", "my-object", { mode: "invalid_mode" }, function () {})
+          client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid governanceBypass ", (done) => {
+      it('should fail on passing invalid governanceBypass ', (done) => {
         try {
-          client.putObjectRetention("my-bucket", "my-object", { governanceBypass: "nonbool" }, function () {})
+          client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid (null) retainUntilDate ", (done) => {
+      it('should fail on passing invalid (null) retainUntilDate ', (done) => {
         try {
-          client.putObjectRetention("my-bucket", "my-object", { retainUntilDate: 12345 }, function () {})
+          client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on passing invalid versionId ", (done) => {
+      it('should fail on passing invalid versionId ', (done) => {
         try {
-          client.putObjectRetention("my-bucket", { versionId: "COMPLIANCE" }, function () {})
+          client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' }, function () {})
         } catch (e) {
           done()
         }
@@ -1269,37 +1269,37 @@ describe("Client", function () {
     })
   })
 
-  describe("Bucket Encryption APIs", () => {
-    describe("setBucketEncryption(bucket, encryptionConfig, callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Bucket Encryption APIs', () => {
+    describe('setBucketEncryption(bucket, encryptionConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setBucketEncryption(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketEncryption("", function () {})
+          client.setBucketEncryption('', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on multiple rules", (done) => {
+      it('should fail on multiple rules', (done) => {
         try {
           client.setBucketEncryption(
-            "my-bucket",
+            'my-bucket',
             {
               // Default Rule
               Rule: [
                 {
                   ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: "AES256",
+                    SSEAlgorithm: 'AES256',
                   },
                 },
                 {
                   ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: "AES256",
+                    SSEAlgorithm: 'AES256',
                   },
                 },
               ],
@@ -1312,125 +1312,125 @@ describe("Client", function () {
       })
     })
 
-    describe("getBucketEncryption(bucket, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('getBucketEncryption(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getBucketEncryption(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketEncryption("", function () {})
+          client.getBucketEncryption('', function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("removeBucketEncryption(bucket, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('removeBucketEncryption(bucket, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.removeBucketEncryption(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketEncryption("", function () {})
+          client.removeBucketEncryption('', function () {})
         } catch (e) {
           done()
         }
       })
     })
   })
-  describe("Bucket Replication APIs", () => {
-    describe("setBucketReplication(bucketName, replicationConfig, callback)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Bucket Replication APIs', () => {
+    describe('setBucketReplication(bucketName, replicationConfig, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setBucketReplication(null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketReplication("", {}, function () {})
+          client.setBucketReplication('', {}, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on empty replicationConfig", (done) => {
+      it('should fail on empty replicationConfig', (done) => {
         try {
-          client.setBucketReplication("my-bucket", {}, function () {})
+          client.setBucketReplication('my-bucket', {}, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on empty replicationConfig role", (done) => {
+      it('should fail on empty replicationConfig role', (done) => {
         try {
-          client.setBucketReplication("my-bucket", { role: "" }, function () {})
+          client.setBucketReplication('my-bucket', { role: '' }, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on  invalid value for replicationConfig role", (done) => {
+      it('should fail on  invalid value for replicationConfig role', (done) => {
         try {
-          client.setBucketReplication("my-bucket", { role: 12 }, function () {})
+          client.setBucketReplication('my-bucket', { role: 12 }, function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on  empty value for replicationConfig rules", (done) => {
+      it('should fail on  empty value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication("my-bucket", { role: "arn:", rules: [] }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on  null value for replicationConfig rules", (done) => {
+      it('should fail on  null value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication("my-bucket", { role: "arn:", rules: null }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("getBucketReplication(bucketName, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('getBucketReplication(bucketName, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getBucketReplication(null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketReplication("", {}, function () {})
+          client.getBucketReplication('', {}, function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("removeBucketReplication(bucketName, callback)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('removeBucketReplication(bucketName, callback)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.removeBucketReplication(null, {}, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketReplication("", {}, function () {})
+          client.removeBucketReplication('', {}, function () {})
         } catch (e) {
           done()
         }
@@ -1438,72 +1438,72 @@ describe("Client", function () {
     })
   })
 
-  describe("Object Legal Hold APIs", () => {
-    describe("getObjectLegalHold(bucketName, objectName, getOpts={}, cb)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Object Legal Hold APIs', () => {
+    describe('getObjectLegalHold(bucketName, objectName, getOpts={}, cb)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.getObjectLegalHold(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectLegalHold("", function () {})
+          client.getObjectLegalHold('', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on null objectName", (done) => {
+      it('should fail on null objectName', (done) => {
         try {
-          client.getObjectLegalHold("my-bucket", null, function () {})
+          client.getObjectLegalHold('my-bucket', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null getOpts", (done) => {
+      it('should fail on null getOpts', (done) => {
         try {
-          client.getObjectLegalHold("my-bucker", "my-object", null, function () {})
+          client.getObjectLegalHold('my-bucker', 'my-object', null, function () {})
         } catch (e) {
           done()
         }
       })
     })
 
-    describe("setObjectLegalHold(bucketName, objectName, setOpts={}, cb)", () => {
-      it("should fail on null bucket", (done) => {
+    describe('setObjectLegalHold(bucketName, objectName, setOpts={}, cb)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.setObjectLegalHold(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.setObjectLegalHold("", function () {})
+          client.setObjectLegalHold('', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on null objectName", (done) => {
+      it('should fail on null objectName', (done) => {
         try {
-          client.setObjectLegalHold("my-bucket", null, function () {})
+          client.setObjectLegalHold('my-bucket', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null setOpts", (done) => {
+      it('should fail on null setOpts', (done) => {
         try {
-          client.setObjectLegalHold("my-bucker", "my-object", null, function () {})
+          client.setObjectLegalHold('my-bucker', 'my-object', null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty versionId", (done) => {
+      it('should fail on empty versionId', (done) => {
         try {
-          client.setObjectLegalHold("my-bucker", "my-object", {}, function () {})
+          client.setObjectLegalHold('my-bucker', 'my-object', {}, function () {})
         } catch (e) {
           done()
         }
@@ -1511,9 +1511,9 @@ describe("Client", function () {
     })
   })
 
-  describe("Compose Object APIs", () => {
-    describe("composeObject(destObjConfig, sourceObjectList,cb)", () => {
-      it("should fail on null destination config", (done) => {
+  describe('Compose Object APIs', () => {
+    describe('composeObject(destObjConfig, sourceObjectList,cb)', () => {
+      it('should fail on null destination config', (done) => {
         try {
           client.composeObject(null, function () {})
         } catch (e) {
@@ -1521,18 +1521,18 @@ describe("Client", function () {
         }
       })
 
-      it("should fail on no array source config", (done) => {
+      it('should fail on no array source config', (done) => {
         try {
-          const destOptions = new CopyDestinationOptions({ Bucket: "test-bucket", Object: "test-object" })
-          client.composeObject(destOptions, "non-array", function () {})
+          const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
+          client.composeObject(destOptions, 'non-array', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on null source config", (done) => {
+      it('should fail on null source config', (done) => {
         try {
-          const destOptions = new CopyDestinationOptions({ Bucket: "test-bucket", Object: "test-object" })
+          const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
           client.composeObject(destOptions, null, function () {})
         } catch (e) {
           done()
@@ -1540,33 +1540,33 @@ describe("Client", function () {
       })
     })
   })
-  describe("Select Object Content APIs", () => {
-    describe("selectObjectContent(bucketName, objectName, selectOpts={}, cb)", () => {
-      it("should fail on null bucket", (done) => {
+  describe('Select Object Content APIs', () => {
+    describe('selectObjectContent(bucketName, objectName, selectOpts={}, cb)', () => {
+      it('should fail on null bucket', (done) => {
         try {
           client.selectObjectContent(null, function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on empty bucket", (done) => {
+      it('should fail on empty bucket', (done) => {
         try {
-          client.selectObjectContent("", function () {})
+          client.selectObjectContent('', function () {})
         } catch (e) {
           done()
         }
       })
 
-      it("should fail on empty object", (done) => {
+      it('should fail on empty object', (done) => {
         try {
-          client.selectObjectContent("my-bucket", "", function () {})
+          client.selectObjectContent('my-bucket', '', function () {})
         } catch (e) {
           done()
         }
       })
-      it("should fail on null object", (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.selectObjectContent("my-bucket", null, function () {})
+          client.selectObjectContent('my-bucket', null, function () {})
         } catch (e) {
           done()
         }
@@ -1575,344 +1575,344 @@ describe("Client", function () {
   })
 })
 
-describe("IP Address Validations", () => {
-  it("should validate for valid ip", () => {
-    assert.equal(isValidIP("1.1.1.1"), true)
+describe('IP Address Validations', () => {
+  it('should validate for valid ip', () => {
+    assert.equal(isValidIP('1.1.1.1'), true)
   })
 
-  it("Check list of IPV4 Invalid addresses", () => {
+  it('Check list of IPV4 Invalid addresses', () => {
     const invalidIpv4 = [
-      " 127.0.0.1",
-      "127.0.0.1 ",
-      "127.0.0.1 127.0.0.1",
-      "127.0.0.256",
-      "127.0.0.1//1",
-      "127.0.0.1/0x1",
-      "127.0.0.1/-1",
-      "127.0.0.1/ab",
-      "127.0.0.1/",
-      "127.0.0.256/32",
-      "127.0.0.1/33",
+      ' 127.0.0.1',
+      '127.0.0.1 ',
+      '127.0.0.1 127.0.0.1',
+      '127.0.0.256',
+      '127.0.0.1//1',
+      '127.0.0.1/0x1',
+      '127.0.0.1/-1',
+      '127.0.0.1/ab',
+      '127.0.0.1/',
+      '127.0.0.256/32',
+      '127.0.0.1/33',
     ]
     invalidIpv4.map((ip) => {
       assert.equal(isValidIP(ip), false)
     })
   })
 
-  it("Check list of IPV4 Valid addresses", () => {
-    const validIpv4 = ["001.002.003.004", "127.0.0.1", "255.255.255.255", "192.168.1.10"]
+  it('Check list of IPV4 Valid addresses', () => {
+    const validIpv4 = ['001.002.003.004', '127.0.0.1', '255.255.255.255', '192.168.1.10']
     validIpv4.map((ip) => {
       assert.equal(isValidIP(ip), true)
     })
   })
 
-  it("Check list of IPV6 Invalid addresses", () => {
+  it('Check list of IPV6 Invalid addresses', () => {
     const invalidIpV6 = [
       "':10.0.0.1",
-      "-1",
-      "::1 ::1",
-      "1.2.3.4:1111:2222:3333:4444::5555",
-      "1.2.3.4:1111:2222:3333::5555",
-      "1.2.3.4:1111:2222::5555",
-      "1.2.3.4:1111::5555",
-      "1.2.3.4::",
-      "1.2.3.4::5555",
-      "11112222:3333:4444:5555:6666:1.2.3.4",
-      "11112222:3333:4444:5555:6666:7777:8888",
-      "::1//64",
-      "::1/0001",
-      "1111:",
-      "1111:1.2.3.4",
-      "1111:2222",
-      "1111:22223333:4444:5555:6666:1.2.3.4",
-      "1111:22223333:4444:5555:6666:7777:8888",
-      "1111:2222:",
-      "1111:2222:1.2.3.4",
-      "1111:2222:3333",
-      "1111:2222:33334444:5555:6666:1.2.3.4",
-      "1111:2222:33334444:5555:6666:7777:8888",
-      "1111:2222:3333:",
-      "1111:2222:3333:1.2.3.4",
-      "1111:2222:3333:4444",
-      "1111:2222:3333:44445555:6666:1.2.3.4",
-      "1111:2222:3333:44445555:6666:7777:8888",
-      "1111:2222:3333:4444:",
-      "1111:2222:3333:4444:1.2.3.4",
-      "1111:2222:3333:4444:5555",
-      "1111:2222:3333:4444:55556666:1.2.3.4",
-      "1111:2222:3333:4444:55556666:7777:8888",
-      "1111:2222:3333:4444:5555:",
-      "1111:2222:3333:4444:5555:1.2.3.4",
-      "1111:2222:3333:4444:5555:6666",
-      "1111:2222:3333:4444:5555:66661.2.3.4",
-      "1111:2222:3333:4444:5555:66667777:8888",
-      "1111:2222:3333:4444:5555:6666:",
-      "1111:2222:3333:4444:5555:6666:1.2.3.4.5",
-      "1111:2222:3333:4444:5555:6666:255.255.255255",
-      "1111:2222:3333:4444:5555:6666:255.255255.255",
-      "1111:2222:3333:4444:5555:6666:255255.255.255",
-      "1111:2222:3333:4444:5555:6666:256.256.256.256",
-      "1111:2222:3333:4444:5555:6666:7777",
-      "1111:2222:3333:4444:5555:6666:77778888",
-      "1111:2222:3333:4444:5555:6666:7777:",
-      "1111:2222:3333:4444:5555:6666:7777:1.2.3.4",
-      "1111:2222:3333:4444:5555:6666:7777:::",
-      "1111:2222:3333:4444:5555:6666::8888:",
-      "1111:2222:3333:4444:5555:6666:::",
-      "1111:2222:3333:4444:5555:6666:::8888",
-      "1111:2222:3333:4444:5555::7777:8888:",
-      "1111:2222:3333:4444:5555::7777::",
-      "1111:2222:3333:4444:5555::8888:",
-      "1111:2222:3333:4444:5555:::",
-      "1111:2222:3333:4444:5555:::1.2.3.4",
-      "1111:2222:3333:4444:5555:::7777:8888",
-      "1111:2222:3333:4444::5555:",
-      "1111:2222:3333:4444::6666:7777:8888:",
-      "1111:2222:3333:4444::6666:7777::",
-      "1111:2222:3333:4444::6666::8888",
-      "1111:2222:3333:4444::7777:8888:",
-      "1111:2222:3333:4444::8888:",
-      "1111:2222:3333:4444:::",
-      "1111:2222:3333:4444:::6666:1.2.3.4",
-      "1111:2222:3333:4444:::6666:7777:8888",
-      "1111:2222:3333::5555:",
-      "1111:2222:3333::5555:6666:7777:8888:",
-      "1111:2222:3333::5555:6666:7777::",
-      "1111:2222:3333::5555:6666::8888",
-      "1111:2222:3333::5555::1.2.3.4",
-      "1111:2222:3333::5555::7777:8888",
-      "1111:2222:3333::6666:7777:8888:",
-      "1111:2222:3333::7777:8888:",
-      "1111:2222:3333::8888:",
-      "1111:2222:3333:::",
-      "1111:2222:3333:::5555:6666:1.2.3.4",
-      "1111:2222:3333:::5555:6666:7777:8888",
-      "1111:2222::4444:5555:6666:7777:8888:",
-      "1111:2222::4444:5555:6666:7777::",
-      "1111:2222::4444:5555:6666::8888",
-      "1111:2222::4444:5555::1.2.3.4",
-      "1111:2222::4444:5555::7777:8888",
-      "1111:2222::4444::6666:1.2.3.4",
-      "1111:2222::4444::6666:7777:8888",
-      "1111:2222::5555:",
-      "1111:2222::5555:6666:7777:8888:",
-      "1111:2222::6666:7777:8888:",
-      "1111:2222::7777:8888:",
-      "1111:2222::8888:",
-      "1111:2222:::",
-      "1111:2222:::4444:5555:6666:1.2.3.4",
-      "1111:2222:::4444:5555:6666:7777:8888",
-      "1111::3333:4444:5555:6666:7777:8888:",
-      "1111::3333:4444:5555:6666:7777::",
-      "1111::3333:4444:5555:6666::8888",
-      "1111::3333:4444:5555::1.2.3.4",
-      "1111::3333:4444:5555::7777:8888",
-      "1111::3333:4444::6666:1.2.3.4",
-      "1111::3333:4444::6666:7777:8888",
-      "1111::3333::5555:6666:1.2.3.4",
-      "1111::3333::5555:6666:7777:8888",
-      "1111::4444:5555:6666:7777:8888:",
-      "1111::5555:",
-      "1111::5555:6666:7777:8888:",
-      "1111::6666:7777:8888:",
-      "1111::7777:8888:",
-      "1111::8888:",
-      "1111:::",
-      "1111:::3333:4444:5555:6666:1.2.3.4",
-      "1111:::3333:4444:5555:6666:7777:8888",
-      "12345::6:7:8",
-      "124.15.6.89/60",
-      "1:2:3:4:5:6:7:8:9",
-      "1:2:3::4:5:6:7:8:9",
-      "1:2:3::4:5::7:8",
-      "1::1.2.256.4",
-      "1::1.2.3.256",
-      "1::1.2.3.300",
-      "1::1.2.3.900",
-      "1::1.2.300.4",
-      "1::1.2.900.4",
-      "1::1.256.3.4",
-      "1::1.300.3.4",
-      "1::1.900.3.4",
-      "1::256.2.3.4",
-      "1::260.2.3.4",
-      "1::2::3",
-      "1::300.2.3.4",
-      "1::300.300.300.300",
-      "1::3000.30.30.30",
-      "1::400.2.3.4",
-      "1::5:1.2.256.4",
-      "1::5:1.2.3.256",
-      "1::5:1.2.3.300",
-      "1::5:1.2.3.900",
-      "1::5:1.2.300.4",
-      "1::5:1.2.900.4",
-      "1::5:1.256.3.4",
-      "1::5:1.300.3.4",
-      "1::5:1.900.3.4",
-      "1::5:256.2.3.4",
-      "1::5:260.2.3.4",
-      "1::5:300.2.3.4",
-      "1::5:300.300.300.300",
-      "1::5:3000.30.30.30",
-      "1::5:400.2.3.4",
-      "1::5:900.2.3.4",
-      "1::900.2.3.4",
-      "1:::3:4:5",
-      "2001:0000:1234: 0000:0000:C1C0:ABCD:0876",
-      "2001:0000:1234:0000:0000:C1C0:ABCD:0876  0",
-      "2001:1:1:1:1:1:255Z255X255Y255",
-      "2001::FFD3::57ab",
-      "2001:DB8:0:0:8:800:200C:417A:221",
-      "2001:db8:85a3::8a2e:37023:7334",
-      "2001:db8:85a3::8a2e:370k:7334",
-      "3ffe:0b00:0000:0001:0000:0000:000a",
-      "3ffe:b00::1::a",
-      ":",
-      ":1.2.3.4",
-      ":1111:2222:3333:4444:5555:6666:1.2.3.4",
-      ":1111:2222:3333:4444:5555:6666:7777:8888",
-      ":1111:2222:3333:4444:5555:6666:7777::",
-      ":1111:2222:3333:4444:5555:6666::",
-      ":1111:2222:3333:4444:5555:6666::8888",
-      ":1111:2222:3333:4444:5555::",
-      ":1111:2222:3333:4444:5555::1.2.3.4",
-      ":1111:2222:3333:4444:5555::7777:8888",
-      ":1111:2222:3333:4444:5555::8888",
-      ":1111:2222:3333:4444::",
-      ":1111:2222:3333:4444::1.2.3.4",
-      ":1111:2222:3333:4444::5555",
-      ":1111:2222:3333:4444::6666:1.2.3.4",
-      ":1111:2222:3333:4444::6666:7777:8888",
-      ":1111:2222:3333:4444::7777:8888",
-      ":1111:2222:3333:4444::8888",
-      ":1111:2222:3333::",
-      ":1111:2222:3333::1.2.3.4",
-      ":1111:2222:3333::5555",
-      ":1111:2222:3333::5555:6666:1.2.3.4",
-      ":1111:2222:3333::5555:6666:7777:8888",
-      ":1111:2222:3333::6666:1.2.3.4",
-      ":1111:2222:3333::6666:7777:8888",
-      ":1111:2222:3333::7777:8888",
-      ":1111:2222:3333::8888",
-      ":1111:2222::",
-      ":1111:2222::1.2.3.4",
-      ":1111:2222::4444:5555:6666:1.2.3.4",
-      ":1111:2222::4444:5555:6666:7777:8888",
-      ":1111:2222::5555",
-      ":1111:2222::5555:6666:1.2.3.4",
-      ":1111:2222::5555:6666:7777:8888",
-      ":1111:2222::6666:1.2.3.4",
-      ":1111:2222::6666:7777:8888",
-      ":1111:2222::7777:8888",
-      ":1111:2222::8888",
-      ":1111::",
-      ":1111::1.2.3.4",
-      ":1111::3333:4444:5555:6666:1.2.3.4",
-      ":1111::3333:4444:5555:6666:7777:8888",
-      ":1111::4444:5555:6666:1.2.3.4",
-      ":1111::4444:5555:6666:7777:8888",
-      ":1111::5555",
-      ":1111::5555:6666:1.2.3.4",
-      ":1111::5555:6666:7777:8888",
-      ":1111::6666:1.2.3.4",
-      ":1111::6666:7777:8888",
-      ":1111::7777:8888",
-      ":1111::8888",
-      ":2222:3333:4444:5555:6666:1.2.3.4",
-      ":2222:3333:4444:5555:6666:7777:8888",
-      ":3333:4444:5555:6666:1.2.3.4",
-      ":3333:4444:5555:6666:7777:8888",
-      ":4444:5555:6666:1.2.3.4",
-      ":4444:5555:6666:7777:8888",
-      ":5555:6666:1.2.3.4",
-      ":5555:6666:7777:8888",
-      ":6666:1.2.3.4",
-      ":6666:7777:8888",
-      ":7777:8888",
-      ":8888",
-      "::-1",
-      "::.",
-      "::..",
-      "::...",
-      "::...4",
-      "::..3.",
-      "::..3.4",
-      "::.2..",
-      "::.2.3.",
-      "::.2.3.4",
-      "::1...",
-      "::1.2..",
-      "::1.2.256.4",
-      "::1.2.3.",
-      "::1.2.3.256",
-      "::1.2.3.300",
-      "::1.2.3.900",
-      "::1.2.300.4",
-      "::1.2.900.4",
-      "::1.256.3.4",
-      "::1.300.3.4",
-      "::1.900.3.4",
-      "::1111:2222:3333:4444:5555:6666::",
-      "::2222:3333:4444:5555:6666:7777:8888:",
-      "::2222:3333:4444:5555:7777:8888::",
-      "::2222:3333:4444:5555:7777::8888",
-      "::2222:3333:4444:5555::1.2.3.4",
-      "::2222:3333:4444:5555::7777:8888",
-      "::2222:3333:4444::6666:1.2.3.4",
-      "::2222:3333:4444::6666:7777:8888",
-      "::2222:3333::5555:6666:1.2.3.4",
-      "::2222:3333::5555:6666:7777:8888",
-      "::2222::4444:5555:6666:1.2.3.4",
-      "::2222::4444:5555:6666:7777:8888",
-      "::256.2.3.4",
-      "::260.2.3.4",
-      "::300.2.3.4",
-      "::300.300.300.300",
-      "::3000.30.30.30",
-      "::3333:4444:5555:6666:7777:8888:",
-      "::400.2.3.4",
-      "::4444:5555:6666:7777:8888:",
-      "::5555:",
-      "::5555:6666:7777:8888:",
-      "::6666:7777:8888:",
-      "::7777:8888:",
-      "::8888:",
-      "::900.2.3.4",
-      ":::",
-      ":::1.2.3.4",
-      ":::2222:3333:4444:5555:6666:1.2.3.4",
-      ":::2222:3333:4444:5555:6666:7777:8888",
-      ":::3333:4444:5555:6666:7777:8888",
-      ":::4444:5555:6666:1.2.3.4",
-      ":::4444:5555:6666:7777:8888",
-      ":::5555",
-      ":::5555:6666:1.2.3.4",
-      ":::5555:6666:7777:8888",
-      ":::6666:1.2.3.4",
-      ":::6666:7777:8888",
-      ":::7777:8888",
-      ":::8888",
-      "::ffff:192x168.1.26",
-      "::ffff:2.3.4",
-      "::ffff:257.1.2.3",
-      "FF01::101::2",
-      "FF02:0000:0000:0000:0000:0000:0000:0000:0001",
-      "XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:1.2.3.4",
-      "XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX",
-      "a::b::c",
-      "a::g",
-      "a:a:a:a:a:a:a:a:a",
-      "a:aaaaa::",
-      "a:b",
-      "a:b:c:d:e:f:g:0",
-      "ffff:",
-      "ffff::ffff::ffff",
-      "ffgg:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-      "ldkfj",
-      "::/129",
-      "1000:://32",
-      "::/",
+      '-1',
+      '::1 ::1',
+      '1.2.3.4:1111:2222:3333:4444::5555',
+      '1.2.3.4:1111:2222:3333::5555',
+      '1.2.3.4:1111:2222::5555',
+      '1.2.3.4:1111::5555',
+      '1.2.3.4::',
+      '1.2.3.4::5555',
+      '11112222:3333:4444:5555:6666:1.2.3.4',
+      '11112222:3333:4444:5555:6666:7777:8888',
+      '::1//64',
+      '::1/0001',
+      '1111:',
+      '1111:1.2.3.4',
+      '1111:2222',
+      '1111:22223333:4444:5555:6666:1.2.3.4',
+      '1111:22223333:4444:5555:6666:7777:8888',
+      '1111:2222:',
+      '1111:2222:1.2.3.4',
+      '1111:2222:3333',
+      '1111:2222:33334444:5555:6666:1.2.3.4',
+      '1111:2222:33334444:5555:6666:7777:8888',
+      '1111:2222:3333:',
+      '1111:2222:3333:1.2.3.4',
+      '1111:2222:3333:4444',
+      '1111:2222:3333:44445555:6666:1.2.3.4',
+      '1111:2222:3333:44445555:6666:7777:8888',
+      '1111:2222:3333:4444:',
+      '1111:2222:3333:4444:1.2.3.4',
+      '1111:2222:3333:4444:5555',
+      '1111:2222:3333:4444:55556666:1.2.3.4',
+      '1111:2222:3333:4444:55556666:7777:8888',
+      '1111:2222:3333:4444:5555:',
+      '1111:2222:3333:4444:5555:1.2.3.4',
+      '1111:2222:3333:4444:5555:6666',
+      '1111:2222:3333:4444:5555:66661.2.3.4',
+      '1111:2222:3333:4444:5555:66667777:8888',
+      '1111:2222:3333:4444:5555:6666:',
+      '1111:2222:3333:4444:5555:6666:1.2.3.4.5',
+      '1111:2222:3333:4444:5555:6666:255.255.255255',
+      '1111:2222:3333:4444:5555:6666:255.255255.255',
+      '1111:2222:3333:4444:5555:6666:255255.255.255',
+      '1111:2222:3333:4444:5555:6666:256.256.256.256',
+      '1111:2222:3333:4444:5555:6666:7777',
+      '1111:2222:3333:4444:5555:6666:77778888',
+      '1111:2222:3333:4444:5555:6666:7777:',
+      '1111:2222:3333:4444:5555:6666:7777:1.2.3.4',
+      '1111:2222:3333:4444:5555:6666:7777:::',
+      '1111:2222:3333:4444:5555:6666::8888:',
+      '1111:2222:3333:4444:5555:6666:::',
+      '1111:2222:3333:4444:5555:6666:::8888',
+      '1111:2222:3333:4444:5555::7777:8888:',
+      '1111:2222:3333:4444:5555::7777::',
+      '1111:2222:3333:4444:5555::8888:',
+      '1111:2222:3333:4444:5555:::',
+      '1111:2222:3333:4444:5555:::1.2.3.4',
+      '1111:2222:3333:4444:5555:::7777:8888',
+      '1111:2222:3333:4444::5555:',
+      '1111:2222:3333:4444::6666:7777:8888:',
+      '1111:2222:3333:4444::6666:7777::',
+      '1111:2222:3333:4444::6666::8888',
+      '1111:2222:3333:4444::7777:8888:',
+      '1111:2222:3333:4444::8888:',
+      '1111:2222:3333:4444:::',
+      '1111:2222:3333:4444:::6666:1.2.3.4',
+      '1111:2222:3333:4444:::6666:7777:8888',
+      '1111:2222:3333::5555:',
+      '1111:2222:3333::5555:6666:7777:8888:',
+      '1111:2222:3333::5555:6666:7777::',
+      '1111:2222:3333::5555:6666::8888',
+      '1111:2222:3333::5555::1.2.3.4',
+      '1111:2222:3333::5555::7777:8888',
+      '1111:2222:3333::6666:7777:8888:',
+      '1111:2222:3333::7777:8888:',
+      '1111:2222:3333::8888:',
+      '1111:2222:3333:::',
+      '1111:2222:3333:::5555:6666:1.2.3.4',
+      '1111:2222:3333:::5555:6666:7777:8888',
+      '1111:2222::4444:5555:6666:7777:8888:',
+      '1111:2222::4444:5555:6666:7777::',
+      '1111:2222::4444:5555:6666::8888',
+      '1111:2222::4444:5555::1.2.3.4',
+      '1111:2222::4444:5555::7777:8888',
+      '1111:2222::4444::6666:1.2.3.4',
+      '1111:2222::4444::6666:7777:8888',
+      '1111:2222::5555:',
+      '1111:2222::5555:6666:7777:8888:',
+      '1111:2222::6666:7777:8888:',
+      '1111:2222::7777:8888:',
+      '1111:2222::8888:',
+      '1111:2222:::',
+      '1111:2222:::4444:5555:6666:1.2.3.4',
+      '1111:2222:::4444:5555:6666:7777:8888',
+      '1111::3333:4444:5555:6666:7777:8888:',
+      '1111::3333:4444:5555:6666:7777::',
+      '1111::3333:4444:5555:6666::8888',
+      '1111::3333:4444:5555::1.2.3.4',
+      '1111::3333:4444:5555::7777:8888',
+      '1111::3333:4444::6666:1.2.3.4',
+      '1111::3333:4444::6666:7777:8888',
+      '1111::3333::5555:6666:1.2.3.4',
+      '1111::3333::5555:6666:7777:8888',
+      '1111::4444:5555:6666:7777:8888:',
+      '1111::5555:',
+      '1111::5555:6666:7777:8888:',
+      '1111::6666:7777:8888:',
+      '1111::7777:8888:',
+      '1111::8888:',
+      '1111:::',
+      '1111:::3333:4444:5555:6666:1.2.3.4',
+      '1111:::3333:4444:5555:6666:7777:8888',
+      '12345::6:7:8',
+      '124.15.6.89/60',
+      '1:2:3:4:5:6:7:8:9',
+      '1:2:3::4:5:6:7:8:9',
+      '1:2:3::4:5::7:8',
+      '1::1.2.256.4',
+      '1::1.2.3.256',
+      '1::1.2.3.300',
+      '1::1.2.3.900',
+      '1::1.2.300.4',
+      '1::1.2.900.4',
+      '1::1.256.3.4',
+      '1::1.300.3.4',
+      '1::1.900.3.4',
+      '1::256.2.3.4',
+      '1::260.2.3.4',
+      '1::2::3',
+      '1::300.2.3.4',
+      '1::300.300.300.300',
+      '1::3000.30.30.30',
+      '1::400.2.3.4',
+      '1::5:1.2.256.4',
+      '1::5:1.2.3.256',
+      '1::5:1.2.3.300',
+      '1::5:1.2.3.900',
+      '1::5:1.2.300.4',
+      '1::5:1.2.900.4',
+      '1::5:1.256.3.4',
+      '1::5:1.300.3.4',
+      '1::5:1.900.3.4',
+      '1::5:256.2.3.4',
+      '1::5:260.2.3.4',
+      '1::5:300.2.3.4',
+      '1::5:300.300.300.300',
+      '1::5:3000.30.30.30',
+      '1::5:400.2.3.4',
+      '1::5:900.2.3.4',
+      '1::900.2.3.4',
+      '1:::3:4:5',
+      '2001:0000:1234: 0000:0000:C1C0:ABCD:0876',
+      '2001:0000:1234:0000:0000:C1C0:ABCD:0876  0',
+      '2001:1:1:1:1:1:255Z255X255Y255',
+      '2001::FFD3::57ab',
+      '2001:DB8:0:0:8:800:200C:417A:221',
+      '2001:db8:85a3::8a2e:37023:7334',
+      '2001:db8:85a3::8a2e:370k:7334',
+      '3ffe:0b00:0000:0001:0000:0000:000a',
+      '3ffe:b00::1::a',
+      ':',
+      ':1.2.3.4',
+      ':1111:2222:3333:4444:5555:6666:1.2.3.4',
+      ':1111:2222:3333:4444:5555:6666:7777:8888',
+      ':1111:2222:3333:4444:5555:6666:7777::',
+      ':1111:2222:3333:4444:5555:6666::',
+      ':1111:2222:3333:4444:5555:6666::8888',
+      ':1111:2222:3333:4444:5555::',
+      ':1111:2222:3333:4444:5555::1.2.3.4',
+      ':1111:2222:3333:4444:5555::7777:8888',
+      ':1111:2222:3333:4444:5555::8888',
+      ':1111:2222:3333:4444::',
+      ':1111:2222:3333:4444::1.2.3.4',
+      ':1111:2222:3333:4444::5555',
+      ':1111:2222:3333:4444::6666:1.2.3.4',
+      ':1111:2222:3333:4444::6666:7777:8888',
+      ':1111:2222:3333:4444::7777:8888',
+      ':1111:2222:3333:4444::8888',
+      ':1111:2222:3333::',
+      ':1111:2222:3333::1.2.3.4',
+      ':1111:2222:3333::5555',
+      ':1111:2222:3333::5555:6666:1.2.3.4',
+      ':1111:2222:3333::5555:6666:7777:8888',
+      ':1111:2222:3333::6666:1.2.3.4',
+      ':1111:2222:3333::6666:7777:8888',
+      ':1111:2222:3333::7777:8888',
+      ':1111:2222:3333::8888',
+      ':1111:2222::',
+      ':1111:2222::1.2.3.4',
+      ':1111:2222::4444:5555:6666:1.2.3.4',
+      ':1111:2222::4444:5555:6666:7777:8888',
+      ':1111:2222::5555',
+      ':1111:2222::5555:6666:1.2.3.4',
+      ':1111:2222::5555:6666:7777:8888',
+      ':1111:2222::6666:1.2.3.4',
+      ':1111:2222::6666:7777:8888',
+      ':1111:2222::7777:8888',
+      ':1111:2222::8888',
+      ':1111::',
+      ':1111::1.2.3.4',
+      ':1111::3333:4444:5555:6666:1.2.3.4',
+      ':1111::3333:4444:5555:6666:7777:8888',
+      ':1111::4444:5555:6666:1.2.3.4',
+      ':1111::4444:5555:6666:7777:8888',
+      ':1111::5555',
+      ':1111::5555:6666:1.2.3.4',
+      ':1111::5555:6666:7777:8888',
+      ':1111::6666:1.2.3.4',
+      ':1111::6666:7777:8888',
+      ':1111::7777:8888',
+      ':1111::8888',
+      ':2222:3333:4444:5555:6666:1.2.3.4',
+      ':2222:3333:4444:5555:6666:7777:8888',
+      ':3333:4444:5555:6666:1.2.3.4',
+      ':3333:4444:5555:6666:7777:8888',
+      ':4444:5555:6666:1.2.3.4',
+      ':4444:5555:6666:7777:8888',
+      ':5555:6666:1.2.3.4',
+      ':5555:6666:7777:8888',
+      ':6666:1.2.3.4',
+      ':6666:7777:8888',
+      ':7777:8888',
+      ':8888',
+      '::-1',
+      '::.',
+      '::..',
+      '::...',
+      '::...4',
+      '::..3.',
+      '::..3.4',
+      '::.2..',
+      '::.2.3.',
+      '::.2.3.4',
+      '::1...',
+      '::1.2..',
+      '::1.2.256.4',
+      '::1.2.3.',
+      '::1.2.3.256',
+      '::1.2.3.300',
+      '::1.2.3.900',
+      '::1.2.300.4',
+      '::1.2.900.4',
+      '::1.256.3.4',
+      '::1.300.3.4',
+      '::1.900.3.4',
+      '::1111:2222:3333:4444:5555:6666::',
+      '::2222:3333:4444:5555:6666:7777:8888:',
+      '::2222:3333:4444:5555:7777:8888::',
+      '::2222:3333:4444:5555:7777::8888',
+      '::2222:3333:4444:5555::1.2.3.4',
+      '::2222:3333:4444:5555::7777:8888',
+      '::2222:3333:4444::6666:1.2.3.4',
+      '::2222:3333:4444::6666:7777:8888',
+      '::2222:3333::5555:6666:1.2.3.4',
+      '::2222:3333::5555:6666:7777:8888',
+      '::2222::4444:5555:6666:1.2.3.4',
+      '::2222::4444:5555:6666:7777:8888',
+      '::256.2.3.4',
+      '::260.2.3.4',
+      '::300.2.3.4',
+      '::300.300.300.300',
+      '::3000.30.30.30',
+      '::3333:4444:5555:6666:7777:8888:',
+      '::400.2.3.4',
+      '::4444:5555:6666:7777:8888:',
+      '::5555:',
+      '::5555:6666:7777:8888:',
+      '::6666:7777:8888:',
+      '::7777:8888:',
+      '::8888:',
+      '::900.2.3.4',
+      ':::',
+      ':::1.2.3.4',
+      ':::2222:3333:4444:5555:6666:1.2.3.4',
+      ':::2222:3333:4444:5555:6666:7777:8888',
+      ':::3333:4444:5555:6666:7777:8888',
+      ':::4444:5555:6666:1.2.3.4',
+      ':::4444:5555:6666:7777:8888',
+      ':::5555',
+      ':::5555:6666:1.2.3.4',
+      ':::5555:6666:7777:8888',
+      ':::6666:1.2.3.4',
+      ':::6666:7777:8888',
+      ':::7777:8888',
+      ':::8888',
+      '::ffff:192x168.1.26',
+      '::ffff:2.3.4',
+      '::ffff:257.1.2.3',
+      'FF01::101::2',
+      'FF02:0000:0000:0000:0000:0000:0000:0000:0001',
+      'XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:1.2.3.4',
+      'XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX',
+      'a::b::c',
+      'a::g',
+      'a:a:a:a:a:a:a:a:a',
+      'a:aaaaa::',
+      'a:b',
+      'a:b:c:d:e:f:g:0',
+      'ffff:',
+      'ffff::ffff::ffff',
+      'ffgg:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+      'ldkfj',
+      '::/129',
+      '1000:://32',
+      '::/',
     ]
     invalidIpV6.map((ip) => {
       const valid = isValidIP(ip)
@@ -1920,185 +1920,185 @@ describe("IP Address Validations", () => {
     })
   })
 
-  it("Check list of IPV6 Valid addresses", () => {
+  it('Check list of IPV6 Valid addresses', () => {
     const validIpv6 = [
-      "0000:0000:0000:0000:0000:0000:0000:0000",
-      "0000:0000:0000:0000:0000:0000:0000:0001",
-      "0:0:0:0:0:0:0:0",
-      "0:0:0:0:0:0:0:1",
-      "0:0:0:0:0:0:0::",
-      "0:0:0:0:0:0:13.1.68.3",
-      "0:0:0:0:0:0::",
-      "0:0:0:0:0::",
-      "0:0:0:0:0:FFFF:129.144.52.38",
-      "0:0:0:0:1:0:0:0",
-      "0:0:0:0::",
-      "0:0:0::",
-      "0:0::",
-      "0:1:2:3:4:5:6:7",
-      "0::",
-      "0:a:b:c:d:e:f::",
-      "1080:0:0:0:8:800:200c:417a",
-      "1080::8:800:200c:417a",
-      "1111:2222:3333:4444:5555:6666:123.123.123.123",
-      "1111:2222:3333:4444:5555:6666:7777:8888",
-      "1111:2222:3333:4444:5555:6666:7777::",
-      "1111:2222:3333:4444:5555:6666::",
-      "1111:2222:3333:4444:5555:6666::8888",
-      "1111:2222:3333:4444:5555::",
-      "1111:2222:3333:4444:5555::7777:8888",
-      "1111:2222:3333:4444:5555::8888",
-      "1111:2222:3333:4444::",
-      "1111:2222:3333:4444::6666:123.123.123.123",
-      "1111:2222:3333:4444::6666:7777:8888",
-      "1111:2222:3333:4444::7777:8888",
-      "1111:2222:3333:4444::8888",
-      "1111:2222:3333::",
-      "1111:2222:3333::5555:6666:123.123.123.123",
-      "1111:2222:3333::5555:6666:7777:8888",
-      "1111:2222:3333::6666:123.123.123.123",
-      "1111:2222:3333::6666:7777:8888",
-      "1111:2222:3333::7777:8888",
-      "1111:2222:3333::8888",
-      "1111:2222::",
-      "1111:2222::4444:5555:6666:123.123.123.123",
-      "1111:2222::4444:5555:6666:7777:8888",
-      "1111:2222::5555:6666:123.123.123.123",
-      "1111:2222::5555:6666:7777:8888",
-      "1111:2222::6666:123.123.123.123",
-      "1111:2222::6666:7777:8888",
-      "1111:2222::7777:8888",
-      "1111:2222::8888",
-      "1111::",
-      "1111::3333:4444:5555:6666:123.123.123.123",
-      "1111::3333:4444:5555:6666:7777:8888",
-      "1111::4444:5555:6666:123.123.123.123",
-      "1111::4444:5555:6666:7777:8888",
-      "1111::5555:6666:123.123.123.123",
-      "1111::5555:6666:7777:8888",
-      "1111::6666:123.123.123.123",
-      "1111::6666:7777:8888",
-      "1111::7777:8888",
-      "1111::8888",
-      "1:2:3:4:5:6:1.2.3.4",
-      "1:2:3:4:5:6:7:8",
-      "1:2:3:4:5:6::",
-      "1:2:3:4:5:6::8",
-      "1:2:3:4:5::",
-      "1:2:3:4:5::7:8",
-      "1:2:3:4:5::8",
-      "1:2:3:4::",
-      "1:2:3:4::5:1.2.3.4",
-      "1:2:3:4::7:8",
-      "1:2:3:4::8",
-      "1:2:3::",
-      "1:2:3::5:1.2.3.4",
-      "1:2:3::7:8",
-      "1:2:3::8",
-      "1:2::",
-      "1:2::5:1.2.3.4",
-      "1:2::7:8",
-      "1:2::8",
-      "1::",
-      "1::2:3",
-      "1::2:3:4",
-      "1::2:3:4:5",
-      "1::2:3:4:5:6",
-      "1::2:3:4:5:6:7",
-      "1::5:1.2.3.4",
-      "1::5:11.22.33.44",
-      "1::7:8",
-      "1::8",
-      "2001:0000:1234:0000:0000:C1C0:ABCD:0876",
-      "2001:0000:4136:e378:8000:63bf:3fff:fdd2",
-      "2001:0db8:0000:0000:0000:0000:1428:57ab",
-      "2001:0db8:0000:0000:0000::1428:57ab",
-      "2001:0db8:0:0:0:0:1428:57ab",
-      "2001:0db8:0:0::1428:57ab",
-      "2001:0db8:1234:0000:0000:0000:0000:0000",
-      "2001:0db8:1234::",
-      "2001:0db8:1234:ffff:ffff:ffff:ffff:ffff",
-      "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-      "2001:0db8::1428:57ab",
-      "2001::CE49:7601:2CAD:DFFF:7C94:FFFE",
-      "2001::CE49:7601:E866:EFFF:62C3:FFFE",
-      "2001:DB8:0:0:8:800:200C:417A",
-      "2001:DB8::8:800:200C:417A",
-      "2001:db8:85a3:0:0:8a2e:370:7334",
-      "2001:db8:85a3::8a2e:370:7334",
-      "2001:db8::",
-      "2001:db8::1428:57ab",
-      "2001:db8:a::123",
-      "2002::",
-      "2608::3:5",
-      "2608:af09:30:0:0:0:0:134",
-      "2608:af09:30::102a:7b91:c239:baff",
-      "2::10",
-      "3ffe:0b00:0000:0000:0001:0000:0000:000a",
-      "7:6:5:4:3:2:1:0",
-      "::",
-      "::0",
-      "::0:0",
-      "::0:0:0",
-      "::0:0:0:0",
-      "::0:0:0:0:0",
-      "::0:0:0:0:0:0",
-      "::0:0:0:0:0:0:0",
-      "::0:a:b:c:d:e:f",
-      "::1",
-      "::123.123.123.123",
-      "::13.1.68.3",
-      "::2222:3333:4444:5555:6666:123.123.123.123",
-      "::2222:3333:4444:5555:6666:7777:8888",
-      "::2:3",
-      "::2:3:4",
-      "::2:3:4:5",
-      "::2:3:4:5:6",
-      "::2:3:4:5:6:7",
-      "::2:3:4:5:6:7:8",
-      "::3333:4444:5555:6666:7777:8888",
-      "::4444:5555:6666:123.123.123.123",
-      "::4444:5555:6666:7777:8888",
-      "::5555:6666:123.123.123.123",
-      "::5555:6666:7777:8888",
-      "::6666:123.123.123.123",
-      "::6666:7777:8888",
-      "::7777:8888",
-      "::8",
-      "::8888",
-      "::FFFF:129.144.52.38",
-      "::ffff:0:0",
-      "::ffff:0c22:384e",
-      "::ffff:12.34.56.78",
-      "::ffff:192.0.2.128",
-      "::ffff:192.168.1.1",
-      "::ffff:192.168.1.26",
-      "::ffff:c000:280",
-      "FF01:0:0:0:0:0:0:101",
-      "FF01::101",
-      "FF02:0000:0000:0000:0000:0000:0000:0001",
-      "a:b:c:d:e:f:0::",
-      "fe80:0000:0000:0000:0204:61ff:fe9d:f156",
-      "fe80:0:0:0:204:61ff:254.157.241.86",
-      "fe80:0:0:0:204:61ff:fe9d:f156",
-      "fe80::",
-      "fe80::1",
-      "fe80::204:61ff:254.157.241.86",
-      "fe80::204:61ff:fe9d:f156",
-      "fe80::217:f2ff:254.7.237.98",
-      "fe80::217:f2ff:fe07:ed62",
-      "fedc:ba98:7654:3210:fedc:ba98:7654:3210",
-      "ff02::1",
-      "ffff::",
-      "ffff::3:5",
-      "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-      "a:0::0:b",
-      "a:0:0::0:b",
-      "a:0::0:0:b",
-      "a::0:0:b",
-      "a::0:b",
-      "a:0::b",
-      "a:0:0::b",
+      '0000:0000:0000:0000:0000:0000:0000:0000',
+      '0000:0000:0000:0000:0000:0000:0000:0001',
+      '0:0:0:0:0:0:0:0',
+      '0:0:0:0:0:0:0:1',
+      '0:0:0:0:0:0:0::',
+      '0:0:0:0:0:0:13.1.68.3',
+      '0:0:0:0:0:0::',
+      '0:0:0:0:0::',
+      '0:0:0:0:0:FFFF:129.144.52.38',
+      '0:0:0:0:1:0:0:0',
+      '0:0:0:0::',
+      '0:0:0::',
+      '0:0::',
+      '0:1:2:3:4:5:6:7',
+      '0::',
+      '0:a:b:c:d:e:f::',
+      '1080:0:0:0:8:800:200c:417a',
+      '1080::8:800:200c:417a',
+      '1111:2222:3333:4444:5555:6666:123.123.123.123',
+      '1111:2222:3333:4444:5555:6666:7777:8888',
+      '1111:2222:3333:4444:5555:6666:7777::',
+      '1111:2222:3333:4444:5555:6666::',
+      '1111:2222:3333:4444:5555:6666::8888',
+      '1111:2222:3333:4444:5555::',
+      '1111:2222:3333:4444:5555::7777:8888',
+      '1111:2222:3333:4444:5555::8888',
+      '1111:2222:3333:4444::',
+      '1111:2222:3333:4444::6666:123.123.123.123',
+      '1111:2222:3333:4444::6666:7777:8888',
+      '1111:2222:3333:4444::7777:8888',
+      '1111:2222:3333:4444::8888',
+      '1111:2222:3333::',
+      '1111:2222:3333::5555:6666:123.123.123.123',
+      '1111:2222:3333::5555:6666:7777:8888',
+      '1111:2222:3333::6666:123.123.123.123',
+      '1111:2222:3333::6666:7777:8888',
+      '1111:2222:3333::7777:8888',
+      '1111:2222:3333::8888',
+      '1111:2222::',
+      '1111:2222::4444:5555:6666:123.123.123.123',
+      '1111:2222::4444:5555:6666:7777:8888',
+      '1111:2222::5555:6666:123.123.123.123',
+      '1111:2222::5555:6666:7777:8888',
+      '1111:2222::6666:123.123.123.123',
+      '1111:2222::6666:7777:8888',
+      '1111:2222::7777:8888',
+      '1111:2222::8888',
+      '1111::',
+      '1111::3333:4444:5555:6666:123.123.123.123',
+      '1111::3333:4444:5555:6666:7777:8888',
+      '1111::4444:5555:6666:123.123.123.123',
+      '1111::4444:5555:6666:7777:8888',
+      '1111::5555:6666:123.123.123.123',
+      '1111::5555:6666:7777:8888',
+      '1111::6666:123.123.123.123',
+      '1111::6666:7777:8888',
+      '1111::7777:8888',
+      '1111::8888',
+      '1:2:3:4:5:6:1.2.3.4',
+      '1:2:3:4:5:6:7:8',
+      '1:2:3:4:5:6::',
+      '1:2:3:4:5:6::8',
+      '1:2:3:4:5::',
+      '1:2:3:4:5::7:8',
+      '1:2:3:4:5::8',
+      '1:2:3:4::',
+      '1:2:3:4::5:1.2.3.4',
+      '1:2:3:4::7:8',
+      '1:2:3:4::8',
+      '1:2:3::',
+      '1:2:3::5:1.2.3.4',
+      '1:2:3::7:8',
+      '1:2:3::8',
+      '1:2::',
+      '1:2::5:1.2.3.4',
+      '1:2::7:8',
+      '1:2::8',
+      '1::',
+      '1::2:3',
+      '1::2:3:4',
+      '1::2:3:4:5',
+      '1::2:3:4:5:6',
+      '1::2:3:4:5:6:7',
+      '1::5:1.2.3.4',
+      '1::5:11.22.33.44',
+      '1::7:8',
+      '1::8',
+      '2001:0000:1234:0000:0000:C1C0:ABCD:0876',
+      '2001:0000:4136:e378:8000:63bf:3fff:fdd2',
+      '2001:0db8:0000:0000:0000:0000:1428:57ab',
+      '2001:0db8:0000:0000:0000::1428:57ab',
+      '2001:0db8:0:0:0:0:1428:57ab',
+      '2001:0db8:0:0::1428:57ab',
+      '2001:0db8:1234:0000:0000:0000:0000:0000',
+      '2001:0db8:1234::',
+      '2001:0db8:1234:ffff:ffff:ffff:ffff:ffff',
+      '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+      '2001:0db8::1428:57ab',
+      '2001::CE49:7601:2CAD:DFFF:7C94:FFFE',
+      '2001::CE49:7601:E866:EFFF:62C3:FFFE',
+      '2001:DB8:0:0:8:800:200C:417A',
+      '2001:DB8::8:800:200C:417A',
+      '2001:db8:85a3:0:0:8a2e:370:7334',
+      '2001:db8:85a3::8a2e:370:7334',
+      '2001:db8::',
+      '2001:db8::1428:57ab',
+      '2001:db8:a::123',
+      '2002::',
+      '2608::3:5',
+      '2608:af09:30:0:0:0:0:134',
+      '2608:af09:30::102a:7b91:c239:baff',
+      '2::10',
+      '3ffe:0b00:0000:0000:0001:0000:0000:000a',
+      '7:6:5:4:3:2:1:0',
+      '::',
+      '::0',
+      '::0:0',
+      '::0:0:0',
+      '::0:0:0:0',
+      '::0:0:0:0:0',
+      '::0:0:0:0:0:0',
+      '::0:0:0:0:0:0:0',
+      '::0:a:b:c:d:e:f',
+      '::1',
+      '::123.123.123.123',
+      '::13.1.68.3',
+      '::2222:3333:4444:5555:6666:123.123.123.123',
+      '::2222:3333:4444:5555:6666:7777:8888',
+      '::2:3',
+      '::2:3:4',
+      '::2:3:4:5',
+      '::2:3:4:5:6',
+      '::2:3:4:5:6:7',
+      '::2:3:4:5:6:7:8',
+      '::3333:4444:5555:6666:7777:8888',
+      '::4444:5555:6666:123.123.123.123',
+      '::4444:5555:6666:7777:8888',
+      '::5555:6666:123.123.123.123',
+      '::5555:6666:7777:8888',
+      '::6666:123.123.123.123',
+      '::6666:7777:8888',
+      '::7777:8888',
+      '::8',
+      '::8888',
+      '::FFFF:129.144.52.38',
+      '::ffff:0:0',
+      '::ffff:0c22:384e',
+      '::ffff:12.34.56.78',
+      '::ffff:192.0.2.128',
+      '::ffff:192.168.1.1',
+      '::ffff:192.168.1.26',
+      '::ffff:c000:280',
+      'FF01:0:0:0:0:0:0:101',
+      'FF01::101',
+      'FF02:0000:0000:0000:0000:0000:0000:0001',
+      'a:b:c:d:e:f:0::',
+      'fe80:0000:0000:0000:0204:61ff:fe9d:f156',
+      'fe80:0:0:0:204:61ff:254.157.241.86',
+      'fe80:0:0:0:204:61ff:fe9d:f156',
+      'fe80::',
+      'fe80::1',
+      'fe80::204:61ff:254.157.241.86',
+      'fe80::204:61ff:fe9d:f156',
+      'fe80::217:f2ff:254.7.237.98',
+      'fe80::217:f2ff:fe07:ed62',
+      'fedc:ba98:7654:3210:fedc:ba98:7654:3210',
+      'ff02::1',
+      'ffff::',
+      'ffff::3:5',
+      'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+      'a:0::0:b',
+      'a:0:0::0:b',
+      'a:0::0:0:b',
+      'a::0:0:b',
+      'a::0:b',
+      'a:0::b',
+      'a:0:0::b',
     ]
     validIpv6.map((ip) => {
       const valid = isValidIP(ip)

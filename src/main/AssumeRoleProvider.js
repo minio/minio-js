@@ -1,11 +1,11 @@
-import Http from "http"
-import Https from "https"
+import Http from 'http'
+import Https from 'https'
 
-import CredentialProvider from "./CredentialProvider"
-import Credentials from "./Credentials"
-import { makeDateLong, parseXml, toSha256 } from "./helpers"
-import { signV4ByServiceName } from "./signing"
-const { URLSearchParams, URL } = require("url")
+import CredentialProvider from './CredentialProvider'
+import Credentials from './Credentials'
+import { makeDateLong, parseXml, toSha256 } from './helpers'
+import { signV4ByServiceName } from './signing'
+const { URLSearchParams, URL } = require('url')
 
 class AssumeRoleProvider extends CredentialProvider {
   constructor({
@@ -15,13 +15,13 @@ class AssumeRoleProvider extends CredentialProvider {
     durationSeconds = 900,
     sessionToken,
     policy,
-    region = "",
+    region = '',
     roleArn,
     roleSessionName,
     externalId,
     token,
     webIdentityToken,
-    action = "AssumeRole",
+    action = 'AssumeRole',
   }) {
     super({})
 
@@ -51,10 +51,10 @@ class AssumeRoleProvider extends CredentialProvider {
     const url = new URL(this.stsEndpoint)
     const hostValue = url.hostname
     const portValue = url.port
-    const isHttp = url.protocol.includes("http:")
+    const isHttp = url.protocol.includes('http:')
     const qryParams = new URLSearchParams()
-    qryParams.set("Action", this.action)
-    qryParams.set("Version", "2011-06-15")
+    qryParams.set('Action', this.action)
+    qryParams.set('Version', '2011-06-15')
 
     const defaultExpiry = 900
     let expirySeconds = parseInt(this.durationSeconds)
@@ -63,28 +63,28 @@ class AssumeRoleProvider extends CredentialProvider {
     }
     this.expirySeconds = expirySeconds // for calculating refresh of credentials.
 
-    qryParams.set("DurationSeconds", this.expirySeconds)
+    qryParams.set('DurationSeconds', this.expirySeconds)
 
     if (this.policy) {
-      qryParams.set("Policy", this.policy)
+      qryParams.set('Policy', this.policy)
     }
     if (this.roleArn) {
-      qryParams.set("RoleArn", this.roleArn)
+      qryParams.set('RoleArn', this.roleArn)
     }
 
     if (this.roleSessionName != null) {
-      qryParams.set("RoleSessionName", this.roleSessionName)
+      qryParams.set('RoleSessionName', this.roleSessionName)
     }
     if (this.token != null) {
-      qryParams.set("Token", this.token)
+      qryParams.set('Token', this.token)
     }
 
     if (this.webIdentityToken) {
-      qryParams.set("WebIdentityToken", this.webIdentityToken)
+      qryParams.set('WebIdentityToken', this.webIdentityToken)
     }
 
     if (this.externalId) {
-      qryParams.set("ExternalId", this.externalId)
+      qryParams.set('ExternalId', this.externalId)
     }
 
     const urlParams = qryParams.toString()
@@ -98,19 +98,19 @@ class AssumeRoleProvider extends CredentialProvider {
     const requestOptions = {
       hostname: hostValue,
       port: portValue,
-      path: "/",
+      path: '/',
       protocol: url.protocol,
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "content-length": urlParams.length,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'content-length': urlParams.length,
         host: hostValue,
-        "x-amz-date": makeDateLong(date),
-        "x-amz-content-sha256": contentSha256,
+        'x-amz-date': makeDateLong(date),
+        'x-amz-content-sha256': contentSha256,
       },
     }
 
-    const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, "sts")
+    const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')
     requestOptions.headers.authorization = authorization
 
     return {
@@ -131,19 +131,19 @@ class AssumeRoleProvider extends CredentialProvider {
     const promise = new Promise((resolve, reject) => {
       const requestObj = Transport.request(requestOptions, (resp) => {
         let resChunks = []
-        resp.on("data", (rChunk) => {
+        resp.on('data', (rChunk) => {
           resChunks.push(rChunk)
         })
-        resp.on("end", () => {
+        resp.on('end', () => {
           let body = Buffer.concat(resChunks).toString()
           const xmlobj = parseXml(body)
           resolve(xmlobj)
         })
-        resp.on("error", (err) => {
+        resp.on('error', (err) => {
           reject(err)
         })
       })
-      requestObj.on("error", (e) => {
+      requestObj.on('error', (e) => {
         reject(e)
       })
       requestObj.write(requestData)
@@ -154,7 +154,7 @@ class AssumeRoleProvider extends CredentialProvider {
 
   parseCredentials(respObj = {}) {
     if (respObj.ErrorResponse) {
-      throw new Error("Unable to obtain credentials:", respObj)
+      throw new Error('Unable to obtain credentials:', respObj)
     }
     const {
       AssumeRoleResponse: {

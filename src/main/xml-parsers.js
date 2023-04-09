@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { XMLParser } = require("fast-xml-parser")
+const { XMLParser } = require('fast-xml-parser')
 const fxp = new XMLParser()
-import _ from "lodash"
+import _ from 'lodash'
 
-import * as errors from "./errors"
+import * as errors from './errors'
 import {
   isObject,
   parseXml,
@@ -27,8 +27,8 @@ import {
   sanitizeObjectKey,
   SelectResults,
   toArray,
-} from "./helpers"
-var crc32 = require("buffer-crc32")
+} from './helpers'
+var crc32 = require('buffer-crc32')
 
 // Parse XML and return information as Javascript types
 
@@ -54,8 +54,8 @@ export function parseError(xml, headerInfo) {
 // parse XML response for copy object
 export function parseCopyObject(xml) {
   var result = {
-    etag: "",
-    lastModified: "",
+    etag: '',
+    lastModified: '',
   }
 
   var xmlobj = parseXml(xml)
@@ -64,12 +64,12 @@ export function parseCopyObject(xml) {
   }
   xmlobj = xmlobj.CopyObjectResult
   if (xmlobj.ETag)
-    result.etag = xmlobj.ETag.replace(/^"/g, "")
-      .replace(/"$/g, "")
-      .replace(/^&quot;/g, "")
-      .replace(/&quot;$/g, "")
-      .replace(/^&#34;/g, "")
-      .replace(/&#34;$/g, "")
+    result.etag = xmlobj.ETag.replace(/^"/g, '')
+      .replace(/"$/g, '')
+      .replace(/^&quot;/g, '')
+      .replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '')
+      .replace(/&#34;$/g, '')
   if (xmlobj.LastModified) result.lastModified = new Date(xmlobj.LastModified)
 
   return result
@@ -232,12 +232,12 @@ export function parseListParts(xml) {
     toArray(xmlobj.Part).forEach((p) => {
       var part = +toArray(p.PartNumber)[0]
       var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, "")
-        .replace(/"$/g, "")
-        .replace(/^&quot;/g, "")
-        .replace(/&quot;$/g, "")
-        .replace(/^&#34;/g, "")
-        .replace(/&#34;$/g, "")
+      var etag = p.ETag.replace(/^"/g, '')
+        .replace(/"$/g, '')
+        .replace(/^&quot;/g, '')
+        .replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '')
+        .replace(/&#34;$/g, '')
       result.parts.push({ part, lastModified, etag })
     })
   }
@@ -264,12 +264,12 @@ export function parseCompleteMultipart(xml) {
     var location = toArray(xmlobj.Location)[0]
     var bucket = toArray(xmlobj.Bucket)[0]
     var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, "")
-      .replace(/"$/g, "")
-      .replace(/^&quot;/g, "")
-      .replace(/&quot;$/g, "")
-      .replace(/^&#34;/g, "")
-      .replace(/&#34;$/g, "")
+    var etag = xmlobj.ETag.replace(/^"/g, '')
+      .replace(/"$/g, '')
+      .replace(/^&quot;/g, '')
+      .replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '')
+      .replace(/&#34;$/g, '')
 
     return { location, bucket, key, etag }
   }
@@ -549,8 +549,8 @@ export function parseSelectObjectContentResponse(res) {
   function extractHeaderType(stream) {
     const headerNameLen = Buffer.from(stream.read(1)).readUInt8()
     const headerNameWithSeparator = Buffer.from(stream.read(headerNameLen)).toString()
-    const splitBySeparator = (headerNameWithSeparator || "").split(":")
-    const headerName = splitBySeparator.length >= 1 ? splitBySeparator[1] : ""
+    const splitBySeparator = (headerNameWithSeparator || '').split(':')
+    const headerName = splitBySeparator.length >= 1 ? splitBySeparator[1] : ''
     return headerName
   }
 
@@ -618,33 +618,33 @@ export function parseSelectObjectContentResponse(res) {
       payloadStream = readableStream(payLoadBuffer)
     }
 
-    const messageType = headers["message-type"]
+    const messageType = headers['message-type']
 
     switch (messageType) {
-      case "error": {
-        const errorMessage = headers["error-code"] + ':"' + headers["error-message"] + '"'
+      case 'error': {
+        const errorMessage = headers['error-code'] + ':"' + headers['error-message'] + '"'
         throw new Error(errorMessage)
       }
-      case "event": {
-        const contentType = headers["content-type"]
-        const eventType = headers["event-type"]
+      case 'event': {
+        const contentType = headers['content-type']
+        const eventType = headers['event-type']
 
         switch (eventType) {
-          case "End": {
+          case 'End': {
             selectResults.setResponse(res)
             return selectResults
           }
 
-          case "Records": {
+          case 'Records': {
             const readData = payloadStream.read(payLoadLength)
             selectResults.setRecords(readData)
             break
           }
 
-          case "Progress":
+          case 'Progress':
             {
               switch (contentType) {
-                case "text/xml": {
+                case 'text/xml': {
                   const progressData = payloadStream.read(payLoadLength)
                   selectResults.setProgress(progressData.toString())
                   break
@@ -656,10 +656,10 @@ export function parseSelectObjectContentResponse(res) {
               }
             }
             break
-          case "Stats":
+          case 'Stats':
             {
               switch (contentType) {
-                case "text/xml": {
+                case 'text/xml': {
                   const statsData = payloadStream.read(payLoadLength)
                   selectResults.setStats(statsData.toString())
                   break
