@@ -2,9 +2,7 @@
   "name": "minio",
   "version": "7.0.34",
   "description": "S3 Compatible Cloud Storage client",
-  "source": "src/main/minio.ts",
-  "main": "./dist/cjs/minio.js",
-  "module": "dist/esm/index.js",
+  "main": "./dist/main/minio.js",
   "scripts": {
     "compile": "gulp compile",
     "test": "gulp test",
