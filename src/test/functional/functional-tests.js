@@ -196,8 +196,12 @@ describe('functional tests', function () {
   describe('listBuckets', () => {
     step('listBuckets(cb)__', (done) => {
       client.listBuckets((e, buckets) => {
-        if (e) return done(e)
-        if (_.find(buckets, { name: bucketName })) return done()
+        if (e) {
+          return done(e)
+        }
+        if (_.find(buckets, { name: bucketName })) {
+          return done()
+        }
         done(new Error('bucket not found'))
       })
     })
@@ -205,7 +209,9 @@ describe('functional tests', function () {
       client
         .listBuckets()
         .then((buckets) => {
-          if (!_.find(buckets, { name: bucketName })) return done(new Error('bucket not found'))
+          if (!_.find(buckets, { name: bucketName })) {
+            return done(new Error('bucket not found'))
+          }
         })
         .then(() => done())
         .catch(done)
@@ -243,7 +249,9 @@ describe('functional tests', function () {
             setTimeout(() => {
               clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-1', done)
             }, 40 * 1000)
-          } else done()
+          } else {
+            done()
+          }
         })
       }
       done()
@@ -263,7 +271,9 @@ describe('functional tests', function () {
     step(`bucketExists(bucketName, cb)_bucketName:${bucketName}_`, (done) => client.bucketExists(bucketName, done))
     step(`bucketExists(bucketName, cb)_bucketName:${bucketName}random_`, (done) => {
       client.bucketExists(bucketName + 'random', (e, exists) => {
-        if (e === null && !exists) return done()
+        if (e === null && !exists) {
+          return done()
+        }
         done(new Error())
       })
     })
@@ -278,7 +288,9 @@ describe('functional tests', function () {
   describe('removeBucket', () => {
     step(`removeBucket(bucketName, cb)_bucketName:${bucketName}random_`, (done) => {
       client.removeBucket(bucketName + 'random', (e) => {
-        if (e.code === 'NoSuchBucket') return done()
+        if (e.code === 'NoSuchBucket') {
+          return done()
+        }
         done(new Error())
       })
     })
@@ -306,11 +318,15 @@ describe('functional tests', function () {
       (done) => {
         var hash = crypto.createHash('md5')
         client.getObject(bucketName, _MultiPath100kbObjectBufferName, (e, stream) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           stream.on('data', (data) => hash.update(data))
           stream.on('error', done)
           stream.on('end', () => {
-            if (hash.digest('hex') === _100kbmd5) return done()
+            if (hash.digest('hex') === _100kbmd5) {
+              return done()
+            }
             done(new Error('content mismatch'))
           })
         })
@@ -339,7 +355,9 @@ describe('functional tests', function () {
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         // As metadata is not provided and there is no file extension,
         // we default to 'application/octet-stream' as per `probeContentType` function
         if (stat.metaData && stat.metaData['content-type'] !== 'application/octet-stream') {
@@ -360,7 +378,9 @@ describe('functional tests', function () {
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         // As metadata is provided, even though we have an extension,
         // the `content-type` should be equal what was declared on the metadata
         if (stat.metaData && stat.metaData['content-type'] !== 'text/html') {
@@ -382,11 +402,14 @@ describe('functional tests', function () {
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         // As metadata is not provided but we have a file extension,
         // we need to infer `content-type` from the file extension
-        if (stat.metaData && stat.metaData['content-type'] !== 'text/plain')
+        if (stat.metaData && stat.metaData['content-type'] !== 'text/plain') {
           return done(new Error('content-type mismatch'))
+        }
         done()
       })
     })
@@ -412,11 +435,15 @@ describe('functional tests', function () {
       (done) => {
         var hash = crypto.createHash('md5')
         client.getObject(bucketName, _100kbObjectName, (e, stream) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           stream.on('data', (data) => hash.update(data))
           stream.on('error', done)
           stream.on('end', () => {
-            if (hash.digest('hex') === _100kbmd5) return done()
+            if (hash.digest('hex') === _100kbmd5) {
+              return done()
+            }
             done(new Error('content mismatch'))
           })
         })
@@ -435,11 +462,15 @@ describe('functional tests', function () {
       (done) => {
         var hash = crypto.createHash('md5')
         client.getObject(bucketName, _100kbObjectBufferName, (e, stream) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           stream.on('data', (data) => hash.update(data))
           stream.on('error', done)
           stream.on('end', () => {
-            if (hash.digest('hex') === _100kbmd5) return done()
+            if (hash.digest('hex') === _100kbmd5) {
+              return done()
+            }
             done(new Error('content mismatch'))
           })
         })
@@ -479,7 +510,9 @@ describe('functional tests', function () {
           .then((stream) => {
             stream.on('data', (data) => hash.update(data))
             stream.on('end', () => {
-              if (hash.digest('hex') === expectedHash) return done()
+              if (hash.digest('hex') === expectedHash) {
+                return done()
+              }
               done(new Error('content mismatch'))
             })
           })
@@ -496,7 +529,9 @@ describe('functional tests', function () {
           .then((stream) => {
             stream.on('data', (data) => hash.update(data))
             stream.on('end', () => {
-              if (hash.digest('hex') === _100kb1kboffsetmd5) return done()
+              if (hash.digest('hex') === _100kb1kboffsetmd5) {
+                return done()
+              }
               done(new Error('content mismatch'))
             })
           })
@@ -523,7 +558,9 @@ describe('functional tests', function () {
         var stream = readableStream(_65mb)
         client.putObject(bucketName, _65mbObjectName, stream, metaData, () => {
           setTimeout(() => {
-            if (Object.values(httpAgent.sockets).length === 0) return done()
+            if (Object.values(httpAgent.sockets).length === 0) {
+              return done()
+            }
             done(new Error('http request did not release network socket'))
           }, 100)
         })
@@ -533,11 +570,15 @@ describe('functional tests', function () {
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
       var hash = crypto.createHash('md5')
       client.getObject(bucketName, _65mbObjectName, (e, stream) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         stream.on('data', (data) => hash.update(data))
         stream.on('error', done)
         stream.on('end', () => {
-          if (hash.digest('hex') === _65mbmd5) return done()
+          if (hash.digest('hex') === _65mbmd5) {
+            return done()
+          }
           done(new Error('content mismatch'))
         })
       })
@@ -545,9 +586,15 @@ describe('functional tests', function () {
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName} non-existent object`, (done) => {
       client.getObject(bucketName, 'an-object-that-does-not-exist', (e, stream) => {
-        if (stream) return done(new Error('on errors the stream object should not exist'))
-        if (!e) return done(new Error('expected an error object'))
-        if (e.code !== 'NoSuchKey') return done(new Error('expected NoSuchKey error'))
+        if (stream) {
+          return done(new Error('on errors the stream object should not exist'))
+        }
+        if (!e) {
+          return done(new Error('expected an error object'))
+        }
+        if (e.code !== 'NoSuchKey') {
+          return done(new Error('expected NoSuchKey error'))
+        }
         done()
       })
     })
@@ -561,11 +608,15 @@ describe('functional tests', function () {
           .update(_65mb.slice(0, 100 * 1024))
           .digest('hex')
         client.getPartialObject(bucketName, _65mbObjectName, 0, 100 * 1024, (e, stream) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           stream.on('data', (data) => hash.update(data))
           stream.on('error', done)
           stream.on('end', () => {
-            if (hash.digest('hex') === expectedHash) return done()
+            if (hash.digest('hex') === expectedHash) {
+              return done()
+            }
             done(new Error('content mismatch'))
           })
         })
@@ -576,7 +627,9 @@ describe('functional tests', function () {
       `copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_65mbObjectNameCopy}, srcObject:/${bucketName}/${_65mbObjectName}_`,
       (done) => {
         client.copyObject(bucketName, _65mbObjectNameCopy, '/' + bucketName + '/' + _65mbObjectName, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -594,16 +647,24 @@ describe('functional tests', function () {
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
       client.statObject(bucketName, _65mbObjectName, (e, stat) => {
-        if (e) return done(e)
-        if (stat.size !== _65mb.length) return done(new Error('size mismatch'))
-        if (`${metaData.randomstuff}` !== stat.metaData.randomstuff)
+        if (e) {
+          return done(e)
+        }
+        if (stat.size !== _65mb.length) {
+          return done(new Error('size mismatch'))
+        }
+        if (`${metaData.randomstuff}` !== stat.metaData.randomstuff) {
           return done(new Error('metadata "randomstuff" mismatch'))
-        if (`${metaData['X-Amz-Meta-Testing']}` !== stat.metaData['testing'])
+        }
+        if (`${metaData['X-Amz-Meta-Testing']}` !== stat.metaData['testing']) {
           return done(new Error('metadata "testing" mismatch'))
-        if (`${metaData['Content-Type']}` !== stat.metaData['content-type'])
+        }
+        if (`${metaData['Content-Type']}` !== stat.metaData['content-type']) {
           return done(new Error('metadata "content-type" mismatch'))
-        if (`${metaData['Content-Language']}` !== stat.metaData['content-language'])
+        }
+        if (`${metaData['Content-Language']}` !== stat.metaData['content-language']) {
           return done(new Error('metadata "content-language" mismatch'))
+        }
         done()
       })
     })
@@ -612,7 +673,9 @@ describe('functional tests', function () {
       client
         .statObject(bucketName, _65mbObjectName)
         .then((stat) => {
-          if (stat.size !== _65mb.length) return done(new Error('size mismatch'))
+          if (stat.size !== _65mb.length) {
+            return done(new Error('size mismatch'))
+          }
         })
         .then(() => done())
         .catch(done)
@@ -646,7 +709,9 @@ describe('functional tests', function () {
       `copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}_`,
       (done) => {
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -654,8 +719,12 @@ describe('functional tests', function () {
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) return done(e)
-        if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
+        if (e) {
+          return done(e)
+        }
+        if (stat.size !== _100kb.length) {
+          return done(new Error('size mismatch'))
+        }
         assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
         assert.equal(stat.metaData['Testing'], metaData['Testing'])
         assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
@@ -671,7 +740,9 @@ describe('functional tests', function () {
         var conds = new minio.CopyConditions()
         conds.setMatchETagExcept('TestEtag')
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, conds, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -697,7 +768,9 @@ describe('functional tests', function () {
         var conds = new minio.CopyConditions()
         conds.setMatchETag(etag)
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, conds, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -723,7 +796,9 @@ describe('functional tests', function () {
         var conds = new minio.CopyConditions()
         conds.setUnmodified(new Date(modifiedDate))
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, conds, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -747,8 +822,12 @@ describe('functional tests', function () {
       `statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}_`,
       (done) => {
         client.statObject(bucketName, _100kbObjectNameCopy, (e, stat) => {
-          if (e) return done(e)
-          if (stat.size !== _100kb.length) return done(new Error('size mismatch'))
+          if (e) {
+            return done(e)
+          }
+          if (stat.size !== _100kb.length) {
+            return done(new Error('size mismatch'))
+          }
           done()
         })
       }
@@ -788,10 +867,14 @@ describe('functional tests', function () {
           .listIncompleteUploads(bucketName, _65mbObjectName, true)
           .on('error', (e) => done(e))
           .on('data', (data) => {
-            if (data.key === _65mbObjectName) found = true
+            if (data.key === _65mbObjectName) {
+              found = true
+            }
           })
           .on('end', () => {
-            if (found) return done()
+            if (found) {
+              return done()
+            }
             done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
           })
       }
@@ -811,10 +894,14 @@ describe('functional tests', function () {
           .listIncompleteUploads(bucketName, '', true)
           .on('error', (e) => done(e))
           .on('data', (data) => {
-            if (data.key === _65mbObjectName) found = true
+            if (data.key === _65mbObjectName) {
+              found = true
+            }
           })
           .on('end', () => {
-            if (found) return done()
+            if (found) {
+              return done()
+            }
             done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
           })
       }
@@ -834,7 +921,9 @@ describe('functional tests', function () {
         fs.writeFileSync(tmpFileUpload, _65mb)
         client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, () => {
           setTimeout(() => {
-            if (Object.values(httpAgent.sockets).length === 0) return done()
+            if (Object.values(httpAgent.sockets).length === 0) {
+              return done()
+            }
             done(new Error('http request did not release network socket'))
           }, 100)
         })
@@ -852,7 +941,9 @@ describe('functional tests', function () {
           .fGetObject(bucketName, _65mbObjectName, tmpFileDownload)
           .then(() => {
             var md5sum = crypto.createHash('md5').update(fs.readFileSync(tmpFileDownload)).digest('hex')
-            if (md5sum === _65mbmd5) return done()
+            if (md5sum === _65mbmd5) {
+              return done()
+            }
             return done(new Error('md5sum mismatch'))
           })
           .catch(done)
@@ -927,7 +1018,9 @@ describe('functional tests', function () {
           .fGetObject(bucketName, _5mbObjectName, localFile)
           .then(() => {
             var md5sum = crypto.createHash('md5').update(fs.readFileSync(localFile)).digest('hex')
-            if (md5sum === _5mbmd5) return done()
+            if (md5sum === _5mbmd5) {
+              return done()
+            }
             return done(new Error('md5sum mismatch'))
           })
           .catch(done)
@@ -947,16 +1040,24 @@ describe('functional tests', function () {
 
     step(`setBucketPolicy(bucketName, bucketPolicy, cb)_bucketName:${bucketName}, bucketPolicy:${policy}_`, (done) => {
       client.setBucketPolicy(bucketName, policy, (err) => {
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
+        if (err && err.code === 'NotImplemented') {
+          return done()
+        }
+        if (err) {
+          return done(err)
+        }
         done()
       })
     })
 
     step(`getBucketPolicy(bucketName, cb)_bucketName:${bucketName}_`, (done) => {
       client.getBucketPolicy(bucketName, (err, response) => {
-        if (err && err.code === 'NotImplemented') return done()
-        if (err) return done(err)
+        if (err && err.code === 'NotImplemented') {
+          return done()
+        }
+        if (err) {
+          return done(err)
+        }
         if (!response) {
           return done(new Error(`policy is empty`))
         }
@@ -1010,16 +1111,22 @@ describe('functional tests', function () {
       `presignedPutObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires: 1000_`,
       (done) => {
         client.presignedPutObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'PUT'
           options.headers = {
             'content-length': _1byte.length,
           }
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             response.on('error', (e) => done(e))
             response.on('end', () => done())
             response.on('data', () => {})
@@ -1059,13 +1166,19 @@ describe('functional tests', function () {
       `presignedGetObject(bucketName, objectName, expires, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`,
       (done) => {
         client.presignedGetObject(bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             var error = null
             response.on('error', (e) => done(e))
             response.on('end', () => done(error))
@@ -1085,13 +1198,19 @@ describe('functional tests', function () {
       `presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:GET, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`,
       (done) => {
         client.presignedUrl('GET', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             var error = null
             response.on('error', (e) => done(e))
             response.on('end', () => done(error))
@@ -1113,13 +1232,19 @@ describe('functional tests', function () {
         var requestDate = new Date()
         requestDate.setHours(0, 0, 0, 0)
         client.presignedUrl('GET', bucketName, _1byteObjectName, 86400, requestDate, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             var error = null
             response.on('error', (e) => done(e))
             response.on('end', () => done(error))
@@ -1139,13 +1264,19 @@ describe('functional tests', function () {
       `presignedGetObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_1byteObjectName}_`,
       (done) => {
         client.presignedGetObject(bucketName, _1byteObjectName, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             var error = null
             response.on('error', (e) => done(e))
             response.on('end', () => done(error))
@@ -1183,13 +1314,19 @@ describe('functional tests', function () {
           'response-content-encoding': 'gzip',
         }
         client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on get : ${response.statusCode}`))
+            }
             if (respHeaders['response-content-type'] !== response.headers['content-type']) {
               return done(new Error(`content-type header mismatch`))
             }
@@ -1225,13 +1362,19 @@ describe('functional tests', function () {
             'attachment; filename="abc|"@#$%&/(<>)/=?!{[\']}+*-_:,;def.png"; filename*=UTF-8\'\'t&21st&20ng.png',
         }
         client.presignedGetObject(bucketName, _1byteObjectName, 1000, respHeaders, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on get : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on get : ${response.statusCode}`))
+            }
             if (respHeaders['response-content-disposition'] !== response.headers['content-disposition']) {
               return done(new Error(`content-disposition header mismatch`))
             }
@@ -1250,13 +1393,19 @@ describe('functional tests', function () {
         var requestDate = new Date()
         requestDate.setHours(0, 0, 0, 0)
         client.presignedGetObject(bucketName, _1byteObjectName, 86400, {}, requestDate, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             var error = null
             response.on('error', (e) => done(e))
             response.on('end', () => done(error))
@@ -1281,12 +1430,16 @@ describe('functional tests', function () {
       policy.setExpires(expires)
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
         req.on('error', (e) => done(e))
@@ -1300,12 +1453,16 @@ describe('functional tests', function () {
       policy.setContentType('text/plain')
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
         req.on('error', (e) => done(e))
@@ -1319,12 +1476,16 @@ describe('functional tests', function () {
       policy.setContentTypeStartsWith('text/')
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
         req.on('error', (e) => done(e))
@@ -1339,12 +1500,16 @@ describe('functional tests', function () {
       policy.setContentDisposition('inline')
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           client.removeObject(bucketName, objectName, done)
         })
         req.on('error', (e) => done(e))
@@ -1359,12 +1524,16 @@ describe('functional tests', function () {
       policy.setContentDisposition('attachment; filename=  My* Docume!  nt.json')
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           client.removeObject(bucketName, objectName, done)
         })
         req.on('error', (e) => done(e))
@@ -1382,12 +1551,16 @@ describe('functional tests', function () {
       })
 
       client.presignedPostPolicy(policy, (e, data) => {
-        if (e) return done(e)
+        if (e) {
+          return done(e)
+        }
         var req = superagent.post(data.postURL)
         _.each(data.formData, (value, key) => req.field(key, value))
         req.attach('file', Buffer.from([_1byte]), 'test')
         req.end(function (e) {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           client.removeObject(bucketName, objectName, done)
         })
         req.on('error', (e) => done(e))
@@ -1407,15 +1580,21 @@ describe('functional tests', function () {
       `presignedUrl(httpMethod, bucketName, objectName, expires, reqParams, cb)_httpMethod:GET, bucketName:${bucketName}, expires:1000_`,
       (done) => {
         client.presignedUrl('GET', bucketName, '', 1000, { prefix: 'data', 'max-keys': 1000 }, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'GET'
           options.headers = {}
           var str = ''
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var callback = function (response) {
-            if (response.statusCode !== 200) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 200) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             response.on('error', (e) => done(e))
             response.on('end', function () {
               if (!str.match(`<Key>${_1byteObjectName}</Key>`)) {
@@ -1437,14 +1616,20 @@ describe('functional tests', function () {
       `presignedUrl(httpMethod, bucketName, objectName, expires, cb)_httpMethod:DELETE, bucketName:${bucketName}, objectName:${_1byteObjectName}, expires:1000_`,
       (done) => {
         client.presignedUrl('DELETE', bucketName, _1byteObjectName, 1000, (e, presignedUrl) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           var transport = http
           var options = _.pick(url.parse(presignedUrl), ['hostname', 'port', 'path', 'protocol'])
           options.method = 'DELETE'
           options.headers = {}
-          if (options.protocol === 'https:') transport = https
+          if (options.protocol === 'https:') {
+            transport = https
+          }
           var request = transport.request(options, (response) => {
-            if (response.statusCode !== 204) return done(new Error(`error on put : ${response.statusCode}`))
+            if (response.statusCode !== 204) {
+              return done(new Error(`error on put : ${response.statusCode}`))
+            }
             response.on('error', (e) => done(e))
             response.on('end', () => done())
             response.on('data', () => {})
@@ -1484,7 +1669,9 @@ describe('functional tests', function () {
           .listObjects(bucketName, listObjectPrefix, true)
           .on('error', done)
           .on('end', () => {
-            if (_.isEqual(objArray, listPrefixArray)) return done()
+            if (_.isEqual(objArray, listPrefixArray)) {
+              return done()
+            }
             return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
           })
           .on('data', (data) => {
@@ -1513,7 +1700,9 @@ describe('functional tests', function () {
         .listObjects(bucketName, '', false)
         .on('error', done)
         .on('end', () => {
-          if (_.isEqual(objArray, listArray)) return done()
+          if (_.isEqual(objArray, listArray)) {
+            return done()
+          }
           return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
         })
         .on('data', (data) => {
@@ -1529,7 +1718,9 @@ describe('functional tests', function () {
           .listObjectsV2(bucketName, '', true, '')
           .on('error', done)
           .on('end', () => {
-            if (_.isEqual(objArray, listArray)) return done()
+            if (_.isEqual(objArray, listArray)) {
+              return done()
+            }
             return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
           })
           .on('data', (data) => {
@@ -1546,7 +1737,9 @@ describe('functional tests', function () {
           .listObjectsV2WithMetadata(bucketName, '', true, '')
           .on('error', done)
           .on('end', () => {
-            if (_.isEqual(objArray, listArray)) return done()
+            if (_.isEqual(objArray, listArray)) {
+              return done()
+            }
             return done(new Error(`listObjects lists ${listArray.length} objects, expected ${listObjectsNum}`))
           })
           .on('data', (data) => {
@@ -1691,13 +1884,19 @@ describe('functional tests', function () {
               return
             }
             client.putObject(bucketName, objectName, 'stringdata', (err) => {
-              if (err) return done(err)
+              if (err) {
+                return done(err)
+              }
               setTimeout(() => {
                 // Give it some time to get the notification.
                 poller.stop()
                 client.removeObject(bucketName, objectName, (err) => {
-                  if (err) return done(err)
-                  if (!records) return done(new Error('notification not received'))
+                  if (err) {
+                    return done(err)
+                  }
+                  if (!records) {
+                    return done(new Error('notification not received'))
+                  }
                   done()
                 })
               }, 10 * 1000)
@@ -1720,7 +1919,9 @@ describe('functional tests', function () {
           })
 
           client.putObject(bucketName, objectName, 'stringdata', (err) => {
-            if (err) return done(err)
+            if (err) {
+              return done(err)
+            }
             // It polls every five seconds, so wait for two-ish polls, then end.
             setTimeout(() => {
               poller.stop()
@@ -1743,31 +1944,47 @@ describe('functional tests', function () {
     describe('Versioning Steps test', function () {
       step('Check if versioning is enabled on a bucket', (done) => {
         client.getBucketVersioning(versionedBucketName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
       step('Enable versioning  on a bucket', (done) => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
 
       step('Suspend versioning  on a bucket', (done) => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Suspended' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
 
       step('Check if versioning is Suspended on a bucket', (done) => {
         client.getBucketVersioning(versionedBucketName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -1792,8 +2009,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,
         (done) => {
           client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         }
@@ -1832,8 +2053,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`,
         (done) => {
           client.setBucketVersioning(versionedBucketName, { Status: 'Suspended' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         }
@@ -1858,8 +2083,12 @@ describe('functional tests', function () {
         `Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${versionedBucketName},{Status:"Enabled"}`,
         (done) => {
           client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         }
@@ -1968,8 +2197,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Suspended"}`,
         (done) => {
           client.setBucketVersioning(versionedBucketName, { Status: 'Suspended' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         }
@@ -1992,8 +2225,12 @@ describe('functional tests', function () {
     before((done) =>
       client.makeBucket(versionedBucketName, '', () => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           isVersioningSupported = true
           done()
         })
@@ -2036,7 +2273,9 @@ describe('functional tests', function () {
             .listObjects(versionedBucketName, '', true, { IncludeVersion: true })
             .on('error', done)
             .on('end', () => {
-              if (_.isEqual(objArray.length, listPrefixArray.length)) return done()
+              if (_.isEqual(objArray.length, listPrefixArray.length)) {
+                return done()
+              }
               return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
             })
             .on('data', (data) => {
@@ -2057,7 +2296,9 @@ describe('functional tests', function () {
             .listObjects(versionedBucketName, prefixName, true, { IncludeVersion: true })
             .on('error', done)
             .on('end', () => {
-              if (_.isEqual(objArray.length, listPrefixArray.length)) return done()
+              if (_.isEqual(objArray.length, listPrefixArray.length)) {
+                return done()
+              }
               return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
             })
             .on('data', (data) => {
@@ -2107,8 +2348,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${versionedBucketName},versionConfig:{Status:"Enabled"} `,
         (done) => {
           client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             isVersioningSupported = true
             done()
           })
@@ -2152,7 +2397,9 @@ describe('functional tests', function () {
               .listObjects(versionedBucketName, '', true, { IncludeVersion: true })
               .on('error', done)
               .on('end', () => {
-                if (_.isEqual(2, objVersionList.length)) return done()
+                if (_.isEqual(2, objVersionList.length)) {
+                  return done()
+                }
                 return done(new Error(`listObjects lists ${objVersionList.length} objects, expected ${2}`))
               })
               .on('data', (data) => {
@@ -2196,15 +2443,23 @@ describe('functional tests', function () {
     describe('set, get and remove Tags on a bucket', function () {
       step(`Set tags on a bucket_bucketName:${tagsBucketName}`, (done) => {
         client.setBucketTagging(tagsBucketName, { 'test-tag-key': 'test-tag-value' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
       step(`Get tags on a bucket_bucketName:${tagsBucketName}`, (done) => {
         client.getBucketTagging(tagsBucketName, (err, tagList) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           if (isArray(tagList)) {
             done()
           }
@@ -2213,8 +2468,12 @@ describe('functional tests', function () {
 
       step(`remove Tags on a bucket_bucketName:${tagsBucketName}`, (done) => {
         client.removeBucketTagging(tagsBucketName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2243,16 +2502,24 @@ describe('functional tests', function () {
 
       step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
         client.setObjectTagging(tagsBucketName, tagObjName, { 'test-tag-key-obj': 'test-tag-value-obj' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
 
       step(`getObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
         client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           if (isArray(tagList)) {
             done()
           }
@@ -2261,8 +2528,12 @@ describe('functional tests', function () {
 
       step(`removeObjectTagging on an object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
         client.removeObjectTagging(tagsBucketName, tagObjName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2290,8 +2561,12 @@ describe('functional tests', function () {
         `Enable Versioning on Bucket: setBucketVersioning(bucketName,versioningConfig)_bucketName:${tagsVersionedBucketName},{Status:"Enabled"}`,
         (done) => {
           client.setBucketVersioning(tagsVersionedBucketName, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             isVersioningSupported = true
             done()
           })
@@ -2325,7 +2600,9 @@ describe('functional tests', function () {
             { 'test-tag-key-obj': 'test-tag-value-obj' },
             { versionId: versionId },
             (err) => {
-              if (err) return done(err)
+              if (err) {
+                return done(err)
+              }
               done()
             }
           )
@@ -2337,7 +2614,9 @@ describe('functional tests', function () {
       step(`Get tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, (done) => {
         if (isVersioningSupported) {
           client.getObjectTagging(tagsVersionedBucketName, tagObjName, { versionId: versionId }, (err, tagList) => {
-            if (err) return done(err)
+            if (err) {
+              return done(err)
+            }
             if (isArray(tagList)) {
               done()
             }
@@ -2350,8 +2629,12 @@ describe('functional tests', function () {
       step(`remove Tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, (done) => {
         if (isVersioningSupported) {
           client.removeObjectTagging(tagsVersionedBucketName, tagObjName, { versionId: versionId }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         } else {
@@ -2392,24 +2675,36 @@ describe('functional tests', function () {
           ],
         }
         client.setBucketLifecycle(bucketName, lifecycleConfig, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
 
       step('Set lifecycle config of a bucket', (done) => {
         client.getBucketLifecycle(bucketName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
 
       step('Remove lifecycle config of a bucket', (done) => {
         client.removeBucketLifecycle(bucketName, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2438,8 +2733,12 @@ describe('functional tests', function () {
     before((done) =>
       client.makeBucket(versionedBucketName, '', () => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           isVersioningSupported = true
           done()
         })
@@ -2465,7 +2764,9 @@ describe('functional tests', function () {
               mobileClientReqWithProtocol = https
             }
             const uploadRequest = mobileClientReqWithProtocol.request(upldRequestOptions, (response) => {
-              if (response.statusCode !== 200) return new Error(`error on put : ${response.statusCode}`)
+              if (response.statusCode !== 200) {
+                return new Error(`error on put : ${response.statusCode}`)
+              }
               response.on('error', (err) => {
                 done(err)
               })
@@ -2508,7 +2809,9 @@ describe('functional tests', function () {
               mobileClientReqWithProtocol = https
             }
             const uploadRequest = mobileClientReqWithProtocol.request(upldRequestOptions, (response) => {
-              if (response.statusCode !== 200) return new Error(`error on put : ${response.statusCode}`)
+              if (response.statusCode !== 200) {
+                return new Error(`error on put : ${response.statusCode}`)
+              }
               response.on('error', (err) => {
                 done(err)
               })
@@ -2586,7 +2889,9 @@ describe('functional tests', function () {
               }
               const request = mobileClientReqWithProtocol.request(getReqOpts, (response) => {
                 // if delete marker. method not allowed.
-                if (response.statusCode !== 200) return new Error(`error on get : ${response.statusCode}`)
+                if (response.statusCode !== 200) {
+                  return new Error(`error on get : ${response.statusCode}`)
+                }
                 response.on('error', () => {
                   return done()
                 })
@@ -2637,9 +2942,13 @@ describe('functional tests', function () {
       let isFeatureSupported = false
       step(`Check if bucket with object lock can be created:_bucketName:${lockEnabledBucketName}`, (done) => {
         client.makeBucket(lockEnabledBucketName, { ObjectLocking: true }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
           isFeatureSupported = true
-          if (err) return done(err)
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2647,8 +2956,12 @@ describe('functional tests', function () {
       step(`Get lock config on a bucket:_bucketName:${lockEnabledBucketName}`, (done) => {
         if (isFeatureSupported) {
           client.getObjectLockConfig(lockEnabledBucketName, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         } else {
@@ -2659,8 +2972,12 @@ describe('functional tests', function () {
       step(`Check if bucket can be deleted:_bucketName:${lockEnabledBucketName}`, (done) => {
         client.removeBucket(lockEnabledBucketName, (err) => {
           if (isFeatureSupported) {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           } else {
             done()
@@ -2674,9 +2991,13 @@ describe('functional tests', function () {
       let isFeatureSupported = false
       step(`Check if bucket with object lock can be created:_bucketName:${lockConfigBucketName}`, (done) => {
         client.makeBucket(lockConfigBucketName, { ObjectLocking: true }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
           isFeatureSupported = true
-          if (err) return done(err)
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2686,8 +3007,12 @@ describe('functional tests', function () {
             lockConfigBucketName,
             { mode: 'GOVERNANCE', unit: 'Years', validity: 2 },
             (err) => {
-              if (err && err.code === 'NotImplemented') return done()
-              if (err) return done(err)
+              if (err && err.code === 'NotImplemented') {
+                return done()
+              }
+              if (err) {
+                return done(err)
+              }
               done()
             }
           )
@@ -2698,8 +3023,12 @@ describe('functional tests', function () {
       step(`Get lock config on a bucket:_bucketName:${lockConfigBucketName}`, (done) => {
         if (isFeatureSupported) {
           client.getObjectLockConfig(lockConfigBucketName, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         } else {
@@ -2710,8 +3039,12 @@ describe('functional tests', function () {
       step(`Set lock config on a bucket:_bucketName:${lockConfigBucketName}`, (done) => {
         if (isFeatureSupported) {
           client.setObjectLockConfig(lockConfigBucketName, {}, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         } else {
@@ -2721,8 +3054,12 @@ describe('functional tests', function () {
       step(`Get and verify lock config on a bucket after reset/update:_bucketName:${lockConfigBucketName}`, (done) => {
         if (isFeatureSupported) {
           client.getObjectLockConfig(lockConfigBucketName, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           })
         } else {
@@ -2733,8 +3070,12 @@ describe('functional tests', function () {
       step(`Check if bucket can be deleted:_bucketName:${lockConfigBucketName}`, (done) => {
         client.removeBucket(lockConfigBucketName, (err) => {
           if (isFeatureSupported) {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             done()
           } else {
             done()
@@ -2756,9 +3097,13 @@ describe('functional tests', function () {
 
       step(`Check if bucket with object lock can be created:_bucketName:${objRetentionBucket}`, (done) => {
         client.makeBucket(objRetentionBucket, { ObjectLocking: true }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
           isFeatureSupported = true
-          if (err) return done(err)
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -2897,7 +3242,9 @@ describe('functional tests', function () {
           if (err && err.code === 'ServerSideEncryptionConfigurationNotFoundError') {
             return done()
           }
-          if (err) return done(err)
+          if (err) {
+            return done(err)
+          }
           done()
         })
     })
@@ -3019,9 +3366,13 @@ describe('functional tests', function () {
 
       step(`Check if bucket with object lock can be created:_bucketName:${objLegalHoldBucketName}`, (done) => {
         client.makeBucket(objLegalHoldBucketName, { ObjectLocking: true }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
           isFeatureSupported = true
-          if (err) return done(err)
+          if (err) {
+            return done(err)
+          }
           done()
         })
       })
@@ -3269,7 +3620,9 @@ describe('functional tests', function () {
         `statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameSpecialChars}`,
         (done) => {
           client.statObject(bucketNameForSpCharObjects, objectNameSpecialChars, (e) => {
-            if (e) return done(e)
+            if (e) {
+              return done(e)
+            }
             done()
           })
         }
@@ -3401,7 +3754,9 @@ describe('functional tests', function () {
         `statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefixForSpecialChars}`,
         (done) => {
           client.statObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars, (e) => {
-            if (e) return done(e)
+            if (e) {
+              return done(e)
+            }
             done()
           })
         }
@@ -3486,7 +3841,9 @@ describe('functional tests', function () {
       (done) => {
         const stream = readableStream(_100kb)
         client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
-          if (e) done(e)
+          if (e) {
+            done(e)
+          }
           if (res.versionId === null && res.etag) {
             done()
           } else {
@@ -3517,7 +3874,9 @@ describe('functional tests', function () {
       (done) => {
         const stream = readableStream(_65mb)
         client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
-          if (e) done(e)
+          if (e) {
+            done(e)
+          }
           if (res.versionId === null && res.etag) {
             done()
           } else {
@@ -3552,8 +3911,12 @@ describe('functional tests', function () {
     before((done) =>
       client.makeBucket(bucketToTestMultipart, '', () => {
         client.setBucketVersioning(bucketToTestMultipart, { Status: 'Enabled' }, (err) => {
-          if (err && err.code === 'NotImplemented') return done()
-          if (err) return done(err)
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
           isVersioningSupported = true
           done()
         })
@@ -3568,7 +3931,9 @@ describe('functional tests', function () {
         if (isVersioningSupported) {
           const stream = readableStream(_100kb)
           client.putObject(bucketToTestMultipart, _100kbObjectName, stream, metaData, (e, res) => {
-            if (e) done(e)
+            if (e) {
+              done(e)
+            }
             if (res.versionId && res.etag) {
               versionedObjectRes = res
               done()
@@ -3608,7 +3973,9 @@ describe('functional tests', function () {
         if (isVersioningSupported) {
           const stream = readableStream(_65mb)
           client.putObject(bucketToTestMultipart, _65mbObjectName, stream, metaData, (e, res) => {
-            if (e) done(e)
+            if (e) {
+              done(e)
+            }
             if (res.versionId && res.etag) {
               versionedMultiPartObjectRes = res
               done()
@@ -3718,7 +4085,9 @@ describe('functional tests', function () {
           })
 
           client.composeObject(destObjConfig, sourcePartObjList).then((e) => {
-            if (e) return done(e)
+            if (e) {
+              return done(e)
+            }
             done()
           })
         } else {
@@ -3732,7 +4101,9 @@ describe('functional tests', function () {
       (done) => {
         if (isSplitSuccess) {
           client.statObject(composeObjectTestBucket, composedObjName, (e) => {
-            if (e) return done(e)
+            if (e) {
+              return done(e)
+            }
             done()
           })
         } else {
@@ -3896,7 +4267,9 @@ describe('functional tests', function () {
       `statObject(bucketName, objectName, cb)_bucketName:${bucketNameForSpCharObjects}, _objectName:${objectNameWithPrefix}`,
       (done) => {
         client.statObject(bucketNameForSpCharObjects, objectNameWithPrefix, (e) => {
-          if (e) return done(e)
+          if (e) {
+            return done(e)
+          }
           done()
         })
       }
@@ -3942,10 +4315,14 @@ describe('functional tests', function () {
           .listIncompleteUploads(spBucketName, spObjWithPrefix, true)
           .on('error', (e) => done(e))
           .on('data', (data) => {
-            if (data.key === spObjWithPrefix) found = true
+            if (data.key === spObjWithPrefix) {
+              found = true
+            }
           })
           .on('end', () => {
-            if (found) return done()
+            if (found) {
+              return done()
+            }
             done(new Error(`${spObjWithPrefix} not found during listIncompleteUploads`))
           })
       }
@@ -3967,10 +4344,14 @@ describe('functional tests', function () {
           .on('error', (e) => done(e))
           .on('data', (data) => {
             // check the prefix
-            if (data.prefix === specialCharPrefix) found = true
+            if (data.prefix === specialCharPrefix) {
+              found = true
+            }
           })
           .on('end', () => {
-            if (found) return done()
+            if (found) {
+              return done()
+            }
             done(new Error(`${specialCharPrefix} not found during listIncompleteUploads`))
           })
       }
@@ -4073,8 +4454,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${fdWithVerBucket},versionConfig:{Status:"Enabled"} `,
         (done) => {
           client.setBucketVersioning(fdWithVerBucket, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             isVersioningSupported = true
             done()
           })
@@ -4130,7 +4515,9 @@ describe('functional tests', function () {
               .listObjects(fdWithVerBucket, '', true, { IncludeVersion: true })
               .on('error', done)
               .on('end', () => {
-                if (_.isEqual(0, objVersionList.length)) return done()
+                if (_.isEqual(0, objVersionList.length)) {
+                  return done()
+                }
                 return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
               })
               .on('data', (data) => {
@@ -4160,8 +4547,12 @@ describe('functional tests', function () {
         `setBucketVersioning(bucketName, versionConfig):_bucketName:${fdPrefixBucketName},versionConfig:{Status:"Enabled"} `,
         (done) => {
           client.setBucketVersioning(fdPrefixBucketName, { Status: 'Enabled' }, (err) => {
-            if (err && err.code === 'NotImplemented') return done()
-            if (err) return done(err)
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
             isVersioningSupported = true
             done()
           })
@@ -4217,7 +4608,9 @@ describe('functional tests', function () {
               .listObjects(fdPrefixBucketName, '/my-prefix', true, { IncludeVersion: true })
               .on('error', done)
               .on('end', () => {
-                if (_.isEqual(0, objVersionList.length)) return done()
+                if (_.isEqual(0, objVersionList.length)) {
+                  return done()
+                }
                 return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
               })
               .on('data', (data) => {
@@ -4270,7 +4663,9 @@ describe('functional tests', function () {
             .listObjects(versionedBucketName, '', true, {})
             .on('error', done)
             .on('end', () => {
-              if (_.isEqual(0, objVersionList.length)) return done()
+              if (_.isEqual(0, objVersionList.length)) {
+                return done()
+              }
               return done(new Error(`listObjects lists ${objVersionList.length} objects, expected 0`))
             })
             .on('data', (data) => {
@@ -4315,7 +4710,9 @@ describe('functional tests', function () {
             .listObjects(fdPrefixBucket, 'my-prefix', true, {})
             .on('error', done)
             .on('end', () => {
-              if (_.isEqual(0, objList.length)) return done()
+              if (_.isEqual(0, objList.length)) {
+                return done()
+              }
               return done(new Error(`listObjects lists ${objList.length} objects, expected 0`))
             })
             .on('data', (data) => {

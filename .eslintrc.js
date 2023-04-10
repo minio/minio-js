@@ -21,6 +21,7 @@ module.exports = {
     'no-console': ['error'],
     // "no-var": ["error"],
     'comma-dangle': 0,
+    curly: ['error'],
     'prefer-const': 0,
     // "quotes": ["error", "double"],
     'comma-spacing': 0, // ["error", { before: false, after: true }],

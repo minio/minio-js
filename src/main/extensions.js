@@ -43,9 +43,15 @@ export default class extensions {
   //   * `obj.metadata` _object_: metadata of the object
 
   listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
-    if (startAfter === undefined) startAfter = ''
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (startAfter === undefined) {
+      startAfter = ''
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -73,7 +79,9 @@ export default class extensions {
         readStream.push(objects.shift())
         return
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
         .on('error', (e) => readStream.emit('error', e))
@@ -154,7 +162,9 @@ export default class extensions {
     var method = 'GET'
     var transformer = transformers.getListObjectsV2WithMetadataTransformer()
     this.client.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer

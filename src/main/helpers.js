@@ -38,7 +38,9 @@ export function promisify(fn) {
     let callback = arguments[arguments.length - 1]
 
     // If the callback is given, don't promisify, just pass straight in.
-    if (typeof callback === 'function') return fn.apply(this, arguments)
+    if (typeof callback === 'function') {
+      return fn.apply(this, arguments)
+    }
 
     // Otherwise, create a new set of arguments, and wrap
     // it in a promise.
@@ -47,7 +49,9 @@ export function promisify(fn) {
     return new Promise((resolve, reject) => {
       // Add the callback function.
       args.push((err, value) => {
-        if (err) return reject(err)
+        if (err) {
+          return reject(err)
+        }
 
         resolve(value)
       })
@@ -126,7 +130,9 @@ export function isValidEndpoint(endpoint) {
 
 // isValidDomain - true if input host is a valid domain.
 export function isValidDomain(host) {
-  if (!isString(host)) return false
+  if (!isString(host)) {
+    return false
+  }
   // See RFC 1035, RFC 3696.
   if (host.length === 0 || host.length > 255) {
     return false
@@ -168,11 +174,17 @@ export function probeContentType(path) {
 // isValidPort - is input port valid.
 export function isValidPort(port) {
   // verify if port is a number.
-  if (!isNumber(port)) return false
+  if (!isNumber(port)) {
+    return false
+  }
   // port cannot be negative.
-  if (port < 0) return false
+  if (port < 0) {
+    return false
+  }
   // port '0' is valid and special case return true.
-  if (port === 0) return true
+  if (port === 0) {
+    return true
+  }
   var min_port = 1
   var max_port = 65535
   // Verify if port is in range.
@@ -180,7 +192,9 @@ export function isValidPort(port) {
 }
 
 export function isValidBucketName(bucket) {
-  if (!isString(bucket)) return false
+  if (!isString(bucket)) {
+    return false
+  }
 
   // bucket length should be less than and no more than 63
   // characters long.
@@ -205,15 +219,23 @@ export function isValidBucketName(bucket) {
 
 // check if objectName is a valid object name
 export function isValidObjectName(objectName) {
-  if (!isValidPrefix(objectName)) return false
-  if (objectName.length === 0) return false
+  if (!isValidPrefix(objectName)) {
+    return false
+  }
+  if (objectName.length === 0) {
+    return false
+  }
   return true
 }
 
 // check if prefix is valid
 export function isValidPrefix(prefix) {
-  if (!isString(prefix)) return false
-  if (prefix.length > 1024) return false
+  if (!isString(prefix)) {
+    return false
+  }
+  if (prefix.length > 1024) {
+    return false
+  }
   return true
 }
 
@@ -721,19 +743,27 @@ export function calculateEvenSplits(size, objInfo) {
 }
 
 export function removeDirAndFiles(dirPath, removeSelf) {
-  if (removeSelf === undefined) removeSelf = true
+  if (removeSelf === undefined) {
+    removeSelf = true
+  }
   try {
     var files = fs.readdirSync(dirPath)
   } catch (e) {
     return
   }
-  if (files.length > 0)
+  if (files.length > 0) {
     for (var i = 0; i < files.length; i++) {
       var filePath = path.join(dirPath, files[i])
-      if (fs.statSync(filePath).isFile()) fs.unlinkSync(filePath)
-      else removeDirAndFiles(filePath)
+      if (fs.statSync(filePath).isFile()) {
+        fs.unlinkSync(filePath)
+      } else {
+        removeDirAndFiles(filePath)
+      }
     }
-  if (removeSelf) fs.rmdirSync(dirPath)
+  }
+  if (removeSelf) {
+    fs.rmdirSync(dirPath)
+  }
 }
 
 export const parseXml = (xml) => {

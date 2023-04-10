@@ -57,7 +57,9 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
 
   const requestResource = path.split('?')[0]
   let requestQuery = path.split('?')[1]
-  if (!requestQuery) requestQuery = ''
+  if (!requestQuery) {
+    requestQuery = ''
+  }
 
   if (requestQuery) {
     requestQuery = requestQuery

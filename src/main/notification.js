@@ -36,7 +36,9 @@ export class NotificationConfig {
     if (target instanceof CloudFunctionConfig) {
       instance = 'CloudFunctionConfiguration'
     }
-    if (!this[instance]) this[instance] = []
+    if (!this[instance]) {
+      this[instance] = []
+    }
     this[instance].push(target)
   }
 }
@@ -47,15 +49,21 @@ class TargetConfig {
     this.Id = id
   }
   addEvent(newevent) {
-    if (!this.Event) this.Event = []
+    if (!this.Event) {
+      this.Event = []
+    }
     this.Event.push(newevent)
   }
   addFilterSuffix(suffix) {
-    if (!this.Filter) this.Filter = { S3Key: { FilterRule: [] } }
+    if (!this.Filter) {
+      this.Filter = { S3Key: { FilterRule: [] } }
+    }
     this.Filter.S3Key.FilterRule.push({ Name: 'suffix', Value: suffix })
   }
   addFilterPrefix(prefix) {
-    if (!this.Filter) this.Filter = { S3Key: { FilterRule: [] } }
+    if (!this.Filter) {
+      this.Filter = { S3Key: { FilterRule: [] } }
+    }
     this.Filter.S3Key.FilterRule.push({ Name: 'prefix', Value: prefix })
   }
 }
@@ -130,7 +138,9 @@ export class NotificationPoller extends EventEmitter {
 
   checkForChanges() {
     // Don't continue if we're looping again but are cancelled.
-    if (this.ending) return
+    if (this.ending) {
+      return
+    }
 
     let method = 'GET'
     var queries = []
@@ -153,7 +163,9 @@ export class NotificationPoller extends EventEmitter {
     }
     const region = this.client.region || DEFAULT_REGION
     this.client.makeRequest({ method, bucketName: this.bucketName, query }, '', [200], region, true, (e, response) => {
-      if (e) return this.emit('error', e)
+      if (e) {
+        return this.emit('error', e)
+      }
 
       let transformer = transformers.getNotificationTransformer()
       pipesetup(response, transformer)
@@ -162,7 +174,9 @@ export class NotificationPoller extends EventEmitter {
           // handle it after flushing from the JSON parser.
           let records = result.Records
           // If null (= no records), change to an empty array.
-          if (!records) records = []
+          if (!records) {
+            records = []
+          }
 
           // Iterate over the notifications and emit them individually.
           records.forEach((record) => {
@@ -170,7 +184,9 @@ export class NotificationPoller extends EventEmitter {
           })
 
           // If we're done, stop.
-          if (this.ending) response.destroy()
+          if (this.ending) {
+            response.destroy()
+          }
         })
         .on('error', (e) => this.emit('error', e))
         .on('end', () => {

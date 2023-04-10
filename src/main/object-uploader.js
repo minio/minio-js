@@ -85,7 +85,9 @@ export default class ObjectUploader extends Transform {
       }
 
       this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
-        if (err) return callback(err)
+        if (err) {
+          return callback(err)
+        }
         let result = {
           etag: sanitizeETag(response.headers.etag),
           versionId: getVersionId(response.headers),
@@ -116,12 +118,16 @@ export default class ObjectUploader extends Transform {
 
       // Check for an incomplete previous upload.
       this.client.findUploadId(this.bucketName, this.objectName, (err, id) => {
-        if (err) return this.emit('error', err)
+        if (err) {
+          return this.emit('error', err)
+        }
 
         // If no upload ID exists, initiate a new one.
         if (!id) {
           this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData, (err, id) => {
-            if (err) return callback(err)
+            if (err) {
+              return callback(err)
+            }
 
             this.id = id
 
@@ -136,10 +142,14 @@ export default class ObjectUploader extends Transform {
 
         // Retrieve the pre-uploaded parts, if we need to resume the upload.
         this.client.listParts(this.bucketName, this.objectName, id, (err, etags) => {
-          if (err) return this.emit('error', err)
+          if (err) {
+            return this.emit('error', err)
+          }
 
           // It is possible for no parts to be already uploaded.
-          if (!etags) etags = []
+          if (!etags) {
+            etags = []
+          }
 
           // oldParts will become an object, allowing oldParts[partNumber].etag
           this.oldParts = etags.reduce(function (prev, item) {
@@ -193,11 +203,15 @@ export default class ObjectUploader extends Transform {
     }
 
     this.client.makeRequest(options, chunk, [200], '', true, (err, response) => {
-      if (err) return callback(err)
+      if (err) {
+        return callback(err)
+      }
 
       // In order to aggregate the parts together, we need to collect the etags.
       let etag = response.headers.etag
-      if (etag) etag = etag.replace(/^"/, '').replace(/"$/, '')
+      if (etag) {
+        etag = etag.replace(/^"/, '').replace(/"$/, '')
+      }
 
       this.etags.push({ part: partNumber, etag })
 
@@ -222,7 +236,9 @@ export default class ObjectUploader extends Transform {
       }
 
       this.client.makeRequest(options, '', [200], '', true, (err, response) => {
-        if (err) return callback(err)
+        if (err) {
+          return callback(err)
+        }
 
         let result = {
           etag: sanitizeETag(response.headers.etag),
@@ -251,7 +267,9 @@ export default class ObjectUploader extends Transform {
     // This is called when all of the chunks uploaded successfully, thus
     // completing the multipart upload.
     this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id, this.etags, (err, etag) => {
-      if (err) return callback(err)
+      if (err) {
+        return callback(err)
+      }
 
       // Call our callback on the next tick to allow the streams infrastructure
       // to finish what its doing before we continue.
