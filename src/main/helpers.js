@@ -17,7 +17,9 @@
 import stream from 'stream'
 import mime from 'mime-types'
 var Crypto = require('crypto-browserify')
-import fxp from "fast-xml-parser"
+const { XMLParser } = require("fast-xml-parser")
+const  fxp = new XMLParser()
+
 const ipaddr = require('ipaddr.js')
 import { isBrowser } from "browser-or-node"
 
@@ -424,7 +426,7 @@ export const toArray = (param) => {
 
 export const sanitizeObjectKey=(objectName)=>{
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
-  let asStrName= (objectName || "").replace(/\+/g, ' ')
+  let asStrName = (objectName ? objectName.toString() : "").replace(/\+/g, ' ')
   const sanitizedName = decodeURIComponent(asStrName)
   return sanitizedName
 }

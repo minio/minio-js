@@ -252,3 +252,7 @@ export function  uploadPartTransformer(){
 export function  selectObjectContentTransformer(){
   return  getConcater()
 }
+
+export function removeObjectsTransformer() {
+  return getConcater(xmlParsers.removeObjectsParser)
+}
