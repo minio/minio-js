@@ -37,6 +37,6 @@ jobs:
           Start-Process -NoNewWindow -FilePath "$HOME/minio.exe" -ArgumentList "-C", "$env:temp/minio-config", "server", "$env:temp/data{1...4}"
           npm install
           npm run lint
-          npm run browserify
+          npm run build
           npm run test
 

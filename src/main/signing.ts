@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-import Crypto from 'crypto'
-import _ from 'lodash'
+import * as Crypto from "crypto"
+import { map as _map } from 'lodash'
 import { uriEscape, getScope, isString, isObject, isArray, isNumber,
   makeDateShort, makeDateLong } from './helpers.js'
-import * as errors from './errors.js'
+import * as errors from './errors'
+import {
+  AccessKey,
+  Region,
+  RequestDate,
+  RequestHeaders,
+  SecretKey,
+  ServiceName,
+  SessionToken,
+  SignedHeaders
+} from "./types"
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -32,7 +42,7 @@ const signV4Algorithm = 'AWS4-HMAC-SHA256'
 //  <SignedHeaders>\n
 //  <HashedPayload>
 //
-function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload) {
+function getCanonicalRequest(method:string, path:string, headers:RequestHeaders, signedHeaders:SignedHeaders, hashedPayload:string) {
   if (!isString(method)) {
     throw new TypeError('method should be of type "string"')
   }
@@ -78,7 +88,7 @@ function getCanonicalRequest(method, path, headers, signedHeaders, hashedPayload
 }
 
 // generate a credential string
-function getCredential(accessKey, region, requestDate,serviceName="s3") {
+function getCredential(accessKey:AccessKey, region:SecretKey, requestDate:RequestDate,serviceName:ServiceName="s3") {
   if (!isString(accessKey)) {
     throw new TypeError('accessKey should be of type "string"')
   }
@@ -92,7 +102,7 @@ function getCredential(accessKey, region, requestDate,serviceName="s3") {
 }
 
 // Returns signed headers array - alphabetically sorted
-function getSignedHeaders(headers) {
+function getSignedHeaders(headers:Record<any, any>) {
   if (!isObject(headers)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -124,13 +134,13 @@ function getSignedHeaders(headers) {
   //      Is skipped for obvious reasons
 
   const ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
-  return _.map(headers, (v, header) => header)
-    .filter(header => ignoredHeaders.indexOf(header) === -1)
+  return _map(headers, (v:any, header:string) => header)
+    .filter((header:string) => ignoredHeaders.indexOf(header) === -1)
     .sort()
 }
 
 // returns the key used for calculating signature
-function getSigningKey(date, region, secretKey,serviceName="s3") {
+function getSigningKey(date:Date, region:Region, secretKey:SecretKey,serviceName:ServiceName="s3") {
   if (!isObject(date)) {
     throw new TypeError('date should be of type "object"')
   }
@@ -148,7 +158,7 @@ function getSigningKey(date, region, secretKey,serviceName="s3") {
 }
 
 // returns the string that needs to be signed
-function getStringToSign(canonicalRequest, requestDate, region,serviceName="s3") {
+function getStringToSign(canonicalRequest:string, requestDate:Date, region:Region,serviceName:ServiceName="s3") {
   if (!isString(canonicalRequest)) {
     throw new TypeError('canonicalRequest should be of type "string"')
   }
@@ -170,7 +180,7 @@ function getStringToSign(canonicalRequest, requestDate, region,serviceName="s3")
 }
 
 // calculate the signature of the POST policy
-export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
+export function postPresignSignatureV4(region:Region, date:Date, secretKey:SecretKey, policyBase64:string) {
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
@@ -188,7 +198,7 @@ export function postPresignSignatureV4(region, date, secretKey, policyBase64) {
 }
 
 // Returns the authorization header
-export function signV4(request, accessKey, secretKey, region, requestDate, serviceName="s3") {
+export function signV4(request:Record<any, any>, accessKey:AccessKey, secretKey:SecretKey, region:Region, requestDate:Date, serviceName:ServiceName="s3") {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }
@@ -223,11 +233,11 @@ export function signV4(request, accessKey, secretKey, region, requestDate, servi
   return `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders.join(';').toLowerCase()}, Signature=${signature}`
 }
 
-export function signV4ByServiceName( request, accessKey, secretKey, region, requestDate, serviceName="s3") {
+export function signV4ByServiceName( request:Record<any, any>, accessKey:AccessKey, secretKey:SecretKey, region:Region, requestDate:Date, serviceName:ServiceName="s3") {
   return signV4(request, accessKey, secretKey, region,requestDate, serviceName)
 }
 // returns a presigned URL string
-export function presignSignatureV4(request, accessKey, secretKey, sessionToken, region, requestDate, expires) {
+export function presignSignatureV4(request:Record<any, any>, accessKey:AccessKey, secretKey:SecretKey, sessionToken:SessionToken, region:Region, requestDate:RequestDate, expires:number) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
   }

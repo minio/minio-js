@@ -17,7 +17,7 @@
 import { isString } from './helpers.js'
 
 // List of currently supported endpoints.
-let awsS3Endpoint = {
+const awsS3Endpoint:Record<string, string> = {
   'us-east-1': 's3.amazonaws.com',
   'us-east-2': 's3-us-east-2.amazonaws.com',
   'us-west-1': 's3-us-west-1.amazonaws.com',
@@ -37,11 +37,11 @@ let awsS3Endpoint = {
 }
 
 // getS3Endpoint get relevant endpoint for the region.
-export function getS3Endpoint(region) {
+export function getS3Endpoint(region:string) {
   if (!isString(region)) {
     throw new TypeError(`Invalid region: ${region}`)
   }
-  var endpoint = awsS3Endpoint[region]
+  const endpoint = awsS3Endpoint[region]
   if (endpoint) {
     return endpoint
   }

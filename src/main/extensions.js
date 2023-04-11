@@ -18,7 +18,7 @@ import Stream from 'stream'
 
 import * as transformers from './transformers'
 
-import * as errors from './errors.js'
+import * as errors from './errors'
 
 import { isValidPrefix, isValidBucketName, uriEscape,
   isBoolean, isNumber, isString,

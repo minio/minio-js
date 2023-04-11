@@ -1,35 +1,40 @@
+import { AuthCredentials } from "./types"
+
 class Credentials{
+  private accessKey: string
+  private secretKey: string
+  private sessionToken: string
   constructor({
     accessKey,
     secretKey,
     sessionToken
-  }) {
+  }:AuthCredentials) {
     this.accessKey = accessKey
     this.secretKey = secretKey
     this.sessionToken=sessionToken
   }
 
 
-  setAccessKey(accessKey){
+  setAccessKey(accessKey:string){
     this.accessKey = accessKey
   }
-  getAccessKey(){
+  getAccessKey():string{
     return this.accessKey
   }
-  setSecretKey(secretKey){
+  setSecretKey(secretKey:string){
     this.secretKey=secretKey
   }
-  getSecretKey(){
+  getSecretKey():string{
     return this.secretKey
   }
-  setSessionToken (sessionToken){
+  setSessionToken (sessionToken:string){
     this.sessionToken = sessionToken
   }
-  getSessionToken (){
+  getSessionToken ():string{
     return this.sessionToken
   }
   
-  get(){
+  get():AuthCredentials{
     return {
       accessKey:this.accessKey,
       secretKey:this.secretKey,

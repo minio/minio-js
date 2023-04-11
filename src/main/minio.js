@@ -50,7 +50,7 @@ import ObjectUploader from './object-uploader'
 
 import * as transformers from './transformers'
 
-import * as errors from './errors.js'
+import * as errors from './errors'
 
 import { getS3Endpoint } from './s3-endpoints.js'
 

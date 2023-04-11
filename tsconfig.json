@@ -1,0 +1,14 @@
+{
+  "files": ["./src/**/*"],
+  "compilerOptions": {
+    "explainFiles": true,
+    "listFiles": true,
+    "noEmitOnError":true,
+    "esModuleInterop": true,
+    "rootDir": "./src/",
+    "noImplicitAny": true,
+    "target": "es5",
+    "allowJs": true,
+    "types": ["node", "mocha"]
+  }
+}

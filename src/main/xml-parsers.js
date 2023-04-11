@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import SelectResults from "./SelectResults"
+
 const { XMLParser } = require("fast-xml-parser")
 const  fxp = new XMLParser()
 import _ from 'lodash'
-import * as errors from './errors.js'
+import * as errors from './errors'
 import {
   isObject,
   sanitizeETag,
@@ -25,7 +27,6 @@ import {
   RETENTION_VALIDITY_UNITS,
   parseXml,
   readableStream,
-  SelectResults
 } from "./helpers"
 var crc32 = require("buffer-crc32")
 

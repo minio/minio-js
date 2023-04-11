@@ -14,46 +14,20 @@
  * limitations under the License.
  */
 
-const babel = require('gulp-babel')
 const gulp = require('gulp')
 const gulpIf = require('gulp-if')
-const sourcemaps = require('gulp-sourcemaps')
-
-const fs = require('fs')
-const browserify = require('browserify')
+var ts = require("gulp-typescript")
+var tsProject = ts.createProject("tsconfig.json")
 const mocha = require('gulp-mocha')
 const eslint = require('gulp-eslint')
 
-const compileJS = (src, dest) => {
-  return gulp.src(src)
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: [['@babel/env', {
-        targets: { node: 8 }
-      }]]
-    }))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(dest))
+const compile =  ()=>{
+  return tsProject.src().pipe(tsProject()).js.pipe(gulp.dest("dist/"))
 }
 
-const compile = () => compileJS('src/main/**/*.js', 'dist/main')
-const testCompile = gulp.series(compile, () => {
-  return compileJS('src/test/**/*.js', 'dist/test')
-})
-
-exports.browserify = gulp.series(compile, () => {
-  return browserify('./dist/main/minio.js', {
-    standalone: 'MinIO'
-  })
-    .bundle()
-    .on('error', (err) => {
-      // eslint-disable-next-line no-console
-      console.log('Error : ' + err.message)
-    })
-    .pipe(fs.createWriteStream('./dist/main/minio-browser.js'))
-})
-
-exports.test = gulp.series(testCompile, () => {
+exports.test = gulp.series(()=>{
+  return Promise.resolve()
+}, () => {
   return gulp.src('dist/test/**/*.js', {
     read: false
   }).pipe(mocha({
@@ -77,7 +51,7 @@ exports.lint = () => {
     .pipe(gulpIf(isFixed, gulp.dest('src/')))
 }
 
-exports.functionalTest = gulp.series(testCompile, () => {
+exports.functionalTest = gulp.series(()=>{return Promise.resolve()}, () => {
   return gulp.src('dist/test/functional/*.js', {
     read: false
   }).pipe(mocha({
@@ -88,5 +62,4 @@ exports.functionalTest = gulp.series(testCompile, () => {
 })
 
 exports.compile = compile
-exports.testCompile = testCompile
-exports.default = gulp.series(exports.test, exports.browserify)
+exports.default = gulp.series(exports.test)
