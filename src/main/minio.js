@@ -1946,10 +1946,10 @@ export class Client {
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ${bucketName}')
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError('Invalid object name: ${objectName}')
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     return this.presignedUrl('PUT', bucketName, objectName, expires, cb)
   }
