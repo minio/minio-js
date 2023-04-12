@@ -23,6 +23,7 @@ module.exports = {
     'comma-dangle': 0,
     curly: ['error'],
     'prefer-const': 0,
+    'no-template-curly-in-string': 'error',
     // "quotes": ["error", "double"],
     'comma-spacing': 0, // ["error", { before: false, after: true }],
     'semi-spacing': 0, // ["warn", { before: false, after: true }],
