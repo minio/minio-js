@@ -27,7 +27,7 @@ jobs:
 
       - run: npm i
 
-      - name: Start Server -> Run Unit and Functional Tests (test)
+      - name: Start Server -> Run Unit and Functional Tests
         env:
           CI: true
           MINIO_CI_CD: true
