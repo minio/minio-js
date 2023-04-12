@@ -1,6 +1,9 @@
 name: CI- Windows
 
 on:
+  push:
+    branches-ignore:
+      - dependabot/**
   pull_request:
     branches:
       - master
@@ -15,11 +18,15 @@ jobs:
         node_version: [12.x, 14.x, 16.x, 17.x, 18.x, 19.x]
         os: [windows-latest]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node_version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+
+      - run: npm i
+
       - name: Start MinIO Server -> Run Unit and Functional Tests ( install, lint, browserify, test)
         env:
           CI: true
@@ -35,7 +42,4 @@ jobs:
         run: |
           Invoke-WebRequest -Uri https://dl.minio.io/server/minio/release/windows-amd64/minio.exe -OutFile $HOME/minio.exe
           Start-Process -NoNewWindow -FilePath "$HOME/minio.exe" -ArgumentList "-C", "$env:temp/minio-config", "server", "$env:temp/data{1...4}"
-          npm install
-          npm run lint
-          npm run browserify
           npm run test
