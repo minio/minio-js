@@ -22,10 +22,10 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.listBuckets(function(e, buckets) {
+s3Client.listBuckets(function (e, buckets) {
   if (e) return console.log(e)
   console.log('buckets :', buckets)
 })

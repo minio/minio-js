@@ -22,19 +22,19 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
-
 
 const bucketName = 'my-bucket'
-const objectName ="my-object"
+const objectName = 'my-object'
 
-const versionId ="my-versionId"
+const versionId = 'my-versionId'
 
-const objRetPromise = s3Client.getObjectRetention(bucketName, objectName, {versionId:versionId} )
-objRetPromise.then((data) => {
-  console.log("Success", data)
-})
-  .catch((e)=>{
-    console.log(" Error",e)
+const objRetPromise = s3Client.getObjectRetention(bucketName, objectName, { versionId: versionId })
+objRetPromise
+  .then((data) => {
+    console.log('Success', data)
+  })
+  .catch((e) => {
+    console.log(' Error', e)
   })

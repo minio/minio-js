@@ -4,7 +4,7 @@ module.exports = {
     mocha: true,
     es6: true,
   },
-  ignorePatterns: ['src/test/*.*'],
+  ignorePatterns: ['src/test/*.*', 'examples/**/*'],
   overrides: [],
   extends: [
     'eslint:recommended',

@@ -1,4 +1,3 @@
-
 /*
  * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
@@ -23,10 +22,10 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketEncryption("my-bucket", function (error, enConfig){
+s3Client.getBucketEncryption('my-bucket', function (error, enConfig) {
   if (error) {
     return console.log(error)
   }

@@ -22,39 +22,44 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 var size = 0
 // Get a full object.
-s3Client.getObject('my-bucketname', 'my-objectname', function(e, dataStream) {
+s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
   if (e) {
     return console.log(e)
   }
-  dataStream.on('data', function(chunk) {
+  dataStream.on('data', function (chunk) {
     size += chunk.length
   })
-  dataStream.on('end', function() {
-    console.log("End. Total size = " + size)
+  dataStream.on('end', function () {
+    console.log('End. Total size = ' + size)
   })
-  dataStream.on('error', function(e) {
+  dataStream.on('error', function (e) {
     console.log(e)
   })
 })
 
 //Get a specific version of an object
 var versionedObjSize = 0
-s3Client.getObject('my-versioned-bucket', 'my-versioned-object', {versionId:"my-versionId"}, function(err, dataStream) {
-  if (err) {
-    return console.log(err)
+s3Client.getObject(
+  'my-versioned-bucket',
+  'my-versioned-object',
+  { versionId: 'my-versionId' },
+  function (err, dataStream) {
+    if (err) {
+      return console.log(err)
+    }
+    dataStream.on('data', function (chunk) {
+      versionedObjSize += chunk.length
+    })
+    dataStream.on('end', function () {
+      console.log('End. Total size = ' + versionedObjSize)
+    })
+    dataStream.on('error', function (err) {
+      console.log(err)
+    })
   }
-  dataStream.on('data', function(chunk) {
-    versionedObjSize += chunk.length
-  })
-  dataStream.on('end', function() {
-    console.log('End. Total size = ' + versionedObjSize)
-  })
-  dataStream.on('error', function(err) {
-    console.log(err)
-  })
-})
+)
