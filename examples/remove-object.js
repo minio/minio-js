@@ -50,7 +50,7 @@ s3Client.removeObject(
       return console.log(e)
     }
     console.log('Success')
-  }
+  },
 )
 
 // force delete object/prefix

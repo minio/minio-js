@@ -102,7 +102,7 @@ export class Client {
     }
     if (!isBoolean(params.useSSL)) {
       throw new errors.InvalidArgumentError(
-        `Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`
+        `Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`,
       )
     }
 
@@ -138,7 +138,7 @@ export class Client {
     if (params.transport) {
       if (!isObject(params.transport)) {
         throw new errors.InvalidArgumentError(
-          `Invalid transport type : ${params.transport}, expected to be type "object"`
+          `Invalid transport type : ${params.transport}, expected to be type "object"`,
         )
       }
       transport = params.transport
@@ -839,7 +839,7 @@ export class Client {
                 ended = true
               }
               readStream._read()
-            }
+            },
           )
         })
     }
@@ -924,7 +924,7 @@ export class Client {
         var query = `uploadId=${removeUploadId}`
         this.makeRequest({ method, bucketName, objectName, query }, '', [204], '', false, (e) => cb(e))
       },
-      cb
+      cb,
     )
   }
 
@@ -1007,7 +1007,7 @@ export class Client {
           cb(new Error('Size mismatch between downloaded file and the object'))
         },
       ],
-      rename
+      rename,
     )
   }
 
@@ -1257,7 +1257,7 @@ export class Client {
                 return cb(e)
               }
               cb(null, partsDone, uploadId)
-            }
+            },
           )
         },
         // all parts uploaded, complete the multipart upload
@@ -1268,7 +1268,7 @@ export class Client {
           return
         }
         callback(err, ...rest)
-      }
+      },
     )
   }
 
@@ -1902,7 +1902,7 @@ export class Client {
         }
         return result
       },
-      { listOfList: [], list: [] }
+      { listOfList: [], list: [] },
     )
 
     if (result.list.length > 0) {
@@ -1945,7 +1945,7 @@ export class Client {
             })
         })
       },
-      cb
+      cb,
     )
   }
 
@@ -2068,7 +2068,7 @@ export class Client {
           this.sessionToken,
           region,
           requestDate,
-          expires
+          expires,
         )
       } catch (pe) {
         return cb(pe)
@@ -2530,7 +2530,7 @@ export class Client {
           // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
           response.on('data', () => {})
           cb(null, result)
-        }
+        },
       )
     }
     if (multipart) {
@@ -3005,7 +3005,7 @@ export class Client {
     if (configKeys.length > 0) {
       if (_.difference(configKeys, ['unit', 'mode', 'validity']).length !== 0) {
         throw new TypeError(
-          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`
+          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`,
         )
       } else {
         config.Rule = {
@@ -3515,7 +3515,7 @@ export class Client {
 
     if (sourceFilesLength < 1 || sourceFilesLength > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
       throw new errors.InvalidArgumentError(
-        `"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`
+        `"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`,
       )
     }
 
@@ -3547,7 +3547,7 @@ export class Client {
     let totalParts = 0
 
     const sourceObjStats = sourceObjList.map((srcItem) =>
-      me.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem))
+      me.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem)),
     )
 
     return Promise.all(sourceObjStats)
@@ -3566,7 +3566,7 @@ export class Client {
             const srcEnd = srcConfig.End
             if (srcEnd >= srcCopySize || srcStart < 0) {
               throw new errors.InvalidArgumentError(
-                `CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`
+                `CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`,
               )
             }
             srcCopySize = srcEnd - srcStart + 1
@@ -3575,7 +3575,7 @@ export class Client {
           // Only the last source may be less than `absMinPartSize`
           if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength - 1) {
             throw new errors.InvalidArgumentError(
-              `CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`
+              `CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`,
             )
           }
 
@@ -3593,7 +3593,7 @@ export class Client {
           // Do we need more parts than we are allowed?
           if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
             throw new errors.InvalidArgumentError(
-              `Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`
+              `Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`,
             )
           }
 

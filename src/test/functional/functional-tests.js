@@ -187,7 +187,7 @@ describe('functional tests', function () {
   describe('makeBucket with period and region', () => {
     if (clientConfigParams.endPoint === 's3.amazonaws.com') {
       step('makeBucket(bucketName, region, cb)_region:eu-central-1_', (done) =>
-        client.makeBucket(`${bucketName}.sec.period`, 'eu-central-1', done)
+        client.makeBucket(`${bucketName}.sec.period`, 'eu-central-1', done),
       )
       step('removeBucket(bucketName, cb)__', (done) => client.removeBucket(`${bucketName}.sec.period`, done))
     }
@@ -310,7 +310,7 @@ describe('functional tests', function () {
           .putObject(bucketName, _MultiPath100kbObjectBufferName, _100kb)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -330,7 +330,7 @@ describe('functional tests', function () {
             done(new Error('content mismatch'))
           })
         })
-      }
+      },
     )
 
     step(
@@ -340,7 +340,7 @@ describe('functional tests', function () {
           .removeObject(bucketName, _MultiPath100kbObjectBufferName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
   })
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function () {
@@ -350,7 +350,7 @@ describe('functional tests', function () {
       (done) => {
         fs.writeFileSync(tmpFileUpload, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload, done)
-      }
+      },
     )
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
@@ -373,7 +373,7 @@ describe('functional tests', function () {
       (done) => {
         fs.writeFileSync(tmpFileUploadWithExt, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, metaData, done)
-      }
+      },
     )
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
@@ -397,7 +397,7 @@ describe('functional tests', function () {
       (done) => {
         fs.writeFileSync(tmpFileUploadWithExt, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, done)
-      }
+      },
     )
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
@@ -419,7 +419,7 @@ describe('functional tests', function () {
       (done) => {
         var stream = readableStream(_100kb)
         client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, metaData, done)
-      }
+      },
     )
 
     step(
@@ -427,7 +427,7 @@ describe('functional tests', function () {
       (done) => {
         var stream = readableStream(_100kb)
         client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, done)
-      }
+      },
     )
 
     step(
@@ -447,14 +447,14 @@ describe('functional tests', function () {
             done(new Error('content mismatch'))
           })
         })
-      }
+      },
     )
 
     step(
       `putObject(bucketName, objectName, stream, callback)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_`,
       (done) => {
         client.putObject(bucketName, _100kbObjectBufferName, _100kb, '', done)
-      }
+      },
     )
 
     step(
@@ -474,7 +474,7 @@ describe('functional tests', function () {
             done(new Error('content mismatch'))
           })
         })
-      }
+      },
     )
 
     step(
@@ -484,7 +484,7 @@ describe('functional tests', function () {
           .putObject(bucketName, _100kbObjectBufferName, _100kb, {})
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -497,7 +497,7 @@ describe('functional tests', function () {
             stream.on('end', done)
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -517,7 +517,7 @@ describe('functional tests', function () {
             })
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -536,7 +536,7 @@ describe('functional tests', function () {
             })
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -549,7 +549,7 @@ describe('functional tests', function () {
             stream.on('end', done)
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -564,7 +564,7 @@ describe('functional tests', function () {
             done(new Error('http request did not release network socket'))
           }, 100)
         })
-      }
+      },
     )
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
@@ -620,7 +620,7 @@ describe('functional tests', function () {
             done(new Error('content mismatch'))
           })
         })
-      }
+      },
     )
 
     step(
@@ -632,7 +632,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(
@@ -642,7 +642,7 @@ describe('functional tests', function () {
           .copyObject(bucketName, _65mbObjectNameCopy, '/' + bucketName + '/' + _65mbObjectName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
@@ -688,7 +688,7 @@ describe('functional tests', function () {
           async.map(
             [_100kbObjectBufferName, _65mbObjectName, _65mbObjectNameCopy],
             (objectName, cb) => client.removeObject(bucketName, objectName, cb),
-            done
+            done,
           )
         })
         .catch(done)
@@ -702,7 +702,7 @@ describe('functional tests', function () {
       `putObject(bucketName, objectName, stream, metaData, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream: 100kb, metaData:${metaData}_`,
       (done) => {
         client.putObject(bucketName, _100kbObjectName, _100kb, metaData, done)
-      }
+      },
     )
 
     step(
@@ -714,7 +714,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
@@ -745,7 +745,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(
@@ -759,7 +759,7 @@ describe('functional tests', function () {
             done(new Error('CopyObject should have failed.'))
           })
           .catch(() => done())
-      }
+      },
     )
 
     step(
@@ -773,7 +773,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(
@@ -787,7 +787,7 @@ describe('functional tests', function () {
             done(new Error('CopyObject should have failed.'))
           })
           .catch(() => done())
-      }
+      },
     )
 
     step(
@@ -801,7 +801,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(
@@ -815,7 +815,7 @@ describe('functional tests', function () {
             done(new Error('CopyObject should have failed.'))
           })
           .catch(() => done())
-      }
+      },
     )
 
     step(
@@ -830,7 +830,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
 
     step(
@@ -839,9 +839,9 @@ describe('functional tests', function () {
         async.map(
           [_100kbObjectName, _100kbObjectNameCopy],
           (objectName, cb) => client.removeObject(bucketName, objectName, cb),
-          done
+          done,
         )
-      }
+      },
     )
   })
 
@@ -850,7 +850,7 @@ describe('functional tests', function () {
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, metaData:${metaData}`,
       (done) => {
         client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData, done)
-      }
+      },
     )
     step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`,
@@ -877,7 +877,7 @@ describe('functional tests', function () {
             }
             done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
           })
-      }
+      },
     )
     step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive: true_`,
@@ -904,7 +904,7 @@ describe('functional tests', function () {
             }
             done(new Error(`${_65mbObjectName} not found during listIncompleteUploads`))
           })
-      }
+      },
     )
     step(`removeIncompleteUploads(bucketName, prefix)_bucketName:${bucketName}, prefix:${_65mbObjectName}_`, (done) => {
       client.removeIncompleteUpload(bucketName, _65mbObjectName).then(done).catch(done)
@@ -927,12 +927,12 @@ describe('functional tests', function () {
             done(new Error('http request did not release network socket'))
           }, 100)
         })
-      }
+      },
     )
 
     step(
       `fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}, metaData: ${metaData}_`,
-      (done) => client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, metaData, done)
+      (done) => client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload, metaData, done),
     )
     step(
       `fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileDownload}_`,
@@ -947,7 +947,7 @@ describe('functional tests', function () {
             return done(new Error('md5sum mismatch'))
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -958,7 +958,7 @@ describe('functional tests', function () {
           .removeObject(bucketName, _65mbObjectName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -968,7 +968,7 @@ describe('functional tests', function () {
           .fPutObject(bucketName, _65mbObjectName, tmpFileUpload)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -978,7 +978,7 @@ describe('functional tests', function () {
           .fGetObject(bucketName, _65mbObjectName, tmpFileDownload)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -987,7 +987,7 @@ describe('functional tests', function () {
         fs.unlinkSync(tmpFileUpload)
         fs.unlinkSync(tmpFileDownload)
         client.removeObject(bucketName, _65mbObjectName, done)
-      }
+      },
     )
   })
   describe('fGetObject-resume', () => {
@@ -1004,7 +1004,7 @@ describe('functional tests', function () {
             done()
           })
           .catch(done)
-      }
+      },
     )
     step(
       `fGetObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}, filePath:${localFile}`,
@@ -1024,14 +1024,14 @@ describe('functional tests', function () {
             return done(new Error('md5sum mismatch'))
           })
           .catch(done)
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_5mbObjectName}_`,
       (done) => {
         fs.unlinkSync(localFile)
         client.removeObject(bucketName, _5mbObjectName, done)
-      }
+      },
     )
   })
 
@@ -1135,7 +1135,7 @@ describe('functional tests', function () {
           request.write(_1byte)
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1148,7 +1148,7 @@ describe('functional tests', function () {
             done(new Error('negative values should trigger an error'))
           })
           .catch(() => done())
-      }
+      },
     )
 
     step(
@@ -1159,7 +1159,7 @@ describe('functional tests', function () {
           .presignedPutObject(bucketName, _1byteObjectName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -1191,7 +1191,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1223,7 +1223,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1257,7 +1257,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1289,7 +1289,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1299,7 +1299,7 @@ describe('functional tests', function () {
           .presignedGetObject(bucketName, 'this.does.not.exist', 2938)
           .then(assert.fail)
           .catch(() => done())
-      }
+      },
     )
 
     step(
@@ -1351,7 +1351,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1384,7 +1384,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1418,7 +1418,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
 
     step('presignedPostPolicy(postPolicy, cb)_postPolicy:expiresin10days_', (done) => {
@@ -1609,7 +1609,7 @@ describe('functional tests', function () {
           var request = transport.request(options, callback)
           request.end()
         })
-      }
+      },
     )
 
     step(
@@ -1637,7 +1637,7 @@ describe('functional tests', function () {
           request.on('error', (e) => done(e))
           request.end()
         })
-      }
+      },
     )
   })
 
@@ -1657,9 +1657,9 @@ describe('functional tests', function () {
           objArray,
           20,
           (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, {}, cb),
-          done
+          done,
         )
-      }
+      },
     )
 
     step(
@@ -1677,7 +1677,7 @@ describe('functional tests', function () {
           .on('data', (data) => {
             listPrefixArray.push(data.name)
           })
-      }
+      },
     )
 
     step('listObjects(bucketName, prefix, recursive)_recursive:true_', (done) => {
@@ -1726,7 +1726,7 @@ describe('functional tests', function () {
           .on('data', (data) => {
             listArray.push(data.name)
           })
-      }
+      },
     )
 
     step(
@@ -1745,14 +1745,14 @@ describe('functional tests', function () {
           .on('data', (data) => {
             listArray.push(data.name)
           })
-      }
+      },
     )
 
     step(
       `removeObject(bucketName, objectName, callback)_bucketName:${bucketName}_Remove ${listObjectsNum} objects`,
       (done) => {
         async.mapLimit(listArray, 20, (objectName, cb) => client.removeObject(bucketName, objectName, cb), done)
-      }
+      },
     )
   })
 
@@ -1771,9 +1771,9 @@ describe('functional tests', function () {
           objArray,
           20,
           (objectName, cb) => client.putObject(bucketName, objectName, readableStream(_1byte), _1byte.length, '', cb),
-          done
+          done,
         )
-      }
+      },
     )
 
     step(`listObjects(bucketName, prefix, recursive)_bucketName:${bucketName}, recursive:false_`, (done) => {
@@ -1855,7 +1855,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
       step(
         `listenBucketNotification(bucketName, prefix, suffix, events)_bucketName:${bucketName}, events: s3:ObjectCreated:*_`,
@@ -1902,7 +1902,7 @@ describe('functional tests', function () {
               }, 10 * 1000)
             })
           }, 10 * 1000)
-        }
+        },
       )
 
       // This test is very similar to that above, except it does not include
@@ -1930,7 +1930,7 @@ describe('functional tests', function () {
               client.removeObject(bucketName, objectName, done)
             }, 11 * 1000)
           })
-        }
+        },
       )
     })
   })
@@ -2017,7 +2017,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2027,7 +2027,7 @@ describe('functional tests', function () {
             .putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -2037,7 +2037,7 @@ describe('functional tests', function () {
             versionId = res.versionId
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2046,7 +2046,7 @@ describe('functional tests', function () {
           client.removeObject(versionedBucketName, versioned_100kbObjectName, { versionId: versionId }, () => {
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2061,7 +2061,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
     })
   })
@@ -2091,7 +2091,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2106,7 +2106,7 @@ describe('functional tests', function () {
               done()
             })
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -2124,12 +2124,12 @@ describe('functional tests', function () {
                 } else {
                   done(new Error('versionId not found in getObject response'))
                 }
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -2144,12 +2144,12 @@ describe('functional tests', function () {
               { versionId: versionId },
               function () {
                 done()
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -2169,12 +2169,12 @@ describe('functional tests', function () {
                 } else {
                   done(new Error('versionId not found in getPartialObject response'))
                 }
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -2190,7 +2190,7 @@ describe('functional tests', function () {
               done()
             })
           }
-        }
+        },
       )
 
       step(
@@ -2205,7 +2205,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
     })
   })
@@ -2234,7 +2234,7 @@ describe('functional tests', function () {
           isVersioningSupported = true
           done()
         })
-      })
+      }),
     )
     after((done) => client.removeBucket(versionedBucketName, done))
 
@@ -2256,13 +2256,13 @@ describe('functional tests', function () {
                   done()
                 }
                 count += 1
-              }
+              },
             )
           })
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2284,7 +2284,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2307,7 +2307,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2326,7 +2326,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
   })
 
@@ -2357,7 +2357,7 @@ describe('functional tests', function () {
             isVersioningSupported = true
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2371,7 +2371,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
       // Put two versions of the same object.
       step(
@@ -2386,7 +2386,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -2409,7 +2409,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -2429,7 +2429,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
     })
   })
@@ -2497,7 +2497,7 @@ describe('functional tests', function () {
             .putObject(tagsBucketName, tagObjName, tagObject)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
 
       step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
@@ -2570,7 +2570,7 @@ describe('functional tests', function () {
             isVersioningSupported = true
             done()
           })
-        }
+        },
       )
 
       step(
@@ -2589,7 +2589,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(`Set tags on an object_bucketName:${tagsVersionedBucketName}, objectName:${tagObjName},`, (done) => {
@@ -2604,7 +2604,7 @@ describe('functional tests', function () {
                 return done(err)
               }
               done()
-            }
+            },
           )
         } else {
           done()
@@ -2742,7 +2742,7 @@ describe('functional tests', function () {
           isVersioningSupported = true
           done()
         })
-      })
+      }),
     )
     after((done) => client.removeBucket(versionedBucketName, done))
 
@@ -2788,7 +2788,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2833,7 +2833,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2854,14 +2854,14 @@ describe('functional tests', function () {
               done()
             } else {
               return done(
-                new Error(`Version count does not match for versioned presigned url test. ${expectedVersionsCount}`)
+                new Error(`Version count does not match for versioned presigned url test. ${expectedVersionsCount}`),
               )
             }
           })
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -2911,12 +2911,12 @@ describe('functional tests', function () {
                 return done()
               })
               request.end()
-            }
+            },
           )
         } else {
           done()
         }
-      }
+      },
     )
 
     step(`removeObjects(bucketName, objectsList)_bucketName:${versionedBucketName}`, (done) => {
@@ -3014,7 +3014,7 @@ describe('functional tests', function () {
                 return done(err)
               }
               done()
-            }
+            },
           )
         } else {
           done()
@@ -3120,7 +3120,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3134,7 +3134,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3159,7 +3159,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3172,7 +3172,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3185,12 +3185,12 @@ describe('functional tests', function () {
               { versionId: versionId, governanceBypass: true },
               () => {
                 done()
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(`removeBucket(bucketName, )_bucketName:${objRetentionBucket}`, (done) => {
@@ -3264,7 +3264,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -3282,7 +3282,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -3300,7 +3300,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(`Remove object on a bucket:_bucketName:${encBucketName}, _objectName:${encObjName}`, (done) => {
@@ -3388,7 +3388,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3402,7 +3402,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3415,7 +3415,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3428,12 +3428,12 @@ describe('functional tests', function () {
               { status: 'ON', versionId: versionId },
               () => {
                 done()
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3446,7 +3446,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3459,12 +3459,12 @@ describe('functional tests', function () {
               { status: 'OFF', versionId: versionId },
               () => {
                 done()
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3477,7 +3477,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -3490,12 +3490,12 @@ describe('functional tests', function () {
               { versionId: versionId, governanceBypass: true },
               () => {
                 done()
-              }
+              },
             )
           } else {
             done()
           }
-        }
+        },
       )
 
       step(`removeBucket(bucketName, )_bucketName:${objLegalHoldBucketName}`, (done) => {
@@ -3536,7 +3536,7 @@ describe('functional tests', function () {
               done()
             })
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -3557,7 +3557,7 @@ describe('functional tests', function () {
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
 
       step(
@@ -3579,7 +3579,7 @@ describe('functional tests', function () {
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
       step(
         `extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketNameForSpCharObjects}, prefix:"", true`,
@@ -3600,7 +3600,7 @@ describe('functional tests', function () {
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
 
       step(
@@ -3613,7 +3613,7 @@ describe('functional tests', function () {
               stream.on('end', done)
             })
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -3625,7 +3625,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
 
       step(
@@ -3635,7 +3635,7 @@ describe('functional tests', function () {
             .removeObject(bucketNameForSpCharObjects, objectNameSpecialChars)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
     })
   })
@@ -3665,7 +3665,7 @@ describe('functional tests', function () {
               done()
             })
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -3681,14 +3681,16 @@ describe('functional tests', function () {
               done()
             } else {
               return done(
-                new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`)
+                new Error(
+                  `Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`,
+                ),
               )
             }
           })
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
 
       step(
@@ -3704,14 +3706,16 @@ describe('functional tests', function () {
               done()
             } else {
               return done(
-                new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`)
+                new Error(
+                  `Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`,
+                ),
               )
             }
           })
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
 
       step(
@@ -3727,14 +3731,16 @@ describe('functional tests', function () {
               done()
             } else {
               return done(
-                new Error(`Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`)
+                new Error(
+                  `Expected object Name: ${objectNameWithPrefixForSpecialChars}: received:${listedObject.name}`,
+                ),
               )
             }
           })
           listStream.on('error', function (e) {
             done(e)
           })
-        }
+        },
       )
 
       step(
@@ -3747,7 +3753,7 @@ describe('functional tests', function () {
               stream.on('end', done)
             })
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -3759,7 +3765,7 @@ describe('functional tests', function () {
             }
             done()
           })
-        }
+        },
       )
 
       step(
@@ -3769,7 +3775,7 @@ describe('functional tests', function () {
             .removeObject(bucketNameForSpCharObjects, objectNameWithPrefixForSpecialChars)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
     })
   })
@@ -3810,7 +3816,7 @@ describe('functional tests', function () {
                   done()
                 })
                 .catch(done)
-            }
+            },
           )
 
           step(`Remove an Object with assume role credentials:${bucketName}, _objectName:${objName}`, (done) => {
@@ -3850,13 +3856,13 @@ describe('functional tests', function () {
             done(
               new Error(
                 `Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(
-                  res
-                )}`
-              )
+                  res,
+                )}`,
+              ),
             )
           }
         })
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`,
@@ -3865,7 +3871,7 @@ describe('functional tests', function () {
           .removeObject(bucketToTestMultipart, _100kbObjectName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
 
     // Multipart Test
@@ -3883,13 +3889,13 @@ describe('functional tests', function () {
             done(
               new Error(
                 `Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(
-                  res
-                )}`
-              )
+                  res,
+                )}`,
+              ),
             )
           }
         })
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`,
@@ -3898,7 +3904,7 @@ describe('functional tests', function () {
           .removeObject(bucketToTestMultipart, _65mbObjectName)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
   })
 
@@ -3920,7 +3926,7 @@ describe('functional tests', function () {
           isVersioningSupported = true
           done()
         })
-      })
+      }),
     )
     after((done) => client.removeBucket(bucketToTestMultipart, done))
 
@@ -3941,16 +3947,16 @@ describe('functional tests', function () {
               done(
                 new Error(
                   `Incorrect response format, expected: {versionId:'some-version-hash', etag:"some-etag-hash"} received:${JSON.stringify(
-                    res
-                  )}`
-                )
+                    res,
+                  )}`,
+                ),
               )
             }
           })
         } else {
           done()
         }
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`,
@@ -3963,7 +3969,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     // Multipart Test
@@ -3983,16 +3989,16 @@ describe('functional tests', function () {
               done(
                 new Error(
                   `Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(
-                    res
-                  )}`
-                )
+                    res,
+                  )}`,
+                ),
               )
             }
           })
         } else {
           done()
         }
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`,
@@ -4005,7 +4011,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
   })
   describe('Compose Object API Tests', () => {
@@ -4093,7 +4099,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -4109,7 +4115,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -4128,7 +4134,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step(
@@ -4144,7 +4150,7 @@ describe('functional tests', function () {
         } else {
           done()
         }
-      }
+      },
     )
 
     step('Clean up temp directory part files', (done) => {
@@ -4181,7 +4187,7 @@ describe('functional tests', function () {
             done()
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -4202,7 +4208,7 @@ describe('functional tests', function () {
         listStream.on('error', function (e) {
           done(e)
         })
-      }
+      },
     )
 
     step(
@@ -4225,7 +4231,7 @@ describe('functional tests', function () {
         listStream.on('error', function (e) {
           done(e)
         })
-      }
+      },
     )
 
     step(
@@ -4247,7 +4253,7 @@ describe('functional tests', function () {
         listStream.on('error', function (e) {
           done(e)
         })
-      }
+      },
     )
 
     step(
@@ -4260,7 +4266,7 @@ describe('functional tests', function () {
             stream.on('end', done)
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -4272,7 +4278,7 @@ describe('functional tests', function () {
           }
           done()
         })
-      }
+      },
     )
     step(
       `removeObject(bucketName, objectName)_bucketName:${objectNameWithPrefix}, _objectName:${objectNameWithPrefix}`,
@@ -4281,7 +4287,7 @@ describe('functional tests', function () {
           .removeObject(bucketNameForSpCharObjects, objectNameWithPrefix)
           .then(() => done())
           .catch(done)
-      }
+      },
     )
   })
   describe('Test listIncompleteUploads (Multipart listing) with special characters', () => {
@@ -4297,7 +4303,7 @@ describe('functional tests', function () {
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`,
       (done) => {
         client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData, done)
-      }
+      },
     )
 
     step(
@@ -4325,7 +4331,7 @@ describe('functional tests', function () {
             }
             done(new Error(`${spObjWithPrefix} not found during listIncompleteUploads`))
           })
-      }
+      },
     )
 
     step(
@@ -4354,13 +4360,13 @@ describe('functional tests', function () {
             }
             done(new Error(`${specialCharPrefix} not found during listIncompleteUploads`))
           })
-      }
+      },
     )
     step(
       `removeIncompleteUploads(bucketName, prefix)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}_`,
       (done) => {
         client.removeIncompleteUpload(spBucketName, spObjWithPrefix).then(done).catch(done)
-      }
+      },
     )
   })
   describe('Select Object content API Test', function () {
@@ -4386,13 +4392,13 @@ describe('functional tests', function () {
               'Sean,(949) 123-45567,Chicago,Developer\n' +
               'Mary,(949) 123-45567,Chicago,Developer\n' +
               'Kate,(949) 123-45567,Chicago,Developer',
-            {}
+            {},
           )
           .then(() => {
             done()
           })
           .catch(done)
-      }
+      },
     )
 
     step(
@@ -4421,13 +4427,13 @@ describe('functional tests', function () {
                 new Error(
                   `Expected Result did not match received:${result
                     .getRecords()
-                    .toString()} expected:"Jane,(949) 123-45567,Chicago,Developer\n"`
-                )
+                    .toString()} expected:"Jane,(949) 123-45567,Chicago,Developer\n"`,
+                ),
               )
             }
           })
           .catch(done)
-      }
+      },
     )
 
     step(`Remove Object post select of content:_bucketName:${selObjContentBucket},objectName:${selObject}`, (done) => {
@@ -4463,7 +4469,7 @@ describe('functional tests', function () {
             isVersioningSupported = true
             done()
           })
-        }
+        },
       )
 
       step(
@@ -4477,7 +4483,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
       // Put two versions of the same object.
       step(
@@ -4491,7 +4497,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -4504,7 +4510,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -4526,7 +4532,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
     })
   })
@@ -4556,7 +4562,7 @@ describe('functional tests', function () {
             isVersioningSupported = true
             done()
           })
-        }
+        },
       )
 
       step(
@@ -4570,7 +4576,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
       // Put two versions of the same object.
       step(
@@ -4584,7 +4590,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -4597,7 +4603,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
 
       step(
@@ -4619,7 +4625,7 @@ describe('functional tests', function () {
           } else {
             done()
           }
-        }
+        },
       )
     })
   })
@@ -4643,7 +4649,7 @@ describe('functional tests', function () {
             .putObject(versionedBucketName, versioned_100kbObjectName, versioned_100kb_Object)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
 
       step(
@@ -4652,7 +4658,7 @@ describe('functional tests', function () {
           client.removeObject(versionedBucketName, versioned_100kbObjectName, { forceDelete: true }, () => {
             done()
           })
-        }
+        },
       )
 
       step(
@@ -4671,7 +4677,7 @@ describe('functional tests', function () {
             .on('data', (data) => {
               objVersionList.push(data)
             })
-        }
+        },
       )
     })
   })
@@ -4693,7 +4699,7 @@ describe('functional tests', function () {
             .putObject(fdPrefixBucket, fdObjectName, fdObject)
             .then(() => done())
             .catch(done)
-        }
+        },
       )
 
       step(`removeObject(bucketName, objectList, removeOpts)_bucketName:${fdPrefixBucket}_Remove 1 object`, (done) => {
@@ -4718,7 +4724,7 @@ describe('functional tests', function () {
             .on('data', (data) => {
               objList.push(data)
             })
-        }
+        },
       )
     })
   })

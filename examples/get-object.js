@@ -61,5 +61,5 @@ s3Client.getObject(
     dataStream.on('error', function (err) {
       console.log(err)
     })
-  }
+  },
 )

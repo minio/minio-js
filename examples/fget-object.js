@@ -44,5 +44,5 @@ s3Client.fGetObject(
       return console.log(e)
     }
     console.log('success')
-  }
+  },
 )

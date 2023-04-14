@@ -38,7 +38,7 @@ const compileJS = (src, dest) => {
             },
           ],
         ],
-      })
+      }),
     )
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(dest))
@@ -71,7 +71,7 @@ exports.test = gulp.series(testCompile, () => {
         exit: true,
         reporter: 'spec',
         ui: 'bdd',
-      })
+      }),
     )
 })
 
@@ -102,7 +102,7 @@ exports.functionalTest = gulp.series(testCompile, () => {
         exit: true,
         reporter: 'spec',
         ui: 'bdd',
-      })
+      }),
     )
 })
 

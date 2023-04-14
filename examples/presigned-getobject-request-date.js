@@ -46,5 +46,5 @@ s3Client.presignedGetObject(
   function (e, presignedUrl) {
     if (e) return console.log(e)
     console.log(presignedUrl)
-  }
+  },
 )

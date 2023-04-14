@@ -561,7 +561,7 @@ export class CopySourceOptions {
       throw new errors.InvalidObjectNameError('Source start must be non-negative, and start must be at most end.')
     } else if ((this.MatchRange && !isNumber(this.Start)) || !isNumber(this.End)) {
       throw new errors.InvalidObjectNameError(
-        'MatchRange is specified. But  Invalid Start and End values are specified. '
+        'MatchRange is specified. But  Invalid Start and End values are specified. ',
       )
     }
 
@@ -679,7 +679,7 @@ export class CopyDestinationOptions {
 
     if (!_.isEmpty(this.Mode) && ![RETENTION_MODES.GOVERNANCE, RETENTION_MODES.COMPLIANCE].includes(this.Mode)) {
       throw new errors.InvalidObjectNameError(
-        `Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]`
+        `Invalid Mode specified for destination object it should be one of [GOVERNANCE,COMPLIANCE]`,
       )
     }
 

@@ -40,5 +40,5 @@ s3Client.copyObject(
     }
     console.log('Successfully copied the object:')
     console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
-  }
+  },
 )

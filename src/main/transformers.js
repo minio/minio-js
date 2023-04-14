@@ -60,7 +60,7 @@ export function getConcater(parser, emitError) {
         }
       }
       cb()
-    }
+    },
   )
 }
 
@@ -151,7 +151,7 @@ export function getHashSummer(enableSHA256) {
       this.push(hashData)
       this.push(null)
       cb()
-    }
+    },
   )
 }
 

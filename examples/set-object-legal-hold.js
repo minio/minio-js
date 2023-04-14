@@ -43,5 +43,5 @@ s3Client.setObjectLegalHold(
       return console.log('Unable to set legal hold config for the object version', err)
     }
     console.log('Success')
-  }
+  },
 )

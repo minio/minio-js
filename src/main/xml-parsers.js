@@ -608,7 +608,7 @@ export function parseSelectObjectContentResponse(res) {
     if (preludeCrcByteValue !== calculatedPreludeCrc) {
       // Handle Header CRC mismatch Error
       throw new Error(
-        `Header Checksum Mismatch, Prelude CRC of ${preludeCrcByteValue} does not equal expected CRC of ${calculatedPreludeCrc}`
+        `Header Checksum Mismatch, Prelude CRC of ${preludeCrcByteValue} does not equal expected CRC of ${calculatedPreludeCrc}`,
       )
     }
 
@@ -635,7 +635,7 @@ export function parseSelectObjectContentResponse(res) {
       // Handle message CRC Error
       if (messageCrcByteValue !== calculatedCrc) {
         throw new Error(
-          `Message Checksum Mismatch, Message CRC of ${messageCrcByteValue} does not equal expected CRC of ${calculatedCrc}`
+          `Message Checksum Mismatch, Message CRC of ${messageCrcByteValue} does not equal expected CRC of ${calculatedCrc}`,
         )
       }
       payloadStream = readableStream(payLoadBuffer)

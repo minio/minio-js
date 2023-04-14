@@ -453,7 +453,7 @@ describe('Client', function () {
       client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
-        client.userAgent
+        client.userAgent,
       )
     })
     it('should set user agent without comments', () => {
@@ -465,7 +465,7 @@ describe('Client', function () {
       client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
-        client.userAgent
+        client.userAgent,
       )
     })
     it('should not set user agent without name', (done) => {
@@ -640,7 +640,7 @@ describe('Client', function () {
           client.removeAllBucketNotification(
             'ab',
             () => {},
-            function () {}
+            function () {},
           )
         }, /Invalid bucket name/)
       })
@@ -1156,7 +1156,7 @@ describe('Client', function () {
           client.setObjectLockConfig(
             'my-bucket',
             { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
-            function () {}
+            function () {},
           )
         } catch (e) {
           done()
@@ -1167,7 +1167,7 @@ describe('Client', function () {
           client.setObjectLockConfig(
             'my-bucket',
             { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
-            function () {}
+            function () {},
           )
         } catch (e) {
           done()
@@ -1304,7 +1304,7 @@ describe('Client', function () {
                 },
               ],
             },
-            function () {}
+            function () {},
           )
         } catch (e) {
           done()
