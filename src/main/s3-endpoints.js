@@ -33,6 +33,7 @@ let awsS3Endpoint = {
   'ap-northeast-1': 's3-ap-northeast-1.amazonaws.com',
   'cn-north-1': 's3.cn-north-1.amazonaws.com.cn',
   'ap-east-1': 's3.ap-east-1.amazonaws.com',
+  'eu-north-1': 's3.eu-north-1.amazonaws.com',
   // Add new endpoints here.
 }
 
