@@ -22,6 +22,7 @@ class AssumeRoleProvider extends CredentialProvider {
     token,
     webIdentityToken,
     action = 'AssumeRole',
+    transportAgent = undefined,
   }) {
     super({})
 
@@ -38,6 +39,10 @@ class AssumeRoleProvider extends CredentialProvider {
     this.webIdentityToken = webIdentityToken
     this.action = action
     this.sessionToken = sessionToken
+    // By default, nodejs uses a global agent if the 'agent' property
+    // is set to undefined. Otherwise, it's okay to assume the users
+    // know what they're doing if they specify a custom transport agent.
+    this.transportAgent = transportAgent
 
     /**
      * Internal Tracking variables
@@ -108,6 +113,7 @@ class AssumeRoleProvider extends CredentialProvider {
         'x-amz-date': makeDateLong(date),
         'x-amz-content-sha256': contentSha256,
       },
+      agent: this.transportAgent,
     }
 
     const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')

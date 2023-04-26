@@ -117,6 +117,7 @@ export class Client {
     var port = params.port
     var protocol = ''
     var transport
+    var transportAgent
     // Validate if configuration is not using SSL
     // for constructing relevant endpoints.
     if (params.useSSL === false) {
@@ -125,6 +126,7 @@ export class Client {
       if (port === 0) {
         port = 80
       }
+      transportAgent = Http.globalAgent
     } else {
       // Defaults to secure.
       transport = Https
@@ -132,6 +134,7 @@ export class Client {
       if (port === 0) {
         port = 443
       }
+      transportAgent = Https.globalAgent
     }
 
     // if custom transport is set, use it.
@@ -144,6 +147,17 @@ export class Client {
       transport = params.transport
     }
 
+    // if custom transport agent is set, use it.
+    if (params.transportAgent) {
+      if (!isObject(params.transportAgent)) {
+        throw new errors.InvalidArgumentError(
+          `Invalid transportAgent type: ${params.transportAgent}, expected to be type "object"`,
+        )
+      }
+
+      transportAgent = params.transportAgent
+    }
+
     // User Agent should always following the below style.
     // Please open an issue to discuss any new changes here.
     //
@@ -154,6 +168,7 @@ export class Client {
     // User agent block ends.
 
     this.transport = transport
+    this.transportAgent = transportAgent
     this.host = host
     this.port = port
     this.protocol = protocol
@@ -272,6 +287,9 @@ export class Client {
 
     var reqOptions = { method }
     reqOptions.headers = {}
+
+    // If custom transportAgent was supplied earlier, we'll inject it here
+    reqOptions.agent = this.transportAgent
 
     // Verify if virtual host supported.
     var virtualHostStyle
@@ -1348,7 +1366,7 @@ export class Client {
     // to the specified bucket and object automatically.
     let uploader = new ObjectUploader(this, bucketName, objectName, size, metaData, callback)
     // stream => chunker => uploader
-    stream.pipe(chunker).pipe(uploader)
+    pipesetup(stream, chunker, uploader)
   }
 
   // Copy the object.
@@ -1910,10 +1928,11 @@ export class Client {
     }
 
     const encoder = new TextEncoder()
+    const batchResults = []
 
     async.eachSeries(
       result.listOfList,
-      (list) => {
+      (list, batchCb) => {
         var objects = []
         list.forEach(function (value) {
           if (isObject(value)) {
@@ -1930,22 +1949,27 @@ export class Client {
 
         headers['Content-MD5'] = toMd5(payload)
 
+        let removeObjectsResult
         this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', true, (e, response) => {
           if (e) {
-            return cb(e)
+            return batchCb(e)
           }
-          let removeObjectsResult
           pipesetup(response, transformers.removeObjectsTransformer())
             .on('data', (data) => {
               removeObjectsResult = data
             })
-            .on('error', cb)
+            .on('error', (e) => {
+              return batchCb(e, null)
+            })
             .on('end', () => {
-              cb(null, removeObjectsResult)
+              batchResults.push(removeObjectsResult)
+              return batchCb(null, removeObjectsResult)
             })
         })
       },
-      cb,
+      () => {
+        cb(null, _.flatten(batchResults))
+      },
     )
   }
 
