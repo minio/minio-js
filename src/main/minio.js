@@ -1737,6 +1737,7 @@ export class Client {
     const query = 'delete'
     const method = 'POST'
 
+
     let result = objectsList.reduce((result, entry) => {
       result.list.push(entry)
       if (result.list.length === maxEntries) {
@@ -1751,8 +1752,9 @@ export class Client {
     }
 
     const encoder = new TextEncoder()
+    const batchResults = []
 
-    async.eachSeries(result.listOfList, (list) => {
+    async.eachSeries(result.listOfList, (list, batchCb) => {
       var objects=[]
       list.forEach(function(value){
         if (isObject(value)) {
@@ -1769,19 +1771,25 @@ export class Client {
 
       headers['Content-MD5'] = toMd5(payload)
 
+      let removeObjectsResult
       this.makeRequest({ method, bucketName, query, headers}, payload, [200], '', true, (e, response) => {
-        if (e) return cb(e)
-        let removeObjectsResult
+        if (e) return batchCb(e)
         pipesetup(response, transformers.removeObjectsTransformer())
           .on('data', data => {
             removeObjectsResult = data
           })
-          .on('error', cb)
+          .on('error', (e)=>{
+            return batchCb(e, null)
+          })
           .on('end', () => {
-            cb(null, removeObjectsResult)
+            batchResults.push(removeObjectsResult)
+            return  batchCb(null, removeObjectsResult)
           })
       })
-    }, cb)
+    }, ()=> {
+      cb(null, _.flatten(batchResults))
+    }
+    )
   }
 
 
