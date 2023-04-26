@@ -1227,7 +1227,7 @@ export class Client {
     // to the specified bucket and object automatically.
     let uploader = new ObjectUploader(this, bucketName, objectName, size, metaData, callback)
     // stream => chunker => uploader
-    stream.pipe(chunker).pipe(uploader)
+    pipesetup(stream, chunker, uploader)
   }
 
   // Copy the object.
