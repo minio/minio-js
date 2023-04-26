@@ -1159,6 +1159,7 @@ export class Client {
         (cb) => fs.stat(filePath, cb),
         (stats, cb) => {
           size = stats.size
+          var stream
           var cbTriggered = false
           var origCb = cb
           cb = function () {
@@ -1166,6 +1167,9 @@ export class Client {
               return
             }
             cbTriggered = true
+            if (stream) {
+              stream.destroy()
+            }
             return origCb.apply(this, arguments)
           }
           if (size > this.maxObjectSize) {
@@ -1187,7 +1191,7 @@ export class Client {
               .on('data', (data) => {
                 var md5sum = data.md5sum
                 var sha256sum = data.sha256sum
-                var stream = fs.createReadStream(filePath, options)
+                stream = fs.createReadStream(filePath, options)
                 uploader(stream, size, sha256sum, md5sum, (err, objInfo) => {
                   callback(err, objInfo)
                   cb(true)
@@ -1226,6 +1230,7 @@ export class Client {
               cb(null, uploadedSize < size)
             },
             (cb) => {
+              var stream
               var cbTriggered = false
               var origCb = cb
               cb = function () {
@@ -1233,6 +1238,9 @@ export class Client {
                   return
                 }
                 cbTriggered = true
+                if (stream) {
+                  stream.destroy()
+                }
                 return origCb.apply(this, arguments)
               }
               var part = parts[partNumber]
@@ -1257,7 +1265,7 @@ export class Client {
                     return cb()
                   }
                   // part is not uploaded yet, or md5 mismatch
-                  var stream = fs.createReadStream(filePath, options)
+                  stream = fs.createReadStream(filePath, options)
                   uploader(uploadId, partNumber, stream, length, data.sha256sum, data.md5sum, (e, objInfo) => {
                     if (e) {
                       return cb(e)
