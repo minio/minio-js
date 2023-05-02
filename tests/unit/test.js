@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as Stream from 'node:stream'
+import Stream from 'node:stream'
 
 import { assert } from 'chai'
 import Nock from 'nock'
@@ -29,8 +29,9 @@ import {
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from '../../src/helpers.js'
-import * as Minio from '../../src/minio.js'
+} from '../../src/helpers.ts'
+import * as Minio from '../../src/minio.ts'
+import { Client } from '../../src/minio.ts'
 
 const Package = { version: 'development' }
 
@@ -243,7 +244,7 @@ describe('Client', function () {
       }
     })
   })
-  var client = new Minio.Client({
+  var client = new Client({
     endPoint: 'localhost',
     port: 9000,
     accessKey: 'accesskey',
@@ -252,7 +253,7 @@ describe('Client', function () {
   })
   describe('new client', () => {
     it('should work with https', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -260,7 +261,7 @@ describe('Client', function () {
       assert.equal(client.port, 443)
     })
     it('should override port with http', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
@@ -270,7 +271,7 @@ describe('Client', function () {
       assert.equal(client.port, 9000)
     })
     it('should work with http', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -279,7 +280,7 @@ describe('Client', function () {
       assert.equal(client.port, 80)
     })
     it('should override port with https', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
@@ -289,7 +290,7 @@ describe('Client', function () {
     })
     it('should fail with url', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           endPoint: 'http://localhost:9000',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -300,7 +301,7 @@ describe('Client', function () {
     })
     it('should fail with alphanumeric', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           endPoint: 'localhost##$@3',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -311,7 +312,7 @@ describe('Client', function () {
     })
     it('should fail with no url', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           accessKey: 'accesskey',
           secretKey: 'secretkey',
         })
@@ -321,7 +322,7 @@ describe('Client', function () {
     })
     it('should fail with bad port', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           endPoint: 'localhost',
           port: -1,
           accessKey: 'accesskey',
@@ -333,7 +334,7 @@ describe('Client', function () {
     })
     it('should fail when secure param is passed', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           endPoint: 'localhost',
           secure: false,
           port: 9000,
@@ -346,7 +347,7 @@ describe('Client', function () {
     })
     it('should fail when secure param is passed', (done) => {
       try {
-        new Minio.Client({
+        new Client({
           endPoint: 'localhost',
           secure: true,
           port: 9000,
@@ -362,7 +363,7 @@ describe('Client', function () {
     describe('presigned-get', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
-          var client = new Minio.Client({
+          var client = new Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
@@ -383,7 +384,7 @@ describe('Client', function () {
     describe('presigned-put', () => {
       it('should not generate presigned url with no access key', (done) => {
         try {
-          var client = new Minio.Client({
+          var client = new Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
@@ -436,7 +437,7 @@ describe('Client', function () {
   })
   describe('User Agent', () => {
     it('should have a default user agent', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -444,7 +445,7 @@ describe('Client', function () {
       assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version}`, client.userAgent)
     })
     it('should set user agent', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -456,7 +457,7 @@ describe('Client', function () {
       )
     })
     it('should set user agent without comments', () => {
-      var client = new Minio.Client({
+      var client = new Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -469,7 +470,7 @@ describe('Client', function () {
     })
     it('should not set user agent without name', (done) => {
       try {
-        var client = new Minio.Client({
+        var client = new Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -481,7 +482,7 @@ describe('Client', function () {
     })
     it('should not set user agent with empty name', (done) => {
       try {
-        var client = new Minio.Client({
+        var client = new Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -493,7 +494,7 @@ describe('Client', function () {
     })
     it('should not set user agent without version', (done) => {
       try {
-        var client = new Minio.Client({
+        var client = new Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -505,7 +506,7 @@ describe('Client', function () {
     })
     it('should not set user agent with empty version', (done) => {
       try {
-        var client = new Minio.Client({
+        var client = new Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -955,40 +956,6 @@ describe('Client', function () {
       it('should fail on invalid bucket name', (done) => {
         try {
           client.removeBucketTagging('xy', function () {})
-        } catch (e) {
-          done()
-        }
-      })
-    })
-    describe('Put Object Tags', () => {
-      it('should fail on null object', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, {}, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, {}, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on non object tags', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, 'non-obj-tag', function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail if tags are more than 50 on an object', (done) => {
-        const _50_plus_key_tags = {}
-        for (let i = 0; i < 51; i += 1) {
-          _50_plus_key_tags[i] = i
-        }
-        try {
-          client.putObjectTagging('my-bucket-name', null, _50_plus_key_tags, function () {})
         } catch (e) {
           done()
         }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isString } from './helpers.js'
+import { isString } from './helpers.ts'
 
 // List of currently supported endpoints.
 const awsS3Endpoint = {
@@ -35,16 +35,20 @@ const awsS3Endpoint = {
   'ap-east-1': 's3.ap-east-1.amazonaws.com',
   'eu-north-1': 's3.eu-north-1.amazonaws.com',
   // Add new endpoints here.
-}
+} as const
+
+export type Region = keyof typeof awsS3Endpoint | string
 
 // getS3Endpoint get relevant endpoint for the region.
-export function getS3Endpoint(region) {
+export function getS3Endpoint(region: string): string {
   if (!isString(region)) {
     throw new TypeError(`Invalid region: ${region}`)
   }
-  var endpoint = awsS3Endpoint[region]
+
+  const endpoint = (awsS3Endpoint as Record<string, string>)[region]
   if (endpoint) {
     return endpoint
   }
+
   return 's3.amazonaws.com'
 }

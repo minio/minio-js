@@ -1,13 +1,53 @@
-import * as Http from 'node:http'
-import * as Https from 'node:https'
+import type http from 'node:http'
 import { URL, URLSearchParams } from 'node:url'
 
-import { CredentialProvider } from './CredentialProvider.js'
-import { Credentials } from './Credentials.js'
-import { makeDateLong, parseXml, toSha256 } from './helpers.js'
-import { signV4ByServiceName } from './signing.js'
+import { CredentialProvider } from './CredentialProvider.ts'
+import { Credentials } from './Credentials.ts'
+import { makeDateLong, parseXml, toSha256 } from './helpers.ts'
+import { request } from './request.ts'
+import { readAsString } from './response.ts'
+import { signV4ByServiceName } from './signing.ts'
+
+type CredentialResponse = {
+  ErrorResponse?: {
+    Error?: {
+      Code?: string
+      Message?: string
+    }
+  }
+
+  AssumeRoleResponse?: {
+    AssumeRoleResult?: {
+      Credentials?: {
+        AccessKeyId: string | undefined
+        SecretAccessKey: string | undefined
+        SessionToken: string | undefined
+        Expiration: string | undefined
+      }
+    }
+  }
+}
 
 export class AssumeRoleProvider extends CredentialProvider {
+  private stsEndpoint: string
+  private accessKey: string
+  private secretKey: string
+  private durationSeconds: number
+  private sessionToken: string
+  private policy: string
+  private region: string
+  private roleArn: string
+  private roleSessionName: string
+  private externalId: string
+  private token: string
+  private webIdentityToken: string
+  private action: string
+
+  private _credentials: Credentials | null
+  private expirySeconds: number | null
+  private accessExpiresAt: string | null
+  private transportAgent?: http.Agent
+
   constructor({
     stsEndpoint,
     accessKey,
@@ -23,6 +63,21 @@ export class AssumeRoleProvider extends CredentialProvider {
     webIdentityToken,
     action = 'AssumeRole',
     transportAgent = undefined,
+  }: {
+    stsEndpoint: string
+    accessKey: string
+    secretKey: string
+    durationSeconds: number
+    sessionToken: string
+    policy: string
+    region?: string
+    roleArn: string
+    roleSessionName: string
+    externalId: string
+    token: string
+    webIdentityToken: string
+    action?: string
+    transportAgent?: http.Agent
   }) {
     super({})
 
@@ -39,6 +94,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     this.webIdentityToken = webIdentityToken
     this.action = action
     this.sessionToken = sessionToken
+
     // By default, nodejs uses a global agent if the 'agent' property
     // is set to undefined. Otherwise, it's okay to assume the users
     // know what they're doing if they specify a custom transport agent.
@@ -47,12 +103,16 @@ export class AssumeRoleProvider extends CredentialProvider {
     /**
      * Internal Tracking variables
      */
-    this.credentials = null
+    this._credentials = null
     this.expirySeconds = null
     this.accessExpiresAt = null
   }
 
-  getRequestConfig() {
+  getRequestConfig(): {
+    isHttp: boolean
+    requestOptions: http.RequestOptions
+    requestData: string
+  } {
     const url = new URL(this.stsEndpoint)
     const hostValue = url.hostname
     const portValue = url.port
@@ -62,13 +122,13 @@ export class AssumeRoleProvider extends CredentialProvider {
     qryParams.set('Version', '2011-06-15')
 
     const defaultExpiry = 900
-    let expirySeconds = parseInt(this.durationSeconds)
+    let expirySeconds = parseInt(this.durationSeconds as unknown as string)
     if (expirySeconds < defaultExpiry) {
       expirySeconds = defaultExpiry
     }
     this.expirySeconds = expirySeconds // for calculating refresh of credentials.
 
-    qryParams.set('DurationSeconds', this.expirySeconds)
+    qryParams.set('DurationSeconds', this.expirySeconds.toString())
 
     if (this.policy) {
       qryParams.set('Policy', this.policy)
@@ -97,9 +157,6 @@ export class AssumeRoleProvider extends CredentialProvider {
 
     const date = new Date()
 
-    /**
-     * Nodejs's Request Configuration.
-     */
     const requestOptions = {
       hostname: hostValue,
       port: portValue,
@@ -108,16 +165,22 @@ export class AssumeRoleProvider extends CredentialProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'content-length': urlParams.length,
+        'content-length': urlParams.length.toString(),
         host: hostValue,
         'x-amz-date': makeDateLong(date),
         'x-amz-content-sha256': contentSha256,
-      },
+      } as Record<string, string>,
       agent: this.transportAgent,
-    }
+    } satisfies http.RequestOptions
 
-    const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')
-    requestOptions.headers.authorization = authorization
+    requestOptions.headers.authorization = signV4ByServiceName(
+      requestOptions,
+      this.accessKey,
+      this.secretKey,
+      this.region,
+      date,
+      'sts',
+    )
 
     return {
       requestOptions,
@@ -126,50 +189,36 @@ export class AssumeRoleProvider extends CredentialProvider {
     }
   }
 
-  async performRequest() {
+  async performRequest(): Promise<CredentialResponse> {
     const reqObj = this.getRequestConfig()
     const requestOptions = reqObj.requestOptions
     const requestData = reqObj.requestData
 
     const isHttp = reqObj.isHttp
-    const Transport = isHttp ? Http : Https
 
-    const promise = new Promise((resolve, reject) => {
-      const requestObj = Transport.request(requestOptions, (resp) => {
-        let resChunks = []
-        resp.on('data', (rChunk) => {
-          resChunks.push(rChunk)
-        })
-        resp.on('end', () => {
-          let body = Buffer.concat(resChunks).toString()
-          const xmlobj = parseXml(body)
-          resolve(xmlobj)
-        })
-        resp.on('error', (err) => {
-          reject(err)
-        })
-      })
-      requestObj.on('error', (e) => {
-        reject(e)
-      })
-      requestObj.write(requestData)
-      requestObj.end()
-    })
-    return promise
+    const res = await request(requestOptions, isHttp, requestData)
+
+    const body = await readAsString(res)
+
+    return parseXml(body)
   }
 
-  parseCredentials(respObj = {}) {
+  parseCredentials(respObj: CredentialResponse = {}) {
     if (respObj.ErrorResponse) {
-      throw new Error('Unable to obtain credentials:', respObj)
+      throw new Error(
+        `Unable to obtain credentials: ${respObj.ErrorResponse?.Error?.Code} ${respObj.ErrorResponse?.Error?.Message}`,
+        { cause: respObj },
+      )
     }
+
     const {
       AssumeRoleResponse: {
         AssumeRoleResult: {
           Credentials: {
-            AccessKeyId: accessKey,
-            SecretAccessKey: secretKey,
-            SessionToken: sessionToken,
-            Expiration: expiresAt,
+            AccessKeyId: accessKey = undefined,
+            SecretAccessKey: secretKey = undefined,
+            SessionToken: sessionToken = undefined,
+            Expiration: expiresAt = null,
           } = {},
         } = {},
       } = {},
@@ -184,38 +233,32 @@ export class AssumeRoleProvider extends CredentialProvider {
     })
 
     this.setCredentials(newCreds)
-    return this.credentials
+    return this._credentials
   }
 
-  async refreshCredentials() {
+  async refreshCredentials(): Promise<Credentials | null> {
     try {
       const assumeRoleCredentials = await this.performRequest()
-      this.credentials = this.parseCredentials(assumeRoleCredentials)
+      this._credentials = this.parseCredentials(assumeRoleCredentials)
     } catch (err) {
-      this.credentials = null
+      this._credentials = null
     }
-    return this.credentials
+    return this._credentials
   }
 
-  async getCredentials() {
-    let credConfig
-    if (!this.credentials || (this.credentials && this.isAboutToExpire())) {
+  async getCredentials(): Promise<Credentials | null> {
+    let credConfig: Credentials | null
+    if (!this._credentials || (this._credentials && this.isAboutToExpire())) {
       credConfig = await this.refreshCredentials()
     } else {
-      credConfig = this.credentials
+      credConfig = this._credentials
     }
     return credConfig
   }
 
   isAboutToExpire() {
-    const expiresAt = new Date(this.accessExpiresAt)
+    const expiresAt = new Date(this.accessExpiresAt!)
     const provisionalExpiry = new Date(Date.now() + 1000 * 10) // check before 10 seconds.
-    const isAboutToExpire = provisionalExpiry > expiresAt
-    return isAboutToExpire
+    return provisionalExpiry > expiresAt
   }
 }
-
-// deprecated default export, please use named exports.
-// keep for backward compatibility.
-// eslint-disable-next-line import/no-default-export
-export default AssumeRoleProvider

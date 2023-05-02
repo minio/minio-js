@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import * as Stream from 'node:stream'
+import * as stream from 'node:stream'
 
 import * as errors from './errors.ts'
-import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.js'
-import * as transformers from './transformers.js'
+import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.ts'
+import * as transformers from './transformers.ts'
+import type { TypedClient2 } from './typed-client2.ts'
+
+// TODO
+type S3Object = unknown
 
 export class extensions {
-  constructor(client) {
-    this.client = client
-  }
+  constructor(readonly client: TypedClient2) {}
 
   // List the objects in the bucket using S3 ListObjects V2 With Metadata
   //
@@ -42,7 +44,7 @@ export class extensions {
   //   * `obj.lastModified` _Date_: modified time stamp
   //   * `obj.metadata` _object_: metadata of the object
 
-  listObjectsV2WithMetadata(bucketName, prefix, recursive, startAfter) {
+  listObjectsV2WithMetadata(bucketName: string, prefix: string, recursive: boolean, startAfter: string) {
     if (prefix === undefined) {
       prefix = ''
     }
@@ -68,11 +70,11 @@ export class extensions {
       throw new TypeError('startAfter should be of type "string"')
     }
     // if recursive is false set delimiter to '/'
-    var delimiter = recursive ? '' : '/'
-    var continuationToken = ''
-    var objects = []
-    var ended = false
-    var readStream = Stream.Readable({ objectMode: true })
+    const delimiter = recursive ? '' : '/'
+    let continuationToken = ''
+    let objects: S3Object[] = []
+    let ended = false
+    const readStream = new stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
@@ -92,6 +94,7 @@ export class extensions {
             ended = true
           }
           objects = result.objects
+          // @ts-expect-error read more
           readStream._read()
         })
     }
@@ -109,7 +112,14 @@ export class extensions {
   // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
   // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
 
-  listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
+  private listObjectsV2WithMetadataQuery(
+    bucketName: string,
+    prefix: string,
+    continuationToken: string,
+    delimiter: string,
+    maxKeys: number,
+    startAfter: string,
+  ) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -128,7 +138,7 @@ export class extensions {
     if (!isString(startAfter)) {
       throw new TypeError('startAfter should be of type "string"')
     }
-    var queries = []
+    const queries = []
 
     // Call for listing objects v2 API
     queries.push(`list-type=2`)
@@ -155,23 +165,29 @@ export class extensions {
       queries.push(`max-keys=${maxKeys}`)
     }
     queries.sort()
-    var query = ''
+    let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
-    var method = 'GET'
-    var transformer = transformers.getListObjectsV2WithMetadataTransformer()
-    this.client.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return transformer.emit('error', e)
-      }
-      pipesetup(response, transformer)
-    })
+    const method = 'GET'
+    const transformer = transformers.getListObjectsV2WithMetadataTransformer()
+    this.client
+      .makeRequestAsync({
+        method,
+        bucketName,
+        query,
+      })
+      .then(
+        (response) => {
+          if (!response) {
+            throw new Error('BUG: callback missing response argument')
+          }
+          pipesetup(response, transformer)
+        },
+        (e) => {
+          return transformer.emit('error', e)
+        },
+      )
     return transformer
   }
 }
-
-// deprecated default export, please use named exports.
-// keep for backward compatibility.
-// eslint-disable-next-line import/no-default-export
-export default extensions
