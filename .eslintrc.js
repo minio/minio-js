@@ -87,6 +87,9 @@ module.exports = {
 
     'no-extra-parens': 0,
     '@typescript-eslint/no-extra-parens': 0,
+    'import/namespace': 'error',
+    'import/default': 'error',
+    'import/named': 'error',
   },
   overrides: [
     {
