@@ -116,5 +116,12 @@ module.exports = {
         '@typescript-eslint/no-empty-function': 0,
       },
     },
+    {
+      files: ['./types/**/*'],
+      rules: {
+        '@typescript-eslint/no-unused-vars': 0,
+        '@typescript-eslint/no-explicit-any': 0,
+      },
+    },
   ],
 }
