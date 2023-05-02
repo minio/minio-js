@@ -92,29 +92,22 @@ module.exports = {
     'import/named': 'error',
     // default export confuse esm/cjs interop
     'import/no-default-export': 'error',
+    'import/extensions': ['error', 'always'],
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        prefer: 'type-imports',
+        fixStyle: 'separate-type-imports',
+      },
+    ],
+    'unused-imports/no-unused-imports': 'error',
+    'import/no-amd': 'error',
   },
   overrides: [
     {
-      files: './src/**/*',
-      excludedFiles: ['tests/*.*'],
-      rules: {
-        '@typescript-eslint/consistent-type-imports': [
-          'error',
-          {
-            prefer: 'type-imports',
-            fixStyle: 'separate-type-imports',
-          },
-        ],
-
-        'import/extensions': ['error', 'always'],
-      },
-    },
-    {
       files: ['./src/**/*', './tests/**/*'],
       rules: {
-        'unused-imports/no-unused-imports': 'error',
         'import/no-commonjs': 'error',
-        'import/no-amd': 'error',
       },
     },
     {
