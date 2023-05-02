@@ -29,24 +29,24 @@ type CredentialResponse = {
 }
 
 export class AssumeRoleProvider extends CredentialProvider {
-  private stsEndpoint: string
-  private accessKey: string
-  private secretKey: string
-  private durationSeconds: number
+  private readonly stsEndpoint: string
+  private readonly accessKey: string
+  private readonly secretKey: string
+  private readonly durationSeconds: number
   private sessionToken: string
-  private policy: string
-  private region: string
-  private roleArn: string
-  private roleSessionName: string
-  private externalId: string
-  private token: string
-  private webIdentityToken: string
-  private action: string
+  private readonly policy: string
+  private readonly region: string
+  private readonly roleArn: string
+  private readonly roleSessionName: string
+  private readonly externalId: string
+  private readonly token: string
+  private readonly webIdentityToken: string
+  private readonly action: string
 
   private _credentials: Credentials | null
   private expirySeconds: number | null
   private accessExpiresAt: string | null
-  private transportAgent?: http.Agent
+  private readonly transportAgent?: http.Agent
 
   constructor({
     stsEndpoint,
