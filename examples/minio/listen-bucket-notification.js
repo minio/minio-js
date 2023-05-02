@@ -22,7 +22,7 @@ const Minio = require('../')
 var s3Client = new Minio.Client({
   endPoint: '...',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Start listening for notifications on the bucket, using our arn.
@@ -46,16 +46,15 @@ let poller = s3Client.listenBucketNotification('bucket1', 'photos/', '.jpg', ['s
 //         ownerIdentity: [Object],
 //         arn: 'arn:aws:s3:::bucket1' },
 //      object: { key: 'photos%2Fobject.jpg', size: 10, sequencer: '...' } } }
-poller.on('notification', record => {
-    console.log('New object: %s/%s (size: %d)', record.s3.bucket.name,
-                record.s3.object.key, record.s3.object.size)
+poller.on('notification', (record) => {
+  console.log('New object: %s/%s (size: %d)', record.s3.bucket.name, record.s3.object.key, record.s3.object.size)
 
-    // Now that we've received our notification, we can cancel the listener.
-    // We could leave it open if we wanted to continue to receive notifications.
-    poller.stop()
+  // Now that we've received our notification, we can cancel the listener.
+  // We could leave it open if we wanted to continue to receive notifications.
+  poller.stop()
 })
 
 // Create an object - this should trigger a notification.
 s3Client.putObject('bucket1', 'file.jpg', 'stringdata', (err, etag) => {
-    if (err) throw err
+  if (err) throw err
 })

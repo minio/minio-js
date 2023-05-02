@@ -22,10 +22,10 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketReplication('bucketname', function (err, replicationConfig){
+s3Client.getBucketReplication('bucketname', function (err, replicationConfig) {
   if (err) {
     return console.log(err)
   }

@@ -1,4 +1,3 @@
-
 /*
  * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
@@ -23,20 +22,20 @@ var Minio = require('minio')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeObjectTagging('bucketname', "object-name", function (err){
+s3Client.removeObjectTagging('bucketname', 'object-name', function (err) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success")
+  console.log('Success')
 })
 
 //remove tags on a version of an object
-s3Client.removeObjectTagging('bucketname', 'object-name', { versionId: "my-object-version-id" }, function (err){
+s3Client.removeObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' }, function (err) {
   if (err) {
     return console.log(err)
   }
-  console.log("Success")
+  console.log('Success')
 })

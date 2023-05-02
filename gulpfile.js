@@ -25,13 +25,21 @@ const mocha = require('gulp-mocha')
 const eslint = require('gulp-eslint')
 
 const compileJS = (src, dest) => {
-  return gulp.src(src)
+  return gulp
+    .src(src)
     .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: [['@babel/env', {
-        targets: { node: 8 }
-      }]]
-    }))
+    .pipe(
+      babel({
+        presets: [
+          [
+            '@babel/env',
+            {
+              targets: { node: 8 },
+            },
+          ],
+        ],
+      }),
+    )
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(dest))
 }
@@ -43,7 +51,7 @@ const testCompile = gulp.series(compile, () => {
 
 exports.browserify = gulp.series(compile, () => {
   return browserify('./dist/main/minio.js', {
-    standalone: 'MinIO'
+    standalone: 'MinIO',
   })
     .bundle()
     .on('error', (err) => {
@@ -54,13 +62,17 @@ exports.browserify = gulp.series(compile, () => {
 })
 
 exports.test = gulp.series(testCompile, () => {
-  return gulp.src('dist/test/**/*.js', {
-    read: false
-  }).pipe(mocha({
-    exit: true,
-    reporter: 'spec',
-    ui: 'bdd',
-  }))
+  return gulp
+    .src('dist/test/**/*.js', {
+      read: false,
+    })
+    .pipe(
+      mocha({
+        exit: true,
+        reporter: 'spec',
+        ui: 'bdd',
+      }),
+    )
 })
 
 function isFixed(file) {
@@ -69,22 +81,29 @@ function isFixed(file) {
 
 exports.lint = () => {
   const hasFixFlag = process.argv.slice(2).includes('--fix')
-  return gulp.src(['src/**/*.js', 'gulpfile.js'])
-    .pipe(eslint({fix: hasFixFlag}))
-    .pipe(eslint.format())
-    .pipe(eslint.failAfterError())
-    // if fixed, write the file to dest
-    .pipe(gulpIf(isFixed, gulp.dest('src/')))
+  return (
+    gulp
+      .src(['src/**/*.js', 'gulpfile.js'])
+      .pipe(eslint({ fix: hasFixFlag }))
+      .pipe(eslint.format())
+      .pipe(eslint.failAfterError())
+      // if fixed, write the file to dest
+      .pipe(gulpIf(isFixed, gulp.dest('src/')))
+  )
 }
 
 exports.functionalTest = gulp.series(testCompile, () => {
-  return gulp.src('dist/test/functional/*.js', {
-    read: false
-  }).pipe(mocha({
-    exit: true,
-    reporter: 'spec',
-    ui: 'bdd',
-  }))
+  return gulp
+    .src('dist/test/functional/*.js', {
+      read: false,
+    })
+    .pipe(
+      mocha({
+        exit: true,
+        reporter: 'spec',
+        ui: 'bdd',
+      }),
+    )
 })
 
 exports.compile = compile

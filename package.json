@@ -11,7 +11,26 @@
     "prepublishOnly": "gulp test",
     "functional": "gulp functionalTest",
     "browserify": "gulp browserify",
-    "prepare": "npm run compile"
+    "prepare": "husky install && npm run compile",
+    "format": "prettier -w .",
+    "format-check": "prettier --list-different .",
+    "lint-staged": "lint-staged"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "singleQuote": true,
+    "endOfLine": "lf",
+    "trailingComma": "all",
+    "semi": false
+  },
+  "lint-staged": {
+    "*.{js,cjs,mjs,ts,cts,mts,json}": [
+      "prettier --write"
+    ],
+    "src/**/*.{js,cjs,mjs,ts,cts,mts}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -53,23 +72,32 @@
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.10",
+    "@types/lodash": "^4.14.192",
+    "@types/node": "^18.15.11",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
     "babelify": "^10.0.0",
     "browserify": "^16.5.2",
     "chai": "^4.2.0",
-    "eslint": "^8.9.0",
+    "eslint": "^8.37.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-simple-import-sort": "^10.0.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
-    "gulp-eslint": "^4.0.2",
+    "gulp-eslint": "^6.0.0",
     "gulp-if": "^3.0.0",
     "gulp-mocha": "^8.0.0",
     "gulp-sourcemaps": "^2.6.5",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
     "mocha": "^9.2.0",
     "mocha-steps": "^1.1.0",
     "nock": "^13.2.2",
+    "prettier": "^2.8.7",
     "source-map-support": "^0.5.13",
     "split-file": "^2.2.2",
     "superagent": "^5.1.0",
-    "uuid": "^3.3.2"
+    "uuid": "^3.4.0"
   },
   "keywords": [
     "api",

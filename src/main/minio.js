@@ -14,61 +14,85 @@
  * limitations under the License.
  */
 
+import async from 'async'
+import BlockStream2 from 'block-stream2'
 import fs from 'fs'
 import Http from 'http'
 import Https from 'https'
-import Stream from 'stream'
-import BlockStream2 from 'block-stream2'
-import Xml from 'xml'
-import xml2js from 'xml2js'
-import async from 'async'
-import querystring from 'query-string'
+import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import path from 'path'
-import _ from 'lodash'
-import { TextEncoder } from "web-encoding"
+import querystring from 'query-string'
+import Stream from 'stream'
+import { TextEncoder } from 'web-encoding'
+import Xml from 'xml'
+import xml2js from 'xml2js'
 
+import CredentialProvider from './CredentialProvider'
+import * as errors from './errors.js'
+import extensions from './extensions'
 import {
-  extractMetadata, prependXAMZMeta, isValidPrefix, isValidEndpoint, isValidBucketName,
-  isValidPort, isValidObjectName, isAmazonEndpoint, getScope,
-  uriEscape, uriResourceEscape, isBoolean, isFunction, isNumber,
-  isString, isObject, isArray, isValidDate, pipesetup,
-  readableStream, isReadableStream, isVirtualHostStyle,
-  insertContentType, makeDateLong, promisify, getVersionId, sanitizeETag,
-  toMd5, toSha256,
-  RETENTION_MODES, RETENTION_VALIDITY_UNITS,
-  LEGAL_HOLD_STATUS, CopySourceOptions, CopyDestinationOptions, getSourceVersionId,
+  calculateEvenSplits,
+  CopyDestinationOptions,
+  CopySourceOptions,
+  DEFAULT_REGION,
+  extractMetadata,
+  getScope,
+  getSourceVersionId,
+  getVersionId,
+  insertContentType,
+  isAmazonEndpoint,
+  isArray,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isObject,
+  isReadableStream,
+  isString,
+  isValidBucketName,
+  isValidDate,
+  isValidEndpoint,
+  isValidObjectName,
+  isValidPort,
+  isValidPrefix,
+  isVirtualHostStyle,
+  LEGAL_HOLD_STATUS,
+  makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
-  calculateEvenSplits,
-  DEFAULT_REGION
+  pipesetup,
+  prependXAMZMeta,
+  promisify,
+  readableStream,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+  sanitizeETag,
+  toMd5,
+  toSha256,
+  uriEscape,
+  uriResourceEscape,
 } from './helpers.js'
-
-import { signV4, presignSignatureV4, postPresignSignatureV4 } from './signing.js'
-
-import ObjectUploader from './object-uploader'
-
-import * as transformers from './transformers'
-
-import * as errors from './errors.js'
-
-import { getS3Endpoint } from './s3-endpoints.js'
-
 import { NotificationConfig, NotificationPoller } from './notification'
-
-import extensions from './extensions'
-import CredentialProvider from "./CredentialProvider"
-
-import { parseSelectObjectContentResponse} from "./xml-parsers"
+import ObjectUploader from './object-uploader'
+import { getS3Endpoint } from './s3-endpoints.js'
+import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
+import * as transformers from './transformers'
+import { parseSelectObjectContentResponse } from './xml-parsers'
 
 var Package = require('../../package.json')
 
 export class Client {
   constructor(params) {
-    if (typeof params.secure !== 'undefined') throw new Error('"secure" option deprecated, "useSSL" should be used instead')
+    if (typeof params.secure !== 'undefined') {
+      throw new Error('"secure" option deprecated, "useSSL" should be used instead')
+    }
     // Default values if not specified.
-    if (typeof params.useSSL === 'undefined') params.useSSL = true
-    if (!params.port) params.port = 0
+    if (typeof params.useSSL === 'undefined') {
+      params.useSSL = true
+    }
+    if (!params.port) {
+      params.port = 0
+    }
     // Validate input params.
     if (!isValidEndpoint(params.endPoint)) {
       throw new errors.InvalidEndpointError(`Invalid endPoint : ${params.endPoint}`)
@@ -77,7 +101,9 @@ export class Client {
       throw new errors.InvalidArgumentError(`Invalid port : ${params.port}`)
     }
     if (!isBoolean(params.useSSL)) {
-      throw new errors.InvalidArgumentError(`Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`)
+      throw new errors.InvalidArgumentError(
+        `Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`,
+      )
     }
 
     // Validate region only if its set.
@@ -114,7 +140,9 @@ export class Client {
     // if custom transport is set, use it.
     if (params.transport) {
       if (!isObject(params.transport)) {
-        throw new errors.InvalidArgumentError(`Invalid transport type : ${params.transport}, expected to be type "object"`)
+        throw new errors.InvalidArgumentError(
+          `Invalid transport type : ${params.transport}, expected to be type "object"`,
+        )
       }
       transport = params.transport
     }
@@ -122,7 +150,9 @@ export class Client {
     // if custom transport agent is set, use it.
     if (params.transportAgent) {
       if (!isObject(params.transportAgent)) {
-        throw new errors.InvalidArgumentError(`Invalid transportAgent type: ${params.transportAgent}, expected to be type "object"`)
+        throw new errors.InvalidArgumentError(
+          `Invalid transportAgent type: ${params.transportAgent}, expected to be type "object"`,
+        )
       }
 
       transportAgent = params.transportAgent
@@ -154,11 +184,15 @@ export class Client {
       this.pathStyle = params.pathStyle
     }
 
-    if (!this.accessKey) this.accessKey = ''
-    if (!this.secretKey) this.secretKey = ''
+    if (!this.accessKey) {
+      this.accessKey = ''
+    }
+    if (!this.secretKey) {
+      this.secretKey = ''
+    }
     this.anonymous = !this.accessKey || !this.secretKey
 
-    if(params.credentialsProvider)  {
+    if (params.credentialsProvider) {
       this.credentialsProvider = params.credentialsProvider
       this.checkAndRefreshCreds()
     }
@@ -168,35 +202,35 @@ export class Client {
       this.region = params.region
     }
 
-    this.partSize = 64*1024*1024
+    this.partSize = 64 * 1024 * 1024
     if (params.partSize) {
       this.partSize = params.partSize
       this.overRidePartSize = true
     }
-    if (this.partSize < 5*1024*1024) {
+    if (this.partSize < 5 * 1024 * 1024) {
       throw new errors.InvalidArgumentError(`Part size should be greater than 5MB`)
     }
-    if (this.partSize > 5*1024*1024*1024) {
+    if (this.partSize > 5 * 1024 * 1024 * 1024) {
       throw new errors.InvalidArgumentError(`Part size should be less than 5GB`)
     }
 
-    this.maximumPartSize = 5*1024*1024*1024
-    this.maxObjectSize = 5*1024*1024*1024*1024
+    this.maximumPartSize = 5 * 1024 * 1024 * 1024
+    this.maxObjectSize = 5 * 1024 * 1024 * 1024 * 1024
     // SHA256 is enabled only for authenticated http requests. If the request is authenticated
     // and the connection is https we use x-amz-content-sha256=UNSIGNED-PAYLOAD
     // header for signature calculation.
     this.enableSHA256 = !this.anonymous && !params.useSSL
 
-    this.s3AccelerateEndpoint = ( params.s3AccelerateEndpoint || null )
+    this.s3AccelerateEndpoint = params.s3AccelerateEndpoint || null
     this.reqOptions = {}
   }
 
   // This is s3 Specific and does not hold validity in any other Object storage.
-  getAccelerateEndPointIfSet(bucketName, objectName){
-    if (!_.isEmpty(this.s3AccelerateEndpoint)  && !_.isEmpty(bucketName)  && !_.isEmpty(objectName) ) {
+  getAccelerateEndPointIfSet(bucketName, objectName) {
+    if (!_.isEmpty(this.s3AccelerateEndpoint) && !_.isEmpty(bucketName) && !_.isEmpty(objectName)) {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
       // Disable transfer acceleration for non-compliant bucket names.
-      if (bucketName.indexOf(".")!== -1) {
+      if (bucketName.indexOf('.') !== -1) {
         throw new Error(`Transfer Acceleration is not supported for non compliant bucket:${bucketName}`)
       }
       // If transfer acceleration is requested set new host.
@@ -204,13 +238,13 @@ export class Client {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
       return this.s3AccelerateEndpoint
     }
-    return  false
+    return false
   }
 
   /**
    * @param endPoint _string_ valid S3 acceleration end point
    */
-  setS3TransferAccelerate(endPoint){
+  setS3TransferAccelerate(endPoint) {
     this.s3AccelerateEndpoint = endPoint
   }
 
@@ -219,7 +253,26 @@ export class Client {
     if (!isObject(options)) {
       throw new TypeError('request options should be of type "object"')
     }
-    this.reqOptions = _.pick(options, ['agent', 'ca', 'cert', 'ciphers', 'clientCertEngine', 'crl', 'dhparam', 'ecdhCurve', 'family', 'honorCipherOrder', 'key', 'passphrase', 'pfx', 'rejectUnauthorized', 'secureOptions', 'secureProtocol', 'servername', 'sessionIdContext'])
+    this.reqOptions = _.pick(options, [
+      'agent',
+      'ca',
+      'cert',
+      'ciphers',
+      'clientCertEngine',
+      'crl',
+      'dhparam',
+      'ecdhCurve',
+      'family',
+      'honorCipherOrder',
+      'key',
+      'passphrase',
+      'pfx',
+      'rejectUnauthorized',
+      'secureOptions',
+      'secureProtocol',
+      'servername',
+      'sessionIdContext',
+    ])
   }
 
   // returns *options* object that can be used with http.request()
@@ -232,7 +285,7 @@ export class Client {
     var headers = opts.headers
     var query = opts.query
 
-    var reqOptions = {method}
+    var reqOptions = { method }
     reqOptions.headers = {}
 
     // If custom transportAgent was supplied earlier, we'll inject it here
@@ -244,7 +297,9 @@ export class Client {
       virtualHostStyle = isVirtualHostStyle(this.host, this.protocol, bucketName, this.pathStyle)
     }
 
-    if (this.port) reqOptions.port = this.port
+    if (this.port) {
+      reqOptions.port = this.port
+    }
     reqOptions.protocol = this.protocol
 
     if (objectName) {
@@ -258,9 +313,9 @@ export class Client {
     // For Amazon S3 endpoint, get endpoint based on region.
     if (isAmazonEndpoint(reqOptions.host)) {
       const accelerateEndPoint = this.getAccelerateEndPointIfSet(bucketName, objectName)
-      if (accelerateEndPoint ) {
+      if (accelerateEndPoint) {
         reqOptions.host = `${accelerateEndPoint}`
-      }else {
+      } else {
         reqOptions.host = getS3Endpoint(region)
       }
     }
@@ -271,26 +326,38 @@ export class Client {
       //
       //  var host = 'bucketName.example.com'
       //
-      if (bucketName) reqOptions.host = `${bucketName}.${reqOptions.host}`
-      if (objectName) reqOptions.path = `/${objectName}`
+      if (bucketName) {
+        reqOptions.host = `${bucketName}.${reqOptions.host}`
+      }
+      if (objectName) {
+        reqOptions.path = `/${objectName}`
+      }
     } else {
       // For all S3 compatible storage services we will fallback to
       // path style requests, where `bucketName` is part of the URI
       // path.
-      if (bucketName) reqOptions.path = `/${bucketName}`
-      if (objectName) reqOptions.path = `/${bucketName}/${objectName}`
+      if (bucketName) {
+        reqOptions.path = `/${bucketName}`
+      }
+      if (objectName) {
+        reqOptions.path = `/${bucketName}/${objectName}`
+      }
     }
 
-    if (query) reqOptions.path += `?${query}`
+    if (query) {
+      reqOptions.path += `?${query}`
+    }
     reqOptions.headers.host = reqOptions.host
-    if ((reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
-        (reqOptions.protocol === 'https:' && reqOptions.port !== 443)) {
+    if (
+      (reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
+      (reqOptions.protocol === 'https:' && reqOptions.port !== 443)
+    ) {
       reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
     }
     reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
       // have all header keys in lower case - to make signing easy
-      _.map(headers, (v, k) => reqOptions.headers[k.toLowerCase()] = v)
+      _.map(headers, (v, k) => (reqOptions.headers[k.toLowerCase()] = v))
     }
 
     // Use any request option specified in minioClient.setRequestOptions()
@@ -336,20 +403,23 @@ export class Client {
       return this.partSize
     }
     var partSize = this.partSize
-    for (;;) { 			// while(true) {...} throws linting error.
+    for (;;) {
+      // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
-      if ((partSize * 10000) > size) {
+      if (partSize * 10000 > size) {
         return partSize
       }
       // Try part sizes as 64MB, 80MB, 96MB etc.
-      partSize += 16*1024*1024
+      partSize += 16 * 1024 * 1024
     }
   }
 
   // log the request, response, error
   logHTTP(reqOptions, response, err) {
     // if no logstreamer available return.
-    if (!this.logStream) return
+    if (!this.logStream) {
+      return
+    }
     if (!isObject(reqOptions)) {
       throw new TypeError('reqOptions should be of type "object"')
     }
@@ -384,7 +454,9 @@ export class Client {
 
   // Enable tracing
   traceOn(stream) {
-    if (!stream) stream = process.stdout
+    if (!stream) {
+      stream = process.stdout
+    }
     this.logStream = stream
   }
 
@@ -407,7 +479,7 @@ export class Client {
       // Buffer is of type 'object'
       throw new TypeError('payload should be of type "string" or "Buffer"')
     }
-    statusCodes.forEach(statusCode => {
+    statusCodes.forEach((statusCode) => {
       if (!isNumber(statusCode)) {
         throw new TypeError('statusCode should be of type "number"')
       }
@@ -418,15 +490,19 @@ export class Client {
     if (!isBoolean(returnResponse)) {
       throw new TypeError('returnResponse should be of type "boolean"')
     }
-    if(!isFunction(cb)) {
+    if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    if (!options.headers) options.headers = {}
+    if (!options.headers) {
+      options.headers = {}
+    }
     if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
       options.headers['content-length'] = payload.length
     }
     var sha256sum = ''
-    if (this.enableSHA256) sha256sum = toSha256(payload)
+    if (this.enableSHA256) {
+      sha256sum = toSha256(payload)
+    }
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb)
   }
@@ -443,7 +519,7 @@ export class Client {
     if (!isString(sha256sum)) {
       throw new TypeError('sha256sum should be of type "string"')
     }
-    statusCodes.forEach(statusCode => {
+    statusCodes.forEach((statusCode) => {
       if (!isNumber(statusCode)) {
         throw new TypeError('statusCode should be of type "number"')
       }
@@ -454,7 +530,7 @@ export class Client {
     if (!isBoolean(returnResponse)) {
       throw new TypeError('returnResponse should be of type "boolean"')
     }
-    if(!isFunction(cb)) {
+    if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
@@ -468,12 +544,16 @@ export class Client {
     }
 
     var _makeRequest = (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       options.region = region
       var reqOptions = this.getRequestOptions(options)
       if (!this.anonymous) {
         // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
-        if (!this.enableSHA256) sha256sum = 'UNSIGNED-PAYLOAD'
+        if (!this.enableSHA256) {
+          sha256sum = 'UNSIGNED-PAYLOAD'
+        }
 
         let date = new Date()
 
@@ -487,35 +567,38 @@ export class Client {
         var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
         reqOptions.headers.authorization = authorization
       }
-      var req = this.transport.request(reqOptions, response => {
+      var req = this.transport.request(reqOptions, (response) => {
         if (!statusCodes.includes(response.statusCode)) {
           // For an incorrect region, S3 server always sends back 400.
           // But we will do cache invalidation for all errors so that,
           // in future, if AWS S3 decides to send a different status code or
           // XML error code we will still work fine.
-          delete(this.regionMap[options.bucketName])
+          delete this.regionMap[options.bucketName]
           var errorTransformer = transformers.getErrorTransformer(response)
-          pipesetup(response, errorTransformer)
-            .on('error', e => {
-              this.logHTTP(reqOptions, response, e)
-              cb(e)
-            })
+          pipesetup(response, errorTransformer).on('error', (e) => {
+            this.logHTTP(reqOptions, response, e)
+            cb(e)
+          })
           return
         }
         this.logHTTP(reqOptions, response)
-        if (returnResponse) return cb(null, response)
+        if (returnResponse) {
+          return cb(null, response)
+        }
         // We drain the socket so that the connection gets closed. Note that this
         // is not expensive as the socket will not have any data.
-        response.on('data', ()=>{})
+        response.on('data', () => {})
         cb(null)
       })
       let pipe = pipesetup(stream, req)
-      pipe.on('error', e => {
+      pipe.on('error', (e) => {
         this.logHTTP(reqOptions, null, e)
         cb(e)
       })
     }
-    if (region) return _makeRequest(null, region)
+    if (region) {
+      return _makeRequest(null, region)
+    }
     this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
@@ -529,16 +612,22 @@ export class Client {
     }
 
     // Region is set with constructor, return the region right here.
-    if (this.region) return cb(null, this.region)
+    if (this.region) {
+      return cb(null, this.region)
+    }
 
-    if (this.regionMap[bucketName]) return cb(null, this.regionMap[bucketName])
+    if (this.regionMap[bucketName]) {
+      return cb(null, this.regionMap[bucketName])
+    }
     var extractRegion = (response) => {
       var transformer = transformers.getBucketRegionTransformer()
       var region = DEFAULT_REGION
       pipesetup(response, transformer)
         .on('error', cb)
-        .on('data', data => {
-          if (data) region = data
+        .on('data', (data) => {
+          if (data) {
+            region = data
+          }
         })
         .on('end', () => {
           this.regionMap[bucketName] = region
@@ -562,13 +651,17 @@ export class Client {
     //   obtained region.
     var pathStyle = this.pathStyle && typeof window === 'undefined'
 
-    this.makeRequest({method, bucketName, query, pathStyle}, '', [200], DEFAULT_REGION, true, (e, response) => {
+    this.makeRequest({ method, bucketName, query, pathStyle }, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) {
         if (e.name === 'AuthorizationHeaderMalformed') {
           var region = e.Region
-          if (!region) return cb(e)
-          this.makeRequest({method, bucketName, query}, '', [200], region, true, (e, response) => {
-            if (e) return cb(e)
+          if (!region) {
+            return cb(e)
+          }
+          this.makeRequest({ method, bucketName, query }, '', [200], region, true, (e, response) => {
+            if (e) {
+              return cb(e)
+            }
             extractRegion(response)
           })
           return
@@ -586,24 +679,24 @@ export class Client {
   // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
   // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, makeOpts={}, cb) {
+  makeBucket(bucketName, region, makeOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     // Backward Compatibility
-    if(isObject(region)){
-      cb= makeOpts
-      makeOpts=region
+    if (isObject(region)) {
+      cb = makeOpts
+      makeOpts = region
       region = ''
     }
     if (isFunction(region)) {
       cb = region
       region = ''
-      makeOpts={}
+      makeOpts = {}
     }
-    if(isFunction(makeOpts)){
-      cb=makeOpts
-      makeOpts={}
+    if (isFunction(makeOpts)) {
+      cb = makeOpts
+      makeOpts = {}
     }
 
     if (!isString(region)) {
@@ -631,38 +724,40 @@ export class Client {
       var createBucketConfiguration = []
       createBucketConfiguration.push({
         _attr: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/'
-        }
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+        },
       })
       createBucketConfiguration.push({
-        LocationConstraint: region
+        LocationConstraint: region,
       })
       var payloadObject = {
-        CreateBucketConfiguration: createBucketConfiguration
+        CreateBucketConfiguration: createBucketConfiguration,
       }
       payload = Xml(payloadObject)
     }
     var method = 'PUT'
     var headers = {}
 
-    if(makeOpts.ObjectLocking){
-      headers["x-amz-bucket-object-lock-enabled"]=true
+    if (makeOpts.ObjectLocking) {
+      headers['x-amz-bucket-object-lock-enabled'] = true
     }
 
-    if (!region) region = DEFAULT_REGION
+    if (!region) {
+      region = DEFAULT_REGION
+    }
 
-    const processWithRetry = (err) =>{
-      if (err && (region === "" || region === DEFAULT_REGION)) {
-        if(err.code === "AuthorizationHeaderMalformed" && err.region !== ""){
+    const processWithRetry = (err) => {
+      if (err && (region === '' || region === DEFAULT_REGION)) {
+        if (err.code === 'AuthorizationHeaderMalformed' && err.region !== '') {
           // Retry with region returned as part of error
-          this.makeRequest({method, bucketName, headers}, payload, [200], err.region, false, cb)
+          this.makeRequest({ method, bucketName, headers }, payload, [200], err.region, false, cb)
         } else {
           return cb && cb(err)
         }
       }
       return cb && cb(err)
     }
-    this.makeRequest({method, bucketName, headers}, payload, [200], region, false, processWithRetry)
+    this.makeRequest({ method, bucketName, headers }, payload, [200], region, false, processWithRetry)
   }
 
   // List of buckets created.
@@ -678,13 +773,15 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({method}, '', [200], DEFAULT_REGION, true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getListBucketTransformer()
       var buckets
       pipesetup(response, transformer)
-        .on('data', result => buckets = result)
-        .on('error', e => cb(e))
+        .on('data', (result) => (buckets = result))
+        .on('error', (e) => cb(e))
         .on('end', () => cb(null, buckets))
     })
   }
@@ -702,8 +799,12 @@ export class Client {
   //   * `object.uploadId` _string_: upload ID of the object
   //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
     if (!isValidBucketName(bucket)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
     }
@@ -718,38 +819,46 @@ export class Client {
     var uploadIdMarker = ''
     var uploads = []
     var ended = false
-    var readStream = Stream.Readable({objectMode: true})
+    var readStream = Stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one upload info per _read()
       if (uploads.length) {
         return readStream.push(uploads.shift())
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
-        .on('error', e => readStream.emit('error', e))
-        .on('data', result => {
-          result.prefixes.forEach(prefix => uploads.push(prefix))
-          async.eachSeries(result.uploads, (upload, cb) => {
-            // for each incomplete upload add the sizes of its uploaded parts
-            this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
-              if (err) return cb(err)
-              upload.size = parts.reduce((acc, item) => acc + item.size, 0)
-              uploads.push(upload)
-              cb()
-            })
-          }, err => {
-            if (err) {
-              readStream.emit('error', err)
-              return
-            }
-            if (result.isTruncated) {
-              keyMarker = result.nextKeyMarker
-              uploadIdMarker = result.nextUploadIdMarker
-            } else {
-              ended = true
-            }
-            readStream._read()
-          })
+        .on('error', (e) => readStream.emit('error', e))
+        .on('data', (result) => {
+          result.prefixes.forEach((prefix) => uploads.push(prefix))
+          async.eachSeries(
+            result.uploads,
+            (upload, cb) => {
+              // for each incomplete upload add the sizes of its uploaded parts
+              this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
+                if (err) {
+                  return cb(err)
+                }
+                upload.size = parts.reduce((acc, item) => acc + item.size, 0)
+                uploads.push(upload)
+                cb()
+              })
+            },
+            (err) => {
+              if (err) {
+                readStream.emit('error', err)
+                return
+              }
+              if (result.isTruncated) {
+                keyMarker = result.nextKeyMarker
+                uploadIdMarker = result.nextUploadIdMarker
+              } else {
+                ended = true
+              }
+              readStream._read()
+            },
+          )
         })
     }
     return readStream
@@ -768,9 +877,11 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'HEAD'
-    this.makeRequest({method, bucketName}, '', [200], '', false, err => {
+    this.makeRequest({ method, bucketName }, '', [200], '', false, (err) => {
       if (err) {
-        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') return cb(null, false)
+        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
+          return cb(null, false)
+        }
         return cb(err)
       }
       cb(null, true)
@@ -790,9 +901,11 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'DELETE'
-    this.makeRequest({method, bucketName}, '', [204], '', false, (e) => {
+    this.makeRequest({ method, bucketName }, '', [204], '', false, (e) => {
       // If the bucket was successfully removed, remove the region map entry.
-      if (!e) delete(this.regionMap[bucketName])
+      if (!e) {
+        delete this.regionMap[bucketName]
+      }
       cb(e)
     })
   }
@@ -815,19 +928,21 @@ export class Client {
     }
     var removeUploadId
     async.during(
-      cb => {
+      (cb) => {
         this.findUploadId(bucketName, objectName, (e, uploadId) => {
-          if (e) return cb(e)
+          if (e) {
+            return cb(e)
+          }
           removeUploadId = uploadId
           cb(null, uploadId)
         })
       },
-      cb => {
+      (cb) => {
         var method = 'DELETE'
         var query = `uploadId=${removeUploadId}`
-        this.makeRequest({method, bucketName, objectName, query}, '', [204], '', false, e => cb(e))
+        this.makeRequest({ method, bucketName, objectName, query }, '', [204], '', false, (e) => cb(e))
       },
-      cb
+      cb,
     )
   }
 
@@ -839,7 +954,7 @@ export class Client {
   // * `filePath` _string_: path to which the object data will be written to
   // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, getOpts={}, cb) {
+  fGetObject(bucketName, objectName, filePath, getOpts = {}, cb) {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -866,43 +981,52 @@ export class Client {
     var objStat
 
     // Rename wrapper.
-    var rename = err => {
-      if (err) return cb(err)
+    var rename = (err) => {
+      if (err) {
+        return cb(err)
+      }
       fs.rename(partFile, filePath, cb)
     }
 
-    async.waterfall([
-      cb => this.statObject(bucketName, objectName, getOpts, cb),
-      (result, cb) => {
-        objStat = result
-        // Create any missing top level directories.
-        mkdirp(path.dirname(filePath), cb)
-      },
-      (ignore, cb) => {
-        partFile = `${filePath}.${objStat.etag}.part.minio`
-        fs.stat(partFile, (e, stats) => {
-          var offset = 0
-          if (e) {
-            partFileStream = fs.createWriteStream(partFile, {flags: 'w'})
-          } else {
-            if (objStat.size === stats.size) return rename()
-            offset = stats.size
-            partFileStream = fs.createWriteStream(partFile, {flags: 'a'})
+    async.waterfall(
+      [
+        (cb) => this.statObject(bucketName, objectName, getOpts, cb),
+        (result, cb) => {
+          objStat = result
+          // Create any missing top level directories.
+          mkdirp(path.dirname(filePath), cb)
+        },
+        (ignore, cb) => {
+          partFile = `${filePath}.${objStat.etag}.part.minio`
+          fs.stat(partFile, (e, stats) => {
+            var offset = 0
+            if (e) {
+              partFileStream = fs.createWriteStream(partFile, { flags: 'w' })
+            } else {
+              if (objStat.size === stats.size) {
+                return rename()
+              }
+              offset = stats.size
+              partFileStream = fs.createWriteStream(partFile, { flags: 'a' })
+            }
+            this.getPartialObject(bucketName, objectName, offset, 0, getOpts, cb)
+          })
+        },
+        (downloadStream, cb) => {
+          pipesetup(downloadStream, partFileStream)
+            .on('error', (e) => cb(e))
+            .on('finish', cb)
+        },
+        (cb) => fs.stat(partFile, cb),
+        (stats, cb) => {
+          if (stats.size === objStat.size) {
+            return cb()
           }
-          this.getPartialObject(bucketName, objectName, offset, 0, getOpts, cb)
-        })
-      },
-      (downloadStream, cb) => {
-        pipesetup(downloadStream, partFileStream)
-          .on('error', e => cb(e))
-          .on('finish', cb)
-      },
-      cb => fs.stat(partFile, cb),
-      (stats, cb) => {
-        if (stats.size === objStat.size) return cb()
-        cb(new Error('Size mismatch between downloaded file and the object'))
-      }
-    ], rename)
+          cb(new Error('Size mismatch between downloaded file and the object'))
+        },
+      ],
+      rename,
+    )
   }
 
   // Callback is called with readable stream of the object content.
@@ -912,7 +1036,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucketName, objectName, getOpts={}, cb) {
+  getObject(bucketName, objectName, getOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -940,7 +1064,7 @@ export class Client {
   // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
   // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucketName, objectName, offset, length, getOpts={}, cb) {
+  getPartialObject(bucketName, objectName, offset, length, getOpts = {}, cb) {
     if (isFunction(length)) {
       cb = length
       length = 0
@@ -976,7 +1100,7 @@ export class Client {
         offset = 0
       }
       if (length) {
-        range += `${(+length + offset) - 1}`
+        range += `${+length + offset - 1}`
       }
     }
 
@@ -992,7 +1116,7 @@ export class Client {
     var method = 'GET'
 
     var query = querystring.stringify(getOpts)
-    this.makeRequest({method, bucketName, objectName, headers, query}, '', expectedStatusCodes, '', true, cb)
+    this.makeRequest({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes, '', true, cb)
   }
 
   // Uploads the object using contents from a file
@@ -1030,130 +1154,148 @@ export class Client {
     var size
     var partSize
 
-    async.waterfall([
-      cb => fs.stat(filePath, cb),
-      (stats, cb) => {
-        size = stats.size
-        var stream
-        var cbTriggered = false
-        var origCb = cb
-        cb = function () {
-          if (cbTriggered) {
+    async.waterfall(
+      [
+        (cb) => fs.stat(filePath, cb),
+        (stats, cb) => {
+          size = stats.size
+          var stream
+          var cbTriggered = false
+          var origCb = cb
+          cb = function () {
+            if (cbTriggered) {
+              return
+            }
+            cbTriggered = true
+            if (stream) {
+              stream.destroy()
+            }
+            return origCb.apply(this, arguments)
+          }
+          if (size > this.maxObjectSize) {
+            return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
+          }
+          if (size <= this.partSize) {
+            // simple PUT request, no multipart
+            var multipart = false
+            var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
+            var hash = transformers.getHashSummer(this.enableSHA256)
+            var start = 0
+            var end = size - 1
+            var autoClose = true
+            if (size === 0) {
+              end = 0
+            }
+            var options = { start, end, autoClose }
+            pipesetup(fs.createReadStream(filePath, options), hash)
+              .on('data', (data) => {
+                var md5sum = data.md5sum
+                var sha256sum = data.sha256sum
+                stream = fs.createReadStream(filePath, options)
+                uploader(stream, size, sha256sum, md5sum, (err, objInfo) => {
+                  callback(err, objInfo)
+                  cb(true)
+                })
+              })
+              .on('error', (e) => cb(e))
             return
           }
-          cbTriggered = true
-          if (stream) stream.destroy()
-          return origCb.apply(this, arguments)
-        }
-        if (size > this.maxObjectSize) {
-          return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
-        }
-        if (size <= this.partSize) {
-          // simple PUT request, no multipart
-          var multipart = false
+          this.findUploadId(bucketName, objectName, cb)
+        },
+        (uploadId, cb) => {
+          // if there was a previous incomplete upload, fetch all its uploaded parts info
+          if (uploadId) {
+            return this.listParts(bucketName, objectName, uploadId, (e, etags) => cb(e, uploadId, etags))
+          }
+          // there was no previous upload, initiate a new one
+          this.initiateNewMultipartUpload(bucketName, objectName, metaData, (e, uploadId) => cb(e, uploadId, []))
+        },
+        (uploadId, etags, cb) => {
+          partSize = this.calculatePartSize(size)
+          var multipart = true
           var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
-          var hash = transformers.getHashSummer(this.enableSHA256)
-          var start = 0
-          var end = size - 1
-          var autoClose = true
-          if (size === 0) end = 0
-          var options = {start, end, autoClose}
-          pipesetup(fs.createReadStream(filePath, options), hash)
-            .on('data', data => {
-              var md5sum = data.md5sum
-              var sha256sum = data.sha256sum
-              stream = fs.createReadStream(filePath, options)
-              uploader(stream, size, sha256sum, md5sum, (err, objInfo) => {
-                callback(err, objInfo)
-                cb(true)
-              })
-            })
-            .on('error', e => cb(e))
+
+          // convert array to object to make things easy
+          var parts = etags.reduce(function (acc, item) {
+            if (!acc[item.part]) {
+              acc[item.part] = item
+            }
+            return acc
+          }, {})
+          var partsDone = []
+          var partNumber = 1
+          var uploadedSize = 0
+          async.whilst(
+            (cb) => {
+              cb(null, uploadedSize < size)
+            },
+            (cb) => {
+              var stream
+              var cbTriggered = false
+              var origCb = cb
+              cb = function () {
+                if (cbTriggered) {
+                  return
+                }
+                cbTriggered = true
+                if (stream) {
+                  stream.destroy()
+                }
+                return origCb.apply(this, arguments)
+              }
+              var part = parts[partNumber]
+              var hash = transformers.getHashSummer(this.enableSHA256)
+              var length = partSize
+              if (length > size - uploadedSize) {
+                length = size - uploadedSize
+              }
+              var start = uploadedSize
+              var end = uploadedSize + length - 1
+              var autoClose = true
+              var options = { autoClose, start, end }
+              // verify md5sum of each part
+              pipesetup(fs.createReadStream(filePath, options), hash)
+                .on('data', (data) => {
+                  var md5sumHex = Buffer.from(data.md5sum, 'base64').toString('hex')
+                  if (part && md5sumHex === part.etag) {
+                    // md5 matches, chunk already uploaded
+                    partsDone.push({ part: partNumber, etag: part.etag })
+                    partNumber++
+                    uploadedSize += length
+                    return cb()
+                  }
+                  // part is not uploaded yet, or md5 mismatch
+                  stream = fs.createReadStream(filePath, options)
+                  uploader(uploadId, partNumber, stream, length, data.sha256sum, data.md5sum, (e, objInfo) => {
+                    if (e) {
+                      return cb(e)
+                    }
+                    partsDone.push({ part: partNumber, etag: objInfo.etag })
+                    partNumber++
+                    uploadedSize += length
+                    return cb()
+                  })
+                })
+                .on('error', (e) => cb(e))
+            },
+            (e) => {
+              if (e) {
+                return cb(e)
+              }
+              cb(null, partsDone, uploadId)
+            },
+          )
+        },
+        // all parts uploaded, complete the multipart upload
+        (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb),
+      ],
+      (err, ...rest) => {
+        if (err === true) {
           return
         }
-        this.findUploadId(bucketName, objectName, cb)
+        callback(err, ...rest)
       },
-      (uploadId, cb) => {
-        // if there was a previous incomplete upload, fetch all its uploaded parts info
-        if (uploadId) return this.listParts(bucketName, objectName, uploadId,  (e, etags) =>  cb(e, uploadId, etags))
-        // there was no previous upload, initiate a new one
-        this.initiateNewMultipartUpload(bucketName, objectName, metaData, (e, uploadId) => cb(e, uploadId, []))
-      },
-      (uploadId, etags, cb) => {
-        partSize = this.calculatePartSize(size)
-        var multipart = true
-        var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
-
-        // convert array to object to make things easy
-        var parts = etags.reduce(function(acc, item) {
-          if (!acc[item.part]) {
-            acc[item.part] = item
-          }
-          return acc
-        }, {})
-        var partsDone = []
-        var partNumber = 1
-        var uploadedSize = 0
-        async.whilst(
-          cb => { cb(null, uploadedSize < size) },
-          cb => {
-            var stream
-            var cbTriggered = false
-            var origCb = cb
-            cb = function () {
-              if (cbTriggered) {
-                return
-              }
-              cbTriggered = true
-              if (stream) stream.destroy()
-              return origCb.apply(this, arguments)
-            }
-            var part = parts[partNumber]
-            var hash = transformers.getHashSummer(this.enableSHA256)
-            var length = partSize
-            if (length > (size - uploadedSize)) {
-              length = size - uploadedSize
-            }
-            var start = uploadedSize
-            var end = uploadedSize + length - 1
-            var autoClose = true
-            var options = {autoClose, start, end}
-            // verify md5sum of each part
-            pipesetup(fs.createReadStream(filePath, options), hash)
-              .on('data', data => {
-                var md5sumHex = (Buffer.from(data.md5sum, 'base64')).toString('hex')
-                if (part && (md5sumHex === part.etag)) {
-                  // md5 matches, chunk already uploaded
-                  partsDone.push({part: partNumber, etag: part.etag})
-                  partNumber++
-                  uploadedSize += length
-                  return cb()
-                }
-                // part is not uploaded yet, or md5 mismatch
-                stream = fs.createReadStream(filePath, options)
-                uploader(uploadId, partNumber, stream, length,
-                         data.sha256sum, data.md5sum, (e, objInfo) => {
-                           if (e) return cb(e)
-                           partsDone.push({part: partNumber, etag: objInfo.etag})
-                           partNumber++
-                           uploadedSize += length
-                           return cb()
-                         })
-              })
-              .on('error', e => cb(e))
-          },
-          e => {
-            if (e) return cb(e)
-            cb(null, partsDone, uploadId)
-          }
-        )
-      },
-      // all parts uploaded, complete the multipart upload
-      (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb)
-    ], (err, ...rest) => {
-      if (err === true) return
-      callback(err, ...rest)
-    })
+    )
   }
 
   // Uploads the object.
@@ -1217,15 +1359,16 @@ export class Client {
 
     // Get the part size and forward that to the BlockStream. Default to the
     // largest block size possible if necessary.
-    if (!isNumber(size))
+    if (!isNumber(size)) {
       size = this.maxObjectSize
+    }
 
     size = this.calculatePartSize(size)
 
     // s3 requires that all non-end chunks be at least `this.partSize`,
     // so we chunk the stream until we hit either that size or the end before
     // we flush it to s3.
-    let chunker = new BlockStream2({size, zeroPadding: false})
+    let chunker = new BlockStream2({ size, zeroPadding: false })
 
     // This is a Writable stream that can be written to in order to upload
     // to the specified bucket and object automatically.
@@ -1263,7 +1406,7 @@ export class Client {
     if (!isString(srcObject)) {
       throw new TypeError('srcObject should be of type "string"')
     }
-    if (srcObject === "") {
+    if (srcObject === '') {
       throw new errors.InvalidPrefixError(`Empty source prefix`)
     }
 
@@ -1275,49 +1418,50 @@ export class Client {
     headers['x-amz-copy-source'] = uriResourceEscape(srcObject)
 
     if (conditions !== null) {
-      if (conditions.modified !== "") {
+      if (conditions.modified !== '') {
         headers['x-amz-copy-source-if-modified-since'] = conditions.modified
       }
-      if (conditions.unmodified !== "") {
+      if (conditions.unmodified !== '') {
         headers['x-amz-copy-source-if-unmodified-since'] = conditions.unmodified
       }
-      if (conditions.matchETag !== "") {
+      if (conditions.matchETag !== '') {
         headers['x-amz-copy-source-if-match'] = conditions.matchETag
       }
-      if (conditions.matchEtagExcept !== "") {
+      if (conditions.matchEtagExcept !== '') {
         headers['x-amz-copy-source-if-none-match'] = conditions.matchETagExcept
       }
     }
 
     var method = 'PUT'
-    this.makeRequest({method, bucketName, objectName, headers}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getCopyObjectTransformer()
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', data => cb(null, data))
+        .on('error', (e) => cb(e))
+        .on('data', (data) => cb(null, data))
     })
   }
 
   /**
-     * Internal Method to perform copy of an object.
-     * @param sourceConfig __object__   instance of CopySourceOptions @link ./helpers/CopySourceOptions
-     * @param destConfig  __object__   instance of CopyDestinationOptions @link ./helpers/CopyDestinationOptions
-     * @param cb __function__ called with null if there is an error
-     * @returns Promise if no callack is passed.
-     */
-  copyObjectV2(sourceConfig, destConfig, cb){
-
-    if(!(sourceConfig instanceof CopySourceOptions )){
+   * Internal Method to perform copy of an object.
+   * @param sourceConfig __object__   instance of CopySourceOptions @link ./helpers/CopySourceOptions
+   * @param destConfig  __object__   instance of CopyDestinationOptions @link ./helpers/CopyDestinationOptions
+   * @param cb __function__ called with null if there is an error
+   * @returns Promise if no callack is passed.
+   */
+  copyObjectV2(sourceConfig, destConfig, cb) {
+    if (!(sourceConfig instanceof CopySourceOptions)) {
       throw new errors.InvalidArgumentError('sourceConfig should of type CopySourceOptions ')
     }
-    if(!(destConfig instanceof CopyDestinationOptions )){
+    if (!(destConfig instanceof CopyDestinationOptions)) {
       throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
     }
-    if(!destConfig.validate()){
+    if (!destConfig.validate()) {
       return false
     }
-    if(!destConfig.validate()){
+    if (!destConfig.validate()) {
       return false
     }
     if (!isFunction(cb)) {
@@ -1326,16 +1470,18 @@ export class Client {
 
     const headers = Object.assign({}, sourceConfig.getHeaders(), destConfig.getHeaders())
 
-    const  bucketName = destConfig.Bucket
-    const objectName= destConfig.Object
+    const bucketName = destConfig.Bucket
+    const objectName = destConfig.Object
 
     const method = 'PUT'
-    this.makeRequest({method, bucketName, objectName, headers}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       const transformer = transformers.getCopyObjectTransformer()
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', data => {
+        .on('error', (e) => cb(e))
+        .on('data', (data) => {
           const resHeaders = response.headers
 
           const copyObjResponse = {
@@ -1343,13 +1489,13 @@ export class Client {
             Key: destConfig.Object,
             LastModified: data.LastModified,
             MetaData: extractMetadata(resHeaders),
-            VersionId:getVersionId(resHeaders),
-            SourceVersionId:getSourceVersionId(resHeaders),
-            Etag:sanitizeETag(resHeaders.etag),
-            Size: +resHeaders['content-length']
+            VersionId: getVersionId(resHeaders),
+            SourceVersionId: getSourceVersionId(resHeaders),
+            Etag: sanitizeETag(resHeaders.etag),
+            Size: +resHeaders['content-length'],
           }
 
-          return  cb(null, copyObjResponse)
+          return cb(null, copyObjResponse)
         })
     })
   }
@@ -1363,7 +1509,7 @@ export class Client {
   }
 
   // list a batch of objects
-  listObjectsQuery(bucketName, prefix, marker, listQueryOpts={}) {
+  listObjectsQuery(bucketName, prefix, marker, listQueryOpts = {}) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1373,11 +1519,7 @@ export class Client {
     if (!isString(marker)) {
       throw new TypeError('marker should be of type "string"')
     }
-    let{
-      Delimiter,
-      MaxKeys,
-      IncludeVersion,
-    } = listQueryOpts
+    let { Delimiter, MaxKeys, IncludeVersion } = listQueryOpts
 
     if (!isObject(listQueryOpts)) {
       throw new TypeError('listQueryOpts should be of type "object"')
@@ -1424,8 +1566,10 @@ export class Client {
 
     var method = 'GET'
     var transformer = transformers.getListObjectsTransformer()
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -1449,9 +1593,13 @@ export class Client {
   // * `obj.lastModified` _Date_: modified time stamp
   // * `obj.isDeleteMarker` _boolean_: true if it is a delete marker
   // * `obj.versionId` _string_: versionId of the object
-  listObjects(bucketName, prefix, recursive, listOpts={}) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
+  listObjects(bucketName, prefix, recursive, listOpts = {}) {
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1468,25 +1616,27 @@ export class Client {
       throw new TypeError('listOpts should be of type "object"')
     }
     var marker = ''
-    const listQueryOpts={
-      Delimiter:recursive ? '' : '/', // if recursive is false set delimiter to '/'
+    const listQueryOpts = {
+      Delimiter: recursive ? '' : '/', // if recursive is false set delimiter to '/'
       MaxKeys: 1000,
-      IncludeVersion:listOpts.IncludeVersion,
+      IncludeVersion: listOpts.IncludeVersion,
     }
     var objects = []
     var ended = false
-    var readStream = Stream.Readable({objectMode: true})
+    var readStream = Stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
         readStream.push(objects.shift())
         return
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsQuery(bucketName, prefix, marker, listQueryOpts)
-        .on('error', e => readStream.emit('error', e))
-        .on('data', result => {
+        .on('error', (e) => readStream.emit('error', e))
+        .on('data', (result) => {
           if (result.isTruncated) {
             marker = result.nextMarker || result.versionIdMarker
           } else {
@@ -1561,8 +1711,10 @@ export class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListObjectsV2Transformer()
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -1584,9 +1736,15 @@ export class Client {
   //   * `obj.etag` _string_: etag of the object
   //   * `obj.lastModified` _Date_: modified time stamp
   listObjectsV2(bucketName, prefix, recursive, startAfter) {
-    if (prefix === undefined) prefix = ''
-    if (recursive === undefined) recursive = false
-    if (startAfter === undefined) startAfter = ''
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (startAfter === undefined) {
+      startAfter = ''
+    }
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1607,18 +1765,20 @@ export class Client {
     var continuationToken = ''
     var objects = []
     var ended = false
-    var readStream = Stream.Readable({objectMode: true})
+    var readStream = Stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one object per _read()
       if (objects.length) {
         readStream.push(objects.shift())
         return
       }
-      if (ended) return readStream.push(null)
+      if (ended) {
+        return readStream.push(null)
+      }
       // if there are no objects to push do query for the next batch of objects
       this.listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
-        .on('error', e => readStream.emit('error', e))
-        .on('data', result => {
+        .on('error', (e) => readStream.emit('error', e))
+        .on('data', (result) => {
           if (result.isTruncated) {
             continuationToken = result.nextContinuationToken
           } else {
@@ -1643,7 +1803,7 @@ export class Client {
   //   * `stat.metaData` _string_: MetaData of the object
   //   * `stat.lastModified` _Date_: modified time stamp
   //   * `stat.versionId` _string_: version id of the object if available
-  statObject(bucketName, objectName, statOpts={}, cb) {
+  statObject(bucketName, objectName, statOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1653,10 +1813,10 @@ export class Client {
     // backward compatibility
     if (isFunction(statOpts)) {
       cb = statOpts
-      statOpts={}
+      statOpts = {}
     }
 
-    if(!isObject(statOpts)){
+    if (!isObject(statOpts)) {
       throw new errors.InvalidArgumentError('statOpts should be of type "object"')
     }
     if (!isFunction(cb)) {
@@ -1665,19 +1825,21 @@ export class Client {
 
     var query = querystring.stringify(statOpts)
     var method = 'HEAD'
-    this.makeRequest({method, bucketName, objectName, query},'' , [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       // We drain the socket so that the connection gets closed. Note that this
       // is not expensive as the socket will not have any data.
-      response.on('data', ()=>{})
+      response.on('data', () => {})
 
       const result = {
         size: +response.headers['content-length'],
         metaData: extractMetadata(response.headers),
         lastModified: new Date(response.headers['last-modified']),
-        versionId:getVersionId(response.headers),
-        etag:sanitizeETag(response.headers.etag)
+        versionId: getVersionId(response.headers),
+        etag: sanitizeETag(response.headers.etag),
       }
 
       cb(null, result)
@@ -1691,7 +1853,7 @@ export class Client {
   // * `objectName` _string_: name of the object
   // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false, forceDelete:true|false}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucketName, objectName, removeOpts={} , cb) {
+  removeObject(bucketName, objectName, removeOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1701,10 +1863,10 @@ export class Client {
     // backward compatibility
     if (isFunction(removeOpts)) {
       cb = removeOpts
-      removeOpts={}
+      removeOpts = {}
     }
 
-    if(!isObject(removeOpts)){
+    if (!isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
     if (!isFunction(cb)) {
@@ -1713,22 +1875,22 @@ export class Client {
     const method = 'DELETE'
     const queryParams = {}
 
-    if(removeOpts.versionId){
-      queryParams.versionId=`${removeOpts.versionId}`
+    if (removeOpts.versionId) {
+      queryParams.versionId = `${removeOpts.versionId}`
     }
     const headers = {}
-    if(removeOpts.governanceBypass){
-      headers["X-Amz-Bypass-Governance-Retention"]=true
+    if (removeOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
     }
-    if(removeOpts.forceDelete){
-      headers["x-minio-force-delete"]=true
+    if (removeOpts.forceDelete) {
+      headers['x-minio-force-delete'] = true
     }
 
-    const query = querystring.stringify( queryParams )
+    const query = querystring.stringify(queryParams)
 
-    let requestOptions = {method, bucketName, objectName, headers}
-    if(query){
-      requestOptions['query']=query
+    let requestOptions = { method, bucketName, objectName, headers }
+    if (query) {
+      requestOptions['query'] = query
     }
 
     this.makeRequest(requestOptions, '', [200, 204], '', false, cb)
@@ -1757,15 +1919,17 @@ export class Client {
     const query = 'delete'
     const method = 'POST'
 
-
-    let result = objectsList.reduce((result, entry) => {
-      result.list.push(entry)
-      if (result.list.length === maxEntries) {
-        result.listOfList.push(result.list)
-        result.list = []
-      }
-      return result
-    }, {listOfList: [], list:[]})
+    let result = objectsList.reduce(
+      (result, entry) => {
+        result.list.push(entry)
+        if (result.list.length === maxEntries) {
+          result.listOfList.push(result.list)
+          result.list = []
+        }
+        return result
+      },
+      { listOfList: [], list: [] },
+    )
 
     if (result.list.length > 0) {
       result.listOfList.push(result.list)
@@ -1774,44 +1938,48 @@ export class Client {
     const encoder = new TextEncoder()
     const batchResults = []
 
-    async.eachSeries(result.listOfList, (list, batchCb) => {
-      var objects=[]
-      list.forEach(function(value){
-        if (isObject(value)) {
-          objects.push({"Key": value.name,  "VersionId": value.versionId})
-        } else {
-          objects.push({"Key": value})
-        }
-      })
-      let deleteObjects = {"Delete": {"Quiet": true, "Object": objects}}
-      const builder = new xml2js.Builder({ headless: true })
-      let payload = builder.buildObject(deleteObjects)
-      payload = encoder.encode(payload)
-      const headers = {}
+    async.eachSeries(
+      result.listOfList,
+      (list, batchCb) => {
+        var objects = []
+        list.forEach(function (value) {
+          if (isObject(value)) {
+            objects.push({ Key: value.name, VersionId: value.versionId })
+          } else {
+            objects.push({ Key: value })
+          }
+        })
+        let deleteObjects = { Delete: { Quiet: true, Object: objects } }
+        const builder = new xml2js.Builder({ headless: true })
+        let payload = builder.buildObject(deleteObjects)
+        payload = encoder.encode(payload)
+        const headers = {}
 
-      headers['Content-MD5'] = toMd5(payload)
+        headers['Content-MD5'] = toMd5(payload)
 
-      let removeObjectsResult
-      this.makeRequest({ method, bucketName, query, headers}, payload, [200], '', true, (e, response) => {
-        if (e) return batchCb(e)
-        pipesetup(response, transformers.removeObjectsTransformer())
-          .on('data', data => {
-            removeObjectsResult = data
-          })
-          .on('error', (e)=>{
-            return batchCb(e, null)
-          })
-          .on('end', () => {
-            batchResults.push(removeObjectsResult)
-            return  batchCb(null, removeObjectsResult)
-          })
-      })
-    }, ()=> {
-      cb(null, _.flatten(batchResults))
-    }
+        let removeObjectsResult
+        this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', true, (e, response) => {
+          if (e) {
+            return batchCb(e)
+          }
+          pipesetup(response, transformers.removeObjectsTransformer())
+            .on('data', (data) => {
+              removeObjectsResult = data
+            })
+            .on('error', (e) => {
+              return batchCb(e, null)
+            })
+            .on('end', () => {
+              batchResults.push(removeObjectsResult)
+              return batchCb(null, removeObjectsResult)
+            })
+        })
+      },
+      () => {
+        cb(null, _.flatten(batchResults))
+      },
     )
   }
-
 
   // Get the policy on a bucket or an object prefix.
   //
@@ -1829,12 +1997,14 @@ export class Client {
 
     let method = 'GET'
     let query = 'policy'
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let policy = Buffer.from('')
       pipesetup(response, transformers.getConcater())
-        .on('data', data => policy = data)
+        .on('data', (data) => (policy = data))
         .on('error', cb)
         .on('end', () => {
           cb(null, policy.toString())
@@ -1867,7 +2037,7 @@ export class Client {
       method = 'PUT'
     }
 
-    this.makeRequest({method, bucketName, query}, policy, [204], '', false, cb)
+    this.makeRequest({ method, bucketName, query }, policy, [204], '', false, cb)
   }
 
   // Generate a generic presigned URL which can be
@@ -1913,20 +2083,25 @@ export class Client {
     }
     var query = querystring.stringify(reqParams)
     this.getBucketRegion(bucketName, (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       // This statement is added to ensure that we send error through
       // callback on presign failure.
       var url
-      var reqOptions = this.getRequestOptions({method,
-                                               region,
-                                               bucketName,
-                                               objectName,
-                                               query})
+      var reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query })
 
       this.checkAndRefreshCreds()
       try {
-        url = presignSignatureV4(reqOptions, this.accessKey, this.secretKey,
-                                 this.sessionToken, region, requestDate, expires)
+        url = presignSignatureV4(
+          reqOptions,
+          this.accessKey,
+          this.secretKey,
+          this.sessionToken,
+          region,
+          requestDate,
+          expires,
+        )
       } catch (pe) {
         return cb(pe)
       }
@@ -1956,10 +2131,16 @@ export class Client {
       requestDate = new Date()
     }
 
-    var validRespHeaders = ['response-content-type', 'response-content-language', 'response-expires', 'response-cache-control',
-                            'response-content-disposition', 'response-content-encoding']
-    validRespHeaders.forEach(header => {
-      if  (respHeaders !== undefined && respHeaders[header] !== undefined && !isString(respHeaders[header])) {
+    var validRespHeaders = [
+      'response-content-type',
+      'response-content-language',
+      'response-expires',
+      'response-cache-control',
+      'response-content-disposition',
+      'response-content-encoding',
+    ]
+    validRespHeaders.forEach((header) => {
+      if (respHeaders !== undefined && respHeaders[header] !== undefined && !isString(respHeaders[header])) {
         throw new TypeError(`response header ${header} should be of type "string"`)
       }
     })
@@ -2001,7 +2182,9 @@ export class Client {
       throw new TypeError('cb should be of type "function"')
     }
     this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       var date = new Date()
       var dateStr = makeDateLong(date)
 
@@ -2021,8 +2204,8 @@ export class Client {
       postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
       postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
 
-      postPolicy.policy.conditions.push(["eq", "$x-amz-credential", this.accessKey + "/" + getScope(region, date)])
-      postPolicy.formData['x-amz-credential'] = this.accessKey + "/" + getScope(region, date)
+      postPolicy.policy.conditions.push(['eq', '$x-amz-credential', this.accessKey + '/' + getScope(region, date)])
+      postPolicy.formData['x-amz-credential'] = this.accessKey + '/' + getScope(region, date)
 
       if (this.sessionToken) {
         postPolicy.policy.conditions.push(['eq', '$x-amz-security-token', this.sessionToken])
@@ -2040,9 +2223,9 @@ export class Client {
       opts.region = region
       opts.bucketName = postPolicy.formData.bucket
       var reqOptions = this.getRequestOptions(opts)
-      var portStr = (this.port == 80 || this.port === 443) ? '' : `:${this.port.toString()}`
+      var portStr = this.port == 80 || this.port === 443 ? '' : `:${this.port.toString()}`
       var urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
-      cb(null, {postURL: urlStr,formData: postPolicy.formData})
+      cb(null, { postURL: urlStr, formData: postPolicy.formData })
     })
   }
 
@@ -2062,12 +2245,14 @@ export class Client {
     var method = 'POST'
     let headers = Object.assign({}, metaData)
     var query = 'uploads'
-    this.makeRequest({method, bucketName, objectName, query, headers}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query, headers }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getInitiateMultipartTransformer()
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', uploadId => cb(null, uploadId))
+        .on('error', (e) => cb(e))
+        .on('data', (uploadId) => cb(null, uploadId))
     })
   }
 
@@ -2099,32 +2284,37 @@ export class Client {
 
     var parts = []
 
-    etags.forEach(element => {
+    etags.forEach((element) => {
       parts.push({
-        Part: [{
-          PartNumber: element.part
-        }, {
-          ETag: element.etag
-        }]
+        Part: [
+          {
+            PartNumber: element.part,
+          },
+          {
+            ETag: element.etag,
+          },
+        ],
       })
     })
 
-    var payloadObject = {CompleteMultipartUpload: parts}
+    var payloadObject = { CompleteMultipartUpload: parts }
     var payload = Xml(payloadObject)
 
-    this.makeRequest({method, bucketName, objectName, query}, payload, [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getCompleteMultipartTransformer()
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', result => {
+        .on('error', (e) => cb(e))
+        .on('data', (result) => {
           if (result.errCode) {
             // Multipart Complete API returns an error XML after a 200 http status
             cb(new errors.S3Error(result.errMessage))
           } else {
             const completeMultipartResult = {
               etag: result.etag,
-              versionId:getVersionId(response.headers)
+              versionId: getVersionId(response.headers),
             }
             cb(null, completeMultipartResult)
           }
@@ -2191,12 +2381,14 @@ export class Client {
     query += `uploadId=${uriEscape(uploadId)}`
 
     var method = 'GET'
-    this.makeRequest({method, bucketName, objectName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getListPartsTransformer()
       pipesetup(response, transformer)
-        .on('error', e => cb(e))
-        .on('data', data => cb(null, data))
+        .on('error', (e) => cb(e))
+        .on('data', (data) => cb(null, data))
     })
   }
 
@@ -2239,8 +2431,10 @@ export class Client {
     }
     var method = 'GET'
     var transformer = transformers.getListMultipartTransformer()
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return transformer.emit('error', e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return transformer.emit('error', e)
+      }
       pipesetup(response, transformer)
     })
     return transformer
@@ -2260,12 +2454,11 @@ export class Client {
     var latestUpload
     var listNext = (keyMarker, uploadIdMarker) => {
       this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
-        .on('error', e => cb(e))
-        .on('data', result => {
-          result.uploads.forEach(upload => {
+        .on('error', (e) => cb(e))
+        .on('data', (result) => {
+          result.uploads.forEach((upload) => {
             if (upload.key === objectName) {
-              if (!latestUpload ||
-                (upload.initiated.getTime() > latestUpload.initiated.getTime())) {
+              if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
                 latestUpload = upload
                 return
               }
@@ -2275,7 +2468,9 @@ export class Client {
             listNext(result.nextKeyMarker, result.nextUploadIdMarker)
             return
           }
-          if (latestUpload) return cb(null, latestUpload.uploadId)
+          if (latestUpload) {
+            return cb(null, latestUpload.uploadId)
+          }
           cb(null, undefined)
         })
     }
@@ -2340,24 +2535,35 @@ export class Client {
     }
     var upload = (query, stream, length, sha256sum, md5sum, cb) => {
       var method = 'PUT'
-      let headers = {'Content-Length': length}
+      let headers = { 'Content-Length': length }
 
       if (!multipart) {
         headers = Object.assign({}, metaData, headers)
       }
 
-      if (!this.enableSHA256) headers['Content-MD5'] = md5sum
-      this.makeRequestStream({method, bucketName, objectName, query, headers},
-                             stream, sha256sum, [200], '', true, (e, response) => {
-                               if (e) return cb(e)
-                               const result = {
-                                 etag: sanitizeETag(response.headers.etag),
-                                 versionId:getVersionId(response.headers)
-                               }
-                               // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
-                               response.on('data', () => {})
-                               cb(null, result)
-                             })
+      if (!this.enableSHA256) {
+        headers['Content-MD5'] = md5sum
+      }
+      this.makeRequestStream(
+        { method, bucketName, objectName, query, headers },
+        stream,
+        sha256sum,
+        [200],
+        '',
+        true,
+        (e, response) => {
+          if (e) {
+            return cb(e)
+          }
+          const result = {
+            etag: sanitizeETag(response.headers.etag),
+            versionId: getVersionId(response.headers),
+          }
+          // Ignore the 'data' event so that the stream closes. (nodejs stream requirement)
+          response.on('data', () => {})
+          cb(null, result)
+        },
+      )
     }
     if (multipart) {
       return multipartUploader
@@ -2378,9 +2584,13 @@ export class Client {
     }
     var method = 'PUT'
     var query = 'notification'
-    var builder = new xml2js.Builder({rootName:'NotificationConfiguration', renderOpts:{'pretty':false}, headless:true})
+    var builder = new xml2js.Builder({
+      rootName: 'NotificationConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
     var payload = builder.buildObject(config)
-    this.makeRequest({method, bucketName, query}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
   }
 
   removeAllBucketNotification(bucketName, cb) {
@@ -2398,13 +2608,15 @@ export class Client {
     }
     var method = 'GET'
     var query = 'notification'
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
       var transformer = transformers.getBucketNotificationTransformer()
       var bucketNotification
       pipesetup(response, transformer)
-        .on('data', result => bucketNotification = result)
-        .on('error', e => cb(e))
+        .on('data', (result) => (bucketNotification = result))
+        .on('error', (e) => cb(e))
         .on('end', () => cb(null, bucketNotification))
     })
   }
@@ -2429,7 +2641,7 @@ export class Client {
     return listener
   }
 
-  getBucketVersioning(bucketName,cb) {
+  getBucketVersioning(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2437,14 +2649,16 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     var method = 'GET'
-    var query = "versioning"
+    var query = 'versioning'
 
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let versionConfig = Buffer.from('')
       pipesetup(response, transformers.bucketVersioningTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           versionConfig = data
         })
         .on('error', cb)
@@ -2454,11 +2668,11 @@ export class Client {
     })
   }
 
-  setBucketVersioning(bucketName,versionConfig, cb) {
+  setBucketVersioning(bucketName, versionConfig, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if(!Object.keys(versionConfig).length){
+    if (!Object.keys(versionConfig).length) {
       throw new errors.InvalidArgumentError('versionConfig should be of type "object"')
     }
     if (!isFunction(cb)) {
@@ -2466,57 +2680,59 @@ export class Client {
     }
 
     var method = 'PUT'
-    var query = "versioning"
-    var builder = new xml2js.Builder({rootName:'VersioningConfiguration', renderOpts:{'pretty':false}, headless:true})
+    var query = 'versioning'
+    var builder = new xml2js.Builder({
+      rootName: 'VersioningConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
     var payload = builder.buildObject(versionConfig)
 
-    this.makeRequest({method, bucketName, query}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
   }
 
   /** To set Tags on a bucket or object based on the params
-     *  __Arguments__
-     * taggingParams _object_ Which contains the following properties
-     *  bucketName _string_,
-     *  objectName _string_ (Optional),
-     *  tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
-     *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
-     *  cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-     */
-  setTagging(taggingParams){
-
-    const { bucketName, objectName, tags, putOpts={}, cb} = taggingParams
+   *  __Arguments__
+   * taggingParams _object_ Which contains the following properties
+   *  bucketName _string_,
+   *  objectName _string_ (Optional),
+   *  tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
+   *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
+   *  cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
+   */
+  setTagging(taggingParams) {
+    const { bucketName, objectName, tags, putOpts = {}, cb } = taggingParams
     const method = 'PUT'
-    let query ="tagging"
+    let query = 'tagging'
 
-    if(putOpts && putOpts.versionId){
-      query =`${query}&versionId=${putOpts.versionId}`
+    if (putOpts && putOpts.versionId) {
+      query = `${query}&versionId=${putOpts.versionId}`
     }
-    const tagsList=[]
+    const tagsList = []
     for (const [key, value] of Object.entries(tags)) {
-      tagsList.push( { Key: key, Value: value} )
+      tagsList.push({ Key: key, Value: value })
     }
     const taggingConfig = {
       Tagging: {
         TagSet: {
-          Tag: tagsList
-        }
-      }
+          Tag: tagsList,
+        },
+      },
     }
     const encoder = new TextEncoder()
-    const headers ={}
-    const builder = new xml2js.Builder({ headless:true,renderOpts:{'pretty':false},})
+    const headers = {}
+    const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
     let payload = builder.buildObject(taggingConfig)
     payload = encoder.encode(payload)
     headers['Content-MD5'] = toMd5(payload)
     const requestOptions = { method, bucketName, query, headers }
 
-    if(objectName){
-      requestOptions['objectName']=objectName
+    if (objectName) {
+      requestOptions['objectName'] = objectName
     }
     headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest(requestOptions, payload, [200], '', false, cb)
-
   }
 
   /** Set Tags on a Bucket
@@ -2525,21 +2741,21 @@ export class Client {
    * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  setBucketTagging(bucketName,tags,cb){
+  setBucketTagging(bucketName, tags, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if(!isObject(tags)){
+    if (!isObject(tags)) {
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
-    if(Object.keys(tags).length > 10){
+    if (Object.keys(tags).length > 10) {
       throw new errors.InvalidArgumentError('maximum tags allowed is 10"')
     }
     if (!isFunction(cb)) {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
 
-    return this.setTagging({bucketName, tags, cb})
+    return this.setTagging({ bucketName, tags, cb })
   }
 
   /** Set Tags on an Object
@@ -2550,7 +2766,7 @@ export class Client {
    *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  setObjectTagging(bucketName, objectName, tags, putOpts={}, cb){
+  setObjectTagging(bucketName, objectName, tags, putOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2558,22 +2774,22 @@ export class Client {
       throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
     }
 
-    if(isFunction(putOpts)){
-      cb=putOpts
-      putOpts={}
+    if (isFunction(putOpts)) {
+      cb = putOpts
+      putOpts = {}
     }
 
-    if(!isObject(tags)){
+    if (!isObject(tags)) {
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
-    if(Object.keys(tags).length > 10){
+    if (Object.keys(tags).length > 10) {
       throw new errors.InvalidArgumentError('Maximum tags allowed is 10"')
     }
 
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    return this.setTagging({bucketName, objectName, tags, putOpts, cb})
+    return this.setTagging({ bucketName, objectName, tags, putOpts, cb })
   }
 
   /** Remove Tags on an Bucket/Object based on params
@@ -2583,12 +2799,12 @@ export class Client {
    * removeOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  removeTagging({bucketName, objectName, removeOpts, cb}){
+  removeTagging({ bucketName, objectName, removeOpts, cb }) {
     const method = 'DELETE'
-    let query ="tagging"
+    let query = 'tagging'
 
     if (removeOpts && Object.keys(removeOpts).length && removeOpts.versionId) {
-      query =`${query}&versionId=${removeOpts.versionId}`
+      query = `${query}&versionId=${removeOpts.versionId}`
     }
     const requestOptions = { method, bucketName, objectName, query }
 
@@ -2603,14 +2819,14 @@ export class Client {
    * bucketName _string_
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  removeBucketTagging(bucketName, cb){
+  removeBucketTagging(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    return this.removeTagging({bucketName, cb})
+    return this.removeTagging({ bucketName, cb })
   }
 
   /** Remove tags associated with an object
@@ -2620,19 +2836,18 @@ export class Client {
    * removeOpts _object_ (Optional) e.g. {VersionID:"my-object-version-id"}
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  removeObjectTagging(bucketName, objectName, removeOpts, cb){
-
+  removeObjectTagging(bucketName, objectName, removeOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
     }
-    if(isFunction(removeOpts)){
-      cb=removeOpts
-      removeOpts={}
+    if (isFunction(removeOpts)) {
+      cb = removeOpts
+      removeOpts = {}
     }
-    if(removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)){
+    if (removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
 
@@ -2640,7 +2855,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
 
-    return this.removeTagging({bucketName, objectName, removeOpts, cb})
+    return this.removeTagging({ bucketName, objectName, removeOpts, cb })
   }
 
   /** Get Tags associated with a Bucket
@@ -2648,18 +2863,20 @@ export class Client {
    * bucketName _string_
    * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  getBucketTagging(bucketName, cb){
+  getBucketTagging(bucketName, cb) {
     const method = 'GET'
-    const query ="tagging"
+    const query = 'tagging'
     const requestOptions = { method, bucketName, query }
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       var transformer = transformers.getTagsTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let tagsList
       pipesetup(response, transformer)
-        .on('data', result => tagsList = result)
-        .on('error', e => cb(e))
+        .on('data', (result) => (tagsList = result))
+        .on('error', (e) => cb(e))
         .on('end', () => cb(null, tagsList))
     })
   }
@@ -2670,45 +2887,46 @@ export class Client {
    * getOpts _object_ (Optional) e.g {versionId:"my-object-version-id"}
    * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  getObjectTagging(bucketName, objectName, getOpts={}, cb=()=>false){
+  getObjectTagging(bucketName, objectName, getOpts = {}, cb = () => false) {
     const method = 'GET'
-    let query ="tagging"
+    let query = 'tagging'
 
-    if(!isValidBucketName(bucketName)) {
+    if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if(!isValidObjectName(objectName)) {
+    if (!isValidObjectName(objectName)) {
       throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
     }
-    if(isFunction(getOpts)){
-      cb=getOpts
-      getOpts={}
+    if (isFunction(getOpts)) {
+      cb = getOpts
+      getOpts = {}
     }
-    if(!isObject(getOpts)){
+    if (!isObject(getOpts)) {
       throw new errors.InvalidArgumentError('getOpts should be of type "object"')
     }
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
-    if(getOpts && getOpts.versionId){
-      query =`${query}&versionId=${getOpts.versionId}`
+    if (getOpts && getOpts.versionId) {
+      query = `${query}&versionId=${getOpts.versionId}`
     }
     const requestOptions = { method, bucketName, query }
-    if(objectName){
-      requestOptions['objectName']=objectName
+    if (objectName) {
+      requestOptions['objectName'] = objectName
     }
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.getTagsTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let tagsList
       pipesetup(response, transformer)
-        .on('data', result => tagsList = result)
-        .on('error', e => cb(e))
+        .on('data', (result) => (tagsList = result))
+        .on('error', (e) => cb(e))
         .on('end', () => cb(null, tagsList))
     })
-
   }
 
   /** Put lifecycle configuration on a bucket.
@@ -2717,13 +2935,17 @@ export class Client {
    * policyConfig _object_ a valid policy configuration object.
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  applyBucketLifecycle(bucketName, policyConfig, cb){
+  applyBucketLifecycle(bucketName, policyConfig, cb) {
     const method = 'PUT'
-    const query="lifecycle"
+    const query = 'lifecycle'
 
     const encoder = new TextEncoder()
-    const headers ={}
-    const builder = new xml2js.Builder({ rootName:'LifecycleConfiguration', headless:true, renderOpts:{'pretty':false},})
+    const headers = {}
+    const builder = new xml2js.Builder({
+      rootName: 'LifecycleConfiguration',
+      headless: true,
+      renderOpts: { pretty: false },
+    })
     let payload = builder.buildObject(policyConfig)
     payload = encoder.encode(payload)
     const requestOptions = { method, bucketName, query, headers }
@@ -2736,13 +2958,13 @@ export class Client {
    * bucketName _string_
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  removeBucketLifecycle(bucketName, cb){
+  removeBucketLifecycle(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     const method = 'DELETE'
-    const query="lifecycle"
-    this.makeRequest({method, bucketName, query}, '', [204], '', false, cb)
+    const query = 'lifecycle'
+    this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
 
   /** Set/Override lifecycle configuration on a bucket. if the configuration is empty, it removes the configuration.
@@ -2750,13 +2972,13 @@ export class Client {
    * lifeCycleConfig _object_ one of the following values: (null or '') to remove the lifecycle configuration. or a valid lifecycle configuration
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
-  setBucketLifecycle(bucketName, lifeCycleConfig=null, cb){
+  setBucketLifecycle(bucketName, lifeCycleConfig = null, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if(_.isEmpty(lifeCycleConfig)){
+    if (_.isEmpty(lifeCycleConfig)) {
       this.removeBucketLifecycle(bucketName, cb)
-    }else {
+    } else {
       this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
     }
   }
@@ -2765,28 +2987,28 @@ export class Client {
    * bucketName _string_
    * `cb(config)` _function_ - callback function with lifecycle configuration as the error argument.
    */
-  getBucketLifecycle(bucketName, cb){
+  getBucketLifecycle(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     const method = 'GET'
-    const query ="lifecycle"
+    const query = 'lifecycle'
     const requestOptions = { method, bucketName, query }
 
     this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       const transformer = transformers.lifecycleTransformer()
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       let lifecycleConfig
       pipesetup(response, transformer)
-        .on('data', result => lifecycleConfig = result)
-        .on('error', e => cb(e))
+        .on('data', (result) => (lifecycleConfig = result))
+        .on('error', (e) => cb(e))
         .on('end', () => cb(null, lifecycleConfig))
     })
-
   }
 
-  setObjectLockConfig(bucketName, lockConfigOpts={}, cb) {
-
+  setObjectLockConfig(bucketName, lockConfigOpts = {}, cb) {
     const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
     const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
 
@@ -2797,27 +3019,29 @@ export class Client {
     if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
       throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
     }
-    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)){
+    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
       throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
     }
-    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)){
+    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)) {
       throw new TypeError(`lockConfigOpts.validity should be a number`)
     }
 
     const method = 'PUT'
-    const query = "object-lock"
+    const query = 'object-lock'
 
-    let config={
-      ObjectLockEnabled:"Enabled"
+    let config = {
+      ObjectLockEnabled: 'Enabled',
     }
     const configKeys = Object.keys(lockConfigOpts)
     // Check if keys are present and all keys are present.
-    if(configKeys.length > 0){
-      if(_.difference(configKeys, ['unit','mode','validity']).length !== 0){
-        throw new TypeError(`lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`)
+    if (configKeys.length > 0) {
+      if (_.difference(configKeys, ['unit', 'mode', 'validity']).length !== 0) {
+        throw new TypeError(
+          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`,
+        )
       } else {
-        config.Rule={
-          DefaultRetention:{}
+        config.Rule = {
+          DefaultRetention: {},
         }
         if (lockConfigOpts.mode) {
           config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
@@ -2830,13 +3054,17 @@ export class Client {
       }
     }
 
-    const builder = new xml2js.Builder({rootName:'ObjectLockConfiguration', renderOpts:{'pretty':false}, headless:true})
+    const builder = new xml2js.Builder({
+      rootName: 'ObjectLockConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
     const payload = builder.buildObject(config)
 
     const headers = {}
-    headers['Content-MD5'] =toMd5(payload)
+    headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest({method, bucketName, query, headers}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
 
   getObjectLockConfig(bucketName, cb) {
@@ -2847,14 +3075,16 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     const method = 'GET'
-    const query = "object-lock"
+    const query = 'object-lock'
 
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let objectLockConfig = Buffer.from('')
       pipesetup(response, transformers.objectLockTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           objectLockConfig = data
         })
         .on('error', cb)
@@ -2864,7 +3094,7 @@ export class Client {
     })
   }
 
-  putObjectRetention(bucketName, objectName, retentionOpts={}, cb) {
+  putObjectRetention(bucketName, objectName, retentionOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2875,16 +3105,19 @@ export class Client {
       throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
     } else {
       if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
-        throw new errors.InvalidArgumentError('Invalid value for governanceBypass',retentionOpts.governanceBypass)
+        throw new errors.InvalidArgumentError('Invalid value for governanceBypass', retentionOpts.governanceBypass)
       }
-      if (retentionOpts.mode && ![RETENTION_MODES.COMPLIANCE,RETENTION_MODES.GOVERNANCE].includes((retentionOpts.mode))) {
+      if (
+        retentionOpts.mode &&
+        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
+      ) {
         throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
       }
       if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
-        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate',retentionOpts.retainUntilDate)
+        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
       }
       if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
-        throw new errors.InvalidArgumentError('Invalid value for versionId',retentionOpts.versionId)
+        throw new errors.InvalidArgumentError('Invalid value for versionId', retentionOpts.versionId)
       }
     }
     if (!isFunction(cb)) {
@@ -2892,59 +3125,61 @@ export class Client {
     }
 
     const method = 'PUT'
-    let query = "retention"
+    let query = 'retention'
 
     const headers = {}
-    if(retentionOpts.governanceBypass){
-      headers["X-Amz-Bypass-Governance-Retention"]=true
+    if (retentionOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
     }
 
-    const builder = new xml2js.Builder({rootName:'Retention', renderOpts:{'pretty':false}, headless:true})
-    const params ={}
+    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
+    const params = {}
 
-    if(retentionOpts.mode){
-      params.Mode =retentionOpts.mode
+    if (retentionOpts.mode) {
+      params.Mode = retentionOpts.mode
     }
-    if(retentionOpts.retainUntilDate){
-      params.RetainUntilDate =retentionOpts.retainUntilDate
+    if (retentionOpts.retainUntilDate) {
+      params.RetainUntilDate = retentionOpts.retainUntilDate
     }
-    if(retentionOpts.versionId){
+    if (retentionOpts.versionId) {
       query += `&versionId=${retentionOpts.versionId}`
     }
 
     let payload = builder.buildObject(params)
 
     headers['Content-MD5'] = toMd5(payload)
-    this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200, 204], '', false, cb)
+    this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200, 204], '', false, cb)
   }
 
-  getObjectRetention(bucketName ,objectName, getOpts, cb) {
+  getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if(!isObject(getOpts)){
+    if (!isObject(getOpts)) {
       throw new errors.InvalidArgumentError('callback should be of type "object"')
-    }else if(getOpts.versionId && !isString(getOpts.versionId)){
+    } else if (getOpts.versionId && !isString(getOpts.versionId)) {
       throw new errors.InvalidArgumentError('VersionID should be of type "string"')
     }
     if (cb && !isFunction(cb)) {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     const method = 'GET'
-    let query = "retention"
-    if(getOpts.versionId){
+    let query = 'retention'
+    if (getOpts.versionId) {
       query += `&versionId=${getOpts.versionId}`
     }
 
-    this.makeRequest({method, bucketName,objectName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let retentionConfig = Buffer.from('')
       pipesetup(response, transformers.objectRetentionTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           retentionConfig = data
         })
         .on('error', cb)
@@ -2954,47 +3189,50 @@ export class Client {
     })
   }
 
-
   setBucketEncryption(bucketName, encryptionConfig, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
-    if(isFunction(encryptionConfig)){
-      cb= encryptionConfig
+    if (isFunction(encryptionConfig)) {
+      cb = encryptionConfig
       encryptionConfig = null
     }
 
-    if(!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length >1){
+    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
       throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
     }
     if (cb && !isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
-    let encryptionObj =encryptionConfig
-    if(_.isEmpty(encryptionConfig)) {
-      encryptionObj={
-      // Default MinIO Server Supported Rule
-        Rule:[
+    let encryptionObj = encryptionConfig
+    if (_.isEmpty(encryptionConfig)) {
+      encryptionObj = {
+        // Default MinIO Server Supported Rule
+        Rule: [
           {
             ApplyServerSideEncryptionByDefault: {
-              SSEAlgorithm:"AES256"
-            }
-          }
-        ]
-
-      }}
+              SSEAlgorithm: 'AES256',
+            },
+          },
+        ],
+      }
+    }
 
     let method = 'PUT'
-    let query = "encryption"
-    let builder = new xml2js.Builder({rootName:'ServerSideEncryptionConfiguration', renderOpts:{'pretty':false}, headless:true})
+    let query = 'encryption'
+    let builder = new xml2js.Builder({
+      rootName: 'ServerSideEncryptionConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
     let payload = builder.buildObject(encryptionObj)
 
     const headers = {}
-    headers['Content-MD5'] =toMd5(payload)
+    headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest({method, bucketName, query,headers}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
 
   getBucketEncryption(bucketName, cb) {
@@ -3005,14 +3243,16 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     const method = 'GET'
-    const query = "encryption"
+    const query = 'encryption'
 
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let bucketEncConfig = Buffer.from('')
       pipesetup(response, transformers.bucketEncryptionTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           bucketEncConfig = data
         })
         .on('error', cb)
@@ -3029,13 +3269,12 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     const method = 'DELETE'
-    const query = "encryption"
+    const query = 'encryption'
 
-    this.makeRequest({method, bucketName, query}, '', [204], '', false, cb)
+    this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
 
-
-  setBucketReplication(bucketName, replicationConfig={}, cb) {
+  setBucketReplication(bucketName, replicationConfig = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -3044,7 +3283,7 @@ export class Client {
     } else {
       if (_.isEmpty(replicationConfig.role)) {
         throw new errors.InvalidArgumentError('Role cannot be empty')
-      }else if (replicationConfig.role && !isString(replicationConfig.role)) {
+      } else if (replicationConfig.role && !isString(replicationConfig.role)) {
         throw new errors.InvalidArgumentError('Invalid value for role', replicationConfig.role)
       }
       if (_.isEmpty(replicationConfig.rules)) {
@@ -3056,23 +3295,23 @@ export class Client {
     }
 
     const method = 'PUT'
-    let query = "replication"
+    let query = 'replication'
     const headers = {}
 
     const replicationParamsConfig = {
       ReplicationConfiguration: {
         Role: replicationConfig.role,
-        Rule: replicationConfig.rules
-      }
+        Rule: replicationConfig.rules,
+      },
     }
 
-    const builder =  new xml2js.Builder({ renderOpts:{'pretty':false},headless: true })
+    const builder = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
     let payload = builder.buildObject(replicationParamsConfig)
 
-    headers['Content-MD5'] =toMd5(payload)
+    headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest({method, bucketName,  query, headers}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
 
   getBucketReplication(bucketName, cb) {
@@ -3083,14 +3322,16 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
     const method = 'GET'
-    const query = "replication"
+    const query = 'replication'
 
-    this.makeRequest({method, bucketName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let replicationConfig = Buffer.from('')
       pipesetup(response, transformers.replicationConfigTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           replicationConfig = data
         })
         .on('error', cb)
@@ -3100,17 +3341,16 @@ export class Client {
     })
   }
 
-  removeBucketReplication(bucketName, cb){
+  removeBucketReplication(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     const method = 'DELETE'
-    const query="replication"
-    this.makeRequest({method, bucketName, query}, '', [200, 204], '', false, cb)
+    const query = 'replication'
+    this.makeRequest({ method, bucketName, query }, '', [200, 204], '', false, cb)
   }
 
-
-  getObjectLegalHold(bucketName, objectName, getOpts={}, cb){
+  getObjectLegalHold(bucketName, objectName, getOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -3118,35 +3358,36 @@ export class Client {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    if(isFunction(getOpts)){
-      cb= getOpts
+    if (isFunction(getOpts)) {
+      cb = getOpts
       getOpts = {}
     }
 
-    if (!isObject(getOpts))  {
+    if (!isObject(getOpts)) {
       throw new TypeError('getOpts should be of type "Object"')
-    } else if(Object.keys(getOpts).length> 0 && getOpts.versionId && !isString((getOpts.versionId))){
-      throw new TypeError('versionId should be of type string.:',getOpts.versionId )
+    } else if (Object.keys(getOpts).length > 0 && getOpts.versionId && !isString(getOpts.versionId)) {
+      throw new TypeError('versionId should be of type string.:', getOpts.versionId)
     }
-
 
     if (!isFunction(cb)) {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
 
     const method = 'GET'
-    let query = "legal-hold"
+    let query = 'legal-hold'
 
-    if (getOpts.versionId){
-      query +=`&versionId=${getOpts.versionId}`
+    if (getOpts.versionId) {
+      query += `&versionId=${getOpts.versionId}`
     }
 
-    this.makeRequest({method, bucketName, objectName, query}, '', [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let legalHoldConfig = Buffer.from('')
       pipesetup(response, transformers.objectLegalHoldTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           legalHoldConfig = data
         })
         .on('error', cb)
@@ -3154,10 +3395,9 @@ export class Client {
           cb(null, legalHoldConfig)
         })
     })
-
   }
 
-  setObjectLegalHold(bucketName, objectName, setOpts={}, cb){
+  setObjectLegalHold(bucketName, objectName, setOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -3166,22 +3406,21 @@ export class Client {
     }
 
     const defaultOpts = {
-      status:LEGAL_HOLD_STATUS.ENABLED
+      status: LEGAL_HOLD_STATUS.ENABLED,
     }
-    if(isFunction(setOpts)){
-      cb= setOpts
-      setOpts =defaultOpts
+    if (isFunction(setOpts)) {
+      cb = setOpts
+      setOpts = defaultOpts
     }
 
     if (!isObject(setOpts)) {
       throw new TypeError('setOpts should be of type "Object"')
-    }else {
-
-      if(![LEGAL_HOLD_STATUS.ENABLED, LEGAL_HOLD_STATUS.DISABLED].includes((setOpts.status))){
-        throw new TypeError('Invalid status: '+setOpts.status )
+    } else {
+      if (![LEGAL_HOLD_STATUS.ENABLED, LEGAL_HOLD_STATUS.DISABLED].includes(setOpts.status)) {
+        throw new TypeError('Invalid status: ' + setOpts.status)
       }
-      if(setOpts.versionId && !setOpts.versionId.length){
-        throw new TypeError('versionId should be of type string.:'+ setOpts.versionId )
+      if (setOpts.versionId && !setOpts.versionId.length) {
+        throw new TypeError('versionId should be of type string.:' + setOpts.versionId)
       }
     }
 
@@ -3189,315 +3428,309 @@ export class Client {
       throw new errors.InvalidArgumentError('callback should be of type "function"')
     }
 
-    if( _.isEmpty(setOpts)){
-      setOpts={
-        defaultOpts
+    if (_.isEmpty(setOpts)) {
+      setOpts = {
+        defaultOpts,
       }
     }
 
     const method = 'PUT'
-    let query = "legal-hold"
+    let query = 'legal-hold'
 
-    if (setOpts.versionId){
-      query +=`&versionId=${setOpts.versionId}`
+    if (setOpts.versionId) {
+      query += `&versionId=${setOpts.versionId}`
     }
 
-    let config={
-      Status: setOpts.status
+    let config = {
+      Status: setOpts.status,
     }
 
-    const builder = new xml2js.Builder({rootName:'LegalHold', renderOpts:{'pretty':false}, headless:true})
+    const builder = new xml2js.Builder({ rootName: 'LegalHold', renderOpts: { pretty: false }, headless: true })
     const payload = builder.buildObject(config)
     const headers = {}
     headers['Content-MD5'] = toMd5(payload)
 
-    this.makeRequest({method, bucketName, objectName, query, headers}, payload, [200], '', false, cb)
+    this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200], '', false, cb)
   }
-  async setCredentialsProvider(credentialsProvider){
-    if(!(credentialsProvider instanceof CredentialProvider)){
-      throw new Error("Unable to get  credentials. Expected instance of CredentialProvider")
+  async setCredentialsProvider(credentialsProvider) {
+    if (!(credentialsProvider instanceof CredentialProvider)) {
+      throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
     }
     this.credentialsProvider = credentialsProvider
     await this.checkAndRefreshCreds()
   }
 
-  async checkAndRefreshCreds(){
-    if(this.credentialsProvider ) {
-      return  await this.fetchCredentials()
+  async checkAndRefreshCreds() {
+    if (this.credentialsProvider) {
+      return await this.fetchCredentials()
     }
   }
 
-  async fetchCredentials(){
-    if(this.credentialsProvider ){
+  async fetchCredentials() {
+    if (this.credentialsProvider) {
       const credentialsConf = await this.credentialsProvider.getCredentials()
-      if(credentialsConf) {
+      if (credentialsConf) {
         this.accessKey = credentialsConf.getAccessKey()
         this.secretKey = credentialsConf.getSecretKey()
         this.sessionToken = credentialsConf.getSessionToken()
-      }else{
-        throw new Error("Unable to get  credentials. Expected instance of BaseCredentialsProvider")
+      } else {
+        throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
       }
-    }else{
-      throw new Error("Unable to get  credentials. Expected instance of BaseCredentialsProvider")
+    } else {
+      throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
     }
   }
 
   /**
-     * Internal Method to abort a multipart upload request in case of any errors.
-     * @param bucketName __string__ Bucket Name
-     * @param objectName __string__ Object Name
-     * @param uploadId __string__ id of a multipart upload to cancel during compose object sequence.
-     * @param cb __function__ callback function
-     */
-  abortMultipartUpload(bucketName, objectName, uploadId, cb){
+   * Internal Method to abort a multipart upload request in case of any errors.
+   * @param bucketName __string__ Bucket Name
+   * @param objectName __string__ Object Name
+   * @param uploadId __string__ id of a multipart upload to cancel during compose object sequence.
+   * @param cb __function__ callback function
+   */
+  abortMultipartUpload(bucketName, objectName, uploadId, cb) {
     const method = 'DELETE'
-    let query =`uploadId=${uploadId}`
+    let query = `uploadId=${uploadId}`
 
-    const requestOptions = { method, bucketName, objectName:objectName, query }
+    const requestOptions = { method, bucketName, objectName: objectName, query }
     this.makeRequest(requestOptions, '', [204], '', false, cb)
   }
 
   /**
-     * Internal method to upload a part during compose object.
-     * @param partConfig __object__ contains the following.
-     *    bucketName __string__
-     *    objectName __string__
-     *    uploadID __string__
-     *    partNumber __number__
-     *    headers __object__
-     * @param cb called with null incase of error.
-     */
-  uploadPartCopy  (partConfig , cb) {
-    const {
-      bucketName, objectName, uploadID, partNumber , headers
-    } = partConfig
+   * Internal method to upload a part during compose object.
+   * @param partConfig __object__ contains the following.
+   *    bucketName __string__
+   *    objectName __string__
+   *    uploadID __string__
+   *    partNumber __number__
+   *    headers __object__
+   * @param cb called with null incase of error.
+   */
+  uploadPartCopy(partConfig, cb) {
+    const { bucketName, objectName, uploadID, partNumber, headers } = partConfig
 
     const method = 'PUT'
-    let query =`uploadId=${uploadID}&partNumber=${partNumber}`
-    const requestOptions = { method, bucketName, objectName:objectName, query, headers }
-    return this.makeRequest(requestOptions, '', [200], '', true,(e, response) => {
+    let query = `uploadId=${uploadID}&partNumber=${partNumber}`
+    const requestOptions = { method, bucketName, objectName: objectName, query, headers }
+    return this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
       let partCopyResult = Buffer.from('')
-      if (e) return cb(e)
+      if (e) {
+        return cb(e)
+      }
       pipesetup(response, transformers.uploadPartTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           partCopyResult = data
         })
         .on('error', cb)
         .on('end', () => {
           let uploadPartCopyRes = {
-            etag:sanitizeETag(partCopyResult.ETag),
-            key:objectName,
-            part:partNumber
+            etag: sanitizeETag(partCopyResult.ETag),
+            key: objectName,
+            part: partNumber,
           }
 
           cb(null, uploadPartCopyRes)
         })
-    }
-    )
+    })
   }
 
-  composeObject (destObjConfig={}, sourceObjList=[], cb){
+  composeObject(destObjConfig = {}, sourceObjList = [], cb) {
     const me = this // many async flows. so store the ref.
     const sourceFilesLength = sourceObjList.length
 
-    if(!(isArray(sourceObjList ))){
+    if (!isArray(sourceObjList)) {
       throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
     }
-    if(!(destObjConfig instanceof CopyDestinationOptions )){
+    if (!(destObjConfig instanceof CopyDestinationOptions)) {
       throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
     }
 
     if (sourceFilesLength < 1 || sourceFilesLength > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
-      throw new errors.InvalidArgumentError(`"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`)
+      throw new errors.InvalidArgumentError(
+        `"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`,
+      )
     }
 
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
 
-    for(let i=0;i<sourceFilesLength;i++){
-      if(!sourceObjList[i].validate()){
+    for (let i = 0; i < sourceFilesLength; i++) {
+      if (!sourceObjList[i].validate()) {
         return false
       }
     }
 
-    if(!destObjConfig.validate()){
+    if (!destObjConfig.validate()) {
       return false
     }
 
-    const getStatOptions = (srcConfig) =>{
+    const getStatOptions = (srcConfig) => {
       let statOpts = {}
-      if(!_.isEmpty(srcConfig.VersionID)) {
-        statOpts= {
-          versionId: srcConfig.VersionID
+      if (!_.isEmpty(srcConfig.VersionID)) {
+        statOpts = {
+          versionId: srcConfig.VersionID,
         }
       }
       return statOpts
     }
-    const srcObjectSizes=[]
-    let totalSize=0
-    let totalParts=0
+    const srcObjectSizes = []
+    let totalSize = 0
+    let totalParts = 0
 
-    const sourceObjStats = sourceObjList.map( (srcItem) =>  me.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem))  )
+    const sourceObjStats = sourceObjList.map((srcItem) =>
+      me.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem)),
+    )
 
-    return  Promise.all(sourceObjStats).then(srcObjectInfos =>{
+    return Promise.all(sourceObjStats)
+      .then((srcObjectInfos) => {
+        const validatedStats = srcObjectInfos.map((resItemStat, index) => {
+          const srcConfig = sourceObjList[index]
 
-      const validatedStats =  srcObjectInfos.map( (resItemStat, index)=>{
-
-        const srcConfig = sourceObjList[index]
-
-        let srcCopySize =resItemStat.size
-        // Check if a segment is specified, and if so, is the
-        // segment within object bounds?
-        if (srcConfig.MatchRange) {
-          // Since range is specified,
-          //    0 <= src.srcStart <= src.srcEnd
-          // so only invalid case to check is:
-          const srcStart = srcConfig.Start
-          const srcEnd = srcConfig.End
-          if (srcEnd >= srcCopySize || srcStart < 0 ){
-            throw new errors.InvalidArgumentError(`CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`)
-          }
-          srcCopySize = srcEnd - srcStart + 1
-        }
-
-        // Only the last source may be less than `absMinPartSize`
-        if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength-1) {
-          throw new errors.InvalidArgumentError(`CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`)
-        }
-
-        // Is data to copy too large?
-        totalSize += srcCopySize
-        if (totalSize > PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE) {
-          throw new errors.InvalidArgumentError(`Cannot compose an object of size ${totalSize} (> 5TiB)`)
-        }
-
-        // record source size
-        srcObjectSizes[index] = srcCopySize
-
-        // calculate parts needed for current source
-        totalParts += partsRequired(srcCopySize)
-        // Do we need more parts than we are allowed?
-        if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT  ){
-          throw new errors.InvalidArgumentError(`Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`)
-        }
-
-        return resItemStat
-
-      })
-
-      if ((totalParts === 1 && totalSize <= PART_CONSTRAINTS.MAX_PART_SIZE) || (totalSize === 0)) {
-        return this.copyObject( sourceObjList[0], destObjConfig, cb) // use copyObjectV2
-      }
-
-      // preserve etag to avoid modification of object while copying.
-      for(let i=0;i<sourceFilesLength;i++){
-        sourceObjList[i].MatchETag = validatedStats[i].etag
-      }
-
-      const splitPartSizeList = validatedStats.map((resItemStat, idx)=>{
-        const calSize = calculateEvenSplits(srcObjectSizes[idx], sourceObjList[idx])
-        return calSize
-
-      })
-
-      function getUploadPartConfigList (uploadId) {
-        const uploadPartConfigList = []
-
-        splitPartSizeList.forEach((splitSize, splitIndex) => {
-
-          const {
-            startIndex: startIdx,
-            endIndex: endIdx,
-            objInfo: objConfig,
-          } = splitSize
-
-          let partIndex = splitIndex + 1 // part index starts from 1.
-          const totalUploads = Array.from(startIdx)
-
-          const headers = sourceObjList[splitIndex].getHeaders()
-
-          totalUploads.forEach((splitStart, upldCtrIdx) => {
-            let splitEnd = endIdx[upldCtrIdx]
-
-            const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
-            headers['x-amz-copy-source'] = `${sourceObj}`
-            headers["x-amz-copy-source-range"] = `bytes=${splitStart}-${splitEnd}`
-
-            const uploadPartConfig = {
-              bucketName: destObjConfig.Bucket,
-              objectName: destObjConfig.Object,
-              uploadID: uploadId,
-              partNumber: partIndex,
-              headers: headers,
-              sourceObj: sourceObj
+          let srcCopySize = resItemStat.size
+          // Check if a segment is specified, and if so, is the
+          // segment within object bounds?
+          if (srcConfig.MatchRange) {
+            // Since range is specified,
+            //    0 <= src.srcStart <= src.srcEnd
+            // so only invalid case to check is:
+            const srcStart = srcConfig.Start
+            const srcEnd = srcConfig.End
+            if (srcEnd >= srcCopySize || srcStart < 0) {
+              throw new errors.InvalidArgumentError(
+                `CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`,
+              )
             }
+            srcCopySize = srcEnd - srcStart + 1
+          }
 
-            uploadPartConfigList.push(uploadPartConfig)
+          // Only the last source may be less than `absMinPartSize`
+          if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength - 1) {
+            throw new errors.InvalidArgumentError(
+              `CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`,
+            )
+          }
+
+          // Is data to copy too large?
+          totalSize += srcCopySize
+          if (totalSize > PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE) {
+            throw new errors.InvalidArgumentError(`Cannot compose an object of size ${totalSize} (> 5TiB)`)
+          }
+
+          // record source size
+          srcObjectSizes[index] = srcCopySize
+
+          // calculate parts needed for current source
+          totalParts += partsRequired(srcCopySize)
+          // Do we need more parts than we are allowed?
+          if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+            throw new errors.InvalidArgumentError(
+              `Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`,
+            )
+          }
+
+          return resItemStat
+        })
+
+        if ((totalParts === 1 && totalSize <= PART_CONSTRAINTS.MAX_PART_SIZE) || totalSize === 0) {
+          return this.copyObject(sourceObjList[0], destObjConfig, cb) // use copyObjectV2
+        }
+
+        // preserve etag to avoid modification of object while copying.
+        for (let i = 0; i < sourceFilesLength; i++) {
+          sourceObjList[i].MatchETag = validatedStats[i].etag
+        }
+
+        const splitPartSizeList = validatedStats.map((resItemStat, idx) => {
+          const calSize = calculateEvenSplits(srcObjectSizes[idx], sourceObjList[idx])
+          return calSize
+        })
+
+        function getUploadPartConfigList(uploadId) {
+          const uploadPartConfigList = []
+
+          splitPartSizeList.forEach((splitSize, splitIndex) => {
+            const { startIndex: startIdx, endIndex: endIdx, objInfo: objConfig } = splitSize
+
+            let partIndex = splitIndex + 1 // part index starts from 1.
+            const totalUploads = Array.from(startIdx)
+
+            const headers = sourceObjList[splitIndex].getHeaders()
+
+            totalUploads.forEach((splitStart, upldCtrIdx) => {
+              let splitEnd = endIdx[upldCtrIdx]
+
+              const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
+              headers['x-amz-copy-source'] = `${sourceObj}`
+              headers['x-amz-copy-source-range'] = `bytes=${splitStart}-${splitEnd}`
+
+              const uploadPartConfig = {
+                bucketName: destObjConfig.Bucket,
+                objectName: destObjConfig.Object,
+                uploadID: uploadId,
+                partNumber: partIndex,
+                headers: headers,
+                sourceObj: sourceObj,
+              }
+
+              uploadPartConfigList.push(uploadPartConfig)
+            })
           })
 
-        })
-
-        return uploadPartConfigList
-      }
-
-      const performUploadParts = (uploadId) =>{
-
-        const uploadList = getUploadPartConfigList(uploadId)
-
-        async.map(uploadList, me.uploadPartCopy.bind(me), (err, res)=>{
-          if(err){
-            return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, cb)
-          }
-          const partsDone = res.map((partCopy)=>({etag:partCopy.etag, part:partCopy.part}))
-          return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
-        })
-
-      }
-
-      const newUploadHeaders = destObjConfig.getHeaders()
-
-      me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders, (err, uploadId)=>{
-        if(err){
-          return cb(err, null)
+          return uploadPartConfigList
         }
-        performUploadParts(uploadId)
-      })
 
-    })
-      .catch((error)=>{
+        const performUploadParts = (uploadId) => {
+          const uploadList = getUploadPartConfigList(uploadId)
+
+          async.map(uploadList, me.uploadPartCopy.bind(me), (err, res) => {
+            if (err) {
+              return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, cb)
+            }
+            const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
+            return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
+          })
+        }
+
+        const newUploadHeaders = destObjConfig.getHeaders()
+
+        me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders, (err, uploadId) => {
+          if (err) {
+            return cb(err, null)
+          }
+          performUploadParts(uploadId)
+        })
+      })
+      .catch((error) => {
         cb(error, null)
       })
-
   }
-  selectObjectContent(bucketName, objectName, selectOpts={}, cb) {
+  selectObjectContent(bucketName, objectName, selectOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if(!_.isEmpty(selectOpts)){
-
+    if (!_.isEmpty(selectOpts)) {
       if (!isString(selectOpts.expression)) {
         throw new TypeError('sqlExpression should be of type "string"')
       }
-      if(!_.isEmpty(selectOpts.inputSerialization)) {
+      if (!_.isEmpty(selectOpts.inputSerialization)) {
         if (!isObject(selectOpts.inputSerialization)) {
           throw new TypeError('inputSerialization should be of type "object"')
         }
-      }else{
+      } else {
         throw new TypeError('inputSerialization is required')
       }
-      if(!_.isEmpty(selectOpts.outputSerialization)) {
+      if (!_.isEmpty(selectOpts.outputSerialization)) {
         if (!isObject(selectOpts.outputSerialization)) {
           throw new TypeError('outputSerialization should be of type "object"')
         }
-      }else{
+      } else {
         throw new TypeError('outputSerialization is required')
       }
-
-    }else{
+    } else {
       throw new TypeError('valid select configuration is required')
     }
 
@@ -3507,48 +3740,47 @@ export class Client {
 
     const method = 'POST'
     let query = `select`
-    query += "&select-type=2"
+    query += '&select-type=2'
 
     const config = [
       {
-        "Expression": selectOpts.expression
+        Expression: selectOpts.expression,
       },
       {
-        "ExpressionType":selectOpts.expressionType || "SQL"
+        ExpressionType: selectOpts.expressionType || 'SQL',
       },
       {
-        "InputSerialization": [selectOpts.inputSerialization]
+        InputSerialization: [selectOpts.inputSerialization],
       },
       {
-        "OutputSerialization": [selectOpts.outputSerialization]
-      }
+        OutputSerialization: [selectOpts.outputSerialization],
+      },
     ]
 
     // Optional
-    if(selectOpts.requestProgress){
-      config.push(
-        {"RequestProgress":selectOpts.requestProgress}
-      )
+    if (selectOpts.requestProgress) {
+      config.push({ RequestProgress: selectOpts.requestProgress })
     }
     // Optional
-    if(selectOpts.scanRange){
-      config.push(
-        {"ScanRange": selectOpts.scanRange}
-
-      )
+    if (selectOpts.scanRange) {
+      config.push({ ScanRange: selectOpts.scanRange })
     }
 
-
-    const builder = new xml2js.Builder({rootName:'SelectObjectContentRequest', renderOpts:{'pretty':false}, headless:true})
+    const builder = new xml2js.Builder({
+      rootName: 'SelectObjectContentRequest',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
     const payload = builder.buildObject(config)
 
-
-    this.makeRequest({method, bucketName, objectName, query}, payload, [200], '', true, (e, response) => {
-      if (e) return cb(e)
+    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
+      if (e) {
+        return cb(e)
+      }
 
       let selectResult
       pipesetup(response, transformers.selectObjectContentTransformer())
-        .on('data', data => {
+        .on('data', (data) => {
           selectResult = parseSelectObjectContentResponse(data)
         })
         .on('error', cb)
@@ -3559,8 +3791,7 @@ export class Client {
   }
 
   get extensions() {
-    if(!this.clientExtensions)
-    {
+    if (!this.clientExtensions) {
       this.clientExtensions = new extensions(this)
     }
     return this.clientExtensions
@@ -3594,49 +3825,51 @@ Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersioning)
-Client.prototype.setBucketVersioning=promisify(Client.prototype.setBucketVersioning)
-Client.prototype.setBucketTagging=promisify(Client.prototype.setBucketTagging)
-Client.prototype.removeBucketTagging=promisify(Client.prototype.removeBucketTagging)
-Client.prototype.getBucketTagging=promisify(Client.prototype.getBucketTagging)
-Client.prototype.setObjectTagging=promisify(Client.prototype.setObjectTagging)
-Client.prototype.removeObjectTagging=promisify(Client.prototype.removeObjectTagging)
-Client.prototype.getObjectTagging=promisify(Client.prototype.getObjectTagging)
-Client.prototype.setBucketLifecycle=promisify(Client.prototype.setBucketLifecycle)
-Client.prototype.getBucketLifecycle=promisify(Client.prototype.getBucketLifecycle)
-Client.prototype.removeBucketLifecycle=promisify(Client.prototype.removeBucketLifecycle)
-Client.prototype.setObjectLockConfig=promisify(Client.prototype.setObjectLockConfig)
-Client.prototype.getObjectLockConfig=promisify(Client.prototype.getObjectLockConfig)
-Client.prototype.putObjectRetention =promisify(Client.prototype.putObjectRetention)
-Client.prototype.getObjectRetention =promisify(Client.prototype.getObjectRetention)
+Client.prototype.setBucketVersioning = promisify(Client.prototype.setBucketVersioning)
+Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
+Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
+Client.prototype.getBucketTagging = promisify(Client.prototype.getBucketTagging)
+Client.prototype.setObjectTagging = promisify(Client.prototype.setObjectTagging)
+Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTagging)
+Client.prototype.getObjectTagging = promisify(Client.prototype.getObjectTagging)
+Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
+Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
+Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
+Client.prototype.setObjectLockConfig = promisify(Client.prototype.setObjectLockConfig)
+Client.prototype.getObjectLockConfig = promisify(Client.prototype.getObjectLockConfig)
+Client.prototype.putObjectRetention = promisify(Client.prototype.putObjectRetention)
+Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
 Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
 Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
-Client.prototype.setBucketReplication =promisify(Client.prototype.setBucketReplication)
-Client.prototype.getBucketReplication =promisify(Client.prototype.getBucketReplication)
-Client.prototype.removeBucketReplication=promisify(Client.prototype.removeBucketReplication)
-Client.prototype.setObjectLegalHold=promisify(Client.prototype.setObjectLegalHold)
-Client.prototype.getObjectLegalHold=promisify(Client.prototype.getObjectLegalHold)
+Client.prototype.setBucketReplication = promisify(Client.prototype.setBucketReplication)
+Client.prototype.getBucketReplication = promisify(Client.prototype.getBucketReplication)
+Client.prototype.removeBucketReplication = promisify(Client.prototype.removeBucketReplication)
+Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalHold)
+Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
-Client.prototype.selectObjectContent=promisify(Client.prototype.selectObjectContent)
+Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 export class CopyConditions {
   constructor() {
-    this.modified = ""
-    this.unmodified = ""
-    this.matchETag = ""
-    this.matchETagExcept = ""
+    this.modified = ''
+    this.unmodified = ''
+    this.matchETag = ''
+    this.matchETagExcept = ''
   }
 
   setModified(date) {
-    if (!(date instanceof Date))
+    if (!(date instanceof Date)) {
       throw new TypeError('date must be of type Date')
+    }
 
     this.modified = date.toUTCString()
   }
 
   setUnmodified(date) {
-    if (!(date instanceof Date))
+    if (!(date instanceof Date)) {
       throw new TypeError('date must be of type Date')
+    }
 
     this.unmodified = date.toUTCString()
   }
@@ -3654,7 +3887,7 @@ export class CopyConditions {
 export class PostPolicy {
   constructor() {
     this.policy = {
-      conditions: []
+      conditions: [],
     }
     this.formData = {}
   }
@@ -3748,5 +3981,5 @@ export class PostPolicy {
   }
 }
 
-export * from './notification'
 export * from './helpers'
+export * from './notification'

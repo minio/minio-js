@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
- // and my-objectname are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
+// and my-objectname are dummy values, please replace them with original values.
 
 var Minio = require('minio')
 var Fs = require('fs')
@@ -23,47 +23,47 @@ var Fs = require('fs')
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Upload a stream
 var file = 'my-testfile.ogg'
 var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function(e, stat) {
+var fileStat = Fs.stat(file, function (e, stat) {
   if (e) {
     return console.log(e)
   }
-  s3Client.putObject('my-bucketname', 'my-objectname.ogg', fileStream, stat.size, 'audio/ogg', function(e) {
+  s3Client.putObject('my-bucketname', 'my-objectname.ogg', fileStream, stat.size, 'audio/ogg', function (e) {
     if (e) {
       return console.log(e)
     }
-    console.log("Successfully uploaded the stream")
+    console.log('Successfully uploaded the stream')
   })
 })
 
 // Upload a buffer
 var buf = new Buffer(10)
 buf.fill('a')
-s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function(e) {
+s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function (e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Successfully uploaded the buffer")
+  console.log('Successfully uploaded the buffer')
 })
 
 // Upload a string
-var str = "random string to be uploaded"
-s3Client.putObject('my-bucketname', 'my-objectname3', str, 'text/plain', function(e) {
+var str = 'random string to be uploaded'
+s3Client.putObject('my-bucketname', 'my-objectname3', str, 'text/plain', function (e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Successfully uploaded the string")
+  console.log('Successfully uploaded the string')
 })
 
 // Upload a Buffer without content-type (default: 'application/octet-stream')
-s3Client.putObject('my-bucketname', 'my-objectname4', buf, function(e) {
+s3Client.putObject('my-bucketname', 'my-objectname4', buf, function (e) {
   if (e) {
     return console.log(e)
   }
-  console.log("Successfully uploaded the Buffer")
+  console.log('Successfully uploaded the Buffer')
 })

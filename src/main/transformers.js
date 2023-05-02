@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import * as xmlParsers from './xml-parsers.js'
-import * as _ from 'lodash'
-import Through2 from 'through2'
 import Crypto from 'crypto'
 import JSONParser from 'json-stream'
+import * as _ from 'lodash'
+import Through2 from 'through2'
 
-import { isFunction } from './helpers.js'
 import * as errors from './errors.js'
+import { isFunction } from './helpers.js'
+import * as xmlParsers from './xml-parsers.js'
 
 // getConcater returns a stream that concatenates the input and emits
 // the concatenated output when 'end' has reached. If an optional
@@ -39,26 +39,29 @@ export function getConcater(parser, emitError) {
     objectMode = true
   }
 
-  return Through2({objectMode},
-                  function (chunk, enc, cb) {
-                    bufs.push(chunk)
-                    cb()
-                  }, function (cb) {
-                    if (emitError) {
-                      cb(parser(Buffer.concat(bufs).toString()))
-                      // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
-                      this.push(null)
-                      return
-                    }
-                    if (bufs.length) {
-                      if (parser) {
-                        this.push(parser(Buffer.concat(bufs).toString()))
-                      } else {
-                        this.push(Buffer.concat(bufs))
-                      }
-                    }
-                    cb()
-                  })
+  return Through2(
+    { objectMode },
+    function (chunk, enc, cb) {
+      bufs.push(chunk)
+      cb()
+    },
+    function (cb) {
+      if (emitError) {
+        cb(parser(Buffer.concat(bufs).toString()))
+        // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
+        this.push(null)
+        return
+      }
+      if (bufs.length) {
+        if (parser) {
+          this.push(parser(Buffer.concat(bufs).toString()))
+        } else {
+          this.push(Buffer.concat(bufs))
+        }
+      }
+      cb()
+    },
+  )
 }
 
 // Generates an Error object depending on http statusCode and XML body
@@ -98,7 +101,7 @@ export function getErrorTransformer(response) {
   // in HEAD bucket and ListObjects response.
   headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
 
-  return getConcater(xmlString => {
+  return getConcater((xmlString) => {
     let getError = () => {
       // Message should be instantiated for each S3Errors.
       var e = new errors.S3Error(message)
@@ -127,27 +130,29 @@ export function getHashSummer(enableSHA256) {
   var md5 = Crypto.createHash('md5')
   var sha256 = Crypto.createHash('sha256')
 
-  return Through2.obj(function(chunk, enc, cb) {
-    
-    if (enableSHA256) {
-      sha256.update(chunk)
-    } else {
-      md5.update(chunk)
-    }
-    cb()
-  }, function(cb) {
-    var md5sum = ''
-    var sha256sum = ''
-    if (enableSHA256) {
-      sha256sum = sha256.digest('hex')
-    } else {
-      md5sum = md5.digest('base64')
-    }
-    var hashData = {md5sum, sha256sum}
-    this.push(hashData)
-    this.push(null)
-    cb()
-  })
+  return Through2.obj(
+    function (chunk, enc, cb) {
+      if (enableSHA256) {
+        sha256.update(chunk)
+      } else {
+        md5.update(chunk)
+      }
+      cb()
+    },
+    function (cb) {
+      var md5sum = ''
+      var sha256sum = ''
+      if (enableSHA256) {
+        sha256sum = sha256.digest('hex')
+      } else {
+        md5sum = md5.digest('base64')
+      }
+      var hashData = { md5sum, sha256sum }
+      this.push(hashData)
+      this.push(null)
+      cb()
+    },
+  )
 }
 
 // Following functions return a stream object that parses XML
@@ -214,43 +219,42 @@ export function getNotificationTransformer() {
   return new JSONParser()
 }
 
-export function  bucketVersioningTransformer(){
+export function bucketVersioningTransformer() {
   return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
 
 export function getTagsTransformer() {
-  return getConcater( xmlParsers.parseTagging)
+  return getConcater(xmlParsers.parseTagging)
 }
 
-export function  lifecycleTransformer(){
+export function lifecycleTransformer() {
   return getConcater(xmlParsers.parseLifecycleConfig)
 }
 
-
-export function  objectLockTransformer(){
+export function objectLockTransformer() {
   return getConcater(xmlParsers.parseObjectLockConfig)
 }
 
-export function  objectRetentionTransformer(){
+export function objectRetentionTransformer() {
   return getConcater(xmlParsers.parseObjectRetentionConfig)
 }
-export function  bucketEncryptionTransformer(){
+export function bucketEncryptionTransformer() {
   return getConcater(xmlParsers.parseBucketEncryptionConfig)
 }
 
-export function  replicationConfigTransformer(){
+export function replicationConfigTransformer() {
   return getConcater(xmlParsers.parseReplicationConfig)
 }
 
-export function  objectLegalHoldTransformer(){
+export function objectLegalHoldTransformer() {
   return getConcater(xmlParsers.parseObjectLegalHoldConfig)
 }
 
-export function  uploadPartTransformer(){
+export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }
-export function  selectObjectContentTransformer(){
-  return  getConcater()
+export function selectObjectContentTransformer() {
+  return getConcater()
 }
 
 export function removeObjectsTransformer() {

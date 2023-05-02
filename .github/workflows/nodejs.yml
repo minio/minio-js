@@ -1,28 +1,33 @@
 name: CI - Linux
 
 on:
+  push:
+    branches-ignore:
+      - dependabot/**
   pull_request:
     branches:
       - master
+
 jobs:
-  build:
+  test:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 1
+      max-parallel: 3
       matrix:
         node_version: [12.x, 14.x, 16.x, 17.x, 18.x, 19.x]
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v1
-        with:
-            fetch-depth: 0
-            ref: ''
+      - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node_version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
-      - name: Start Server -> Run Unit and Functional Tests ( install, lint, browserify, test)
+          cache: 'npm'
+
+      - run: npm i
+
+      - name: Start Server -> Run Unit and Functional Tests
         env:
           CI: true
           MINIO_CI_CD: true
@@ -30,7 +35,7 @@ jobs:
           SERVER_ENDPOINT: localhost:9000
           MINIO_ROOT_USER: minio
           MINIO_ROOT_PASSWORD: minio123
-          MINIO_KMS_SECRET_KEY: "my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw="
+          MINIO_KMS_SECRET_KEY: 'my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw='
           ACCESS_KEY: minio
           SECRET_KEY: minio123
           ENABLE_HTTPS: 0
@@ -38,8 +43,4 @@ jobs:
           wget --quiet -O /tmp/minio https://dl.min.io/server/minio/release/linux-amd64/minio
           chmod +x /tmp/minio
           /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
-          npm install
-          npm run lint
-          npm run browserify
           npm run test
-

@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
- // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
- // dummy values, please replace them with original values.
-
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// dummy values, please replace them with original values.
 
 var Minio = require('minio')
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.bucketExists('my-bucketname', function(err, exists) {
+s3Client.bucketExists('my-bucketname', function (err, exists) {
   if (err) {
     return console.log(err)
   }
   if (exists) {
-      console.log("Bucket exists.")
+    console.log('Bucket exists.')
   }
 })

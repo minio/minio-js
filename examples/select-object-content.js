@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require("../dist/main/minio")
+var Minio = require('../dist/main/minio')
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
-  secretKey: 'YOUR-SECRETACCESSKEY'
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Reference: https://aws.amazon.com/blogs/storage/querying-data-without-servers-or-databases-using-amazon-s3-select/
 const selectRequestConfig = {
   // expression:"SELECT * FROM s3object s where s.\"Name\" = 'Jane'",
-  expression:"SELECT * FROM s3object s",
-  expressionType:"SQL",
-  inputSerialization : {'CSV': {"FileHeaderInfo": "Use",
-                                RecordDelimiter: "\n",
-                                FieldDelimiter:  ",",
+  expression: 'SELECT * FROM s3object s',
+  expressionType: 'SQL',
+  inputSerialization: {
+    CSV: { FileHeaderInfo: 'Use', RecordDelimiter: '\n', FieldDelimiter: ',' },
+    CompressionType: 'NONE',
   },
-                        'CompressionType': 'NONE'},
-  outputSerialization : {'CSV': {RecordDelimiter: "\n",
-                                 FieldDelimiter:  ",",}},
-  requestProgress:{Enabled:true},
+  outputSerialization: { CSV: { RecordDelimiter: '\n', FieldDelimiter: ',' } },
+  requestProgress: { Enabled: true },
   // scanRange:{ start:50, end:100 }
 }
 
-s3Client.selectObjectContent('my-bucketname', 'my-objectname', selectRequestConfig, function(e, stat) {
+s3Client.selectObjectContent('my-bucketname', 'my-objectname', selectRequestConfig, function (e, stat) {
   if (e) {
     return console.log(e)
   }
   console.log(stat)
 })
-

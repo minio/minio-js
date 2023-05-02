@@ -9,3 +9,5 @@ node_modules
 
 /dist/
 yarn.lock
+.yarn/
+.yarnrc.yml
