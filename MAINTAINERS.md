@@ -1,5 +1,5 @@
 # For maintainers only
-MinIO JS SDK uses [npm4+](https://www.npmjs.org/) build system.
+Development of MinIO JS SDK require nodejs14+ and [npm7+](https://www.npmjs.org/).
 
 ## Responsibilities
 Go through [Maintainer Responsibility Guide](https://gist.github.com/abperiasamy/f4d9b31d3186bbd26522).
@@ -11,10 +11,20 @@ $ git clone git@github.com:minio/minio-js
 $ cd minio-js
 ```
 
-### Build and verify
-Run `install` gulp task to build and verify the SDK.
-```sh
+### Install deps
+```shell
 $ npm install
+```
+
+### Testing
+```shell
+$ npm test
+```
+
+### Build
+Build project for release
+```sh
+$ npm run build
 ```
 
 ## Publishing new release
