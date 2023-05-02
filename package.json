@@ -101,6 +101,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.5",
     "@babel/preset-env": "^7.12.10",
     "@babel/preset-typescript": "^7.21.4",
     "@babel/register": "^7.21.0",

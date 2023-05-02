@@ -7,7 +7,18 @@ const register = require('@babel/register')
 
 register({
   extensions: ['.ts', '.js'],
+  assumptions: {
+    constantSuper: true,
+    noIncompleteNsImportDetection: true,
+    constantReexports: true,
+  },
   plugins: [
+    [
+      '@babel/plugin-transform-modules-commonjs',
+      {
+        importInterop: 'node',
+      },
+    ],
     '@upleveled/remove-node-prefix', // lower version of node (<14) doesn't support require('node:fs')
   ],
   presets: [

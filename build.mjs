@@ -13,32 +13,42 @@ const pkg = JSON.parse(fs.readFileSync('package.json').toString())
  * @param {'esm'|'cjs'} module
  */
 function options(module) {
+  const plugins = [
+    [
+      '@babel/plugin-transform-modules-commonjs',
+      {
+        importInterop: 'node',
+      },
+    ],
+    ['@upleveled/remove-node-prefix'],
+    [
+      'replace-import-extension',
+      {
+        extMapping: {
+          '.ts': extMap[module],
+          '.js': extMap[module],
+        },
+      },
+    ],
+    [
+      'babel-plugin-transform-replace-expressions',
+      {
+        replace: {
+          'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),
+        },
+      },
+    ],
+  ]
+
   return {
     sourceMaps: 'inline',
-    plugins: [
-      ['@upleveled/remove-node-prefix'],
-      [
-        'replace-import-extension',
-        {
-          extMapping: {
-            '.ts': extMap[module],
-            '.js': extMap[module],
-          },
-        },
-      ],
-      [
-        'babel-plugin-transform-replace-expressions',
-        {
-          replace: {
-            'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),
-          },
-        },
-      ],
-    ],
-    presets: [
-      ['@babel/env', { targets: { node: '8' }, modules: module === 'esm' ? false : module }],
-      ['@babel/preset-typescript'],
-    ],
+    assumptions: {
+      constantSuper: true,
+      noIncompleteNsImportDetection: true,
+      constantReexports: true,
+    },
+    plugins: module === 'esm' ? plugins.splice(1) : plugins,
+    presets: [['@babel/env', { targets: { node: '8' }, modules: false }], ['@babel/preset-typescript']],
   }
 }
 
