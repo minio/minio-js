@@ -18,8 +18,8 @@ import { EventEmitter } from 'node:events'
 
 import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
-import type { Client } from './client.ts'
 import { DEFAULT_REGION, pipesetup, uriEscape } from './helpers.ts'
+import type { TypedBase } from './typedBase.ts'
 
 // TODO: type this
 
@@ -151,14 +151,14 @@ export type NotificationRecord = unknown
 // Listening constitutes repeatedly requesting s3 whether or not any
 // changes have occurred.
 export class NotificationPoller extends EventEmitter {
-  private client: Client
+  private client: TypedBase
   private bucketName: string
   private prefix: string
   private suffix: string
   private events: NotificationEvent[]
   private ending: boolean
 
-  constructor(client: Client, bucketName: string, prefix: string, suffix: string, events: NotificationEvent[]) {
+  constructor(client: TypedBase, bucketName: string, prefix: string, suffix: string, events: NotificationEvent[]) {
     super()
 
     this.client = client

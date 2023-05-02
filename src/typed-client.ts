@@ -5,8 +5,6 @@ import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
 import { fsp } from './async.ts'
-import type { RequestMethod, RequestOption } from './client.ts'
-import { Client, findCallback } from './client.ts'
 import * as errors from './errors.ts'
 import type { MetaData, SelectResults } from './helpers.ts'
 import {
@@ -56,11 +54,13 @@ import type {
   VersionIdentification,
   VersioningConfig,
 } from './type.ts'
+import type { RequestMethod, RequestOption } from './typedBase.ts'
+import { findCallback, TypedBase } from './typedBase.ts'
 import type { S3ListObject } from './xml-parsers.ts'
 import * as xmlParsers from './xml-parsers.ts'
 import { parseSelectObjectContentResponse } from './xml-parsers.ts'
 
-export class TypedClient extends Client {
+export class TypedClient extends TypedBase {
   getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
   getBucketVersioning(bucketName: string): Promise<VersioningConfig>
 
@@ -1578,7 +1578,7 @@ export class TypedClient extends Client {
 }
 
 export class Helper {
-  constructor(private readonly client: Client) {}
+  constructor(private readonly client: TypedBase) {}
 
   async MultipleFileUpload(
     bucketName: string,

@@ -134,7 +134,7 @@ export function findCallback<A extends unknown[], T extends AnyFunction>(args: u
   return [args.slice(0, index) as A, args[index] as T]
 }
 
-export class Client {
+export class TypedBase {
   protected transport: typeof http | typeof https
   protected host: string
   protected port: number
@@ -1982,7 +1982,7 @@ export async function uploadStream({
   stream: source,
   partSize,
 }: {
-  client: Client
+  client: TypedBase
   bucketName: string
   objectName: string
   metaData: MetaData

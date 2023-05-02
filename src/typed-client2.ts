@@ -6,8 +6,6 @@ import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
 import { fsp } from './async.ts'
-import type { RequestOption } from './client.ts'
-import { findCallback, uploadStream } from './client.ts'
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
 import type { MetaData } from './helpers.ts'
@@ -55,6 +53,8 @@ import type {
   UploadedObjectInfo,
 } from './type.ts'
 import { TypedClient } from './typed-client.ts'
+import type { RequestOption } from './typedBase.ts'
+import { findCallback, uploadStream } from './typedBase.ts'
 import type { ObjectLockConfig, S3ListObject } from './xml-parsers.ts'
 import * as xmlParsers from './xml-parsers.ts'
 
@@ -66,7 +66,7 @@ type PartConfig = {
   headers: RequestHeaders
 }
 
-export class TypedClient2 extends TypedClient {
+export class Client extends TypedClient {
   // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
   protected copyObjectV1(
     bucketName: string,

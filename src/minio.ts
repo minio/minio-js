@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { TypedClient2 } from './typed-client2.ts'
-
 export { AssumeRoleProvider } from './AssumeRoleProvider.ts'
 export { CopyConditions } from './copyConditions.ts'
 export { CredentialProvider } from './CredentialProvider.ts'
@@ -37,5 +35,4 @@ export {
   TopicConfig,
 } from './notification.ts'
 export { PostPolicy } from './postPolicy.ts'
-
-export class Client extends TypedClient2 {}
+export { Client } from './typed-client2.ts'
