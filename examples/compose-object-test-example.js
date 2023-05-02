@@ -20,8 +20,8 @@ const os = require('os')
 const splitFile = require('split-file')
 const fs = require('fs')
 
-var Minio = require('../dist/main/minio')
-var Helpers = require('../dist/main/helpers')
+var Minio = require('minio')
+var Helpers = require('minio/dist/main/helpers')
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
