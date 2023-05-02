@@ -7,7 +7,7 @@ import { Credentials } from './Credentials.js'
 import { makeDateLong, parseXml, toSha256 } from './helpers.js'
 import { signV4ByServiceName } from './signing.js'
 
-class AssumeRoleProvider extends CredentialProvider {
+export class AssumeRoleProvider extends CredentialProvider {
   constructor({
     stsEndpoint,
     accessKey,
@@ -215,4 +215,6 @@ class AssumeRoleProvider extends CredentialProvider {
   }
 }
 
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
 export default AssumeRoleProvider

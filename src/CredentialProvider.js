@@ -46,5 +46,6 @@ export class CredentialProvider {
   }
 }
 
-// deprecated, keep for backward compatibility.
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
 export default CredentialProvider
