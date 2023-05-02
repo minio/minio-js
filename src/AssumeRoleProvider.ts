@@ -79,7 +79,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     action?: string
     transportAgent?: http.Agent
   }) {
-    super({})
+    super({ accessKey, secretKey, sessionToken })
 
     this.stsEndpoint = stsEndpoint
     this.accessKey = accessKey
@@ -226,11 +226,8 @@ export class AssumeRoleProvider extends CredentialProvider {
 
     this.accessExpiresAt = expiresAt
 
-    const newCreds = new Credentials({
-      accessKey,
-      secretKey,
-      sessionToken,
-    })
+    // @ts-expect-error not sure if this could be undefined
+    const newCreds = new Credentials({ accessKey, secretKey, sessionToken })
 
     this.setCredentials(newCreds)
     return this._credentials

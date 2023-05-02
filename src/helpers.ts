@@ -168,18 +168,9 @@ export function isValidPort(port: unknown): port is number {
   if (!isNumber(port)) {
     return false
   }
-  // port cannot be negative.
-  if (port < 0) {
-    return false
-  }
-  // port '0' is valid and special case return true.
-  if (port === 0) {
-    return true
-  }
-  const min_port = 1
-  const max_port = 65535
-  // Verify if port is in range.
-  return port >= min_port && port <= max_port
+
+  // port `0` is valid and special case
+  return 0 <= port && port <= 65535
 }
 
 export function isValidBucketName(bucket: unknown) {

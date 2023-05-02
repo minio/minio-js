@@ -251,9 +251,6 @@ export class TypedBase {
     this.host = host
     this.port = port
     this.protocol = protocol
-    this.accessKey = params.accessKey
-    this.secretKey = params.secretKey
-    this.sessionToken = params.sessionToken
     this.userAgent = `${libraryAgent}`
 
     // Default path style is true
@@ -263,12 +260,9 @@ export class TypedBase {
       this.pathStyle = params.pathStyle
     }
 
-    if (!this.accessKey) {
-      this.accessKey = ''
-    }
-    if (!this.secretKey) {
-      this.secretKey = ''
-    }
+    this.accessKey = params.accessKey ?? ''
+    this.secretKey = params.secretKey ?? ''
+    this.sessionToken = params.sessionToken
     this.anonymous = !this.accessKey || !this.secretKey
 
     if (params.credentialsProvider) {
@@ -1553,17 +1547,13 @@ export class TypedBase {
 
   private async fetchCredentials() {
     if (this.credentialsProvider) {
-      const credentialsConf = await this.credentialsProvider.getCredentials()
-      if (credentialsConf) {
-        // @ts-expect-error secretKey maybe undefined
-        this.accessKey = credentialsConf.getAccessKey()
-        // @ts-expect-error secretKey maybe undefined
-        this.secretKey = credentialsConf.getSecretKey()
-        this.sessionToken = credentialsConf.getSessionToken()
+      const credential = await this.credentialsProvider.getCredentials()
+      if (credential) {
+        this.accessKey = credential.getAccessKey()
+        this.secretKey = credential.getSecretKey()
+        this.sessionToken = credential.getSessionToken()
       } else {
-        throw new Error(
-          `Unable to get credentials. Expected instance of BaseCredentialsProvider, get ${credentialsConf}`,
-        )
+        throw new Error(`Unable to get credentials. Expected instance of BaseCredentialsProvider, get ${credential}`)
       }
     } else {
       throw new Error('Unable to get credentials. Expected instance of BaseCredentialsProvider')

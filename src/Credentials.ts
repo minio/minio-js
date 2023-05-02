@@ -1,17 +1,9 @@
 export class Credentials {
-  public accessKey?: string
-  public secretKey?: string
-  public sessionToken?: string
+  public accessKey: string
+  public secretKey: string
+  public sessionToken: string
 
-  constructor({
-    accessKey,
-    secretKey,
-    sessionToken,
-  }: {
-    accessKey?: string
-    secretKey?: string
-    sessionToken?: string
-  }) {
+  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken: string }) {
     this.accessKey = accessKey
     this.secretKey = secretKey
     this.sessionToken = sessionToken

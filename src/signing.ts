@@ -295,7 +295,7 @@ export function presignSignatureV4(
   const credential = getCredential(accessKey, region, requestDate)
   const hashedPayload = 'UNSIGNED-PAYLOAD'
 
-  const requestQuery = []
+  const requestQuery: string[] = []
   requestQuery.push(`X-Amz-Algorithm=${signV4Algorithm}`)
   requestQuery.push(`X-Amz-Credential=${uriEscape(credential)}`)
   requestQuery.push(`X-Amz-Date=${iso8601Date}`)

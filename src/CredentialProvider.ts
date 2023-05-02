@@ -3,15 +3,7 @@ import { Credentials } from './Credentials.ts'
 export class CredentialProvider {
   private credentials: Credentials
 
-  constructor({
-    accessKey,
-    secretKey,
-    sessionToken,
-  }: {
-    accessKey?: string
-    secretKey?: string
-    sessionToken?: string
-  }) {
+  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken: string }) {
     this.credentials = new Credentials({
       accessKey,
       secretKey,
