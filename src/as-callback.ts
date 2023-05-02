@@ -1,4 +1,4 @@
-import { isFunction } from './helpers.ts'
+import { isFunction } from './assert.ts'
 
 export function asCallback<T = void>(
   cb: undefined | ((err: unknown | null, result: T) => void),

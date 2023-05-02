@@ -23,7 +23,6 @@ import {
   calculateEvenSplits,
   CopyDestinationOptions,
   CopySourceOptions,
-  isArray,
   isValidEndpoint,
   isValidIP,
   makeDateLong,
@@ -174,7 +173,7 @@ describe('Helpers', () => {
       const fnResult = calculateEvenSplits(testCase.size, testCase)
       const { startIndex, endIndex } = fnResult || {}
 
-      if (isArray(startIndex) && isArray(endIndex)) {
+      if (Array.isArray(startIndex) && Array.isArray(endIndex)) {
         const isExpectedResult =
           startIndex.length === testCase.expectedStart.length && endIndex.length === testCase.expectedEnd.length
         assert.equal(isExpectedResult, true)

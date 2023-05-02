@@ -26,6 +26,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
 
+import { isEmpty, isEmptyObject, isNumber, isObject, isString } from './assert.ts'
 import * as errors from './errors.ts'
 import { qs } from './qs.ts'
 import type { Binary, Mode } from './type.ts'
@@ -33,9 +34,11 @@ import type { Binary, Mode } from './type.ts'
 export type MetaData = Record<string, string | number>
 export type Header = Record<string, string | null | undefined>
 
-// All characters in string which are NOT unreserved should be percent encoded.
-// Unreserved characers are : ALPHA / DIGIT / "-" / "." / "_" / "~"
-// Reference https://tools.ietf.org/html/rfc3986#section-2.2
+/**
+ * All characters in string which are NOT unreserved should be percent encoded.
+ * Unreserved characters are : ALPHA / DIGIT / "-" / "." / "_" / "~"
+ * Reference https://tools.ietf.org/html/rfc3986#section-2.2
+ */
 export function uriEscape(string: string) {
   return string.split('').reduce((acc: string, elem: string) => {
     const buf = Buffer.from(elem)
@@ -73,16 +76,20 @@ export function getScope(region: string, date: Date, serviceName = 's3') {
   return `${makeDateShort(date)}/${region}/${serviceName}/aws4_request`
 }
 
-// isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
+/**
+ * isAmazonEndpoint - true if endpoint is 's3.amazonaws.com' or 's3.cn-north-1.amazonaws.com.cn'
+ */
 export function isAmazonEndpoint(endpoint: string) {
   return endpoint === 's3.amazonaws.com' || endpoint === 's3.cn-north-1.amazonaws.com.cn'
 }
 
-// isVirtualHostStyle - verify if bucket name is support with virtual
-// hosts. bucketNames with periods should be always treated as path
-// style if the protocol is 'https:', this is due to SSL wildcard
-// limitation. For all other buckets and Amazon S3 endpoint we will
-// default to virtual host style.
+/**
+ * isVirtualHostStyle - verify if bucket name is support with virtual
+ * hosts. bucketNames with periods should be always treated as path
+ * style if the protocol is 'https:', this is due to SSL wildcard
+ * limitation. For all other buckets and Amazon S3 endpoint we will
+ * default to virtual host style.
+ */
 export function isVirtualHostStyle(endpoint: string, protocol: string, bucket: string, pathStyle: boolean) {
   if (protocol === 'https:' && bucket.includes('.')) {
     return false
@@ -94,12 +101,16 @@ export function isValidIP(ip: string) {
   return ipaddr.isValid(ip)
 }
 
-// isValidEndpoint - true if endpoint is valid domain.
+/**
+ * @returns if endpoint is valid domain.
+ */
 export function isValidEndpoint(endpoint: string) {
   return isValidDomain(endpoint) || isValidIP(endpoint)
 }
 
-// isValidDomain - true if input host is a valid domain.
+/**
+ * @returns if input host is a valid domain.
+ */
 export function isValidDomain(host: string) {
   if (!isString(host)) {
     return false
@@ -132,8 +143,15 @@ export function isValidDomain(host: string) {
   return true
 }
 
-// Probes contentType using file extensions.
-// For example: probeContentType('file.png') returns 'image/png'.
+/**
+ * Probes contentType using file extensions.
+ *
+ * @example
+ * ```
+ * // return 'image/png'
+ * probeContentType('file.png')
+ * ```
+ */
 export function probeContentType(path: string) {
   let contentType = mime.lookup(path)
   if (!contentType) {
@@ -142,7 +160,9 @@ export function probeContentType(path: string) {
   return contentType
 }
 
-// isValidPort - is input port valid.
+/**
+ * is input port valid.
+ */
 export function isValidPort(port: unknown): port is number {
   // verify if port is a number.
   if (!isNumber(port)) {
@@ -177,29 +197,31 @@ export function isValidBucketName(bucket: unknown) {
     return false
   }
   // bucket cannot have ip address style.
-  if (bucket.match(/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/)) {
+  if (/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/.test(bucket)) {
     return false
   }
   // bucket should begin with alphabet/number and end with alphabet/number,
   // with alphabet/number/.- in the middle.
-  if (bucket.match(/^[a-z0-9][a-z0-9.-]+[a-z0-9]$/)) {
+  if (/^[a-z0-9][a-z0-9.-]+[a-z0-9]$/.test(bucket)) {
     return true
   }
   return false
 }
 
-// check if objectName is a valid object name
+/**
+ * check if objectName is a valid object name
+ */
 export function isValidObjectName(objectName: unknown) {
   if (!isValidPrefix(objectName)) {
     return false
   }
-  if (objectName.length === 0) {
-    return false
-  }
-  return true
+
+  return objectName.length !== 0
 }
 
-// check if prefix is valid
+/**
+ * check if prefix is valid
+ */
 export function isValidPrefix(prefix: unknown): prefix is string {
   if (!isString(prefix)) {
     return false
@@ -210,68 +232,9 @@ export function isValidPrefix(prefix: unknown): prefix is string {
   return true
 }
 
-// check if typeof arg number
-export function isNumber(arg: unknown): arg is number {
-  return typeof arg === 'number'
-}
-
-export type AnyFunction = (...args: any[]) => any
-
-// check if typeof arg function
-export function isFunction(arg: unknown): arg is AnyFunction {
-  return typeof arg === 'function'
-}
-
-// check if typeof arg function or undefined
-export function isOptionalFunction(arg: unknown): arg is undefined | AnyFunction {
-  if (arg === undefined) {
-    return true
-  }
-  return typeof arg === 'function'
-}
-
-// check if typeof arg string
-export function isString(arg: unknown): arg is string {
-  return typeof arg === 'string'
-}
-
-// check if typeof arg object
-export function isObject(arg: unknown): arg is object {
-  return typeof arg === 'object' && arg !== null
-}
-
-// check if object is readable stream
-export function isReadableStream(arg: unknown): arg is stream.Readable {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  return isObject(arg) && isFunction((arg as stream.Readable)._read)
-}
-
-// check if arg is boolean
-export function isBoolean(arg: unknown): arg is boolean {
-  return typeof arg === 'boolean'
-}
-
-// check if arg is array
-export function isArray(arg: unknown): arg is Array<unknown> {
-  return Array.isArray(arg)
-}
-
-export function isEmpty(o: unknown): o is null | undefined {
-  return _.isEmpty(o)
-}
-
-export function isEmptyObject(o: Record<string, unknown>): boolean {
-  return Object.values(o).filter((x) => x !== undefined).length !== 0
-}
-
-// check if arg is a valid date
-export function isValidDate(arg: unknown): arg is Date {
-  // @ts-expect-error TS(2345): Argument of type 'Date' is not assignable to param... Remove this comment to see the full error message
-  return arg instanceof Date && !isNaN(arg)
-}
-
-// Create a Date string with format:
-// 'YYYYMMDDTHHmmss' + Z
+/**
+ * Create a Date string with format: 'YYYYMMDDTHHmmss' + Z
+ */
 export function makeDateLong(date?: Date): string {
   date = date || new Date()
 
@@ -281,8 +244,9 @@ export function makeDateLong(date?: Date): string {
   return s.slice(0, 4) + s.slice(5, 7) + s.slice(8, 13) + s.slice(14, 16) + s.slice(17, 19) + 'Z'
 }
 
-// Create a Date string with format:
-// 'YYYYMMDD'
+/**
+ * Create a Date string with format: 'YYYYMMDD'
+ */
 export function makeDateShort(date?: Date) {
   date = date || new Date()
 
@@ -292,15 +256,19 @@ export function makeDateShort(date?: Date) {
   return s.slice(0, 4) + s.slice(5, 7) + s.slice(8, 10)
 }
 
-// pipesetup sets up pipe() from left to right os streams array
-// pipesetup will also make sure that error emitted at any of the upstream Stream
-// will be emitted at the last stream. This makes error handling simple
+/**
+ * pipesetup sets up pipe() from left to right os streams array
+ * pipesetup will also make sure that error emitted at any of the upstream Stream
+ * will be emitted at the last stream. This makes error handling simple
+ */
 export function pipesetup(src: stream.Readable, dst: stream.Writable) {
   src.on('error', (err: unknown) => dst.emit('error', err))
   return src.pipe(dst)
 }
 
-// return a Readable stream that emits data
+/**
+ * return a Readable stream that emits data
+ */
 export function readableStream(data: unknown): stream.Readable {
   const s = new stream.Readable()
   s._read = () => {}
@@ -309,7 +277,9 @@ export function readableStream(data: unknown): stream.Readable {
   return s
 }
 
-// Process metadata to insert appropriate value to `content-type` attribute
+/**
+ * Process metadata to insert appropriate value to `content-type` attribute
+ */
 export function insertContentType(metaData: MetaData, filePath: string) {
   // check if content-type attribute present in metaData
   for (const key in metaData) {
@@ -324,7 +294,9 @@ export function insertContentType(metaData: MetaData, filePath: string) {
   return newMetadata
 }
 
-// Function prepends metadata with the appropriate prefix if it is not already on
+/**
+ * Function prepends metadata with the appropriate prefix if it is not already on
+ */
 export function prependXAMZMeta(metaData?: MetaData) {
   if (!metaData) {
     return {}
@@ -340,7 +312,9 @@ export function prependXAMZMeta(metaData?: MetaData) {
   return newMetadata
 }
 
-// Checks if it is a valid header according to the AmazonS3 API
+/**
+ * Checks if it is a valid header according to the AmazonS3 API
+ */
 export function isAmzHeader(key: string) {
   const temp = key.toLowerCase()
   return (
@@ -351,7 +325,9 @@ export function isAmzHeader(key: string) {
   )
 }
 
-// Checks if it is a supported Header
+/**
+ * Checks if it is a supported Header
+ */
 export function isSupportedHeader(key: string) {
   const supported_headers = [
     'content-type',
@@ -364,7 +340,9 @@ export function isSupportedHeader(key: string) {
   return supported_headers.includes(key.toLowerCase())
 }
 
-// Checks if it is a storage header
+/**
+ * Checks if it is a storage header
+ */
 export function isStorageClassHeader(key: string) {
   return key.toLowerCase() === 'x-amz-storage-class'
 }
@@ -433,9 +411,11 @@ export function toSha256(payload: Binary | Uint8Array): string {
   return crypto.createHash('sha256').update(payload).digest('hex')
 }
 
-// toArray returns a single element array with param being the element,
-// if param is just a string, and returns 'param' back if it is an array
-// So, it makes sure param is always an array
+/**
+ * toArray returns a single element array with param being the element,
+ * if param is just a string, and returns 'param' back if it is an array
+ * So, it makes sure param is always an array
+ */
 export function toArray<T = unknown>(param: T | T[]): Array<T> {
   if (!Array.isArray(param)) {
     return [param] as T[]
@@ -745,10 +725,12 @@ export function partsRequired(size: number): number {
   return requiredPartSize
 }
 
-// calculateEvenSplits - computes splits for a source and returns
-// start and end index slices. Splits happen evenly to be sure that no
-// part is less than 5MiB, as that could fail the multipart request if
-// it is not the last part.
+/**
+ * calculateEvenSplits - computes splits for a source and returns
+ * start and end index slices. Splits happen evenly to be sure that no
+ * part is less than 5MiB, as that could fail the multipart request if
+ * it is not the last part.
+ */
 export function calculateEvenSplits(size: number, objInfo: { Start?: unknown; Bucket: string; Object: string }) {
   if (size === 0) {
     return null
@@ -818,7 +800,9 @@ export function parseXml(xml: string): any {
   return result
 }
 
-// maybe this should be a generic type for Records, leave it for later refactor
+/**
+ * maybe this should be a generic type for Records, leave it for later refactor
+ */
 export class SelectResults {
   private records?: unknown
   private response?: unknown

@@ -16,8 +16,9 @@
 
 import * as Crypto from 'node:crypto'
 
+import { isNumber, isObject, isString } from './assert.ts'
 import * as errors from './errors.ts'
-import { getScope, isArray, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './helpers.ts'
+import { getScope, makeDateLong, makeDateShort, uriEscape } from './helpers.ts'
 import type { ICanonicalRequest, IRequest, RequestHeaders } from './type.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
@@ -48,7 +49,7 @@ function getCanonicalRequest(
   if (!isObject(headers)) {
     throw new TypeError('headers should be of type "object"')
   }
-  if (!isArray(signedHeaders)) {
+  if (!Array.isArray(signedHeaders)) {
     throw new TypeError('signedHeaders should be of type "array"')
   }
   if (!isString(hashedPayload)) {

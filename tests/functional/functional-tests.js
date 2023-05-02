@@ -31,7 +31,7 @@ import superagent from 'superagent'
 import * as uuid from 'uuid'
 
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
-import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, getVersionId, isArray } from '../../src/helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, getVersionId } from '../../src/helpers.ts'
 import { removeDirAndFiles } from '../../src/helpers.ts'
 import * as minio from '../../src/minio.ts'
 
@@ -2453,7 +2453,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2513,7 +2513,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2610,7 +2610,7 @@ describe('functional tests', function () {
             if (err) {
               return done(err)
             }
-            if (isArray(tagList)) {
+            if (Array.isArray(tagList)) {
               done()
             }
           })

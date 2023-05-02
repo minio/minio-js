@@ -5,6 +5,16 @@ import _ from 'lodash'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
+import {
+  isBoolean,
+  isEmpty,
+  isFunction,
+  isNumber,
+  isObject,
+  isOptionalFunction,
+  isReadableStream,
+  isString,
+} from './assert.ts'
 import { fsp } from './async.ts'
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
@@ -16,15 +26,6 @@ import {
   extractMetadata,
   getSourceVersionId,
   getVersionId,
-  isArray,
-  isBoolean,
-  isEmpty,
-  isFunction,
-  isNumber,
-  isObject,
-  isOptionalFunction,
-  isReadableStream,
-  isString,
   isValidBucketName,
   isValidObjectName,
   isValidPrefix,
@@ -242,7 +243,7 @@ export class Client extends TypedClient {
     const me = this // many async flows. so store the ref.
     const sourceFilesLength = sourceObjList.length
 
-    if (!isArray(sourceObjList)) {
+    if (!Array.isArray(sourceObjList)) {
       throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
     }
     if (!(destObjConfig instanceof CopyDestinationOptions)) {
@@ -636,7 +637,7 @@ export class Client extends TypedClient {
     if (!isString(suffix)) {
       throw new TypeError('suffix must be of type string')
     }
-    if (!isArray(events)) {
+    if (!Array.isArray(events)) {
       throw new TypeError('events must be of type Array')
     }
     const listener = new NotificationPoller(this, bucketName, prefix, suffix, events)

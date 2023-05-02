@@ -14,18 +14,8 @@ import { mkdirp } from 'mkdirp'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
-import { fsp, streamPromise } from './async.ts'
-import { CredentialProvider } from './CredentialProvider.ts'
-import * as errors from './errors.ts'
-import { S3Error } from './errors.ts'
-import { extensions } from './extensions.ts'
-import type { AnyFunction, MetaData } from './helpers.ts'
+import type { AnyFunction } from './assert.ts'
 import {
-  DEFAULT_REGION,
-  extractMetadata,
-  getVersionId,
-  insertContentType,
-  isAmazonEndpoint,
   isBoolean,
   isEmpty,
   isFunction,
@@ -34,6 +24,19 @@ import {
   isOptionalFunction,
   isReadableStream,
   isString,
+} from './assert.ts'
+import { fsp, streamPromise } from './async.ts'
+import { CredentialProvider } from './CredentialProvider.ts'
+import * as errors from './errors.ts'
+import { S3Error } from './errors.ts'
+import { extensions } from './extensions.ts'
+import type { MetaData } from './helpers.ts'
+import {
+  DEFAULT_REGION,
+  extractMetadata,
+  getVersionId,
+  insertContentType,
+  isAmazonEndpoint,
   isValidBucketName,
   isValidEndpoint,
   isValidObjectName,

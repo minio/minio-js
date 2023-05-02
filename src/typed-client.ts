@@ -4,13 +4,7 @@ import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
-import { fsp } from './async.ts'
-import * as errors from './errors.ts'
-import type { MetaData, SelectResults } from './helpers.ts'
 import {
-  getScope,
-  insertContentType,
-  isArray,
   isBoolean,
   isEmpty,
   isFunction,
@@ -18,8 +12,15 @@ import {
   isObject,
   isOptionalFunction,
   isString,
-  isValidBucketName,
   isValidDate,
+} from './assert.ts'
+import { fsp } from './async.ts'
+import * as errors from './errors.ts'
+import type { MetaData, SelectResults } from './helpers.ts'
+import {
+  getScope,
+  insertContentType,
+  isValidBucketName,
   isValidObjectName,
   isValidPrefix,
   LEGAL_HOLD_STATUS,
@@ -1512,7 +1513,7 @@ export class TypedClient extends TypedBase {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (!isArray(objectsList)) {
+    if (!Array.isArray(objectsList)) {
       throw new errors.InvalidArgumentError('objectsList should be a list')
     }
     if (!isOptionalFunction(cb)) {

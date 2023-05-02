@@ -17,10 +17,10 @@
 import * as newCrc32 from 'crc-32'
 import { XMLParser } from 'fast-xml-parser'
 
+import { isObject } from './assert.ts'
 import * as errors from './errors.ts'
 import type { MetaData, RETENTION_MODES } from './helpers.ts'
 import {
-  isObject,
   parseXml,
   RETENTION_VALIDITY_UNITS,
   sanitizeETag,
