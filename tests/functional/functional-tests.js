@@ -34,7 +34,6 @@ import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, getVersionId, isArray } from '../../src/helpers.ts'
 import { removeDirAndFiles } from '../../src/helpers.ts'
 import * as minio from '../../src/minio.ts'
-import { Client } from '../../src/minio.ts'
 
 const isWindowsPlatform = process.platform === 'win32'
 
@@ -88,10 +87,10 @@ describe('functional tests', function () {
   // a directory with files to read from, i.e. /mint/data.
   var dataDir = process.env['MINT_DATA_DIR']
 
-  var client = new Client(clientConfigParams)
+  var client = new minio.Client(clientConfigParams)
   var usEastConfig = clientConfigParams
   usEastConfig.region = server_region
-  var clientUsEastRegion = new Client(usEastConfig)
+  var clientUsEastRegion = new minio.Client(usEastConfig)
 
   var traceStream
   // FUNCTIONAL_TEST_TRACE env variable contains the path to which trace
@@ -3811,7 +3810,7 @@ describe('functional tests', function () {
           credentialsProvider: assumeRoleProvider,
         })
 
-        const assumeRoleClient = new Client(aRoleConf)
+        const assumeRoleClient = new minio.Client(aRoleConf)
         assumeRoleClient.region = server_region
 
         describe('Put an Object', function () {
