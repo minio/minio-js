@@ -90,6 +90,8 @@ module.exports = {
     'import/namespace': 'error',
     'import/default': 'error',
     'import/named': 'error',
+    // default export confuse esm/cjs interop
+    'import/no-default-export': 'error',
   },
   overrides: [
     {
