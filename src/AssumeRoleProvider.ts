@@ -16,13 +16,13 @@ type CredentialResponse = {
     }
   }
 
-  AssumeRoleResponse?: {
-    AssumeRoleResult?: {
-      Credentials?: {
-        AccessKeyId: string | undefined
-        SecretAccessKey: string | undefined
-        SessionToken: string | undefined
-        Expiration: string | undefined
+  AssumeRoleResponse: {
+    AssumeRoleResult: {
+      Credentials: {
+        AccessKeyId: string
+        SecretAccessKey: string
+        SessionToken: string
+        Expiration: string
       }
     }
   }
@@ -203,7 +203,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     return parseXml(body)
   }
 
-  parseCredentials(respObj: CredentialResponse = {}) {
+  parseCredentials(respObj: CredentialResponse) {
     if (respObj.ErrorResponse) {
       throw new Error(
         `Unable to obtain credentials: ${respObj.ErrorResponse?.Error?.Code} ${respObj.ErrorResponse?.Error?.Message}`,
@@ -215,21 +215,20 @@ export class AssumeRoleProvider extends CredentialProvider {
       AssumeRoleResponse: {
         AssumeRoleResult: {
           Credentials: {
-            AccessKeyId: accessKey = undefined,
-            SecretAccessKey: secretKey = undefined,
-            SessionToken: sessionToken = undefined,
-            Expiration: expiresAt = null,
-          } = {},
-        } = {},
-      } = {},
+            AccessKeyId: accessKey,
+            SecretAccessKey: secretKey,
+            SessionToken: sessionToken,
+            Expiration: expiresAt,
+          },
+        },
+      },
     } = respObj
 
     this.accessExpiresAt = expiresAt
 
-    // @ts-expect-error not sure if this could be undefined
-    const newCreds = new Credentials({ accessKey, secretKey, sessionToken })
+    const credentials = new Credentials({ accessKey, secretKey, sessionToken })
 
-    this.setCredentials(newCreds)
+    this.setCredentials(credentials)
     return this._credentials
   }
 
