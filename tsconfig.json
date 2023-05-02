@@ -11,9 +11,9 @@
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "declaration": true,
-    "declarationMap": false,
+    "declarationMap": true,
     "emitDeclarationOnly": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "outDir": "./dist/main/",
     "rootDir": "./src"
   }
