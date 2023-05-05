@@ -307,7 +307,7 @@ export function makeDateShort(date?: Date) {
  * pipesetup will also make sure that error emitted at any of the upstream Stream
  * will be emitted at the last stream. This makes error handling simple
  */
-export function pipesetup(...streams: [stream.Writable, ...stream.Duplex[], stream.Readable]) {
+export function pipesetup(...streams: [stream.Readable, ...stream.Duplex[], stream.Writable]) {
   // @ts-expect-error ts can't narrow this
   return streams.reduce((src: stream.Readable, dst: stream.Writable) => {
     src.on('error', (err) => dst.emit('error', err))
