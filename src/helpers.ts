@@ -16,7 +16,6 @@
 
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
-import type { IncomingHttpHeaders } from 'node:http'
 import * as path from 'node:path'
 import * as stream from 'node:stream'
 
@@ -28,10 +27,7 @@ import mime from 'mime-types'
 import querystring from 'query-string'
 
 import * as errors from './errors.ts'
-import type { Binary, Mode } from './type.ts'
-
-export type MetaData = Record<string, string | number>
-export type Header = Record<string, string | null | undefined>
+import type { Binary, Header, MetaData, Mode, ResponseHeader } from './type.ts'
 
 /**
  * All characters in string which are NOT unreserved should be percent encoded.
@@ -280,7 +276,7 @@ export function isEmptyObject(o: Record<string, unknown>): boolean {
  * check if arg is a valid date
  */
 export function isValidDate(arg: unknown): arg is Date {
-  // @ts-expect-error TS(2345): Argument of type 'Date' is not assignable to param... Remove this comment to see the full error message
+  // @ts-expect-error checknew Date(Math.NaN)
   return arg instanceof Date && !isNaN(arg)
 }
 
@@ -399,36 +395,39 @@ export function isStorageClassHeader(key: string) {
   return key.toLowerCase() === 'x-amz-storage-class'
 }
 
-export function extractMetadata(metaData: IncomingHttpHeaders) {
-  const newMetadata = {}
-  for (const key in metaData) {
+export function extractMetadata(headers: ResponseHeader) {
+  const newMetadata: Record<string, string> = {}
+  for (const [key, value] of Object.entries(headers)) {
     if (isSupportedHeader(key) || isStorageClassHeader(key) || isAmzHeader(key)) {
       if (key.toLowerCase().startsWith('x-amz-meta-')) {
-        // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
-        newMetadata[key.slice(11, key.length)] = metaData[key]
+        newMetadata[key.slice(11, key.length)] = value
       } else {
-        // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
-        newMetadata[key] = metaData[key]
+        newMetadata[key] = value
       }
     }
   }
   return newMetadata
 }
 
-export function getVersionId(headers: IncomingHttpHeaders = {}) {
+export function getVersionId(headers: ResponseHeader = {}) {
   const versionIdValue = headers['x-amz-version-id'] as string
   return versionIdValue || null
 }
 
-export function getSourceVersionId(headers: IncomingHttpHeaders = {}) {
+export function getSourceVersionId(headers: ResponseHeader = {}) {
   const sourceVersionId = headers['x-amz-copy-source-version-id']
   return sourceVersionId || null
 }
 
 export function sanitizeETag(etag = ''): string {
-  const replaceChars = { '"': '', '&quot;': '', '&#34;': '', '&QUOT;': '', '&#x00022': '' }
-  // @ts-expect-error TS(7053): Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
-  return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m])
+  const replaceChars: Record<string, string> = {
+    '"': '',
+    '&quot;': '',
+    '&#34;': '',
+    '&QUOT;': '',
+    '&#x00022': '',
+  }
+  return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m] as string)
 }
 
 export const RETENTION_MODES = {
@@ -446,12 +445,12 @@ export const LEGAL_HOLD_STATUS = {
   DISABLED: 'OFF',
 } as const
 
-function objectToBuffer(payload: Binary | Uint8Array): Buffer {
+function objectToBuffer(payload: Binary): Buffer {
   // don't know how to write this...
   return Buffer.from(payload)
 }
 
-export function toMd5(payload: Binary | Uint8Array): string {
+export function toMd5(payload: Binary): string {
   let payLoadBuf: Binary = objectToBuffer(payload)
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
@@ -459,7 +458,7 @@ export function toMd5(payload: Binary | Uint8Array): string {
   return crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
 }
 
-export function toSha256(payload: Binary | Uint8Array): string {
+export function toSha256(payload: Binary): string {
   return crypto.createHash('sha256').update(payload).digest('hex')
 }
 
@@ -662,7 +661,7 @@ export class CopyDestinationOptions {
   public readonly Object: string
   private readonly Encryption?: Encryption
   private readonly UserMetadata?: MetaData
-  private readonly UserTags?: Record<string, unknown> | string
+  private readonly UserTags?: Record<string, string> | string
   private readonly LegalHold?: 'on' | 'off'
   private readonly RetainUntilDate?: string
   private readonly Mode?: Mode
@@ -672,7 +671,7 @@ export class CopyDestinationOptions {
    * @param Object - Object Name for the destination (composed/copied) object defaults
    * @param Encryption - Encryption configuration defaults to {}
    * @param UserMetadata -
-   * @param UserTags
+   * @param UserTags - query-string escaped string or Record<string, string>
    * @param LegalHold -
    * @param RetainUntilDate - UTC Date String
    * @param Mode
@@ -691,7 +690,7 @@ export class CopyDestinationOptions {
     Object: string
     Encryption?: Encryption
     UserMetadata?: MetaData
-    UserTags?: Record<string, unknown> | string
+    UserTags?: Record<string, string> | string
     LegalHold?: 'on' | 'off'
     RetainUntilDate?: string
     Mode?: Mode
@@ -848,8 +847,7 @@ const fxp = new XMLParser()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseXml(xml: string): any {
-  let result = null
-  result = fxp.parse(xml)
+  let result = fxp.parse(xml)
   if (result.Error) {
     throw result.Error
   }

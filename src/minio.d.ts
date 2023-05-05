@@ -1,8 +1,14 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 
+/* eslint-disable */
+
 import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
+
+import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+
+export * from './helpers.ts'
 
 // Exports only from typings
 export type Region =
@@ -649,14 +655,14 @@ export class Client {
   }
 }
 
-export namespace Policy {
-  const NONE: 'none'
-  const READONLY: 'readonly'
-  const WRITEONLY: 'writeonly'
-  const READWRITE: 'readwrite'
+export enum Policy {
+  NONE = 'none',
+  READONLY = 'readonly',
+  WRITEONLY = 'writeonly',
+  READWRITE = 'readwrite',
 }
 
-export class CopyConditions {
+export declare class CopyConditions {
   setModified(date: Date): void
 
   setUnmodified(date: Date): void
@@ -666,7 +672,7 @@ export class CopyConditions {
   setMatchETagExcept(etag: string): void
 }
 
-export class PostPolicy {
+export declare class PostPolicy {
   setExpires(date: Date): void
 
   setKey(objectName: string): void
@@ -686,7 +692,7 @@ export class PostPolicy {
   setUserMetaData(metadata: Record<string, string>): void
 }
 
-export class NotificationPoller extends EventEmitter {
+export declare class NotificationPoller extends EventEmitter {
   stop(): void
 
   start(): void
@@ -695,68 +701,23 @@ export class NotificationPoller extends EventEmitter {
   checkForChanges(): void
 }
 
-export class NotificationConfig {
+export declare class NotificationConfig {
   add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
 }
 
-export class TopicConfig extends TargetConfig {
+export declare class TopicConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class QueueConfig extends TargetConfig {
+export declare class QueueConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class CloudFunctionConfig extends TargetConfig {
+export declare class CloudFunctionConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class CopySourceOptions {
-  constructor(options: {
-    Bucket: string
-    Object: string
-    VersionID?: string
-    MatchETag?: string
-    NoMatchETag?: string
-    MatchModifiedSince?: string
-    MatchUnmodifiedSince?: string
-    MatchRange?: boolean
-    Start?: number
-    End?: number
-    Encryption?: {
-      type: string
-      SSEAlgorithm?: string
-      KMSMasterKeyID?: string
-    }
-  })
-
-  getHeaders(): Record<string, string>
-
-  validate(): boolean
-}
-
-export class CopyDestinationOptions {
-  constructor(options: {
-    Bucket: string
-    Object: string
-    Encryption?: {
-      type: string
-      SSEAlgorithm?: string
-      KMSMasterKeyID?: string
-    }
-    UserMetadata?: Record<string, unknown>
-    UserTags?: Record<string, unknown> | string
-    LegalHold?: LegalHoldStatus
-    RetainUntilDate?: string
-    Mode?: Mode
-  })
-
-  getHeaders(): Record<string, string>
-
-  validate(): boolean
-}
-
-export function buildARN(
+export declare function buildARN(
   partition: string,
   service: string,
   region: string,
@@ -764,12 +725,12 @@ export function buildARN(
   resource: string,
 ): string
 
-export const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
-export const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
-export const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
-export const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
-export const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
-export const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
-export const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
-export const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
-export const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject
+export declare const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
+export declare const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
+export declare const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
+export declare const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
+export declare const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
+export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
+export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
+export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
+export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject

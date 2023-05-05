@@ -64,22 +64,22 @@ async function buildFiles({ files, module, outDir }) {
       continue
     }
 
-    if (file.path.endsWith('.d.ts')) {
-      continue
-    }
-
     const outFilePath = path.join(outDir, path.relative('src/', file.path))
     const outDirPath = path.dirname(outFilePath)
 
     await fsp.mkdir(outDirPath, { recursive: true })
+    const distCodePath = outFilePath.replace(/\.[tj]s$/g, extMap[module])
+
+    if (file.path.endsWith('.d.ts')) {
+      fs.copyFileSync(file.path, outFilePath)
+      continue
+    }
 
     try {
       const result = await babel.transformAsync(fs.readFileSync(file.path).toString(), {
         filename: file.path,
         ...opt,
       })
-
-      const distCodePath = outFilePath.replace(/\.[tj]s$/g, extMap[module])
 
       fs.writeFileSync(distCodePath, result.code)
     } catch (e) {
@@ -113,6 +113,10 @@ async function main() {
     if (!file.path.endsWith('.d.ts')) {
       continue
     }
+
+    // if (file.path.endsWith('minio.d.ts')) {
+    //   continue
+    // }
 
     const fileContent = fs.readFileSync(file.path).toString()
 
