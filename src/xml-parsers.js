@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { XMLParser } = require('fast-xml-parser')
-const fxp = new XMLParser()
+
+import crc32 from 'buffer-crc32'
+import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
-import * as errors from './errors.js'
+import * as errors from './errors.ts'
 import {
   isObject,
   parseXml,
@@ -27,10 +28,10 @@ import {
   sanitizeObjectKey,
   SelectResults,
   toArray,
-} from './helpers'
-var crc32 = require('buffer-crc32')
+} from './helpers.js'
 
 // Parse XML and return information as Javascript types
+const fxp = new XMLParser()
 
 // parse error XML response
 export function parseError(xml, headerInfo) {

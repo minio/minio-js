@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import Crypto from 'crypto'
+import * as Crypto from 'node:crypto'
+
 import _ from 'lodash'
 
-import * as errors from './errors.js'
+import * as errors from './errors.ts'
 import { getScope, isArray, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './helpers.js'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'

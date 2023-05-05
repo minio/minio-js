@@ -4,18 +4,35 @@ module.exports = {
     mocha: true,
     es6: true,
   },
-  ignorePatterns: ['src/test/*.*', 'examples/**/*'],
-  overrides: [],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier', // This should be the last entry.
   ],
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'simple-import-sort'],
+  plugins: ['@typescript-eslint', 'simple-import-sort', 'unused-imports', 'import', 'unicorn'],
   parserOptions: {
     sourceType: 'module',
-    ecmaVersion: 8,
+    ecmaVersion: 'latest',
+  },
+  ignorePatterns: ['examples/**/*', 'dist/**/*'],
+  settings: {
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts'],
+    },
+    // we need to config this so import are fully specified
+    // otherwise @babel/register can't handle TypeScript files
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: false,
+        extensionAlias: {
+          '.js': ['.js'],
+        },
+        extensions: ['.ts', '.js', '.mjs'],
+        fullySpecified: true,
+        enforceExtension: true,
+      },
+    },
   },
   rules: {
     'no-console': ['error'],
@@ -34,6 +51,9 @@ module.exports = {
     'rest-spread-spacing': 0, // ["error", "never"],
     'no-multi-spaces': 0, // ["warn", { ignoreEOLComments: false }],
 
+    // import node stdlib as `node:...`
+    // don't worry, babel will remove these prefix.
+    'unicorn/prefer-node-protocol': 'error',
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
     indent: 'off',
@@ -67,5 +87,42 @@ module.exports = {
 
     'no-extra-parens': 0,
     '@typescript-eslint/no-extra-parens': 0,
+    'import/namespace': 'error',
+    'import/default': 'error',
+    'import/named': 'error',
+    // default export confuse esm/cjs interop
+    'import/no-default-export': 'error',
+    'import/extensions': ['error', 'always'],
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        prefer: 'type-imports',
+        fixStyle: 'separate-type-imports',
+      },
+    ],
+    'unused-imports/no-unused-imports': 'error',
+    'import/no-amd': 'error',
   },
+  overrides: [
+    {
+      files: ['./src/**/*', './tests/**/*'],
+      rules: {
+        'import/no-commonjs': 'error',
+      },
+    },
+    {
+      files: ['./tests/**/*'],
+      rules: {
+        'no-empty-function': 0,
+        '@typescript-eslint/no-empty-function': 0,
+      },
+    },
+    {
+      files: ['./types/**/*'],
+      rules: {
+        '@typescript-eslint/no-unused-vars': 0,
+        '@typescript-eslint/no-explicit-any': 0,
+      },
+    },
+  ],
 }

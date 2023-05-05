@@ -1,4 +1,4 @@
-class Credentials {
+export class Credentials {
   constructor({ accessKey, secretKey, sessionToken }) {
     this.accessKey = accessKey
     this.secretKey = secretKey
@@ -33,4 +33,7 @@ class Credentials {
   }
 }
 
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
+// eslint-disable-next-line import/no-default-export
 export default Credentials

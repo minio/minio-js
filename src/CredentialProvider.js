@@ -1,6 +1,6 @@
-import Credentials from './Credentials'
+import { Credentials } from './Credentials.js'
 
-class CredentialProvider {
+export class CredentialProvider {
   constructor({ accessKey, secretKey, sessionToken }) {
     this.credentials = new Credentials({
       accessKey,
@@ -46,4 +46,7 @@ class CredentialProvider {
   }
 }
 
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
+// eslint-disable-next-line import/no-default-export
 export default CredentialProvider

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import mime from 'mime-types'
-import stream from 'stream'
-var Crypto = require('crypto-browserify')
-const { XMLParser } = require('fast-xml-parser')
-const fxp = new XMLParser()
+import * as Crypto from 'node:crypto'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as stream from 'node:stream'
 
-const ipaddr = require('ipaddr.js')
 import { isBrowser } from 'browser-or-node'
-
-const fs = require('fs')
-const path = require('path')
+import { XMLParser } from 'fast-xml-parser'
+import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
+import mime from 'mime-types'
 import querystring from 'query-string'
 
-import * as errors from './errors.js'
+import * as errors from './errors.ts'
+
+const fxp = new XMLParser()
 
 // Returns a wrapper function that will promisify a given callback function.
 // It will preserve 'this'.

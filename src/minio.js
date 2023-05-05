@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
+import * as fs from 'node:fs'
+import * as Http from 'node:http'
+import * as Https from 'node:https'
+import * as path from 'node:path'
+import * as Stream from 'node:stream'
+
 import async from 'async'
 import BlockStream2 from 'block-stream2'
-import fs from 'fs'
-import Http from 'http'
-import Https from 'https'
 import _ from 'lodash'
 import mkdirp from 'mkdirp'
-import path from 'path'
-import querystring from 'query-string'
-import Stream from 'stream'
+import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import CredentialProvider from './CredentialProvider'
-import * as errors from './errors.js'
-import extensions from './extensions'
+import { CredentialProvider } from './CredentialProvider.js'
+import * as errors from './errors.ts'
+import { extensions } from './extensions.js'
 import {
   calculateEvenSplits,
   CopyDestinationOptions,
@@ -72,14 +73,18 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './helpers.js'
-import { NotificationConfig, NotificationPoller } from './notification'
-import ObjectUploader from './object-uploader'
+import { NotificationConfig, NotificationPoller } from './notification.js'
+import { ObjectUploader } from './object-uploader.js'
 import { getS3Endpoint } from './s3-endpoints.js'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
-import * as transformers from './transformers'
-import { parseSelectObjectContentResponse } from './xml-parsers'
+import * as transformers from './transformers.js'
+import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
-var Package = require('../../package.json')
+// will be replaced by bundler
+const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
+
+export * from './helpers.js'
+export * from './notification.js'
 
 export class Client {
   constructor(params) {
@@ -2929,8 +2934,8 @@ export class Client {
     })
   }
 
-  /** Put lifecycle configuration on a bucket.
-  /** Apply lifecycle configuration on a bucket.
+  /**
+   * Apply lifecycle configuration on a bucket.
    * bucketName _string_
    * policyConfig _object_ a valid policy configuration object.
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
@@ -3980,6 +3985,3 @@ export class PostPolicy {
     })
   }
 }
-
-export * from './helpers'
-export * from './notification'

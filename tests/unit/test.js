@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-require('source-map-support').install()
+import * as Stream from 'node:stream'
 
 import { assert } from 'chai'
 import Nock from 'nock'
-import Stream from 'stream'
 
 import {
   calculateEvenSplits,
@@ -30,10 +29,10 @@ import {
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from '../../../dist/main/helpers'
-import * as Minio from '../../../dist/main/minio'
+} from '../../src/helpers.js'
+import * as Minio from '../../src/minio.js'
 
-var Package = require('../../../package.json')
+const Package = { version: 'development' }
 
 describe('Helpers', () => {
   it('should validate for s3 endpoint', () => {

@@ -14,47 +14,34 @@
  * limitations under the License.
  */
 
-const os = require('os')
-const stream = require('stream')
-const crypto = require('crypto')
-const async = require('async')
-const _ = require('lodash')
-const fs = require('fs')
-const http = require('http')
-const https = require('https')
-const url = require('url')
-const chai = require('chai')
+import * as crypto from 'node:crypto'
+import * as fs from 'node:fs'
+import * as http from 'node:http'
+import * as https from 'node:https'
+import * as os from 'node:os'
+import * as stream from 'node:stream'
+import * as url from 'node:url'
+
+import async from 'async'
+import chai from 'chai'
+import _ from 'lodash'
+import { step } from 'mocha-steps'
+import splitFile from 'split-file'
+import superagent from 'superagent'
+import * as uuid from 'uuid'
+
+import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.js'
+import {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  DEFAULT_REGION,
+  getVersionId,
+  isArray,
+  removeDirAndFiles,
+} from '../../src/helpers.js'
+import * as minio from '../../src/minio.js'
+
 const assert = chai.assert
-const superagent = require('superagent')
-const uuid = require('uuid')
-const splitFile = require('split-file')
-const step = require('mocha-steps').step
-
-let helpers
-try {
-  helpers = require('../../../dist/main/helpers')
-} catch (err) {
-  helpers = require('minio/dist/main/helpers')
-}
-
-let AssumeRoleProvider
-try {
-  AssumeRoleProvider = require('../../../dist/main/AssumeRoleProvider')
-} catch (err) {
-  AssumeRoleProvider = require('minio/dist/main/AssumeRoleProvider')
-}
-AssumeRoleProvider = AssumeRoleProvider.default
-
-let minio
-try {
-  minio = require('../../../dist/main/minio')
-} catch (err) {
-  minio = require('minio')
-}
-
-const { getVersionId, isArray, CopyDestinationOptions, CopySourceOptions, removeDirAndFiles, DEFAULT_REGION } = helpers
-
-require('source-map-support').install()
 
 const isWindowsPlatform = process.platform === 'win32'
 
