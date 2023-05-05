@@ -29,6 +29,7 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
+import { CopyConditions } from './copy-conditions.ts'
 import { CredentialProvider } from './CredentialProvider.js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
@@ -85,6 +86,7 @@ const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development'
 
 export * from './helpers.js'
 export * from './notification.js'
+export { CopyConditions }
 
 export class Client {
   constructor(params) {
@@ -3854,39 +3856,6 @@ Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalH
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
-
-export class CopyConditions {
-  constructor() {
-    this.modified = ''
-    this.unmodified = ''
-    this.matchETag = ''
-    this.matchETagExcept = ''
-  }
-
-  setModified(date) {
-    if (!(date instanceof Date)) {
-      throw new TypeError('date must be of type Date')
-    }
-
-    this.modified = date.toUTCString()
-  }
-
-  setUnmodified(date) {
-    if (!(date instanceof Date)) {
-      throw new TypeError('date must be of type Date')
-    }
-
-    this.unmodified = date.toUTCString()
-  }
-
-  setMatchETag(etag) {
-    this.matchETag = etag
-  }
-
-  setMatchETagExcept(etag) {
-    this.matchETagExcept = etag
-  }
-}
 
 // Build PostPolicy object that can be signed by presignedPostPolicy
 export class PostPolicy {
