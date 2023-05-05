@@ -2,8 +2,8 @@ import * as Http from 'node:http'
 import * as Https from 'node:https'
 import { URL, URLSearchParams } from 'node:url'
 
-import { CredentialProvider } from './CredentialProvider.js'
-import { Credentials } from './Credentials.js'
+import { CredentialProvider } from './CredentialProvider.ts'
+import { Credentials } from './Credentials.ts'
 import { makeDateLong, parseXml, toSha256 } from './helpers.js'
 import { signV4ByServiceName } from './signing.js'
 
