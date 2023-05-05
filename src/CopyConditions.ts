@@ -1,15 +1,8 @@
 export class CopyConditions {
-  public modified: string
-  public unmodified: string
-  public matchETag: string
-  public matchETagExcept: string
-
-  constructor() {
-    this.modified = ''
-    this.unmodified = ''
-    this.matchETag = ''
-    this.matchETagExcept = ''
-  }
+  public modified = ''
+  public unmodified = ''
+  public matchETag = ''
+  public matchETagExcept = ''
 
   setModified(date: Date): void {
     if (!(date instanceof Date)) {
