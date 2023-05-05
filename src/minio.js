@@ -29,7 +29,7 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { CredentialProvider } from './CredentialProvider.js'
+import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import {

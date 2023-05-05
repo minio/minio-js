@@ -126,7 +126,8 @@ export function isValidDomain(host: string) {
   if (host[0] === '.') {
     return false
   }
-  const alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'.split('')
+
+  const alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'
   // All non alphanumeric characters are invalid.
   for (const char of alphaNumerics) {
     if (host.includes(char)) {
