@@ -1,3 +1,6 @@
+import type * as http from 'node:http'
+import type * as https from 'node:https'
+
 export type Binary = string | Buffer
 
 export type Mode = 'COMPLIANCE' | 'GOVERNANCE'
@@ -19,3 +22,10 @@ export interface IRequest {
 }
 
 export type ICanonicalRequest = string
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
+}
+
+export type Transport = typeof http | typeof https

@@ -16,14 +16,21 @@ export async function request(
       reject(e)
     })
 
-    if (body) {
-      if (!Buffer.isBuffer(body) && typeof body !== 'string') {
-        body.on('error', reject)
-      }
-
-      requestObj.end(body)
-    } else {
+    if (!body) {
       requestObj.end(null)
+      return
     }
+
+    if (Buffer.isBuffer(body) || typeof body === 'string') {
+      requestObj.end(body)
+      return
+    }
+
+    // stream.Readable
+    body.pipe(requestObj)
+    body.on('error', (err) => {
+      requestObj.destroy(err)
+      reject(err)
+    })
   })
 }

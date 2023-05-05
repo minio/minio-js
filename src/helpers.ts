@@ -63,7 +63,7 @@ export function uriEscape(string: string) {
   }, '')
 }
 
-export function uriResourceEscape(string: string) {
+export function uriResourceEscape(string: string): string {
   return uriEscape(string).replace(/%2F/g, '/')
 }
 

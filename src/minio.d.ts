@@ -5,8 +5,11 @@ import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import { TypedClient } from './internal/typed-client.ts'
 import type { Region } from './s3-endpoints.ts'
+import { UploadedObjectInfo } from './type.ts'
 
+export { UploadedObjectInfo }
 export * from './helpers.ts'
 export type { Region } from './s3-endpoints.ts'
 
@@ -43,19 +46,6 @@ export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
-
-export interface ClientOptions {
-  endPoint: string
-  accessKey: string
-  secretKey: string
-  useSSL?: boolean | undefined
-  port?: number | undefined
-  region?: Region | undefined
-  transport?: any
-  sessionToken?: string | undefined
-  partSize?: number | undefined
-  pathStyle?: boolean | undefined
-}
 
 export interface BucketItemFromList {
   name: string
@@ -120,11 +110,6 @@ export interface ItemBucketMetadataList {
 
 export interface ItemBucketMetadata {
   [key: string]: any
-}
-
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
 }
 
 export interface Tag {
@@ -243,9 +228,7 @@ export interface RemoveOptions {
 }
 
 // Exports from library
-export class Client {
-  constructor(options: ClientOptions)
-
+export class Client extends TypedClient {
   // Bucket operations
   makeBucket(bucketName: string, region: Region, makeOpts: MakeBucketOpt, callback: NoResultCallback): void
   makeBucket(bucketName: string, region: Region, callback: NoResultCallback): void
