@@ -19,7 +19,7 @@ import { Transform } from 'node:stream'
 
 import * as querystring from 'query-string'
 
-import { getVersionId, sanitizeETag } from './helpers.js'
+import { getVersionId, sanitizeETag } from './helpers.ts'
 
 // We extend Transform because Writable does not implement ._flush().
 export class ObjectUploader extends Transform {

@@ -28,7 +28,7 @@ import {
   sanitizeObjectKey,
   SelectResults,
   toArray,
-} from './helpers.js'
+} from './helpers.ts'
 
 // Parse XML and return information as Javascript types
 const fxp = new XMLParser()

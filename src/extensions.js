@@ -17,7 +17,7 @@
 import * as Stream from 'node:stream'
 
 import * as errors from './errors.ts'
-import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.js'
+import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.ts'
 import * as transformers from './transformers.js'
 
 export class extensions {

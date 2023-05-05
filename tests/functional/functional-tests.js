@@ -36,9 +36,8 @@ import {
   CopySourceOptions,
   DEFAULT_REGION,
   getVersionId,
-  isArray,
   removeDirAndFiles,
-} from '../../src/helpers.js'
+} from '../../src/helpers.ts'
 import * as minio from '../../src/minio.js'
 
 const assert = chai.assert
@@ -2447,7 +2446,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2507,7 +2506,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2604,7 +2603,7 @@ describe('functional tests', function () {
             if (err) {
               return done(err)
             }
-            if (isArray(tagList)) {
+            if (Array.isArray(tagList)) {
               done()
             }
           })

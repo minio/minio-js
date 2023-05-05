@@ -43,7 +43,6 @@ import {
   getVersionId,
   insertContentType,
   isAmazonEndpoint,
-  isArray,
   isBoolean,
   isFunction,
   isNumber,
@@ -63,7 +62,6 @@ import {
   partsRequired,
   pipesetup,
   prependXAMZMeta,
-  promisify,
   readableStream,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
@@ -72,9 +70,10 @@ import {
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helpers.js'
+} from './helpers.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
+import { promisify } from './promisify.js'
 import { getS3Endpoint } from './s3-endpoints.js'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
 import * as transformers from './transformers.js'
@@ -83,7 +82,7 @@ import { parseSelectObjectContentResponse } from './xml-parsers.js'
 // will be replaced by bundler
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 
-export * from './helpers.js'
+export * from './helpers.ts'
 export * from './notification.js'
 
 export class Client {
@@ -1913,7 +1912,7 @@ export class Client {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (!isArray(objectsList)) {
+    if (!Array.isArray(objectsList)) {
       throw new errors.InvalidArgumentError('objectsList should be a list')
     }
     if (!isFunction(cb)) {
@@ -2637,7 +2636,7 @@ export class Client {
     if (!isString(suffix)) {
       throw new TypeError('suffix must be of type string')
     }
-    if (!isArray(events)) {
+    if (!Array.isArray(events)) {
       throw new TypeError('events must be of type Array')
     }
     let listener = new NotificationPoller(this, bucketName, prefix, suffix, events)
@@ -3543,7 +3542,7 @@ export class Client {
     const me = this // many async flows. so store the ref.
     const sourceFilesLength = sourceObjList.length
 
-    if (!isArray(sourceObjList)) {
+    if (!Array.isArray(sourceObjList)) {
       throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
     }
     if (!(destObjConfig instanceof CopyDestinationOptions)) {
