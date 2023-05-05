@@ -8,7 +8,7 @@ import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
 import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
-export { Region } from './s3-endpoints.ts'
+export type { Region } from './s3-endpoints.ts'
 
 // Exports only from typings
 export type NotificationEvent =
