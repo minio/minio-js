@@ -4527,7 +4527,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucketName = 'minio-js-fd-version-' + uuid.v4()
     const fdPrefixObjName = 'my-prefix/datafile-100-kB'
-    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/' + fdPrefixObjName) : Buffer.alloc(100 * 1024, 0)
+    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucketName, '', done))
     after((done) => client.removeBucket(fdPrefixBucketName, done))
@@ -4672,7 +4672,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucket = 'minio-js-fd-nv-' + uuid.v4()
     const fdObjectName = 'my-prefix/datafile-100-kB'
-    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucket, '', done))
     after((done) => client.removeBucket(fdPrefixBucket, done))
