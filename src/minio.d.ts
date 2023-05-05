@@ -9,6 +9,7 @@ import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
 export type { Region } from './s3-endpoints.ts'
+import type { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './helpers.ts'
 
 // Exports only from typings
 export type NotificationEvent =
@@ -29,9 +30,22 @@ export type NotificationEvent =
   | 's3:Replication:OperationReplicatedAfterThreshold'
   | 's3:Replication:OperationNotTracked'
   | string
-export type Mode = 'COMPLIANCE' | 'GOVERNANCE'
-export type LockUnit = 'Days' | 'Years'
-export type LegalHoldStatus = 'ON' | 'OFF'
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type Mode = RETENTION_MODES
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LockUnit = RETENTION_VALIDITY_UNITS
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+
 export type NoResultCallback = (error: Error | null) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
@@ -141,8 +155,8 @@ export interface LifecycleRule {
 }
 
 export interface LockConfig {
-  mode: Mode
-  unit: LockUnit
+  mode: RETENTION_MODES
+  unit: RETENTION_VALIDITY_UNITS
   validity: number
 }
 

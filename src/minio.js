@@ -33,10 +33,15 @@ import { CredentialProvider } from './CredentialProvider.js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import {
-  calculateEvenSplits,
   CopyDestinationOptions,
   CopySourceOptions,
   DEFAULT_REGION,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from './helpers.ts'
+import {
+  calculateEvenSplits,
   extractMetadata,
   getScope,
   getSourceVersionId,
@@ -56,21 +61,18 @@ import {
   isValidPort,
   isValidPrefix,
   isVirtualHostStyle,
-  LEGAL_HOLD_STATUS,
   makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
   pipesetup,
   prependXAMZMeta,
   readableStream,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
   sanitizeETag,
   toMd5,
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helpers.ts'
+} from './internal/assert.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
@@ -78,7 +80,6 @@ import { getS3Endpoint } from './s3-endpoints.ts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
-
 // will be replaced by bundler
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 

@@ -19,16 +19,9 @@ import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
 import * as errors from './errors.ts'
-import {
-  isObject,
-  parseXml,
-  readableStream,
-  RETENTION_VALIDITY_UNITS,
-  sanitizeETag,
-  sanitizeObjectKey,
-  SelectResults,
-  toArray,
-} from './helpers.ts'
+import { RETENTION_VALIDITY_UNITS } from './helpers.ts'
+import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/assert.ts'
+import { SelectResults } from './select-results.ts'
 
 // Parse XML and return information as Javascript types
 const fxp = new XMLParser()

@@ -19,16 +19,15 @@ import * as Stream from 'node:stream'
 import { assert } from 'chai'
 import Nock from 'nock'
 
+import { CopyDestinationOptions, CopySourceOptions } from '../../src/helpers.ts'
 import {
   calculateEvenSplits,
-  CopyDestinationOptions,
-  CopySourceOptions,
   isValidEndpoint,
   isValidIP,
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from '../../src/helpers.ts'
+} from '../../src/internal/assert.ts'
 import * as Minio from '../../src/minio.js'
 
 const Package = { version: 'development' }

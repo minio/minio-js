@@ -31,13 +31,8 @@ import superagent from 'superagent'
 import * as uuid from 'uuid'
 
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.js'
-import {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
-  getVersionId,
-  removeDirAndFiles,
-} from '../../src/helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, removeDirAndFiles } from '../../src/helpers.ts'
+import { getVersionId } from '../../src/internal/assert.ts'
 import * as minio from '../../src/minio.js'
 
 const assert = chai.assert

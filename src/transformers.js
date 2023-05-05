@@ -21,7 +21,7 @@ import _ from 'lodash'
 import Through2 from 'through2'
 
 import * as errors from './errors.ts'
-import { isFunction } from './helpers.ts'
+import { isFunction } from './internal/assert.ts'
 import * as xmlParsers from './xml-parsers.js'
 
 // getConcater returns a stream that concatenates the input and emits

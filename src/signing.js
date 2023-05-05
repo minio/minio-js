@@ -19,7 +19,7 @@ import * as Crypto from 'node:crypto'
 import _ from 'lodash'
 
 import * as errors from './errors.ts'
-import { getScope, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './helpers.ts'
+import { getScope, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './internal/assert.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -232,6 +232,7 @@ export function signV4(request, accessKey, secretKey, region, requestDate, servi
 export function signV4ByServiceName(request, accessKey, secretKey, region, requestDate, serviceName = 's3') {
   return signV4(request, accessKey, secretKey, region, requestDate, serviceName)
 }
+
 // returns a presigned URL string
 export function presignSignatureV4(request, accessKey, secretKey, sessionToken, region, requestDate, expires) {
   if (!isObject(request)) {
