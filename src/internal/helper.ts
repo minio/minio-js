@@ -583,7 +583,7 @@ const fxp = new XMLParser()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseXml(xml: string): any {
-  let result = fxp.parse(xml)
+  const result = fxp.parse(xml)
   if (result.Error) {
     throw result.Error
   }
