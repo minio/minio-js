@@ -30,7 +30,7 @@ import splitFile from 'split-file'
 import superagent from 'superagent'
 import * as uuid from 'uuid'
 
-import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.js'
+import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
 import {
   CopyDestinationOptions,
   CopySourceOptions,

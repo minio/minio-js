@@ -26,11 +26,13 @@
       "require": "./dist/main/minio.js",
       "default": "./dist/esm/minio.mjs"
     },
+    "./dist/main/internal/*": null,
     "./dist/main/*": {
       "types": "./dist/main/*",
       "require": "./dist/main/*",
       "default": null
     },
+    "./dist/esm/internal/*": null,
     "./dist/esm/*": {
       "types": "./dist/esm/*",
       "import": "./dist/esm/*",
