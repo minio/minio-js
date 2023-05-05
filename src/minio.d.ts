@@ -653,13 +653,6 @@ export class Client {
   }
 }
 
-export enum Policy {
-  NONE = 'none',
-  READONLY = 'readonly',
-  WRITEONLY = 'writeonly',
-  READWRITE = 'readwrite',
-}
-
 export declare class CopyConditions {
   setModified(date: Date): void
 
