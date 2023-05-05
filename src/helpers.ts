@@ -789,13 +789,20 @@ export function partsRequired(size: number): number {
  * part is less than 5MiB, as that could fail the multipart request if
  * it is not the last part.
  */
-export function calculateEvenSplits(size: number, objInfo: { Start?: number; Bucket: string; Object: string }) {
+export function calculateEvenSplits<T extends { Start?: number }>(
+  size: number,
+  objInfo: T,
+): {
+  startIndex: number[]
+  objInfo: T
+  endIndex: number[]
+} | null {
   if (size === 0) {
     return null
   }
   const reqParts = partsRequired(size)
-  const startIndexParts = new Array(reqParts)
-  const endIndexParts = new Array(reqParts)
+  const startIndexParts: number[] = []
+  const endIndexParts: number[] = []
 
   let start = objInfo.Start
   if (isEmpty(start) || start === -1) {
@@ -817,8 +824,8 @@ export function calculateEvenSplits(size: number, objInfo: { Start?: number; Buc
     const currentEnd = currentStart + curPartSize - 1
     nextStart = currentEnd + 1
 
-    startIndexParts[i] = currentStart
-    endIndexParts[i] = currentEnd
+    startIndexParts.push(currentStart)
+    endIndexParts.push(currentEnd)
   }
 
   return { startIndex: startIndexParts, endIndex: endIndexParts, objInfo: objInfo }
