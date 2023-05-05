@@ -114,10 +114,6 @@ async function main() {
       continue
     }
 
-    // if (file.path.endsWith('minio.d.ts')) {
-    //   continue
-    // }
-
     const fileContent = fs.readFileSync(file.path).toString()
 
     const mts = babel.transformSync(fileContent, {
