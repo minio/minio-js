@@ -15,9 +15,9 @@
  */
 
 import * as crypto from 'node:crypto'
-import fs from 'node:fs'
+import * as fs from 'node:fs'
 import type { IncomingHttpHeaders } from 'node:http'
-import path from 'node:path'
+import * as path from 'node:path'
 import * as stream from 'node:stream'
 
 import { isBrowser } from 'browser-or-node'
@@ -25,9 +25,9 @@ import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
+import querystring from 'query-string'
 
 import * as errors from './errors.ts'
-import { qs } from './qs.ts'
 import type { Binary, Mode } from './type.ts'
 
 export type MetaData = Record<string, string | number>
@@ -713,7 +713,11 @@ export class CopyDestinationOptions {
     const userTags = this.UserTags
     if (!isEmpty(userTags)) {
       headerOptions['X-Amz-Tagging-Directive'] = replaceDirective
-      headerOptions['X-Amz-Tagging'] = isObject(userTags) ? qs(userTags) : isString(userTags) ? userTags : ''
+      headerOptions['X-Amz-Tagging'] = isObject(userTags)
+        ? querystring.stringify(userTags)
+        : isString(userTags)
+        ? userTags
+        : ''
     }
 
     if (this.Mode) {
