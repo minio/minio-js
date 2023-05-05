@@ -5,22 +5,12 @@ import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
+export { Region } from './s3-endpoints.ts'
 
 // Exports only from typings
-export type Region =
-  | 'us-east-1'
-  | 'us-west-1'
-  | 'us-west-2'
-  | 'eu-west-1'
-  | 'eu-central-1'
-  | 'ap-southeast-1'
-  | 'ap-northeast-1'
-  | 'ap-southeast-2'
-  | 'sa-east-1'
-  | 'cn-north-1'
-  | string
 export type NotificationEvent =
   | 's3:ObjectCreated:*'
   | 's3:ObjectCreated:Put'
