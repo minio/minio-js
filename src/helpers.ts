@@ -14,7 +14,10 @@ import {
   isValidObjectName,
 } from './internal/assert.ts'
 import type { Encryption, MetaData } from './internal/type.ts'
+import { RETENTION_MODES } from './internal/type.ts'
+
 export { CopySourceOptions } from './copy-source-options.ts'
+export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 export { SelectResults } from './select-results.ts'
 
 export const DEFAULT_REGION = 'us-east-1'
@@ -39,21 +42,6 @@ export function removeDirAndFiles(dirPath: string, removeSelf = true) {
   if (removeSelf) {
     fs.rmdirSync(dirPath)
   }
-}
-
-export enum RETENTION_MODES {
-  GOVERNANCE = 'GOVERNANCE',
-  COMPLIANCE = 'COMPLIANCE',
-}
-
-export enum RETENTION_VALIDITY_UNITS {
-  DAYS = 'Days',
-  YEARS = 'Years',
-}
-
-export enum LEGAL_HOLD_STATUS {
-  ENABLED = 'ON',
-  DISABLED = 'OFF',
 }
 
 export class CopyDestinationOptions {

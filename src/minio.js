@@ -32,14 +32,7 @@ import xml2js from 'xml2js'
 import { CredentialProvider } from './CredentialProvider.js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
-import {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
-  LEGAL_HOLD_STATUS,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
-} from './helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
@@ -73,6 +66,7 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/assert.ts'
+import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'

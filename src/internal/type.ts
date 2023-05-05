@@ -12,8 +12,27 @@ export type Encryption = {
 }
 
 export enum ENCRYPTION_TYPES {
-  // SSEC represents server-side-encryption with customer provided keys
+  /**
+   * SSEC represents server-side-encryption with customer provided keys
+   */
   SSEC = 'SSE-C',
-  // KMS represents server-side-encryption with managed keys
+  /**
+   * KMS represents server-side-encryption with managed keys
+   */
   KMS = 'KMS',
+}
+
+export enum RETENTION_MODES {
+  GOVERNANCE = 'GOVERNANCE',
+  COMPLIANCE = 'COMPLIANCE',
+}
+
+export enum RETENTION_VALIDITY_UNITS {
+  DAYS = 'Days',
+  YEARS = 'Years',
+}
+
+export enum LEGAL_HOLD_STATUS {
+  ENABLED = 'ON',
+  DISABLED = 'OFF',
 }
