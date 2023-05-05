@@ -37,7 +37,7 @@ export type NotificationEvent =
   | string
 
 /**
- * @deprecated keep for backward compatible
+ * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
  */
 export type Mode = RETENTION_MODES
 
@@ -184,7 +184,7 @@ export interface ReplicationConfig {
 
 export interface RetentionOptions {
   versionId: string
-  mode?: Mode
+  mode?: RETENTION_MODES
   retainUntilDate?: IsoDate
   governanceBypass?: boolean
 }
