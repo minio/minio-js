@@ -27,7 +27,7 @@ import mime from 'mime-types'
 import querystring from 'query-string'
 
 import * as errors from './errors.ts'
-import type { Binary, Header, MetaData, Mode, ResponseHeader } from './type.ts'
+import type { Binary, MetaData, Mode, RequestHeaders, ResponseHeader } from './type.ts'
 
 /**
  * All characters in string which are NOT unreserved should be percent encoded.
@@ -628,7 +628,7 @@ export class CopySourceOptions {
   }
 
   getHeaders() {
-    const headerOptions: Header = {}
+    const headerOptions: RequestHeaders = {}
     headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object)
 
     if (!isEmpty(this.VersionID)) {
