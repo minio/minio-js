@@ -26,9 +26,7 @@ npm install -g
 
 ## Using with TypeScript
 
-```sh
-npm install --save-dev @types/minio
-```
+`minio` not have builtin type definition, you can remove `@types/minio` now.
 
 ## Initialize MinIO Client
 
