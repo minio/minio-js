@@ -16,9 +16,6 @@
 
 /// <reference lib="ES2022.Error" />
 
-/**
- * @internal
- */
 class ExtendableError extends Error {
   constructor(message?: string, opt?: ErrorOptions) {
     // error Option {cause?: unknown} is a 'nice to have',
