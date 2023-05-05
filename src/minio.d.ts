@@ -4,12 +4,17 @@ import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
-import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import type {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from './helpers.ts'
 import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
 export type { Region } from './s3-endpoints.ts'
-import type { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 
 // Exports only from typings
 export type NotificationEvent =
@@ -729,6 +734,3 @@ export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
 export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
 export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
 export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject
-export { LEGAL_HOLD_STATUS } from './internal/type.ts'
-export { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
-export { RETENTION_MODES } from './internal/type.ts'
