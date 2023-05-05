@@ -65,7 +65,7 @@ import {
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './internal/assert.ts'
+} from './internal/helper.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'

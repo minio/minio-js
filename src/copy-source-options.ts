@@ -1,5 +1,5 @@
 import * as errors from './errors.ts'
-import { isEmpty, isNumber, isValidBucketName, isValidObjectName } from './internal/assert.ts'
+import { isEmpty, isNumber, isValidBucketName, isValidObjectName } from './internal/helper.ts'
 import type { Encryption, Header } from './internal/type.ts'
 
 export class CopySourceOptions {

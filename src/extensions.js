@@ -25,7 +25,7 @@ import {
   isValidPrefix,
   pipesetup,
   uriEscape,
-} from './internal/assert.ts'
+} from './internal/helper.ts'
 import * as transformers from './transformers.js'
 
 export class extensions {

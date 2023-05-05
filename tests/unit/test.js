@@ -27,7 +27,7 @@ import {
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from '../../src/internal/assert.ts'
+} from '../../src/internal/helper.ts'
 import * as Minio from '../../src/minio.js'
 
 const Package = { version: 'development' }

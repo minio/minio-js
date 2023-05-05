@@ -19,7 +19,7 @@ import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
 import * as errors from './errors.ts'
-import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/assert.ts'
+import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
 import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { SelectResults } from './select-results.ts'
 

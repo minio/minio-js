@@ -12,7 +12,7 @@ import {
   isString,
   isValidBucketName,
   isValidObjectName,
-} from './internal/assert.ts'
+} from './internal/helper.ts'
 import type { Encryption, MetaData } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
 
