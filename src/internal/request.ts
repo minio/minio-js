@@ -5,7 +5,7 @@ import type * as stream from 'node:stream'
 export async function request(
   transport: typeof http | typeof https,
   opt: https.RequestOptions,
-  body: Buffer | string | stream.Readable | undefined = undefined,
+  body: Buffer | string | stream.Readable | null = null,
 ): Promise<http.IncomingMessage> {
   return new Promise<http.IncomingMessage>((resolve, reject) => {
     const requestObj = transport.request(opt, (resp) => {
@@ -22,6 +22,8 @@ export async function request(
       }
 
       requestObj.end(body)
+    } else {
+      requestObj.end(null)
     }
   })
 }
