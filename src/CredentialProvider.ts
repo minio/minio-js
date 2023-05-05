@@ -11,7 +11,6 @@ export class CredentialProvider {
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async getCredentials(): Promise<Credentials | null> {
     return this.credentials.get()
   }
