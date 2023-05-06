@@ -66,11 +66,11 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
+import { getS3Endpoint } from './internal/s3-endpoints.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
-import { getS3Endpoint } from './s3-endpoints.ts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'

@@ -11,11 +11,11 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import type { Region } from './internal/s3-endpoints.ts'
 import type { Transport } from './internal/type.ts'
-import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
-export type { Region } from './s3-endpoints.ts'
+export type { Region } from './internal/s3-endpoints.ts'
 
 // Exports only from typings
 export type NotificationEvent =
