@@ -71,7 +71,7 @@ import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
-import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.js'
+import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.ts'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
 // will be replaced by bundler

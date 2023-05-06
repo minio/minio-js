@@ -5,7 +5,7 @@ import { URL, URLSearchParams } from 'node:url'
 import { CredentialProvider } from './CredentialProvider.js'
 import { Credentials } from './Credentials.js'
 import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
-import { signV4ByServiceName } from './signing.js'
+import { signV4ByServiceName } from './signing.ts'
 
 export class AssumeRoleProvider extends CredentialProvider {
   constructor({

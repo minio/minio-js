@@ -47,3 +47,13 @@ export enum LEGAL_HOLD_STATUS {
 }
 
 export type Transport = typeof http | typeof https
+
+export interface IRequest {
+  protocol: string
+  port?: number | string
+  method: string
+  path: string
+  headers: RequestHeaders
+}
+
+export type ICanonicalRequest = string
