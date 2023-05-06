@@ -10,11 +10,15 @@ export type Header = Record<string, string | null | undefined>
 import type * as http from 'node:http'
 import type * as https from 'node:https'
 
-export type Encryption = {
-  type: string
-  SSEAlgorithm?: string
-  KMSMasterKeyID?: string
-}
+export type Encryption =
+  | {
+      type: ENCRYPTION_TYPES.SSEC
+    }
+  | {
+      type: ENCRYPTION_TYPES.KMS
+      SSEAlgorithm?: string
+      KMSMasterKeyID?: string
+    }
 
 export enum ENCRYPTION_TYPES {
   /**
