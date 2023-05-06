@@ -8,8 +8,7 @@ export type ResponseHeader = Record<string, string>
 
 export type ObjectMetaData = Record<string, string | number>
 
-// request header
-export type Header = Record<string, string | null | undefined>
+export type RequestHeaders = Record<string, string | boolean | number | undefined>
 
 export type Encryption =
   | {

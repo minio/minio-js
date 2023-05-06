@@ -14,7 +14,7 @@ import {
   isValidBucketName,
   isValidObjectName,
 } from './internal/helper.ts'
-import type { Encryption, Header, ObjectMetaData } from './internal/type.ts'
+import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
 
 export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
@@ -104,8 +104,8 @@ export class CopySourceOptions {
     return true
   }
 
-  getHeaders(): Header {
-    const headerOptions: Header = {}
+  getHeaders(): RequestHeaders {
+    const headerOptions: RequestHeaders = {}
     headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object)
 
     if (!isEmpty(this.VersionID)) {
@@ -201,9 +201,9 @@ export class CopyDestinationOptions {
     this.RetainUntilDate = RetainUntilDate
   }
 
-  getHeaders(): Header {
+  getHeaders(): RequestHeaders {
     const replaceDirective = 'REPLACE'
-    const headerOptions: Header = {}
+    const headerOptions: RequestHeaders = {}
 
     const userTags = this.UserTags
     if (!isEmpty(userTags)) {
