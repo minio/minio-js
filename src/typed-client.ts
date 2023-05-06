@@ -37,7 +37,7 @@ import type {
   Lifecycle,
   ListObjectV1Opt,
   NoResultCallback,
-  ObjectMetaData as MetaData,
+  ObjectMetaData,
   PostPolicyResult,
   RemoveOptions,
   RequestHeaders,
@@ -1585,7 +1585,7 @@ export class Helper {
     bucketName: string,
     objectName: string,
     filePath: string,
-    metaData: MetaData = {},
+    metaData: ObjectMetaData = {},
   ): Promise<UploadedObjectInfo> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
