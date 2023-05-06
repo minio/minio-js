@@ -203,6 +203,7 @@ export function signV4(
   region: string,
   requestDate: Date,
   serviceName = 's3',
+  sha256sum: string,
 ) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
@@ -224,8 +225,6 @@ export function signV4(
     throw new errors.SecretKeyRequiredError('secretKey is required for signing')
   }
 
-  const sha256sum = request.headers['x-amz-content-sha256'] as string
-
   const signedHeaders = getSignedHeaders(request.headers)
   const canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers, signedHeaders, sha256sum)
   const serviceIdentifier = serviceName || 's3'
@@ -246,8 +245,9 @@ export function signV4ByServiceName(
   region: string,
   requestDate: Date,
   serviceName = 's3',
+  contentSha256: string,
 ): string {
-  return signV4(request, accessKey, secretKey, region, requestDate, serviceName)
+  return signV4(request, accessKey, secretKey, region, requestDate, serviceName, contentSha256)
 }
 
 // returns a presigned URL string

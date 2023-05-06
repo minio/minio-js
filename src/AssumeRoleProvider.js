@@ -116,7 +116,15 @@ export class AssumeRoleProvider extends CredentialProvider {
       agent: this.transportAgent,
     }
 
-    const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')
+    const authorization = signV4ByServiceName(
+      requestOptions,
+      this.accessKey,
+      this.secretKey,
+      this.region,
+      date,
+      'sts',
+      contentSha256,
+    )
     requestOptions.headers.authorization = authorization
 
     return {

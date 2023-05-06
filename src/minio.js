@@ -563,7 +563,7 @@ export class Client {
         }
 
         this.checkAndRefreshCreds()
-        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
+        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, (response) => {
