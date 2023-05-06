@@ -14,7 +14,7 @@ import {
   isValidBucketName,
   isValidObjectName,
 } from './internal/helper.ts'
-import type { Encryption, Header, MetaData } from './internal/type.ts'
+import type { Encryption, Header, ObjectMetaData } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
 
 export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
@@ -156,7 +156,7 @@ export class CopyDestinationOptions {
   public readonly Bucket: string
   public readonly Object: string
   private readonly Encryption?: Encryption
-  private readonly UserMetadata?: MetaData
+  private readonly UserMetadata?: ObjectMetaData
   private readonly UserTags?: Record<string, string> | string
   private readonly LegalHold?: 'on' | 'off'
   private readonly RetainUntilDate?: string
@@ -185,7 +185,7 @@ export class CopyDestinationOptions {
     Bucket: string
     Object: string
     Encryption?: Encryption
-    UserMetadata?: MetaData
+    UserMetadata?: ObjectMetaData
     UserTags?: Record<string, string> | string
     LegalHold?: 'on' | 'off'
     RetainUntilDate?: string

@@ -23,7 +23,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import mime from 'mime-types'
 
-import type { Binary, Encryption, MetaData, ResponseHeader } from './type.ts'
+import type { Binary, Encryption, ObjectMetaData, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
 /**
@@ -329,7 +329,7 @@ export function readableStream(data: unknown): stream.Readable {
 /**
  * Process metadata to insert appropriate value to `content-type` attribute
  */
-export function insertContentType(metaData: MetaData, filePath: string) {
+export function insertContentType(metaData: ObjectMetaData, filePath: string) {
   // check if content-type attribute present in metaData
   for (const key in metaData) {
     if (key.toLowerCase() === 'content-type') {
@@ -346,7 +346,7 @@ export function insertContentType(metaData: MetaData, filePath: string) {
 /**
  * Function prepends metadata with the appropriate prefix if it is not already on
  */
-export function prependXAMZMeta(metaData?: MetaData) {
+export function prependXAMZMeta(metaData?: ObjectMetaData) {
   if (!metaData) {
     return {}
   }
