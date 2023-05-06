@@ -21,7 +21,7 @@ import { isBrowser } from 'browser-or-node'
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
-import mime from 'mime-types'
+import * as mime from 'mime-types'
 
 import type { Binary, Encryption, ObjectMetaData, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'

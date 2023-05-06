@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
+import type { Transport } from '../dist/esm/internal/type.mjs'
 import type {
   CopyDestinationOptions,
   CopySourceOptions,
@@ -70,7 +71,7 @@ export interface ClientOptions {
   useSSL?: boolean | undefined
   port?: number | undefined
   region?: Region | undefined
-  transport?: any
+  transport?: Transport
   sessionToken?: string | undefined
   partSize?: number | undefined
   pathStyle?: boolean | undefined
@@ -191,7 +192,7 @@ export interface RetentionOptions {
 
 export interface LegalHoldOptions {
   versionId: string
-  status: LegalHoldStatus
+  status: LEGAL_HOLD_STATUS
 }
 
 export interface InputSerialization {
@@ -243,13 +244,13 @@ export interface SourceObjectStats {
 
 // No need to export this. But without it - linter error.
 export class TargetConfig {
-  setId(id: any): void
+  setId(id: unknown): void
 
-  addEvent(newEvent: any): void
+  addEvent(newEvent: unknown): void
 
-  addFilterSuffix(suffix: any): void
+  addFilterSuffix(suffix: string): void
 
-  addFilterPrefix(prefix: any): void
+  addFilterPrefix(prefix: string): void
 }
 
 export interface MakeBucketOpt {
