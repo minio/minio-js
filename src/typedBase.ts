@@ -18,6 +18,7 @@ import { asCallback, asCallbackFn } from './as-callback.ts'
 import type { AnyFunction } from './assert.ts'
 import {
   isBoolean,
+  isDefined,
   isEmpty,
   isFunction,
   isNumber,
@@ -425,14 +426,9 @@ export class TypedBase {
     // Use any request option specified in minioClient.setRequestOptions()
     reqOptions = Object.assign({}, this.reqOptions, reqOptions)
 
-    const reqHeaders = _.mapValues(
-      Object.fromEntries(Object.entries(reqOptions.headers).filter(([_, value]) => value !== undefined)),
-      (v) => v?.toString(),
-    ) as Record<string, string>
-
     return {
       ...reqOptions,
-      headers: reqHeaders,
+      headers: _.mapValues(_.pickBy(reqOptions.headers, isDefined), (v) => v.toString()),
       host,
       port,
       path,

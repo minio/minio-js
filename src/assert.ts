@@ -78,3 +78,7 @@ export function isValidDate(arg: unknown): arg is Date {
   // @ts-expect-error TS(2345): Argument of type 'Date' is not assignable to param... Remove this comment to see the full error message
   return arg instanceof Date && !isNaN(arg)
 }
+
+export function isDefined<T>(o: T): o is NonNullable<T> {
+  return o !== null && o !== undefined
+}
