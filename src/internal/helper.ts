@@ -23,7 +23,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
-import type { Binary, Encryption, ObjectMetaData, ResponseHeader } from './type.ts'
+import type { Binary, Encryption, Header, ObjectMetaData, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
 /**
@@ -498,7 +498,7 @@ const ENCRYPTION_HEADERS = {
  * @param encConfig
  * @returns an object with key value pairs that can be used in headers.
  */
-export function getEncryptionHeaders(encConfig: Encryption): Record<string, string> {
+export function getEncryptionHeaders(encConfig: Encryption): Header {
   const encType = encConfig.type
   const encHeaders = {}
   if (!isEmpty(encType)) {
@@ -510,8 +510,6 @@ export function getEncryptionHeaders(encConfig: Encryption): Record<string, stri
       }
     } else if (encType === ENCRYPTION_TYPES.KMS) {
       return {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         [ENCRYPTION_HEADERS.sseGenericHeader]: encConfig.SSEAlgorithm,
         [ENCRYPTION_HEADERS.sseKmsKeyID]: encConfig.KMSMasterKeyID,
       }

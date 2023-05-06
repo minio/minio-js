@@ -4,6 +4,8 @@ export type Binary = string | Buffer
 export type ResponseHeader = Record<string, string>
 
 export type ObjectMetaData = Record<string, string | number>
+
+// request header
 export type Header = Record<string, string | null | undefined>
 import type * as http from 'node:http'
 import type * as https from 'node:https'

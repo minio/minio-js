@@ -104,12 +104,12 @@ export class CopySourceOptions {
     return true
   }
 
-  getHeaders() {
+  getHeaders(): Header {
     const headerOptions: Header = {}
     headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object)
 
     if (!isEmpty(this.VersionID)) {
-      headerOptions['x-amz-copy-source'] = encodeURI(this.Bucket + '/' + this.Object) + '?versionId=' + this.VersionID
+      headerOptions['x-amz-copy-source'] = `${encodeURI(this.Bucket + '/' + this.Object)}?versionId=${this.VersionID}`
     }
 
     if (!isEmpty(this.MatchETag)) {
@@ -201,9 +201,9 @@ export class CopyDestinationOptions {
     this.RetainUntilDate = RetainUntilDate
   }
 
-  getHeaders(): Record<string, string> {
+  getHeaders(): Header {
     const replaceDirective = 'REPLACE'
-    const headerOptions: Record<string, string> = {}
+    const headerOptions: Header = {}
 
     const userTags = this.UserTags
     if (!isEmpty(userTags)) {
