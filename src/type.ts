@@ -3,7 +3,6 @@ import type { Readable as ReadableStream } from 'node:stream'
 import type { LEGAL_HOLD_STATUS } from './internal/type.ts'
 import type { RETENTION_MODES } from './internal/type.ts'
 
-export type Binary = string | Buffer
 export type RequestHeaders = Record<string, string | boolean | number | undefined>
 
 export interface IRequest {

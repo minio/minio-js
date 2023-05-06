@@ -850,7 +850,7 @@ export class Client extends TypedClient {
     }
 
     // Ensures Metadata has appropriate prefix for A3 API
-    metaData = prependXAMZMeta(metaData)
+    const headers = prependXAMZMeta(metaData)
     if (typeof stream === 'string' || stream instanceof Buffer) {
       // Adapts the non-stream interface into a stream.
       if (size !== undefined) {
@@ -907,7 +907,7 @@ export class Client extends TypedClient {
         partSize,
         bucketName,
         objectName,
-        metaData,
+        headers,
       })
     }
 

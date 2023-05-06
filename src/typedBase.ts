@@ -53,13 +53,12 @@ import {
 } from './internal/helper.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import { getS3Endpoint } from './internal/s3-endpoints.ts'
-import type { ObjectMetaData, ResponseHeader } from './internal/type.ts'
+import type { Binary, ObjectMetaData, ResponseHeader } from './internal/type.ts'
 import { qs } from './qs.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import { signV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type {
-  Binary,
   BucketItemFromList,
   BucketItemStat,
   GetObjectOpt,
@@ -1976,14 +1975,14 @@ export async function uploadStream({
   client,
   bucketName,
   objectName,
-  metaData,
+  headers,
   stream: source,
   partSize,
 }: {
   client: TypedBase
   bucketName: string
   objectName: string
-  metaData: ObjectMetaData
+  headers: RequestHeaders
   stream: stream.Readable
   partSize: number
 }): Promise<UploadedObjectInfo> {
@@ -1998,7 +1997,7 @@ export async function uploadStream({
   const previousUploadId = await client.findUploadId(bucketName, objectName)
   let uploadId: string
   if (!previousUploadId) {
-    uploadId = await client.initiateNewMultipartUpload(bucketName, objectName, metaData)
+    uploadId = await client.initiateNewMultipartUpload(bucketName, objectName, headers)
   } else {
     uploadId = previousUploadId
     const oldTags = await client.listParts(bucketName, objectName, previousUploadId)
