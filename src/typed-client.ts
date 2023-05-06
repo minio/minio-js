@@ -32,7 +32,7 @@ import {
 import { readAsBuffer } from './internal/response.ts'
 import type {
   BucketStream,
-  Encryption,
+  EncryptionConfig,
   LegalHoldOptions,
   Lifecycle,
   ListObjectV1Opt,
@@ -601,9 +601,9 @@ export class TypedClient extends TypedBase {
     })
   }
 
-  getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
-  getBucketEncryption(bucketName: string): Promise<Encryption>
-  getBucketEncryption(bucketName: string, cb?: ResultCallback<Encryption>): void | Promise<Encryption> {
+  getBucketEncryption(bucketName: string, callback: ResultCallback<EncryptionConfig>): void
+  getBucketEncryption(bucketName: string): Promise<EncryptionConfig>
+  getBucketEncryption(bucketName: string, cb?: ResultCallback<EncryptionConfig>): void | Promise<EncryptionConfig> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -620,18 +620,18 @@ export class TypedClient extends TypedBase {
     })
   }
 
-  setBucketEncryption(bucketName: string, encryptionConfig: Encryption, callback: NoResultCallback): void
-  setBucketEncryption(bucketName: string, encryptionConfig: Encryption): Promise<void>
+  setBucketEncryption(bucketName: string, encryptionConfig: EncryptionConfig, callback: NoResultCallback): void
+  setBucketEncryption(bucketName: string, encryptionConfig: EncryptionConfig): Promise<void>
   setBucketEncryption(
     bucketName: string,
-    encryptionConfigOrCallback: Encryption | NoResultCallback | undefined,
+    encryptionConfigOrCallback: EncryptionConfig | NoResultCallback | undefined,
     callback?: NoResultCallback,
   ): void | Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
-    let encryptionConfig: Encryption | undefined
+    let encryptionConfig: EncryptionConfig | undefined
     let cb: NoResultCallback | undefined
 
     if (isFunction(encryptionConfigOrCallback)) {
@@ -642,7 +642,7 @@ export class TypedClient extends TypedBase {
       cb = callback
     }
 
-    if (!isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
+    if (encryptionConfig && encryptionConfig.Rule && encryptionConfig.Rule.length > 1) {
       throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed: ' + encryptionConfig.Rule)
     }
     if (!isOptionalFunction(cb)) {

@@ -171,7 +171,7 @@ export interface LockConfig {
 }
 
 export interface EncryptionConfig {
-  Rule: EncryptionRule[]
+  Rule?: EncryptionRule[]
 }
 
 export interface EncryptionRule {

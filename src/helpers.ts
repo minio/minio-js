@@ -14,7 +14,7 @@ import {
   isValidBucketName,
   isValidObjectName,
 } from './internal/helper.ts'
-import type { Encryption, ObjectMetaData, RequestHeaders, RequestHeaders } from './internal/type.ts'
+import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
 
 export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
