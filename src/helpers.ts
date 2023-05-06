@@ -49,8 +49,8 @@ export class CopySourceOptions {
    * @param Encryption
    */
   constructor({
-    Bucket = '',
-    Object = '',
+    Bucket,
+    Object,
     VersionID = '',
     MatchETag = '',
     NoMatchETag = '',
@@ -61,8 +61,8 @@ export class CopySourceOptions {
     End = 0,
     Encryption = undefined,
   }: {
-    Bucket?: string
-    Object?: string
+    Bucket: string
+    Object: string
     VersionID?: string
     MatchETag?: string
     NoMatchETag?: string
@@ -72,7 +72,7 @@ export class CopySourceOptions {
     Start?: number
     End?: number
     Encryption?: Encryption
-  } = {}) {
+  }) {
     this.Bucket = Bucket
     this.Object = Object
     this.VersionID = VersionID
