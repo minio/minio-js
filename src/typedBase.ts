@@ -56,22 +56,24 @@ import {
 import { drainResponse, readAsBuffer, readAsString } from './internal/response.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import { getS3Endpoint } from './internal/s3-endpoints.ts'
-import type { Binary, ObjectMetaData, ResponseHeader } from './internal/type.ts'
-import { qs } from './qs.ts'
-import { signV4 } from './signing.ts'
-import * as transformers from './transformers.ts'
 import type {
+  Binary,
   BucketItemFromList,
   BucketItemStat,
   GetObjectOpt,
   IRequest,
   MakeBucketOpt,
   NoResultCallback,
+  ObjectMetaData,
   RequestHeaders,
+  ResponseHeader,
   ResultCallback,
   StatObjectOpts,
   UploadedObjectInfo,
-} from './type.ts'
+} from './internal/type.ts'
+import { qs } from './qs.ts'
+import { signV4 } from './signing.ts'
+import * as transformers from './transformers.ts'
 import type { Part } from './xml-parsers.ts'
 import * as xmlParsers from './xml-parsers.ts'
 

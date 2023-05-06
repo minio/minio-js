@@ -22,8 +22,13 @@ import * as errors from './errors.ts'
 import type { RETENTION_MODES } from './helpers.ts'
 import { RETENTION_VALIDITY_UNITS, SelectResults } from './helpers.ts'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
-import type { ObjectMetaData as MetaData } from './internal/type.ts'
-import type { BucketItemCopy, BucketItemFromList, Retention, UploadID } from './type.ts'
+import type {
+  BucketItemCopy,
+  BucketItemFromList,
+  ObjectMetaData as MetaData,
+  Retention,
+  UploadID,
+} from './internal/type.ts'
 
 const fxp = new XMLParser()
 

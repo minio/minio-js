@@ -38,19 +38,20 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { readAsBuffer } from './internal/response.ts'
-import type { ObjectMetaData, ResponseHeader } from './internal/type.ts'
+import type {
+  BucketItemCopy,
+  NoResultCallback,
+  ObjectMetaData,
+  RequestHeaders,
+  ResponseHeader,
+  ResultCallback,
+  SourceObjectStats,
+  UploadedObjectInfo,
+} from './internal/type.ts'
 import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import type { NotificationEvent } from './notification.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
 import * as transformers from './transformers.ts'
-import type {
-  BucketItemCopy,
-  NoResultCallback,
-  RequestHeaders,
-  ResultCallback,
-  SourceObjectStats,
-  UploadedObjectInfo,
-} from './type.ts'
 import { TypedClient } from './typed-client.ts'
 import type { RequestOption } from './typedBase.ts'
 import { findCallback, uploadStream } from './typedBase.ts'

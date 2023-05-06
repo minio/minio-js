@@ -19,7 +19,7 @@ import * as Crypto from 'node:crypto'
 import { isNumber, isObject, isString } from './assert.ts'
 import * as errors from './errors.ts'
 import { getScope, makeDateLong, makeDateShort, uriEscape } from './internal/helper.ts'
-import type { ICanonicalRequest, IRequest, RequestHeaders } from './type.ts'
+import type { ICanonicalRequest, IRequest, RequestHeaders } from './internal/type.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 

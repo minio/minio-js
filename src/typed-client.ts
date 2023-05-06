@@ -30,11 +30,6 @@ import {
   uriEscape,
 } from './internal/helper.ts'
 import { readAsBuffer } from './internal/response.ts'
-import type { ObjectMetaData as MetaData } from './internal/type.ts'
-import { PostPolicy } from './postPolicy.ts'
-import { qs } from './qs.ts'
-import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
-import * as transformers from './transformers.ts'
 import type {
   BucketStream,
   Encryption,
@@ -42,6 +37,7 @@ import type {
   Lifecycle,
   ListObjectV1Opt,
   NoResultCallback,
+  ObjectMetaData as MetaData,
   PostPolicyResult,
   RemoveOptions,
   RequestHeaders,
@@ -54,7 +50,11 @@ import type {
   VersionConfigInput,
   VersionIdentification,
   VersioningConfig,
-} from './type.ts'
+} from './internal/type.ts'
+import { PostPolicy } from './postPolicy.ts'
+import { qs } from './qs.ts'
+import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
+import * as transformers from './transformers.ts'
 import type { RequestMethod, RequestOption } from './typedBase.ts'
 import { findCallback, TypedBase } from './typedBase.ts'
 import type { S3ListObject } from './xml-parsers.ts'

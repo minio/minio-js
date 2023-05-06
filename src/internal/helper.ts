@@ -23,7 +23,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
-import type { Binary, Encryption, Header, ObjectMetaData, ResponseHeader } from './type.ts'
+import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
 /**
@@ -498,7 +498,7 @@ const ENCRYPTION_HEADERS = {
  * @param encConfig
  * @returns an object with key value pairs that can be used in headers.
  */
-export function getEncryptionHeaders(encConfig: Encryption): Header {
+export function getEncryptionHeaders(encConfig: Encryption): RequestHeaders {
   const encType = encConfig.type
 
   if (!isEmpty(encType)) {
