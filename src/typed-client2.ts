@@ -895,7 +895,7 @@ export class Client extends TypedClient {
       const partSize = this.calculatePartSize(size)
 
       if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= this.partSize) {
-        const uploader = this.getUploader(bucketName, objectName, metaData, false)
+        const uploader = this.getUploader(bucketName, objectName, headers, false)
         const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
         const { md5sum, sha256sum } = transformers.hashBinary(buf, this.enableSHA256)
         return uploader(buf, buf.length, sha256sum, md5sum)

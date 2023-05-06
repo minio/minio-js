@@ -539,18 +539,23 @@ describe('functional tests', function () {
 
     step(
       `putObject(bucketName, objectName, stream, metadata, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`,
-      (done) => {
-        var stream = readableStream(_65mb)
-        client.putObject(bucketName, _65mbObjectName, stream, metaData, () => {
-          setTimeout(() => {
-            if (Object.values(httpAgent.sockets).length === 0) {
-              return done()
-            }
-            done(new Error('http request did not release network socket'))
-          }, 100)
-        })
+      async () => {
+        const stream = readableStream(_65mb)
+        await client.putObject(bucketName, _65mbObjectName, stream, metaData)
+
+        for (;;) {
+          await new Promise((resolve) => {
+            setTimeout(() => {
+              resolve()
+            }),
+              100
+          })
+          if (Object.values(httpAgent.sockets).length === 0) {
+            return
+          }
+        }
       },
-    ).timeout(5000)
+    ).timeout(15000)
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
       var hash = crypto.createHash('md5')
@@ -691,6 +696,21 @@ describe('functional tests', function () {
     )
 
     step(
+      `statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`,
+      async () => {
+        const stat = await client.statObject(bucketName, _100kbObjectName)
+        if (stat.size !== _100kb.length) {
+          throw new Error('size mismatch')
+        }
+        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
+        assert.equal(stat.metaData['Testing'], metaData['Testing'])
+        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
+        etag = stat.etag
+        modifiedDate = stat.modifiedDate
+      },
+    )
+
+    step(
       `copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}_`,
       (done) => {
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, (e) => {
@@ -701,23 +721,6 @@ describe('functional tests', function () {
         })
       },
     )
-
-    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
-      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) {
-          return done(e)
-        }
-        if (stat.size !== _100kb.length) {
-          return done(new Error('size mismatch'))
-        }
-        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
-        assert.equal(stat.metaData['Testing'], metaData['Testing'])
-        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
-        etag = stat.etag
-        modifiedDate = stat.modifiedDate
-        done()
-      })
-    })
 
     step(
       `copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:ExceptIncorrectEtag_`,

@@ -11,6 +11,7 @@ import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import { mkdirp } from 'mkdirp'
+import * as querystring from 'query-string'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
@@ -424,12 +425,14 @@ export class TypedBase {
     // Use any request option specified in minioClient.setRequestOptions()
     reqOptions = Object.assign({}, this.reqOptions, reqOptions)
 
+    const reqHeaders = _.mapValues(
+      Object.fromEntries(Object.entries(reqOptions.headers).filter(([_, value]) => value !== undefined)),
+      (v) => v?.toString(),
+    ) as Record<string, string>
+
     return {
       ...reqOptions,
-      headers: _.mapValues(
-        Object.fromEntries(Object.entries(reqOptions.headers).filter(([_, value]) => value !== undefined)),
-        (v) => v?.toString(),
-      ) as Record<string, string>,
+      headers: reqHeaders,
       host,
       port,
       path,
@@ -618,7 +621,7 @@ export class TypedBase {
    *
    * @internal
    */
-  makeRequestStreamAsync(
+  async makeRequestStreamAsync(
     options: RequestOption,
     stream: stream.Readable | Buffer,
     sha256sum: string,
@@ -1769,7 +1772,7 @@ export class TypedBase {
       throw new TypeError('callback should be of type "function"')
     }
 
-    const query = qs(statOpts)
+    const query = querystring.stringify(statOpts)
     const method = 'HEAD'
     return asCallbackFn(cb, async () => {
       const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
@@ -1794,13 +1797,13 @@ export class TypedBase {
   getUploader(
     bucketName: string,
     objectName: string,
-    metaData: ObjectMetaData,
+    extraHeaders: RequestHeaders,
     multipart: false,
   ): (buf: Buffer, length: number, sha256sum: string, md5sum: string) => Promise<UploadedObjectInfo>
   getUploader(
     bucketName: string,
     objectName: string,
-    metaData: ObjectMetaData,
+    extraHeaders: RequestHeaders,
     multipart: true,
   ): (
     uploadId: string,
@@ -1812,7 +1815,7 @@ export class TypedBase {
   ) => Promise<UploadedObjectInfo>
 
   // a part of the multipart.
-  getUploader(bucketName: string, objectName: string, metaData: ObjectMetaData, multipart: boolean) {
+  getUploader(bucketName: string, objectName: string, extraHeaders: RequestHeaders, multipart: boolean) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1822,7 +1825,7 @@ export class TypedBase {
     if (!isBoolean(multipart)) {
       throw new TypeError('multipart should be of type "boolean"')
     }
-    if (!isObject(metaData)) {
+    if (!isObject(extraHeaders)) {
       throw new TypeError('metadata should be of type "object"')
     }
 
@@ -1876,7 +1879,7 @@ export class TypedBase {
       let headers: RequestHeaders = { 'Content-Length': length }
 
       if (!multipart) {
-        headers = Object.assign({}, metaData, headers)
+        headers = Object.assign({}, extraHeaders, headers)
       }
 
       if (!this.enableSHA256) {
