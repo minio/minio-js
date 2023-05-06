@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import querystring from 'query-string'
+import * as querystring from 'query-string'
 
 import * as errors from './errors.ts'
 import {
