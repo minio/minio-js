@@ -1,3 +1,6 @@
+import type * as http from 'node:http'
+import type * as https from 'node:https'
+
 export type Binary = string | Buffer
 
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
@@ -7,8 +10,6 @@ export type ObjectMetaData = Record<string, string | number>
 
 // request header
 export type Header = Record<string, string | null | undefined>
-import type * as http from 'node:http'
-import type * as https from 'node:https'
 
 export type Encryption =
   | {
