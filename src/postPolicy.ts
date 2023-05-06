@@ -1,8 +1,8 @@
 // Build PostPolicy object that can be signed by presignedPostPolicy
 import { isObject } from './assert.ts'
 import * as errors from './errors.ts'
-import type { MetaData } from './helpers.ts'
-import { isValidBucketName, isValidObjectName, isValidPrefix } from './helpers.ts'
+import { isValidBucketName, isValidObjectName, isValidPrefix } from './internal/helper.ts'
+import type { ObjectMetaData as MetaData } from './internal/type.ts'
 
 export class PostPolicy {
   public policy: { conditions: (string | number)[][]; expiration?: string }

@@ -16,20 +16,20 @@ import {
 } from './assert.ts'
 import { fsp } from './async.ts'
 import * as errors from './errors.ts'
-import type { MetaData, SelectResults } from './helpers.ts'
+import type { SelectResults } from './helpers.ts'
+import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
 import {
   getScope,
   insertContentType,
   isValidBucketName,
   isValidObjectName,
   isValidPrefix,
-  LEGAL_HOLD_STATUS,
   makeDateLong,
   prependXAMZMeta,
-  RETENTION_MODES,
   toMd5,
   uriEscape,
-} from './helpers.ts'
+} from './internal/helper.ts'
+import type { ObjectMetaData as MetaData } from './internal/type.ts'
 import { PostPolicy } from './postPolicy.ts'
 import { qs } from './qs.ts'
 import { readAsBuffer } from './response.ts'
@@ -326,7 +326,7 @@ export class TypedClient extends TypedBase {
       renderOpts: { pretty: false },
     })
 
-    const payload = encoder.encode(builder.buildObject(policyConfig))
+    const payload = Buffer.from(encoder.encode(builder.buildObject(policyConfig)))
     const headers: RequestHeaders = { 'Content-MD5': toMd5(payload) }
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
@@ -1096,7 +1096,7 @@ export class TypedClient extends TypedBase {
     const encoder = new TextEncoder()
     const headers: RequestHeaders = {}
     const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
-    const payload = encoder.encode(builder.buildObject(taggingConfig))
+    const payload = Buffer.from(encoder.encode(builder.buildObject(taggingConfig)))
     headers['Content-MD5'] = toMd5(payload)
     const requestOptions: RequestOption = { method, bucketName, query, headers }
 
@@ -1559,7 +1559,7 @@ export class TypedClient extends TypedBase {
         })
         const deleteObjects = { Delete: { Quiet: true, Object: objects } }
         const builder = new xml2js.Builder({ headless: true })
-        const payload = new TextEncoder().encode(builder.buildObject(deleteObjects))
+        const payload = Buffer.from(new TextEncoder().encode(builder.buildObject(deleteObjects)))
         const headers = {
           ['Content-MD5']: toMd5(payload),
         }

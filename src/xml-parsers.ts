@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-import * as newCrc32 from 'crc-32'
+import * as crc32 from 'crc-32'
 import { XMLParser } from 'fast-xml-parser'
 
 import { isObject } from './assert.ts'
 import * as errors from './errors.ts'
-import type { MetaData, RETENTION_MODES } from './helpers.ts'
-import {
-  parseXml,
-  RETENTION_VALIDITY_UNITS,
-  sanitizeETag,
-  sanitizeObjectKey,
-  SelectResults,
-  toArray,
-} from './helpers.ts'
+import type { RETENTION_MODES } from './helpers.ts'
+import { RETENTION_VALIDITY_UNITS, SelectResults } from './helpers.ts'
+import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
+import type { ObjectMetaData as MetaData } from './internal/type.ts'
 import type { BucketItemCopy, BucketItemFromList, Retention, UploadID } from './type.ts'
 
 const fxp = new XMLParser()
@@ -592,9 +587,9 @@ export function parseLifecycleConfig(xml: string) {
 }
 
 export type ObjectLockConfig = {
-  mode?: keyof typeof RETENTION_MODES
+  mode?: RETENTION_MODES
   objectLockEnabled?: 'Enabled'
-  unit?: 'Years' | 'Days'
+  unit?: RETENTION_VALIDITY_UNITS
   validity?: number
 }
 
@@ -716,15 +711,15 @@ export function parseSelectObjectContentResponse(res: Buffer): SelectResults {
   const responseStream = new ReadableBuffer(res) // convert byte array to a readable responseStream
   while (responseStream.notEnd()) {
     const totalByteLengthBuffer = responseStream.read(4)
-    let msgCrcAccumulator = newCrc32.buf(totalByteLengthBuffer)
+    let msgCrcAccumulator = crc32.buf(totalByteLengthBuffer)
 
     const headerBytesBuffer = responseStream.read(4)
-    msgCrcAccumulator = newCrc32.buf(headerBytesBuffer, msgCrcAccumulator)
+    msgCrcAccumulator = crc32.buf(headerBytesBuffer, msgCrcAccumulator)
 
     const calculatedPreludeCrc = msgCrcAccumulator // use it to check if any CRC mismatch in header itself.
 
     const preludeCrcBuffer = responseStream.read(4) // read 4 bytes    i.e 4+4 =8 + 4 = 12 ( prelude + prelude crc)
-    msgCrcAccumulator = newCrc32.buf(preludeCrcBuffer, msgCrcAccumulator)
+    msgCrcAccumulator = crc32.buf(preludeCrcBuffer, msgCrcAccumulator)
 
     const totalMsgLength = totalByteLengthBuffer.readInt32BE()
     const headerLength = headerBytesBuffer.readInt32BE()
@@ -741,7 +736,7 @@ export function parseSelectObjectContentResponse(res: Buffer): SelectResults {
 
     if (headerLength > 0) {
       const headerBytes = responseStream.read(headerLength)
-      msgCrcAccumulator = newCrc32.buf(headerBytes, msgCrcAccumulator)
+      msgCrcAccumulator = crc32.buf(headerBytes, msgCrcAccumulator)
       const headerReaderStream = new ReadableBuffer(headerBytes)
       while (headerReaderStream.notEnd()) {
         const headerTypeName = extractHeaderType(headerReaderStream)
@@ -754,7 +749,7 @@ export function parseSelectObjectContentResponse(res: Buffer): SelectResults {
     const payLoadLength = totalMsgLength - headerLength - 16
     if (payLoadLength > 0) {
       const payLoadBuffer = responseStream.read(payLoadLength)
-      msgCrcAccumulator = newCrc32.buf(payLoadBuffer, msgCrcAccumulator)
+      msgCrcAccumulator = crc32.buf(payLoadBuffer, msgCrcAccumulator)
       // read the checksum early and detect any mismatch so we can avoid unnecessary further processing.
       const messageCrcByteValue = responseStream.read(4).readInt32BE()
       const calculatedCrc = msgCrcAccumulator

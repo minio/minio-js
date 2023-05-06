@@ -111,6 +111,12 @@ module.exports = {
       },
     },
     {
+      files: ['./src/**/*.ts'],
+      rules: {
+        'prefer-const': ['error', { destructuring: 'all' }],
+      },
+    },
+    {
       files: ['./tests/**/*'],
       rules: {
         'no-empty-function': 0,

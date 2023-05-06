@@ -21,12 +21,6 @@ $ npm install
 $ npm test
 ```
 
-### Build
-Build project for release
-```sh
-$ npm run build
-```
-
 ## Publishing new release
 Edit `package.json` version and all other files to the latest version as shown below.
 ```sh
@@ -42,6 +36,11 @@ Login to your npm account.
 $ npm login
 ...
 Logged in as minio on https://registry.npmjs.org/.
+```
+
+Build for release
+```sh
+$ npm run build
 ```
 
 Publish the new release to npm repository.

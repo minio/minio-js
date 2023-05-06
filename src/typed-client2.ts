@@ -18,11 +18,9 @@ import {
 import { fsp } from './async.ts'
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
-import type { MetaData } from './helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
 import {
   calculateEvenSplits,
-  CopyDestinationOptions,
-  CopySourceOptions,
   extractMetadata,
   getSourceVersionId,
   getVersionId,
@@ -34,13 +32,13 @@ import {
   pipesetup,
   prependXAMZMeta,
   readableStream,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
   sanitizeETag,
   toMd5,
   uriEscape,
   uriResourceEscape,
-} from './helpers.ts'
+} from './internal/helper.ts'
+import type { ObjectMetaData, ResponseHeader } from './internal/type.ts'
+import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import type { NotificationEvent } from './notification.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
 import { readAsBuffer } from './response.ts'
@@ -170,9 +168,9 @@ export class Client extends TypedClient {
         Key: destConfig.Object,
         LastModified: data.lastModified,
         lastModified: data.lastModified,
-        MetaData: extractMetadata(resHeaders),
-        VersionId: getVersionId(resHeaders),
-        SourceVersionId: getSourceVersionId(resHeaders),
+        MetaData: extractMetadata(resHeaders as ResponseHeader),
+        VersionId: getVersionId(resHeaders as ResponseHeader),
+        SourceVersionId: getSourceVersionId(resHeaders as ResponseHeader),
         Etag: sanitizeETag(resHeaders.etag),
         etag: sanitizeETag(resHeaders.etag),
         Size: parseInt(resHeaders['content-length']!),
@@ -362,7 +360,7 @@ export class Client extends TypedClient {
       const uploadList = validatedStats
         .map((resItemStat, idx) => {
           // @ts-expect-error index check
-          return calculateEvenSplits(srcObjectSizes[idx], sourceObjList[idx])
+          return calculateEvenSplits<CopySourceOptions>(srcObjectSizes[idx], sourceObjList[idx])
         })
         .flatMap((splitSize, splitIndex) => {
           if (splitSize === null) {
@@ -412,7 +410,7 @@ export class Client extends TypedClient {
     cb?: NoResultCallback,
   ): void | Promise<void> {
     const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
-    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
+    const validUnits: RETENTION_VALIDITY_UNITS[] = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
 
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -829,7 +827,7 @@ export class Client extends TypedClient {
     objectName: string,
     stream: string | Buffer | stream.Readable,
     sizeArg?: number,
-    metaDataArg?: MetaData,
+    metaDataArg?: ObjectMetaData,
     callbackArg?: ResultCallback<UploadedObjectInfo>,
   ): void | Promise<UploadedObjectInfo> {
     if (!isValidBucketName(bucketName)) {
@@ -840,7 +838,7 @@ export class Client extends TypedClient {
     }
 
     let [[size, metaData = {}], callback] = findCallback<
-      [number | undefined, MetaData],
+      [number | undefined, ObjectMetaData],
       ResultCallback<UploadedObjectInfo>
     >([sizeArg, metaDataArg, callbackArg])
 

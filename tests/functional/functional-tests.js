@@ -23,7 +23,7 @@ import * as stream from 'node:stream'
 import * as url from 'node:url'
 
 import async from 'async'
-import { assert } from 'chai'
+import chai from 'chai'
 import _ from 'lodash'
 import { step } from 'mocha-steps'
 import splitFile from 'split-file'
@@ -31,9 +31,11 @@ import superagent from 'superagent'
 import * as uuid from 'uuid'
 
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
-import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, getVersionId } from '../../src/helpers.ts'
-import { removeDirAndFiles } from '../../src/helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
+import { getVersionId } from '../../src/internal/helper.ts'
 import * as minio from '../../src/minio.ts'
+
+const assert = chai.assert
 
 const isWindowsPlatform = process.platform === 'win32'
 
@@ -4166,7 +4168,7 @@ describe('functional tests', function () {
 
     step('Clean up temp directory part files', (done) => {
       if (isSplitSuccess) {
-        removeDirAndFiles(tmpSubDir)
+        fs.rmdirSync(tmpSubDir, { recursive: true })
       }
       done()
     })
@@ -4562,7 +4564,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucketName = 'minio-js-fd-version-' + uuid.v4()
     const fdPrefixObjName = 'my-prefix/datafile-100-kB'
-    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/' + fdPrefixObjName) : Buffer.alloc(100 * 1024, 0)
+    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucketName, '', done))
     after((done) => client.removeBucket(fdPrefixBucketName, done))
@@ -4709,7 +4711,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucket = 'minio-js-fd-nv-' + uuid.v4()
     const fdObjectName = 'my-prefix/datafile-100-kB'
-    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucket, '', done))
     after((done) => client.removeBucket(fdPrefixBucket, done))

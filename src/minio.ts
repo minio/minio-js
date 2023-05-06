@@ -18,13 +18,7 @@ export { AssumeRoleProvider } from './AssumeRoleProvider.ts'
 export { CopyConditions } from './copyConditions.ts'
 export { CredentialProvider } from './CredentialProvider.ts'
 export { Credentials } from './Credentials.ts'
-export {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
-  ENCRYPTION_TYPES,
-  PART_CONSTRAINTS,
-} from './helpers.ts'
+export { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, ENCRYPTION_TYPES } from './helpers.ts'
 export type { NotificationEvent, NotificationRecord } from './notification.ts'
 export {
   buildARN,

@@ -18,7 +18,8 @@ import { EventEmitter } from 'node:events'
 
 import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
-import { DEFAULT_REGION, pipesetup, uriEscape } from './helpers.ts'
+import { DEFAULT_REGION } from './helpers.ts'
+import { pipesetup, uriEscape } from './internal/helper.ts'
 import type { TypedBase } from './typedBase.ts'
 
 // TODO: type this

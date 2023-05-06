@@ -18,7 +18,7 @@ import * as stream from 'node:stream'
 
 import { isBoolean, isNumber, isString } from './assert.ts'
 import * as errors from './errors.ts'
-import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.ts'
+import { isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './internal/helper.ts'
 import * as transformers from './transformers.ts'
 import type { Client } from './typed-client2.ts'
 

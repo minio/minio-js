@@ -1,7 +1,10 @@
 import type { Readable as ReadableStream } from 'node:stream'
 
+import type { LEGAL_HOLD_STATUS } from './internal/type.ts'
+import type { RETENTION_MODES } from './internal/type.ts'
+
 export type Binary = string | Buffer
-export type RequestHeaders = Record<string, string | boolean | number>
+export type RequestHeaders = Record<string, string | boolean | number | undefined>
 
 export interface IRequest {
   protocol: string
@@ -148,14 +151,14 @@ export interface ReplicationConfig {
 
 export interface RetentionOptions {
   versionId: string
-  mode?: Mode
+  mode?: RETENTION_MODES
   retainUntilDate?: IsoDate
   governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
   versionId?: string
-  status: LegalHoldStatus
+  status: LEGAL_HOLD_STATUS
 }
 
 export interface InputSerialization {

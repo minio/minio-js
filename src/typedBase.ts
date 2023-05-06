@@ -30,9 +30,8 @@ import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { S3Error } from './errors.ts'
 import { extensions } from './extensions.ts'
-import type { MetaData } from './helpers.ts'
+import { DEFAULT_REGION } from './helpers.ts'
 import {
-  DEFAULT_REGION,
   extractMetadata,
   getVersionId,
   insertContentType,
@@ -51,11 +50,12 @@ import {
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helpers.ts'
+} from './internal/helper.ts'
+import type { Region } from './internal/s3-endpoints.ts'
+import { getS3Endpoint } from './internal/s3-endpoints.ts'
+import type { ObjectMetaData as MetaData, ResponseHeader } from './internal/type.ts'
 import { qs } from './qs.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
-import type { Region } from './s3-endpoints.ts'
-import { getS3Endpoint } from './s3-endpoints.ts'
 import { signV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type {
@@ -427,7 +427,10 @@ export class TypedBase {
 
     return {
       ...reqOptions,
-      headers: _.mapValues(reqOptions.headers, (v) => v.toString()),
+      headers: _.mapValues(
+        Object.fromEntries(Object.entries(reqOptions.headers).filter(([_, value]) => value !== undefined)),
+        (v) => v?.toString(),
+      ) as Record<string, string>,
       host,
       port,
       path,
@@ -561,7 +564,7 @@ export class TypedBase {
    */
   makeRequestAsync(
     options: RequestOption,
-    payload: Binary | Uint8Array = '',
+    payload: Binary = '',
     expectedCodes: number[] = [200],
     region = '',
     returnResponse = true,
@@ -603,7 +606,7 @@ export class TypedBase {
    */
   async makeRequestAsyncOmit(
     options: RequestOption,
-    payload: Binary | Uint8Array = '',
+    payload: Binary = '',
     statusCodes: number[] = [200],
     region = '',
   ): Promise<Omit<IncomingMessage, 'on'>> {
@@ -1468,7 +1471,7 @@ export class TypedBase {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         etag: result.etag as string,
-        versionId: getVersionId(res.headers),
+        versionId: getVersionId(res.headers as ResponseHeader),
       }
     })
   }
@@ -1564,18 +1567,17 @@ export class TypedBase {
    * Initiate a new multipart upload.
    * @internal
    */
-  async initiateNewMultipartUpload(bucketName: string, objectName: string, metaData: MetaData): Promise<string> {
+  async initiateNewMultipartUpload(bucketName: string, objectName: string, headers: RequestHeaders): Promise<string> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!isObject(metaData)) {
+    if (!isObject(headers)) {
       throw new errors.InvalidObjectNameError('contentType should be of type "object"')
     }
     const method = 'POST'
-    const headers = Object.assign({}, metaData)
     const query = 'uploads'
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query, headers })
     const body = await readAsBuffer(res)
@@ -1777,9 +1779,9 @@ export class TypedBase {
 
       const result: BucketItemStat = {
         size: parseInt(res.headers['content-length'] as string),
-        metaData: extractMetadata(res.headers),
+        metaData: extractMetadata(res.headers as ResponseHeader),
         lastModified: new Date(res.headers['last-modified'] as string),
-        versionId: getVersionId(res.headers),
+        versionId: getVersionId(res.headers as ResponseHeader),
         etag: sanitizeETag(res.headers.etag),
       }
 
@@ -1895,7 +1897,7 @@ export class TypedBase {
       )
       return {
         etag: sanitizeETag(response.headers.etag),
-        versionId: getVersionId(response.headers),
+        versionId: getVersionId(response.headers as ResponseHeader),
       }
     }
     if (multipart) {

@@ -1,11 +1,12 @@
-import type http from 'node:http'
+import * as http from 'node:http'
+import * as https from 'node:https'
 import { URL, URLSearchParams } from 'node:url'
 
 import { CredentialProvider } from './CredentialProvider.ts'
 import { Credentials } from './Credentials.ts'
-import { makeDateLong, parseXml, toSha256 } from './helpers.ts'
-import { request } from './request.ts'
-import { readAsString } from './response.ts'
+import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
+import { request } from './internal/request.ts'
+import { readAsString } from './internal/response.ts'
 import { signV4ByServiceName } from './signing.ts'
 
 type CredentialResponse = {
@@ -45,7 +46,7 @@ export class AssumeRoleProvider extends CredentialProvider {
 
   private _credentials: Credentials | null
   private expirySeconds: number | null
-  private accessExpiresAt: string | null
+  private accessExpiresAt = ''
   private readonly transportAgent?: http.Agent
 
   constructor({
@@ -105,7 +106,6 @@ export class AssumeRoleProvider extends CredentialProvider {
      */
     this._credentials = null
     this.expirySeconds = null
-    this.accessExpiresAt = null
   }
 
   getRequestConfig(): {
@@ -116,10 +116,8 @@ export class AssumeRoleProvider extends CredentialProvider {
     const url = new URL(this.stsEndpoint)
     const hostValue = url.hostname
     const portValue = url.port
-    const isHttp = url.protocol.includes('http:')
-    const qryParams = new URLSearchParams()
-    qryParams.set('Action', this.action)
-    qryParams.set('Version', '2011-06-15')
+    const isHttp = url.protocol === 'http:'
+    const qryParams = new URLSearchParams({ Action: this.action, Version: '2011-06-15' })
 
     const defaultExpiry = 900
     let expirySeconds = parseInt(this.durationSeconds as unknown as string)
@@ -196,7 +194,7 @@ export class AssumeRoleProvider extends CredentialProvider {
 
     const isHttp = reqObj.isHttp
 
-    const res = await request(requestOptions, isHttp, requestData)
+    const res = await request(isHttp ? http : https, requestOptions, requestData)
 
     const body = await readAsString(res)
 
@@ -253,8 +251,13 @@ export class AssumeRoleProvider extends CredentialProvider {
   }
 
   isAboutToExpire() {
-    const expiresAt = new Date(this.accessExpiresAt!)
+    const expiresAt = new Date(this.accessExpiresAt)
     const provisionalExpiry = new Date(Date.now() + 1000 * 10) // check before 10 seconds.
     return provisionalExpiry > expiresAt
   }
 }
+
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
+// eslint-disable-next-line import/no-default-export
+export default AssumeRoleProvider

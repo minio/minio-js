@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isString } from './assert.ts'
+import { isString } from './helper.ts'
 
 // List of currently supported endpoints.
 const awsS3Endpoint = {
