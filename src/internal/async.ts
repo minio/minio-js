@@ -1,4 +1,4 @@
-// promise helper for stdlibl
+// promise helper for stdlib
 
 import * as fs from 'node:fs'
 import * as stream from 'node:stream'

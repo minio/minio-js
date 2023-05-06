@@ -27,12 +27,12 @@ import {
   isReadableStream,
   isString,
 } from './assert.ts'
-import { fsp, streamPromise } from './async.ts'
 import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { S3Error } from './errors.ts'
 import { extensions } from './extensions.ts'
 import { DEFAULT_REGION } from './helpers.ts'
+import { fsp, streamPromise } from './internal/async.ts'
 import {
   extractMetadata,
   getVersionId,
@@ -53,11 +53,11 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
+import { drainResponse, readAsBuffer, readAsString } from './internal/response.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import { getS3Endpoint } from './internal/s3-endpoints.ts'
 import type { Binary, ObjectMetaData, ResponseHeader } from './internal/type.ts'
 import { qs } from './qs.ts'
-import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import { signV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type {

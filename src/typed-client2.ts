@@ -15,10 +15,10 @@ import {
   isReadableStream,
   isString,
 } from './assert.ts'
-import { fsp } from './async.ts'
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import { fsp } from './internal/async.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
@@ -37,11 +37,11 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
+import { readAsBuffer } from './internal/response.ts'
 import type { ObjectMetaData, ResponseHeader } from './internal/type.ts'
 import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import type { NotificationEvent } from './notification.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
-import { readAsBuffer } from './response.ts'
 import * as transformers from './transformers.ts'
 import type {
   BucketItemCopy,

@@ -14,10 +14,10 @@ import {
   isString,
   isValidDate,
 } from './assert.ts'
-import { fsp } from './async.ts'
 import * as errors from './errors.ts'
 import type { SelectResults } from './helpers.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
+import { fsp } from './internal/async.ts'
 import {
   getScope,
   insertContentType,
@@ -29,10 +29,10 @@ import {
   toMd5,
   uriEscape,
 } from './internal/helper.ts'
+import { readAsBuffer } from './internal/response.ts'
 import type { ObjectMetaData as MetaData } from './internal/type.ts'
 import { PostPolicy } from './postPolicy.ts'
 import { qs } from './qs.ts'
-import { readAsBuffer } from './response.ts'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type {
