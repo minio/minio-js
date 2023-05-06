@@ -53,7 +53,7 @@ import {
 } from './internal/helper.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import { getS3Endpoint } from './internal/s3-endpoints.ts'
-import type { ObjectMetaData as MetaData, ResponseHeader } from './internal/type.ts'
+import type { ObjectMetaData, ResponseHeader } from './internal/type.ts'
 import { qs } from './qs.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import { signV4 } from './signing.ts'
@@ -1247,7 +1247,7 @@ export class TypedBase {
     bucketName: string,
     objectName: string,
     filePath: string,
-    metaDataOrCallback?: MetaData,
+    metaDataOrCallback?: ObjectMetaData,
     maybeCallback?: NoResultCallback,
   ) {
     if (!isValidBucketName(bucketName)) {
@@ -1261,7 +1261,10 @@ export class TypedBase {
       throw new TypeError('filePath should be of type "string"')
     }
 
-    let [[metaData = {}], callback] = findCallback<[MetaData], NoResultCallback>([metaDataOrCallback, maybeCallback])
+    let [[metaData = {}], callback] = findCallback<[ObjectMetaData], NoResultCallback>([
+      metaDataOrCallback,
+      maybeCallback,
+    ])
 
     if (!isObject(metaData)) {
       throw new TypeError('metaData should be of type "object"')
@@ -1792,13 +1795,13 @@ export class TypedBase {
   getUploader(
     bucketName: string,
     objectName: string,
-    metaData: MetaData,
+    metaData: ObjectMetaData,
     multipart: false,
   ): (buf: Buffer, length: number, sha256sum: string, md5sum: string) => Promise<UploadedObjectInfo>
   getUploader(
     bucketName: string,
     objectName: string,
-    metaData: MetaData,
+    metaData: ObjectMetaData,
     multipart: true,
   ): (
     uploadId: string,
@@ -1810,7 +1813,7 @@ export class TypedBase {
   ) => Promise<UploadedObjectInfo>
 
   // a part of the multipart.
-  getUploader(bucketName: string, objectName: string, metaData: MetaData, multipart: boolean) {
+  getUploader(bucketName: string, objectName: string, metaData: ObjectMetaData, multipart: boolean) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1980,7 +1983,7 @@ export async function uploadStream({
   client: TypedBase
   bucketName: string
   objectName: string
-  metaData: MetaData
+  metaData: ObjectMetaData
   stream: stream.Readable
   partSize: number
 }): Promise<UploadedObjectInfo> {

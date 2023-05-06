@@ -2,7 +2,7 @@
 import { isObject } from './assert.ts'
 import * as errors from './errors.ts'
 import { isValidBucketName, isValidObjectName, isValidPrefix } from './internal/helper.ts'
-import type { ObjectMetaData as MetaData } from './internal/type.ts'
+import type { ObjectMetaData } from './internal/type.ts'
 
 export class PostPolicy {
   public policy: { conditions: (string | number)[][]; expiration?: string }
@@ -92,7 +92,7 @@ export class PostPolicy {
   }
 
   // set user defined metadata
-  setUserMetaData(metaData: MetaData) {
+  setUserMetaData(metaData: ObjectMetaData) {
     if (!isObject(metaData)) {
       throw new TypeError('metadata should be of type "object"')
     }
