@@ -500,13 +500,11 @@ const ENCRYPTION_HEADERS = {
  */
 export function getEncryptionHeaders(encConfig: Encryption): Header {
   const encType = encConfig.type
-  const encHeaders = {}
+
   if (!isEmpty(encType)) {
     if (encType === ENCRYPTION_TYPES.SSEC) {
       return {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        [encHeaders[ENCRYPTION_HEADERS.sseGenericHeader]]: 'AES256',
+        [ENCRYPTION_HEADERS.sseGenericHeader]: 'AES256',
       }
     } else if (encType === ENCRYPTION_TYPES.KMS) {
       return {
@@ -516,7 +514,7 @@ export function getEncryptionHeaders(encConfig: Encryption): Header {
     }
   }
 
-  return encHeaders
+  return {}
 }
 
 export function partsRequired(size: number): number {
