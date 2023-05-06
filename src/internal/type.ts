@@ -5,6 +5,9 @@ export type ResponseHeader = Record<string, string>
 
 export type ObjectMetaData = Record<string, string | number>
 export type Header = Record<string, string | null | undefined>
+import type * as http from 'node:http'
+import type * as https from 'node:https'
+
 export type Encryption = {
   type: string
   SSEAlgorithm?: string
@@ -36,3 +39,5 @@ export enum LEGAL_HOLD_STATUS {
   ENABLED = 'ON',
   DISABLED = 'OFF',
 }
+
+export type Transport = typeof http | typeof https

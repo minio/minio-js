@@ -4,7 +4,6 @@ import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
-import type { Transport } from '../dist/esm/internal/type.mjs'
 import type {
   CopyDestinationOptions,
   CopySourceOptions,
@@ -12,6 +11,7 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import type { Transport } from './internal/type.ts'
 import type { Region } from './s3-endpoints.ts'
 
 export * from './helpers.ts'
