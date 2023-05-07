@@ -73,29 +73,6 @@ export * from './helpers.ts'
 export * from './notification.js'
 
 export class Client extends TypedClient {
-  constructor(params) {
-    super(params)
-    this.clientExtensions = new extensions(this)
-  }
-
-  get extensions() {
-    return this.clientExtensions
-  }
-  // This is s3 Specific and does not hold validity in any other Object storage.
-  getAccelerateEndPointIfSet(bucketName, objectName) {
-    if (!_.isEmpty(this.s3AccelerateEndpoint) && !_.isEmpty(bucketName) && !_.isEmpty(objectName)) {
-      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
-      // Disable transfer acceleration for non-compliant bucket names.
-      if (bucketName.indexOf('.') !== -1) {
-        throw new Error(`Transfer Acceleration is not supported for non compliant bucket:${bucketName}`)
-      }
-      // If transfer acceleration is requested set new host.
-      // For more details about enabling transfer acceleration read here.
-      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
-      return this.s3AccelerateEndpoint
-    }
-    return false
-  }
   /**
    * @param endPoint _string_ valid S3 acceleration end point
    */
@@ -103,6 +80,14 @@ export class Client extends TypedClient {
     this.s3AccelerateEndpoint = endPoint
   }
 
+  // Set application specific information.
+  //
+  // Generates User-Agent in the following style.
+  //
+  //       MinIO (OS; ARCH) LIB/VER APP/VER
+  //
+  // __Arguments__
+  // * `appName` _string_ - Application name.
   // * `appVersion` _string_ - Application version.
   setAppInfo(appName, appVersion) {
     if (!isString(appName)) {
@@ -119,6 +104,7 @@ export class Client extends TypedClient {
     }
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
+
   // Calculate part size given the object size. Part size will be atleast this.partSize
   calculatePartSize(size) {
     if (!isNumber(size)) {
@@ -141,6 +127,7 @@ export class Client extends TypedClient {
       partSize += 16 * 1024 * 1024
     }
   }
+
   // log the request, response, error
   logHTTP(reqOptions, response, err) {
     // if no logstreamer available return.
@@ -178,6 +165,7 @@ export class Client extends TypedClient {
       this.logStream.write(`${errJSON}\n`)
     }
   }
+
   // Enable tracing
   traceOn(stream) {
     if (!stream) {
@@ -186,17 +174,16 @@ export class Client extends TypedClient {
     this.logStream = stream
   }
 
-  // makeRequest is the primitive used by the apis for making S3 requests.
-  // payload can be empty string in case of no payload.
-  // statusCode is the expected statusCode. If response.statusCode does not match
-  // we parse the XML error and call the callback with the error message.
-  // A valid region is passed by the calls - listBuckets, makeBucket and
   // Disable tracing
   traceOff() {
     this.logStream = null
   }
 
-  // makeRequestStream will be used directly instead of makeRequest in case the payload
+  // makeRequest is the primitive used by the apis for making S3 requests.
+  // payload can be empty string in case of no payload.
+  // statusCode is the expected statusCode. If response.statusCode does not match
+  // we parse the XML error and call the callback with the error message.
+  // A valid region is passed by the calls - listBuckets, makeBucket and
   // getBucketRegion.
   makeRequest(options, payload, statusCodes, region, returnResponse, cb) {
     if (!isObject(options)) {
@@ -233,6 +220,8 @@ export class Client extends TypedClient {
     var stream = readableStream(payload)
     this.makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb)
   }
+
+  // makeRequestStream will be used directly instead of makeRequest in case the payload
   // is available as a stream. for ex. putObject
   makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb) {
     if (!isObject(options)) {
@@ -289,7 +278,7 @@ export class Client extends TypedClient {
         }
 
         this.checkAndRefreshCreds()
-        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
+        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, (response) => {
@@ -327,12 +316,6 @@ export class Client extends TypedClient {
     this.getBucketRegion(options.bucketName, _makeRequest)
   }
 
-  // Creates the bucket `bucketName`.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ - Name of the bucket
-  // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
-  // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // gets the region of the bucket
   getBucketRegion(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -403,13 +386,12 @@ export class Client extends TypedClient {
     })
   }
 
-  // List of buckets created.
+  // Creates the bucket `bucketName`.
   //
   // __Arguments__
-  // * `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
-  //
-  // `buckets` array element:
-  // * `bucket.name` _string_ : bucket name
+  // * `bucketName` _string_ - Name of the bucket
+  // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
+  // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
   // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
   makeBucket(bucketName, region, makeOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -492,17 +474,13 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, headers }, payload, [200], region, false, processWithRetry)
   }
 
-  // Returns a stream that emits objects that are partially uploaded.
+  // List of buckets created.
   //
   // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
-  // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
+  // * `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
   //
-  // __Return Value__
-  // * `stream` _Stream_ : emits objects of the format:
-  //   * `object.key` _string_: name of the object
-  //   * `object.uploadId` _string_: upload ID of the object
+  // `buckets` array element:
+  // * `bucket.name` _string_ : bucket name
   // * `bucket.creationDate` _Date_: date when bucket was created
   listBuckets(cb) {
     if (!isFunction(cb)) {
@@ -522,10 +500,17 @@ export class Client extends TypedClient {
     })
   }
 
-  // To check if a bucket already exists.
+  // Returns a stream that emits objects that are partially uploaded.
   //
   // __Arguments__
-  // * `bucketName` _string_ : name of the bucket
+  // * `bucketName` _string_: name of the bucket
+  // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
+  // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
+  //
+  // __Return Value__
+  // * `stream` _Stream_ : emits objects of the format:
+  //   * `object.key` _string_: name of the object
+  //   * `object.uploadId` _string_: upload ID of the object
   //   * `object.size` _Integer_: size of the partially uploaded object
   listIncompleteUploads(bucket, prefix, recursive) {
     if (prefix === undefined) {
@@ -593,7 +578,7 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // Remove a bucket.
+  // To check if a bucket already exists.
   //
   // __Arguments__
   // * `bucketName` _string_ : name of the bucket
@@ -617,11 +602,10 @@ export class Client extends TypedClient {
     })
   }
 
-  // Remove the partially uploaded object.
+  // Remove a bucket.
   //
   // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
+  // * `bucketName` _string_ : name of the bucket
   // * `callback(err)` _function_ : `err` is `null` if the bucket is removed successfully.
   removeBucket(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -640,13 +624,11 @@ export class Client extends TypedClient {
     })
   }
 
-  // Callback is called with `error` in case of error or `null` in case of success
+  // Remove the partially uploaded object.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `filePath` _string_: path to which the object data will be written to
-  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeIncompleteUpload(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -678,11 +660,12 @@ export class Client extends TypedClient {
     )
   }
 
-  // Callback is called with readable stream of the object content.
+  // Callback is called with `error` in case of error or `null` in case of success
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `filePath` _string_: path to which the object data will be written to
   // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback is called with `err` in case of error.
   fGetObject(bucketName, objectName, filePath, getOpts = {}, cb) {
@@ -760,13 +743,11 @@ export class Client extends TypedClient {
     )
   }
 
-  // Callback is called with readable stream of the partial object content.
+  // Callback is called with readable stream of the object content.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `offset` _number_: offset of the object from where the stream will start
-  // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
   // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getObject(bucketName, objectName, getOpts = {}, cb) {
@@ -788,13 +769,14 @@ export class Client extends TypedClient {
     this.getPartialObject(bucketName, objectName, 0, 0, getOpts, cb)
   }
 
-  // Uploads the object using contents from a file
+  // Callback is called with readable stream of the partial object content.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `filePath` _string_: file path of the file to be uploaded
-  // * `metaData` _Javascript Object_: metaData assosciated with the object
+  // * `offset` _number_: offset of the object from where the stream will start
+  // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
+  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
   // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
   getPartialObject(bucketName, objectName, offset, length, getOpts = {}, cb) {
     if (isFunction(length)) {
@@ -851,23 +833,13 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes, '', true, cb)
   }
 
-  // Uploads the object.
+  // Uploads the object using contents from a file
   //
-  // Uploading a stream
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `stream` _Stream_: Readable stream
-  // * `size` _number_: size of the object (optional)
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  //
-  // Uploading "Buffer" or "string"
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `string or Buffer` _string_ or _Buffer_: string or buffer
-  // * `callback(err, objInfo)` _function_: `err` is `null` in case of success and `info` will have the following object details:
-  //   * `etag` _string_: etag of the object
+  // * `filePath` _string_: file path of the file to be uploaded
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
   // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
   fPutObject(bucketName, objectName, filePath, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
@@ -1040,13 +1012,23 @@ export class Client extends TypedClient {
     )
   }
 
-  // Copy the object.
+  // Uploads the object.
   //
+  // Uploading a stream
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `srcObject` _string_: path of the source object to be copied
-  // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
+  // * `stream` _Stream_: Readable stream
+  // * `size` _number_: size of the object (optional)
+  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
+  //
+  // Uploading "Buffer" or "string"
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `string or Buffer` _string_ or _Buffer_: string or buffer
+  // * `callback(err, objInfo)` _function_: `err` is `null` in case of success and `info` will have the following object details:
+  //   * `etag` _string_: etag of the object
   //   * `versionId` _string_: versionId of the object
   putObject(bucketName, objectName, stream, size, metaData, callback) {
     if (!isValidBucketName(bucketName)) {
@@ -1108,6 +1090,14 @@ export class Client extends TypedClient {
     // stream => chunker => uploader
     pipesetup(stream, chunker, uploader)
   }
+
+  // Copy the object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `srcObject` _string_: path of the source object to be copied
+  // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
   // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
   copyObjectV1(arg1, arg2, arg3, arg4, arg5) {
     var bucketName = arg1
@@ -1167,6 +1157,7 @@ export class Client extends TypedClient {
         .on('data', (data) => cb(null, data))
     })
   }
+
   /**
    * Internal Method to perform copy of an object.
    * @param sourceConfig __object__   instance of CopySourceOptions @link ./helpers/CopySourceOptions
@@ -1222,6 +1213,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   // Backward compatibility for Copy Object API.
   copyObject(...allArgs) {
     if (allArgs[0] instanceof CopySourceOptions && allArgs[1] instanceof CopyDestinationOptions) {
@@ -1230,23 +1222,6 @@ export class Client extends TypedClient {
     return this.copyObjectV1(...arguments)
   }
 
-  // List the objects in the bucket.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
-  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
-  // * `listOpts _object_: query params to list object with below keys
-  // *    listOpts.MaxKeys _int_ maximum number of keys to return
-  // *    listOpts.IncludeVersion  _bool_ true|false to include versions.
-  // __Return Value__
-  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  // * `obj.name` _string_: name of the object
-  // * `obj.prefix` _string_: name of the object prefix
-  // * `obj.size` _number_: size of the object
-  // * `obj.etag` _string_: etag of the object
-  // * `obj.lastModified` _Date_: modified time stamp
-  // * `obj.isDeleteMarker` _boolean_: true if it is a delete marker
   // list a batch of objects
   listObjectsQuery(bucketName, prefix, marker, listQueryOpts = {}) {
     if (!isValidBucketName(bucketName)) {
@@ -1314,15 +1289,23 @@ export class Client extends TypedClient {
     return transformer
   }
 
-  // listObjectsV2Query - (List Objects V2) - List some or all (up to 1000) of the objects in a bucket.
+  // List the objects in the bucket.
   //
-  // You can use the request parameters as selection criteria to return a subset of the objects in a bucket.
-  // request parameters :-
+  // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: Limits the response to keys that begin with the specified prefix.
-  // * `continuation-token` _string_: Used to continue iterating over a set of objects.
-  // * `delimiter` _string_: A delimiter is a character you use to group keys.
-  // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
+  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
+  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  // * `listOpts _object_: query params to list object with below keys
+  // *    listOpts.MaxKeys _int_ maximum number of keys to return
+  // *    listOpts.IncludeVersion  _bool_ true|false to include versions.
+  // __Return Value__
+  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
+  // * `obj.name` _string_: name of the object
+  // * `obj.prefix` _string_: name of the object prefix
+  // * `obj.size` _number_: size of the object
+  // * `obj.etag` _string_: etag of the object
+  // * `obj.lastModified` _Date_: modified time stamp
+  // * `obj.isDeleteMarker` _boolean_: true if it is a delete marker
   // * `obj.versionId` _string_: versionId of the object
   listObjects(bucketName, prefix, recursive, listOpts = {}) {
     if (prefix === undefined) {
@@ -1380,20 +1363,15 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // List the objects in the bucket using S3 ListObjects V2
+  // listObjectsV2Query - (List Objects V2) - List some or all (up to 1000) of the objects in a bucket.
   //
-  // __Arguments__
+  // You can use the request parameters as selection criteria to return a subset of the objects in a bucket.
+  // request parameters :-
   // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
-  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
-  // * `startAfter` _string_: Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
-  //
-  // __Return Value__
-  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `obj.name` _string_: name of the object
-  //   * `obj.prefix` _string_: name of the object prefix
-  //   * `obj.size` _number_: size of the object
-  //   * `obj.etag` _string_: etag of the object
+  // * `prefix` _string_: Limits the response to keys that begin with the specified prefix.
+  // * `continuation-token` _string_: Used to continue iterating over a set of objects.
+  // * `delimiter` _string_: A delimiter is a character you use to group keys.
+  // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
   // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
   listObjectsV2Query(bucketName, prefix, continuationToken, delimiter, maxKeys, startAfter) {
     if (!isValidBucketName(bucketName)) {
@@ -1456,17 +1434,20 @@ export class Client extends TypedClient {
     return transformer
   }
 
-  // Stat information of the object.
+  // List the objects in the bucket using S3 ListObjects V2
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
-  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
-  //   * `stat.size` _number_: size of the object
-  //   * `stat.etag` _string_: etag of the object
-  //   * `stat.metaData` _string_: MetaData of the object
-  //   * `stat.lastModified` _Date_: modified time stamp
+  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
+  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+  // * `startAfter` _string_: Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
+  //
+  // __Return Value__
+  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
+  //   * `obj.name` _string_: name of the object
+  //   * `obj.prefix` _string_: name of the object prefix
+  //   * `obj.size` _number_: size of the object
+  //   * `obj.etag` _string_: etag of the object
   //   * `obj.lastModified` _Date_: modified time stamp
   listObjectsV2(bucketName, prefix, recursive, startAfter) {
     if (prefix === undefined) {
@@ -1524,12 +1505,17 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // Remove the specified object.
+  // Stat information of the object.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
-  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false, forceDelete:true|false}`. Default is `{}`. (optional)
+  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
+  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
+  //   * `stat.size` _number_: size of the object
+  //   * `stat.etag` _string_: etag of the object
+  //   * `stat.metaData` _string_: MetaData of the object
+  //   * `stat.lastModified` _Date_: modified time stamp
   //   * `stat.versionId` _string_: version id of the object if available
   statObject(bucketName, objectName, statOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1574,13 +1560,12 @@ export class Client extends TypedClient {
     })
   }
 
-  // Remove all the objects residing in the objectsList.
+  // Remove the specified object.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `objectsList` _array_: array of objects of one of the following:
-  // *         List of Object names as array of strings which are object keys:  ['objectname1','objectname2']
-  // *         List of Object name and versionId as an object:  [{name:"objectname",versionId:"my-version-id"}]
+  // * `objectName` _string_: name of the object
+  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false, forceDelete:true|false}`. Default is `{}`. (optional)
   // * `callback(err)` _function_: callback function is called with non `null` value in case of error
   removeObject(bucketName, objectName, removeOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1625,10 +1610,14 @@ export class Client extends TypedClient {
     this.makeRequest(requestOptions, '', [200, 204], '', false, cb)
   }
 
-  // Get the policy on a bucket or an object prefix.
+  // Remove all the objects residing in the objectsList.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
+  // * `objectsList` _array_: array of objects of one of the following:
+  // *         List of Object names as array of strings which are object keys:  ['objectname1','objectname2']
+  // *         List of Object name and versionId as an object:  [{name:"objectname",versionId:"my-version-id"}]
+
   removeObjects(bucketName, objectsList, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1706,11 +1695,10 @@ export class Client extends TypedClient {
     )
   }
 
-  // Set the policy on a bucket or an object prefix.
+  // Get the policy on a bucket or an object prefix.
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
-  // * `bucketPolicy` _string_: bucket policy (JSON stringify'ed)
   // * `callback(err, policy)` _function_: callback function
   getBucketPolicy(bucketName, cb) {
     // Validate arguments.
@@ -1738,15 +1726,11 @@ export class Client extends TypedClient {
     })
   }
 
-  // Generate a generic presigned URL which can be
-  // used for HTTP methods GET, PUT, HEAD and DELETE
+  // Set the policy on a bucket or an object prefix.
   //
   // __Arguments__
-  // * `method` _string_: name of the HTTP method
   // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `reqParams` _object_: request parameters (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
+  // * `bucketPolicy` _string_: bucket policy (JSON stringify'ed)
   // * `callback(err)` _function_: callback function
   setBucketPolicy(bucketName, policy, cb) {
     // Validate arguments.
@@ -1770,13 +1754,15 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, query }, policy, [204], '', false, cb)
   }
 
-  // Generate a presigned URL for GET
+  // Generate a generic presigned URL which can be
+  // used for HTTP methods GET, PUT, HEAD and DELETE
   //
   // __Arguments__
+  // * `method` _string_: name of the HTTP method
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `respHeaders` _object_: response headers to override or request params for query (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
+  // * `reqParams` _object_: request parameters (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
   presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
     if (this.anonymous) {
@@ -1837,11 +1823,13 @@ export class Client extends TypedClient {
     })
   }
 
-  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+  // Generate a presigned URL for GET
   //
   // __Arguments__
   // * `bucketName` _string_: name of the bucket
   // * `objectName` _string_: name of the object
+  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
+  // * `respHeaders` _object_: response headers to override or request params for query (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
   presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1872,6 +1860,12 @@ export class Client extends TypedClient {
     })
     return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, cb)
   }
+
+  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   presignedPutObject(bucketName, objectName, expires, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1883,14 +1877,13 @@ export class Client extends TypedClient {
     return this.presignedUrl('PUT', bucketName, objectName, expires, cb)
   }
 
-  // presignedPostPolicy can be used in situations where we want more control on the upload than what
-  // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
   // return PostPolicy object
   newPostPolicy() {
     return new PostPolicy()
   }
 
-  // Calls implemented below are related to multipart.
+  // presignedPostPolicy can be used in situations where we want more control on the upload than what
+  // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
   // on the object's `name` `bucket` `expiry` `Content-Type` `Content-Disposition` `metaData`
   presignedPostPolicy(postPolicy, cb) {
     if (this.anonymous) {
@@ -1950,7 +1943,8 @@ export class Client extends TypedClient {
     })
   }
 
-  // Complete the multipart upload. After all the parts are uploaded issuing
+  // Calls implemented below are related to multipart.
+
   // Initiate a new multipart upload.
   initiateNewMultipartUpload(bucketName, objectName, metaData, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1975,6 +1969,8 @@ export class Client extends TypedClient {
         .on('data', (uploadId) => cb(null, uploadId))
     })
   }
+
+  // Complete the multipart upload. After all the parts are uploaded issuing
   // this call will aggregate the parts on the server into a single object.
   completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2039,6 +2035,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   // Get part-info of all parts of an incomplete upload specified by uploadId.
   listParts(bucketName, objectName, uploadId, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2070,6 +2067,7 @@ export class Client extends TypedClient {
     }
     listNext(0)
   }
+
   // Called by listParts to fetch a batch of part-info
   listPartsQuery(bucketName, objectName, uploadId, marker, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2107,6 +2105,7 @@ export class Client extends TypedClient {
         .on('data', (data) => cb(null, data))
     })
   }
+
   // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
   listIncompleteUploadsQuery(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
     if (!isValidBucketName(bucketName)) {
@@ -2155,8 +2154,6 @@ export class Client extends TypedClient {
     return transformer
   }
 
-  // Returns a function that can be used for uploading objects.
-  // If multipart === true, it returns function that is used to upload
   // Find uploadId of an incomplete upload.
   findUploadId(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2193,6 +2190,9 @@ export class Client extends TypedClient {
     }
     listNext('', '')
   }
+
+  // Returns a function that can be used for uploading objects.
+  // If multipart === true, it returns function that is used to upload
   // a part of the multipart.
   getUploader(bucketName, objectName, metaData, multipart) {
     if (!isValidBucketName(bucketName)) {
@@ -2284,6 +2284,7 @@ export class Client extends TypedClient {
     }
     return simpleUploader
   }
+
   // Remove all the notification configurations in the S3 provider
   setBucketNotification(bucketName, config, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2306,10 +2307,11 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
   }
 
-  // Return the list of notification configurations stored
   removeAllBucketNotification(bucketName, cb) {
     this.setBucketNotification(bucketName, new NotificationConfig(), cb)
   }
+
+  // Return the list of notification configurations stored
   // in the S3 provider
   getBucketNotification(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -2332,6 +2334,7 @@ export class Client extends TypedClient {
         .on('end', () => cb(null, bucketNotification))
     })
   }
+
   // Listens for bucket notifications. Returns an EventEmitter.
   listenBucketNotification(bucketName, prefix, suffix, events) {
     if (!isValidBucketName(bucketName)) {
@@ -2351,6 +2354,7 @@ export class Client extends TypedClient {
 
     return listener
   }
+
   getBucketVersioning(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2377,6 +2381,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   setBucketVersioning(bucketName, versionConfig, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2399,6 +2404,7 @@ export class Client extends TypedClient {
 
     this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
   }
+
   /** To set Tags on a bucket or object based on the params
    *  __Arguments__
    * taggingParams _object_ Which contains the following properties
@@ -2442,6 +2448,7 @@ export class Client extends TypedClient {
 
     this.makeRequest(requestOptions, payload, [200], '', false, cb)
   }
+
   /** Set Tags on a Bucket
    * __Arguments__
    * bucketName _string_
@@ -2464,6 +2471,7 @@ export class Client extends TypedClient {
 
     return this.setTagging({ bucketName, tags, cb })
   }
+
   /** Set Tags on an Object
    * __Arguments__
    * bucketName _string_
@@ -2497,6 +2505,7 @@ export class Client extends TypedClient {
     }
     return this.setTagging({ bucketName, objectName, tags, putOpts, cb })
   }
+
   /** Remove Tags on an Bucket/Object based on params
    * __Arguments__
    * bucketName _string_
@@ -2518,6 +2527,7 @@ export class Client extends TypedClient {
     }
     this.makeRequest(requestOptions, '', [200, 204], '', true, cb)
   }
+
   /** Remove Tags associated with a bucket
    *  __Arguments__
    * bucketName _string_
@@ -2532,6 +2542,7 @@ export class Client extends TypedClient {
     }
     return this.removeTagging({ bucketName, cb })
   }
+
   /** Remove tags associated with an object
    * __Arguments__
    * bucketName _string_
@@ -2560,6 +2571,7 @@ export class Client extends TypedClient {
 
     return this.removeTagging({ bucketName, objectName, removeOpts, cb })
   }
+
   /** Get Tags associated with a Bucket
    *  __Arguments__
    * bucketName _string_
@@ -2582,6 +2594,7 @@ export class Client extends TypedClient {
         .on('end', () => cb(null, tagsList))
     })
   }
+
   /** Get the tags associated with a bucket OR an object
    * bucketName _string_
    * objectName _string_ (Optional)
@@ -2629,6 +2642,7 @@ export class Client extends TypedClient {
         .on('end', () => cb(null, tagsList))
     })
   }
+
   /**
    * Apply lifecycle configuration on a bucket.
    * bucketName _string_
@@ -2653,6 +2667,7 @@ export class Client extends TypedClient {
 
     this.makeRequest(requestOptions, payload, [200], '', false, cb)
   }
+
   /** Remove lifecycle configuration of a bucket.
    * bucketName _string_
    * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
@@ -2665,6 +2680,7 @@ export class Client extends TypedClient {
     const query = 'lifecycle'
     this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
+
   /** Set/Override lifecycle configuration on a bucket. if the configuration is empty, it removes the configuration.
    * bucketName _string_
    * lifeCycleConfig _object_ one of the following values: (null or '') to remove the lifecycle configuration. or a valid lifecycle configuration
@@ -2680,6 +2696,7 @@ export class Client extends TypedClient {
       this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
     }
   }
+
   /** Get lifecycle configuration on a bucket.
    * bucketName _string_
    * `cb(config)` _function_ - callback function with lifecycle configuration as the error argument.
@@ -2704,6 +2721,7 @@ export class Client extends TypedClient {
         .on('end', () => cb(null, lifecycleConfig))
     })
   }
+
   setObjectLockConfig(bucketName, lockConfigOpts = {}, cb) {
     const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
     const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
@@ -2762,6 +2780,7 @@ export class Client extends TypedClient {
 
     this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
+
   getObjectLockConfig(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2788,6 +2807,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   putObjectRetention(bucketName, objectName, retentionOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2844,6 +2864,7 @@ export class Client extends TypedClient {
     headers['Content-MD5'] = toMd5(payload)
     this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200, 204], '', false, cb)
   }
+
   getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2881,6 +2902,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   setBucketEncryption(bucketName, encryptionConfig, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2926,6 +2948,7 @@ export class Client extends TypedClient {
 
     this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
+
   getBucketEncryption(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2964,6 +2987,7 @@ export class Client extends TypedClient {
 
     this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
+
   setBucketReplication(bucketName, replicationConfig = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -3003,6 +3027,7 @@ export class Client extends TypedClient {
 
     this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
   }
+
   getBucketReplication(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -3029,6 +3054,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   removeBucketReplication(bucketName, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -3037,6 +3063,7 @@ export class Client extends TypedClient {
     const query = 'replication'
     this.makeRequest({ method, bucketName, query }, '', [200, 204], '', false, cb)
   }
+
   getObjectLegalHold(bucketName, objectName, getOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -3083,6 +3110,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   setObjectLegalHold(bucketName, objectName, setOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -3160,6 +3188,7 @@ export class Client extends TypedClient {
     const requestOptions = { method, bucketName, objectName: objectName, query }
     this.makeRequest(requestOptions, '', [204], '', false, cb)
   }
+
   /**
    * Internal method to upload a part during compose object.
    * @param partConfig __object__ contains the following.
@@ -3197,6 +3226,7 @@ export class Client extends TypedClient {
         })
     })
   }
+
   composeObject(destObjConfig = {}, sourceObjList = [], cb) {
     const me = this // many async flows. so store the ref.
     const sourceFilesLength = sourceObjList.length
@@ -3451,6 +3481,13 @@ export class Client extends TypedClient {
           cb(null, selectResult)
         })
     })
+  }
+
+  get extensions() {
+    if (!this.clientExtensions) {
+      this.clientExtensions = new extensions(this)
+    }
+    return this.clientExtensions
   }
 }
 
