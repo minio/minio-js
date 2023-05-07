@@ -30,11 +30,9 @@ import xml2js from 'xml2js'
 import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
 import {
   calculateEvenSplits,
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
   extractMetadata,
   getScope,
   getSourceVersionId,
@@ -50,21 +48,19 @@ import {
   isValidDate,
   isValidObjectName,
   isValidPrefix,
-  LEGAL_HOLD_STATUS,
   makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
   pipesetup,
   prependXAMZMeta,
   readableStream,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
   sanitizeETag,
   toMd5,
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helpers.ts'
+} from './internal/helper.ts'
+import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { TypedClient } from './internal/typed-client.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
@@ -293,7 +289,7 @@ export class Client extends TypedClient {
         }
 
         this.checkAndRefreshCreds()
-        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date)
+        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
         reqOptions.headers.authorization = authorization
       }
       var req = this.transport.request(reqOptions, (response) => {

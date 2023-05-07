@@ -4,7 +4,7 @@ import { URL, URLSearchParams } from 'node:url'
 
 import { CredentialProvider } from './CredentialProvider.ts'
 import { Credentials } from './Credentials.ts'
-import { makeDateLong, parseXml, toSha256 } from './helpers.ts'
+import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
 import { request } from './internal/request.ts'
 import { readAsString } from './internal/response.ts'
 import { signV4ByServiceName } from './signing.ts'

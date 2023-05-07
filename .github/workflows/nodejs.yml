@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 3
       matrix:
-        node_version: [12.x, 14.x, 16.x, 17.x, 18.x, 20.x]
+        node_version: [10.x, 12.x, 14.x, 16.x, 18.x, 20.x]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3

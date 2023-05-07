@@ -8,6 +8,7 @@ import * as errors from '../errors.ts'
 import {
   isAmazonEndpoint,
   isBoolean,
+  isDefined,
   isEmpty,
   isObject,
   isString,
@@ -15,10 +16,10 @@ import {
   isValidPort,
   isVirtualHostStyle,
   uriResourceEscape,
-} from '../helpers.ts'
-import type { Region } from '../s3-endpoints.ts'
-import { getS3Endpoint } from '../s3-endpoints.ts'
-import type { IRequest, RequestHeaders, Transport } from '../type.ts'
+} from './helper.ts'
+import type { Region } from './s3-endpoints.ts'
+import { getS3Endpoint } from './s3-endpoints.ts'
+import type { IRequest, RequestHeaders, Transport } from './type.ts'
 
 // will be replaced by bundler
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -328,7 +329,7 @@ export class TypedClient {
 
     return {
       ...reqOptions,
-      headers: _.mapValues(reqOptions.headers, (v) => v.toString()),
+      headers: _.mapValues(_.pickBy(reqOptions.headers, isDefined), (v) => v.toString()),
       host,
       port,
       path,

@@ -4,14 +4,20 @@ import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
-import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import type {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from './helpers.ts'
+import type { Region } from './internal/s3-endpoints.ts'
+import type { UploadedObjectInfo } from './internal/type.ts'
 import { TypedClient } from './internal/typed-client.ts'
-import type { Region } from './s3-endpoints.ts'
-import { UploadedObjectInfo } from './type.ts'
 
 export { UploadedObjectInfo }
 export * from './helpers.ts'
-export type { Region } from './s3-endpoints.ts'
+export type { Region } from './internal/s3-endpoints.ts'
 
 // Exports only from typings
 export type NotificationEvent =
@@ -32,9 +38,22 @@ export type NotificationEvent =
   | 's3:Replication:OperationReplicatedAfterThreshold'
   | 's3:Replication:OperationNotTracked'
   | string
-export type Mode = 'COMPLIANCE' | 'GOVERNANCE'
-export type LockUnit = 'Days' | 'Years'
-export type LegalHoldStatus = 'ON' | 'OFF'
+
+/**
+ * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
+ */
+export type Mode = RETENTION_MODES
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LockUnit = RETENTION_VALIDITY_UNITS
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+
 export type NoResultCallback = (error: Error | null) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
@@ -126,8 +145,8 @@ export interface LifecycleRule {
 }
 
 export interface LockConfig {
-  mode: Mode
-  unit: LockUnit
+  mode: RETENTION_MODES
+  unit: RETENTION_VALIDITY_UNITS
   validity: number
 }
 
@@ -150,14 +169,14 @@ export interface ReplicationConfig {
 
 export interface RetentionOptions {
   versionId: string
-  mode?: Mode
+  mode?: RETENTION_MODES
   retainUntilDate?: IsoDate
   governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
   versionId: string
-  status: LegalHoldStatus
+  status: LEGAL_HOLD_STATUS
 }
 
 export interface InputSerialization {
@@ -209,13 +228,13 @@ export interface SourceObjectStats {
 
 // No need to export this. But without it - linter error.
 export class TargetConfig {
-  setId(id: any): void
+  setId(id: unknown): void
 
-  addEvent(newEvent: any): void
+  addEvent(newEvent: unknown): void
 
-  addFilterSuffix(suffix: any): void
+  addFilterSuffix(suffix: string): void
 
-  addFilterPrefix(prefix: any): void
+  addFilterPrefix(prefix: string): void
 }
 
 export interface MakeBucketOpt {

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as Crypto from 'node:crypto'
+import * as crypto from 'node:crypto'
 
 import * as errors from './errors.ts'
-import { getScope, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './helpers.ts'
-import type { ICanonicalRequest, IRequest, RequestHeaders } from './type.ts'
+import { getScope, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './internal/helper.ts'
+import type { ICanonicalRequest, IRequest, RequestHeaders } from './internal/type.ts'
 
 const signV4Algorithm = 'AWS4-HMAC-SHA256'
 
@@ -76,14 +76,14 @@ function getCanonicalRequest(
       .join('&')
   }
 
-  const canonical = []
-  canonical.push(method.toUpperCase())
-  canonical.push(requestResource)
-  canonical.push(requestQuery)
-  canonical.push(headersArray.join('\n') + '\n')
-  canonical.push(signedHeaders.join(';').toLowerCase())
-  canonical.push(hashedPayload)
-  return canonical.join('\n')
+  return [
+    method.toUpperCase(),
+    requestResource,
+    requestQuery,
+    headersArray.join('\n') + '\n',
+    signedHeaders.join(';').toLowerCase(),
+    hashedPayload,
+  ].join('\n')
 }
 
 // generate a credential string
@@ -149,15 +149,14 @@ function getSigningKey(date: Date, region: string, secretKey: string, serviceNam
   if (!isString(secretKey)) {
     throw new TypeError('secretKey should be of type "string"')
   }
-
   const dateLine = makeDateShort(date)
-  const hmac1 = Crypto.createHmac('sha256', 'AWS4' + secretKey)
-    .update(dateLine)
-    .digest()
-  const hmac2 = Crypto.createHmac('sha256', hmac1).update(region).digest()
-  const hmac3 = Crypto.createHmac('sha256', hmac2).update(serviceName).digest()
-
-  return Crypto.createHmac('sha256', hmac3).update('aws4_request').digest()
+  const hmac1 = crypto
+      .createHmac('sha256', 'AWS4' + secretKey)
+      .update(dateLine)
+      .digest(),
+    hmac2 = crypto.createHmac('sha256', hmac1).update(region).digest(),
+    hmac3 = crypto.createHmac('sha256', hmac2).update(serviceName).digest()
+  return crypto.createHmac('sha256', hmac3).update('aws4_request').digest()
 }
 
 // returns the string that needs to be signed
@@ -171,8 +170,7 @@ function getStringToSign(canonicalRequest: ICanonicalRequest, requestDate: Date,
   if (!isString(region)) {
     throw new TypeError('region should be of type "string"')
   }
-
-  const hash = Crypto.createHash('sha256').update(canonicalRequest).digest('hex')
+  const hash = crypto.createHash('sha256').update(canonicalRequest).digest('hex')
   const scope = getScope(region, requestDate, serviceName)
   const stringToSign = [signV4Algorithm, makeDateLong(requestDate), scope, hash]
 
@@ -194,7 +192,7 @@ export function postPresignSignatureV4(region: string, date: Date, secretKey: st
     throw new TypeError('policyBase64 should be of type "string"')
   }
   const signingKey = getSigningKey(date, region, secretKey)
-  return Crypto.createHmac('sha256', signingKey).update(policyBase64).digest('hex').toLowerCase()
+  return crypto.createHmac('sha256', signingKey).update(policyBase64).digest('hex').toLowerCase()
 }
 
 // Returns the authorization header
@@ -204,6 +202,7 @@ export function signV4(
   secretKey: string,
   region: string,
   requestDate: Date,
+  sha256sum: string,
   serviceName = 's3',
 ) {
   if (!isObject(request)) {
@@ -226,15 +225,13 @@ export function signV4(
     throw new errors.SecretKeyRequiredError('secretKey is required for signing')
   }
 
-  const sha256sum = request.headers['x-amz-content-sha256'] as string
-
   const signedHeaders = getSignedHeaders(request.headers)
   const canonicalRequest = getCanonicalRequest(request.method, request.path, request.headers, signedHeaders, sha256sum)
   const serviceIdentifier = serviceName || 's3'
   const stringToSign = getStringToSign(canonicalRequest, requestDate, region, serviceIdentifier)
   const signingKey = getSigningKey(requestDate, region, secretKey, serviceIdentifier)
   const credential = getCredential(accessKey, region, requestDate, serviceIdentifier)
-  const signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
+  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
 
   return `${signV4Algorithm} Credential=${credential}, SignedHeaders=${signedHeaders
     .join(';')
@@ -247,9 +244,10 @@ export function signV4ByServiceName(
   secretKey: string,
   region: string,
   requestDate: Date,
+  contentSha256: string,
   serviceName = 's3',
 ): string {
-  return signV4(request, accessKey, secretKey, region, requestDate, serviceName)
+  return signV4(request, accessKey, secretKey, region, requestDate, contentSha256, serviceName)
 }
 
 // returns a presigned URL string
@@ -260,7 +258,7 @@ export function presignSignatureV4(
   sessionToken: string,
   region: string,
   requestDate: Date,
-  expires: unknown,
+  expires: number,
 ) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
@@ -321,7 +319,6 @@ export function presignSignatureV4(
 
   const stringToSign = getStringToSign(canonicalRequest, requestDate, region)
   const signingKey = getSigningKey(requestDate, region, secretKey)
-  const signature = Crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
-
+  const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex').toLowerCase()
   return request.protocol + '//' + request.headers.host + path + `&X-Amz-Signature=${signature}`
 }
