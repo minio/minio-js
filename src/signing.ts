@@ -258,7 +258,7 @@ export function presignSignatureV4(
   sessionToken: string,
   region: string,
   requestDate: Date,
-  expires: unknown,
+  expires: number,
 ) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
