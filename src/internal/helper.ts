@@ -17,7 +17,6 @@
 import * as crypto from 'node:crypto'
 import * as stream from 'node:stream'
 
-import { isBrowser } from 'browser-or-node'
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
@@ -25,6 +24,8 @@ import * as mime from 'mime-types'
 
 import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
+
+const MetaDataHeaderPrefix = 'x-amz-meta-'
 
 /**
  * All characters in string which are NOT unreserved should be percent encoded.
@@ -329,36 +330,36 @@ export function readableStream(data: unknown): stream.Readable {
 /**
  * Process metadata to insert appropriate value to `content-type` attribute
  */
-export function insertContentType(metaData: ObjectMetaData, filePath: string) {
+export function insertContentType(metaData: ObjectMetaData, filePath: string): ObjectMetaData {
   // check if content-type attribute present in metaData
   for (const key in metaData) {
     if (key.toLowerCase() === 'content-type') {
       return metaData
     }
   }
-  // if `content-type` attribute is not present in metadata,
-  // then infer it from the extension in filePath
-  const newMetadata = Object.assign({}, metaData)
-  newMetadata['content-type'] = probeContentType(filePath)
-  return newMetadata
+
+  // if `content-type` attribute is not present in metadata, then infer it from the extension in filePath
+  return {
+    ...metaData,
+    'content-type': probeContentType(filePath),
+  }
 }
 
 /**
  * Function prepends metadata with the appropriate prefix if it is not already on
  */
-export function prependXAMZMeta(metaData?: ObjectMetaData) {
+export function prependXAMZMeta(metaData?: ObjectMetaData): RequestHeaders {
   if (!metaData) {
     return {}
   }
 
-  const newMetadata = Object.assign({}, metaData)
-  for (const [key, value] of _.entries(metaData)) {
-    if (!isAmzHeader(key) && !isSupportedHeader(key) && !isStorageClassHeader(key)) {
-      newMetadata['X-Amz-Meta-' + key] = value
-      delete newMetadata[key]
+  return _.mapKeys(metaData, (value, key) => {
+    if (isAmzHeader(key) || isSupportedHeader(key) || isStorageClassHeader(key)) {
+      return key
     }
-  }
-  return newMetadata
+
+    return MetaDataHeaderPrefix + key
+  })
 }
 
 /**
@@ -367,7 +368,7 @@ export function prependXAMZMeta(metaData?: ObjectMetaData) {
 export function isAmzHeader(key: string) {
   const temp = key.toLowerCase()
   return (
-    temp.startsWith('x-amz-meta-') ||
+    temp.startsWith(MetaDataHeaderPrefix) ||
     temp === 'x-amz-acl' ||
     temp.startsWith('x-amz-server-side-encryption-') ||
     temp === 'x-amz-server-side-encryption'
@@ -397,27 +398,25 @@ export function isStorageClassHeader(key: string) {
 }
 
 export function extractMetadata(headers: ResponseHeader) {
-  const newMetadata: Record<string, string> = {}
-  for (const [key, value] of Object.entries(headers)) {
-    if (isSupportedHeader(key) || isStorageClassHeader(key) || isAmzHeader(key)) {
-      if (key.toLowerCase().startsWith('x-amz-meta-')) {
-        newMetadata[key.slice(11, key.length)] = value
-      } else {
-        newMetadata[key] = value
+  return _.mapKeys(
+    _.pickBy(headers, (value, key) => isSupportedHeader(key) || isStorageClassHeader(key) || isAmzHeader(key)),
+    (value, key) => {
+      const lower = key.toLowerCase()
+      if (lower.startsWith(MetaDataHeaderPrefix)) {
+        return lower.slice(MetaDataHeaderPrefix.length)
       }
-    }
-  }
-  return newMetadata
+
+      return key
+    },
+  )
 }
 
 export function getVersionId(headers: ResponseHeader = {}) {
-  const versionIdValue = headers['x-amz-version-id'] as string
-  return versionIdValue || null
+  return headers['x-amz-version-id'] || null
 }
 
 export function getSourceVersionId(headers: ResponseHeader = {}) {
-  const sourceVersionId = headers['x-amz-copy-source-version-id']
-  return sourceVersionId || null
+  return headers['x-amz-copy-source-version-id'] || null
 }
 
 export function sanitizeETag(etag = ''): string {
@@ -431,17 +430,10 @@ export function sanitizeETag(etag = ''): string {
   return etag.replace(/^("|&quot;|&#34;)|("|&quot;|&#34;)$/g, (m) => replaceChars[m] as string)
 }
 
-function objectToBuffer(payload: Binary): Buffer {
-  // don't know how to write this...
-  return Buffer.from(payload)
-}
-
 export function toMd5(payload: Binary): string {
-  let payLoadBuf: Binary = objectToBuffer(payload)
   // use string from browser and buffer from nodejs
   // browser support is tested only against minio server
-  payLoadBuf = isBrowser ? payLoadBuf.toString() : payLoadBuf
-  return crypto.createHash('md5').update(payLoadBuf).digest().toString('base64')
+  return crypto.createHash('md5').update(Buffer.from(payload)).digest().toString('base64')
 }
 
 export function toSha256(payload: Binary): string {
