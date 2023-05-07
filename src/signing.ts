@@ -202,8 +202,8 @@ export function signV4(
   secretKey: string,
   region: string,
   requestDate: Date,
-  serviceName = 's3',
   sha256sum: string,
+  serviceName = 's3',
 ) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
@@ -244,10 +244,10 @@ export function signV4ByServiceName(
   secretKey: string,
   region: string,
   requestDate: Date,
-  serviceName = 's3',
   contentSha256: string,
+  serviceName = 's3',
 ): string {
-  return signV4(request, accessKey, secretKey, region, requestDate, serviceName, contentSha256)
+  return signV4(request, accessKey, secretKey, region, requestDate, contentSha256, serviceName)
 }
 
 // returns a presigned URL string

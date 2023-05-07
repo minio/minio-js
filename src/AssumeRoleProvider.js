@@ -122,8 +122,8 @@ export class AssumeRoleProvider extends CredentialProvider {
       this.secretKey,
       this.region,
       date,
-      'sts',
       contentSha256,
+      'sts',
     )
     requestOptions.headers.authorization = authorization
 
