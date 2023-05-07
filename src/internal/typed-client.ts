@@ -21,7 +21,7 @@ import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type { IRequest, RequestHeaders, Transport } from './type.ts'
 
-// will be replaced by bundler
+// will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 
 const requestOptionProperties = [
