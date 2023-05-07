@@ -76,14 +76,14 @@ function getCanonicalRequest(
       .join('&')
   }
 
-  const canonical = []
-  canonical.push(method.toUpperCase())
-  canonical.push(requestResource)
-  canonical.push(requestQuery)
-  canonical.push(headersArray.join('\n') + '\n')
-  canonical.push(signedHeaders.join(';').toLowerCase())
-  canonical.push(hashedPayload)
-  return canonical.join('\n')
+  return [
+    method.toUpperCase(),
+    requestResource,
+    requestQuery,
+    headersArray.join('\n') + '\n',
+    signedHeaders.join(';').toLowerCase(),
+    hashedPayload,
+  ].join('\n')
 }
 
 // generate a credential string
