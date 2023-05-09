@@ -21,6 +21,38 @@ export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDIT
 
 export const DEFAULT_REGION = 'us-east-1'
 
+export interface ICopySourceOptions {
+  Bucket: string
+  Object: string
+  /**
+   * Valid versionId
+   */
+  VersionID?: string
+  /**
+   * Etag to match
+   */
+  MatchETag?: string
+  /**
+   * Etag to exclude
+   */
+  NoMatchETag?: string
+  /**
+   * Modified Date of the object/part.  UTC Date in string format
+   */
+  MatchModifiedSince?: string | null
+  /**
+   * Modified Date of the object/part to exclude UTC Date in string format
+   */
+  MatchUnmodifiedSince?: string | null
+  /**
+   * true or false Object range to match
+   */
+  MatchRange?: boolean
+  Start?: number
+  End?: number
+  Encryption?: Encryption
+}
+
 export class CopySourceOptions {
   public readonly Bucket: string
   public readonly Object: string
@@ -34,20 +66,6 @@ export class CopySourceOptions {
   public readonly End: number
   private readonly Encryption?: Encryption
 
-  /**
-   *
-   * @param Bucket - Bucket Name
-   * @param Object - Object Name
-   * @param VersionID - Valid versionId
-   * @param MatchETag - Etag to match
-   * @param NoMatchETag - Etag to exclude
-   * @param MatchModifiedSince - Modified Date of the object/part.  UTC Date in string format
-   * @param MatchUnmodifiedSince - Modified Date of the object/part to exclude UTC Date in string format
-   * @param MatchRange - true or false Object range to match
-   * @param Start
-   * @param End
-   * @param Encryption
-   */
   constructor({
     Bucket,
     Object,
@@ -60,19 +78,7 @@ export class CopySourceOptions {
     Start = 0,
     End = 0,
     Encryption = undefined,
-  }: {
-    Bucket: string
-    Object: string
-    VersionID?: string
-    MatchETag?: string
-    NoMatchETag?: string
-    MatchModifiedSince?: string | null
-    MatchUnmodifiedSince?: string | null
-    MatchRange?: boolean
-    Start?: number
-    End?: number
-    Encryption?: Encryption
-  }) {
+  }: ICopySourceOptions) {
     this.Bucket = Bucket
     this.Object = Object
     this.VersionID = VersionID
@@ -152,6 +158,33 @@ export function removeDirAndFiles(dirPath: string, removeSelf = true) {
   }
 }
 
+export interface ICopyDestinationOptions {
+  /**
+   * Bucket name
+   */
+  Bucket: string
+  /**
+   * Object Name for the destination (composed/copied) object defaults
+   */
+  Object: string
+  /**
+   * Encryption configuration defaults to {}
+   * @default {}
+   */
+  Encryption?: Encryption
+  UserMetadata?: ObjectMetaData
+  /**
+   * query-string encoded string or Record<string, string> Object
+   */
+  UserTags?: Record<string, string> | string
+  LegalHold?: 'on' | 'off'
+  /**
+   * UTC Date String
+   */
+  RetainUntilDate?: string
+  Mode?: RETENTION_MODES
+}
+
 export class CopyDestinationOptions {
   public readonly Bucket: string
   public readonly Object: string
@@ -162,16 +195,6 @@ export class CopyDestinationOptions {
   private readonly RetainUntilDate?: string
   private readonly Mode?: RETENTION_MODES
 
-  /**
-   * @param Bucket - Bucket name
-   * @param Object - Object Name for the destination (composed/copied) object defaults
-   * @param Encryption - Encryption configuration defaults to {}
-   * @param UserMetadata -
-   * @param UserTags - query-string escaped string or Record<string, string>
-   * @param LegalHold -
-   * @param RetainUntilDate - UTC Date String
-   * @param Mode
-   */
   constructor({
     Bucket,
     Object,
@@ -181,16 +204,7 @@ export class CopyDestinationOptions {
     LegalHold,
     RetainUntilDate,
     Mode,
-  }: {
-    Bucket: string
-    Object: string
-    Encryption?: Encryption
-    UserMetadata?: ObjectMetaData
-    UserTags?: Record<string, string> | string
-    LegalHold?: 'on' | 'off'
-    RetainUntilDate?: string
-    Mode?: RETENTION_MODES
-  }) {
+  }: ICopyDestinationOptions) {
     this.Bucket = Bucket
     this.Object = Object
     this.Encryption = Encryption ?? undefined // null input will become undefined, easy for runtime assert
