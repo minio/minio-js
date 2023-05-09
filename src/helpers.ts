@@ -137,25 +137,13 @@ export class CopySourceOptions {
 }
 
 export function removeDirAndFiles(dirPath: string, removeSelf = true) {
-  let files
-  try {
-    files = fs.readdirSync(dirPath)
-  } catch (e) {
-    return
-  }
-
-  for (const item of files) {
-    const filePath = path.join(dirPath, item)
-    if (fs.statSync(filePath).isFile()) {
-      fs.unlinkSync(filePath)
-    } else {
-      removeDirAndFiles(filePath, true)
-    }
-  }
-
   if (removeSelf) {
-    fs.rmdirSync(dirPath)
+    return fs.rmSync(dirPath, { recursive: true, force: true })
   }
+
+  fs.readdirSync(dirPath).forEach((item) => {
+    fs.rmSync(path.join(dirPath, item), { recursive: true, force: true })
+  })
 }
 
 export interface ICopyDestinationOptions {
