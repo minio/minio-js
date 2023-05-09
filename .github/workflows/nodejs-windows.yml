@@ -13,7 +13,7 @@ jobs:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 3
+      max-parallel: 2
       matrix:
         node_version: [14.x, 16.x, 18.x, 20.x]
         os: [windows-latest]
