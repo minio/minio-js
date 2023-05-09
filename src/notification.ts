@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'node:events'
-
+import { EventEmitter } from 'eventemitter3'
 import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
 import { DEFAULT_REGION } from './helpers.ts'
@@ -151,7 +150,10 @@ export type NotificationRecord = unknown
 // Poll for notifications, used in #listenBucketNotification.
 // Listening constitutes repeatedly requesting s3 whether or not any
 // changes have occurred.
-export class NotificationPoller extends EventEmitter {
+export class NotificationPoller extends EventEmitter<{
+  notification: (event: NotificationRecord) => void
+  error: (error: unknown) => void
+}> {
   private client: TypedBase
   private bucketName: string
   private prefix: string
