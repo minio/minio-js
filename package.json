@@ -75,7 +75,7 @@
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">8  <=20"
+    "node": ">=10 <=20"
   },
   "license": "Apache-2.0",
   "bugs": {
