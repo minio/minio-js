@@ -71,11 +71,10 @@
   },
   "author": {
     "name": "MinIO, Inc.",
-    "email": "",
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">=10 <=20"
+    "node": "^16 || ^18 || >=20"
   },
   "license": "Apache-2.0",
   "bugs": {
