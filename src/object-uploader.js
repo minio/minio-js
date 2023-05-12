@@ -282,3 +282,8 @@ export class ObjectUploader extends Transform {
     })
   }
 }
+
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
+// eslint-disable-next-line import/no-default-export
+export default ObjectUploader
