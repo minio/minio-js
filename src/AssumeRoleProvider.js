@@ -4,8 +4,8 @@ import { URL, URLSearchParams } from 'node:url'
 
 import { CredentialProvider } from './CredentialProvider.js'
 import { Credentials } from './Credentials.js'
-import { makeDateLong, parseXml, toSha256 } from './helpers.js'
-import { signV4ByServiceName } from './signing.js'
+import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
+import { signV4ByServiceName } from './signing.ts'
 
 export class AssumeRoleProvider extends CredentialProvider {
   constructor({
@@ -116,7 +116,15 @@ export class AssumeRoleProvider extends CredentialProvider {
       agent: this.transportAgent,
     }
 
-    const authorization = signV4ByServiceName(requestOptions, this.accessKey, this.secretKey, this.region, date, 'sts')
+    const authorization = signV4ByServiceName(
+      requestOptions,
+      this.accessKey,
+      this.secretKey,
+      this.region,
+      date,
+      contentSha256,
+      'sts',
+    )
     requestOptions.headers.authorization = authorization
 
     return {
