@@ -4,15 +4,10 @@ import { isObject, isValidBucketName, isValidObjectName, isValidPrefix } from '.
 import type { ObjectMetaData } from './type.ts'
 
 export class PostPolicy {
-  public policy: { conditions: (string | number)[][]; expiration?: string }
-  public formData: Record<string, string>
-
-  constructor() {
-    this.policy = {
-      conditions: [],
-    }
-    this.formData = {}
+  public policy: { conditions: (string | number)[][]; expiration?: string } = {
+    conditions: [],
   }
+  public formData: Record<string, string> = {}
 
   // set expiration date
   setExpires(date: Date) {
