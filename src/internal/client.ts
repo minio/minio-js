@@ -58,7 +58,7 @@ export interface ClientOptions {
   pathStyle?: boolean
   credentialsProvider?: CredentialProvider
   s3AccelerateEndpoint?: string
-  transportAgent?: http.Agent
+  transportAgent?: http.Agent | https.Agent
 }
 
 export type RequestOption = Partial<IRequest> & {
