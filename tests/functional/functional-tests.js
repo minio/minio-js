@@ -31,7 +31,7 @@ import superagent from 'superagent'
 import * as uuid from 'uuid'
 
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
-import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, removeDirAndFiles } from '../../src/helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
 import { getVersionId } from '../../src/internal/helper.ts'
 import * as minio from '../../src/minio.js'
 
@@ -4136,7 +4136,7 @@ describe('functional tests', function () {
 
     step('Clean up temp directory part files', (done) => {
       if (isSplitSuccess) {
-        removeDirAndFiles(tmpSubDir)
+        fs.rmSync(tmpSubDir, { recursive: true, force: true })
       }
       done()
     })
