@@ -227,6 +227,13 @@ export class TypedClient {
   }
 
   /**
+   * @param endPoint - valid S3 acceleration end point
+   */
+  setS3TransferAccelerate(endPoint: string) {
+    this.s3AccelerateEndpoint = endPoint
+  }
+
+  /**
    * Sets the supported request options.
    */
   public setRequestOptions(options: Pick<https.RequestOptions, (typeof requestOptionProperties)[number]>) {

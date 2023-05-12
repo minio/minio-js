@@ -627,9 +627,6 @@ export class Client extends TypedClient {
     events: NotificationEvent[],
   ): NotificationPoller
 
-  // Custom Settings
-  setS3TransferAccelerate(endpoint: string): void
-
   // Other
   newPostPolicy(): PostPolicy
 

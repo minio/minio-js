@@ -72,13 +72,6 @@ export * from './helpers.ts'
 export * from './notification.js'
 
 export class Client extends TypedClient {
-  /**
-   * @param endPoint _string_ valid S3 acceleration end point
-   */
-  setS3TransferAccelerate(endPoint) {
-    this.s3AccelerateEndpoint = endPoint
-  }
-
   // Set application specific information.
   //
   // Generates User-Agent in the following style.
