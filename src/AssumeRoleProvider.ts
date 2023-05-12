@@ -241,13 +241,12 @@ export class AssumeRoleProvider extends CredentialProvider {
   }
 
   async getCredentials(): Promise<Credentials> {
-    let credConfig: Credentials | null
-    if (!this._credentials || (this._credentials && this.isAboutToExpire())) {
-      credConfig = await this.refreshCredentials()
-    } else {
-      credConfig = this._credentials
+    if (this._credentials && !this.isAboutToExpire()) {
+      return this._credentials
     }
-    return credConfig
+
+    this._credentials = await this.refreshCredentials()
+    return this._credentials
   }
 
   isAboutToExpire() {
