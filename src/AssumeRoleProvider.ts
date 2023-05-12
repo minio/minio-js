@@ -51,7 +51,7 @@ export interface AssumeRoleProviderOptions {
 }
 
 export class AssumeRoleProvider extends CredentialProvider {
-  private readonly stsEndpoint: string
+  private readonly stsEndpoint: URL
   private readonly accessKey: string
   private readonly secretKey: string
   private readonly durationSeconds: number
@@ -70,8 +70,6 @@ export class AssumeRoleProvider extends CredentialProvider {
   private readonly transportAgent?: http.Agent | https.Agent
 
   private readonly transport: Transport
-  private readonly requestData: string
-  private readonly requestOptions: http.RequestOptions
 
   constructor({
     stsEndpoint,
@@ -91,7 +89,7 @@ export class AssumeRoleProvider extends CredentialProvider {
   }: AssumeRoleProviderOptions) {
     super({ accessKey, secretKey, sessionToken })
 
-    this.stsEndpoint = stsEndpoint
+    this.stsEndpoint = new URL(stsEndpoint)
     this.accessKey = accessKey
     this.secretKey = secretKey
     this.durationSeconds = durationSeconds
@@ -115,22 +113,17 @@ export class AssumeRoleProvider extends CredentialProvider {
     this._credentials = null
     this.expirySeconds = null
 
-    const { isHttp, requestData, requestOptions } = this.getRequestConfig()
+    const isHttp: boolean = this.stsEndpoint.protocol === 'http:'
 
     this.transport = isHttp ? http : https
-    this.requestData = requestData
-    this.requestOptions = requestOptions
   }
 
   getRequestConfig(): {
-    isHttp: boolean
     requestOptions: http.RequestOptions
     requestData: string
   } {
-    const url = new URL(this.stsEndpoint)
-    const hostValue = url.hostname
-    const portValue = url.port
-    const isHttp = url.protocol === 'http:'
+    const hostValue = this.stsEndpoint.hostname
+    const portValue = this.stsEndpoint.port
     const qryParams = new URLSearchParams({ Action: this.action, Version: '2011-06-15' })
 
     const defaultExpiry = 900
@@ -173,7 +166,7 @@ export class AssumeRoleProvider extends CredentialProvider {
       hostname: hostValue,
       port: portValue,
       path: '/',
-      protocol: url.protocol,
+      protocol: this.stsEndpoint.protocol,
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -198,12 +191,13 @@ export class AssumeRoleProvider extends CredentialProvider {
     return {
       requestOptions,
       requestData: urlParams,
-      isHttp: isHttp,
     }
   }
 
   async performRequest(): Promise<CredentialResponse> {
-    const res = await request(this.transport, this.requestOptions, this.requestData)
+    const { requestOptions, requestData } = this.getRequestConfig()
+
+    const res = await request(this.transport, requestOptions, requestData)
 
     const body = await readAsString(res)
 
