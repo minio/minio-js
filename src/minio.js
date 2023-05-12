@@ -27,7 +27,6 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
@@ -3165,13 +3164,6 @@ export class Client extends TypedClient {
     headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200], '', false, cb)
-  }
-  async setCredentialsProvider(credentialsProvider) {
-    if (!(credentialsProvider instanceof CredentialProvider)) {
-      throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
-    }
-    this.credentialsProvider = credentialsProvider
-    await this.checkAndRefreshCreds()
   }
 
   /**

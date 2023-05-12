@@ -3,7 +3,7 @@ import * as https from 'node:https'
 
 import _ from 'lodash'
 
-import type { CredentialProvider } from '../CredentialProvider.ts'
+import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import {
   isAmazonEndpoint,
@@ -351,6 +351,14 @@ export class TypedClient {
       return this.s3AccelerateEndpoint
     }
     return false
+  }
+
+  public async setCredentialsProvider(credentialsProvider: CredentialProvider) {
+    if (!(credentialsProvider instanceof CredentialProvider)) {
+      throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
+    }
+    this.credentialsProvider = credentialsProvider
+    await this.checkAndRefreshCreds()
   }
 
   private async checkAndRefreshCreds() {
