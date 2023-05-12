@@ -211,12 +211,6 @@ export function parseBucketNotification(xml) {
   return result
 }
 
-// parse XML response for bucket region
-export function parseBucketRegion(xml) {
-  // return region information
-  return parseXml(xml).LocationConstraint
-}
-
 // parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml) {
   var xmlobj = parseXml(xml)
@@ -230,7 +224,7 @@ export function parseListParts(xml) {
   }
   xmlobj = xmlobj.ListPartsResult
   if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncated
+    result.isTruncated = xmlobj.IsTruncatFed
   }
   if (xmlobj.NextPartNumberMarker) {
     result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
