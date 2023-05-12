@@ -667,12 +667,16 @@ export class TypedClient {
     return await extractRegionAsync(res)
   }
 
-  // makeRequest is the primitive used by the apis for making S3 requests.
-  // payload can be empty string in case of no payload.
-  // statusCode is the expected statusCode. If response.statusCode does not match
-  // we parse the XML error and call the callback with the error message.
-  // A valid region is passed by the calls - listBuckets, makeBucket and
-  // getBucketRegion.
+  /**
+   * makeRequest is the primitive used by the apis for making S3 requests.
+   * payload can be empty string in case of no payload.
+   * statusCode is the expected statusCode. If response.statusCode does not match
+   * we parse the XML error and call the callback with the error message.
+   * A valid region is passed by the calls - listBuckets, makeBucket and
+   * getBucketRegion.
+   *
+   * @deprecated use `makeRequestAsync` instead
+   */
   makeRequest(
     options: RequestOption,
     payload: Binary = '',
@@ -698,8 +702,12 @@ export class TypedClient {
     )
   }
 
-  // makeRequestStream will be used directly instead of makeRequest in case the payload
-  // is available as a stream. for ex. putObject
+  /**
+   * makeRequestStream will be used directly instead of makeRequest in case the payload
+   * is available as a stream. for ex. putObject
+   *
+   * @deprecated use `makeRequestStreamAsync` instead
+   */
   makeRequestStream(
     options: RequestOption,
     stream: stream.Readable | Buffer,
@@ -726,6 +734,9 @@ export class TypedClient {
     )
   }
 
+  /**
+   * @deprecated use `getBucketRegionAsync` instead
+   */
   getBucketRegion(bucketName: string, cb: (err: unknown, region: string) => void) {
     return this.getBucketRegionAsync(bucketName).then(
       (result) => cb(null, result),
