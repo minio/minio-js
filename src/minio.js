@@ -31,6 +31,7 @@ import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { TypedClient } from './internal/client.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
@@ -61,7 +62,6 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
-import { TypedClient } from './internal/typed-client.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'

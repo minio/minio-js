@@ -11,14 +11,14 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import type { ClientOptions } from './internal/client.ts'
+import { TypedClient } from './internal/client.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import type { UploadedObjectInfo } from './internal/type.ts'
-import { TypedClient } from './internal/typed-client.ts'
-
-export { UploadedObjectInfo }
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export type { ClientOptions, UploadedObjectInfo }
 
 // Exports only from typings
 export type NotificationEvent =
