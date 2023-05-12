@@ -11,11 +11,13 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import { CopyConditions } from './internal/CopyConditions.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import type { Transport } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export { CopyConditions }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -661,16 +663,6 @@ export class Client {
       startAfter?: string,
     ): BucketStream<BucketItemWithMetadata>
   }
-}
-
-export declare class CopyConditions {
-  setModified(date: Date): void
-
-  setUnmodified(date: Date): void
-
-  setMatchETag(etag: string): void
-
-  setMatchETagExcept(etag: string): void
 }
 
 export declare class PostPolicy {
