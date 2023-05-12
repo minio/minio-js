@@ -88,7 +88,7 @@ export class TypedClient {
   protected overRidePartSize?: boolean
 
   protected maximumPartSize = 5 * 1024 * 1024 * 1024
-  maxObjectSize = 5 * 1024 * 1024 * 1024 * 1024
+  protected maxObjectSize = 5 * 1024 * 1024 * 1024 * 1024
   public enableSHA256: boolean
   protected s3AccelerateEndpoint?: string
   protected reqOptions: Record<string, unknown>
@@ -230,7 +230,6 @@ export class TypedClient {
    * Sets the supported request options.
    */
   public setRequestOptions(options: Pick<https.RequestOptions, (typeof requestOptionProperties)[number]>) {
-    // TODO: add options type details
     if (!isObject(options)) {
       throw new TypeError('request options should be of type "object"')
     }
