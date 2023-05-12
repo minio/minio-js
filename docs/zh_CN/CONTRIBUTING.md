@@ -17,19 +17,19 @@ $ npm install
 ### 格式化代码
 
 ```shell
-npm run format
+$ npm run format
 ```
 
 ### 检查代码风格
 
 ```shell
-npm run lint
+$ npm run lint
 ```
 
 ### 运行测试
 
 ```shell
-npm run test
+$ npm run test
 ```
 
 ###  开发者指南
