@@ -47,8 +47,10 @@ export interface AssumeRoleProviderOptions {
   token?: string
   webIdentityToken?: string
   action?: string
-  transportAgent?: http.Agent | https.Agent
+  transportAgent?: http.Agent
 }
+
+const defaultExpiry = 900
 
 export class AssumeRoleProvider extends CredentialProvider {
   private readonly stsEndpoint: URL
@@ -65,9 +67,9 @@ export class AssumeRoleProvider extends CredentialProvider {
   private readonly action: string
 
   private _credentials: Credentials | null
-  private expirySeconds: number | null
+  private readonly expirySeconds: number
   private accessExpiresAt = ''
-  private readonly transportAgent?: http.Agent | https.Agent
+  private readonly transportAgent?: http.Agent
 
   private readonly transport: Transport
 
@@ -75,7 +77,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     stsEndpoint,
     accessKey,
     secretKey,
-    durationSeconds = 900,
+    durationSeconds = defaultExpiry,
     sessionToken,
     policy,
     region = '',
@@ -92,7 +94,6 @@ export class AssumeRoleProvider extends CredentialProvider {
     this.stsEndpoint = new URL(stsEndpoint)
     this.accessKey = accessKey
     this.secretKey = secretKey
-    this.durationSeconds = durationSeconds
     this.policy = policy
     this.region = region
     this.roleArn = roleArn
@@ -102,20 +103,25 @@ export class AssumeRoleProvider extends CredentialProvider {
     this.webIdentityToken = webIdentityToken
     this.action = action
 
+    this.durationSeconds = parseInt(durationSeconds as unknown as string)
+
+    let expirySeconds = this.durationSeconds
+    if (this.durationSeconds < defaultExpiry) {
+      expirySeconds = defaultExpiry
+    }
+    this.expirySeconds = expirySeconds // for calculating refresh of credentials.
+
     // By default, nodejs uses a global agent if the 'agent' property
     // is set to undefined. Otherwise, it's okay to assume the users
     // know what they're doing if they specify a custom transport agent.
     this.transportAgent = transportAgent
+    const isHttp: boolean = this.stsEndpoint.protocol === 'http:'
+    this.transport = isHttp ? http : https
 
     /**
      * Internal Tracking variables
      */
     this._credentials = null
-    this.expirySeconds = null
-
-    const isHttp: boolean = this.stsEndpoint.protocol === 'http:'
-
-    this.transport = isHttp ? http : https
   }
 
   getRequestConfig(): {
@@ -125,13 +131,6 @@ export class AssumeRoleProvider extends CredentialProvider {
     const hostValue = this.stsEndpoint.hostname
     const portValue = this.stsEndpoint.port
     const qryParams = new URLSearchParams({ Action: this.action, Version: '2011-06-15' })
-
-    const defaultExpiry = 900
-    let expirySeconds = parseInt(this.durationSeconds as unknown as string)
-    if (expirySeconds < defaultExpiry) {
-      expirySeconds = defaultExpiry
-    }
-    this.expirySeconds = expirySeconds // for calculating refresh of credentials.
 
     qryParams.set('DurationSeconds', this.expirySeconds.toString())
 
