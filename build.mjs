@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import { execSync } from 'node:child_process'
+import { exec } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'
 import * as path from 'node:path'
+import { promisify } from 'node:util'
 
 import * as babel from '@babel/core'
 import * as fsWalk from '@nodelib/fs.walk'
@@ -48,7 +49,7 @@ function options(module) {
       constantReexports: true,
     },
     plugins: module === 'esm' ? plugins.splice(1) : plugins,
-    presets: [['@babel/env', { targets: { node: '8' }, modules: false }], ['@babel/preset-typescript']],
+    presets: [['@babel/env', { targets: { node: '14' }, modules: false }], ['@babel/preset-typescript']],
   }
 }
 
@@ -56,7 +57,7 @@ const extMap = { cjs: '.js', esm: '.mjs' }
 
 async function buildFiles({ files, module, outDir }) {
   console.log(`building for ${module}`)
-  execSync(`npx tsc --outDir ${outDir}`, { stdio: 'inherit' })
+  await promisify(exec)(`npx tsc --outDir ${outDir}`, { stdio: 'inherit' })
 
   const opt = options(module)
   for (const file of files) {
@@ -64,24 +65,24 @@ async function buildFiles({ files, module, outDir }) {
       continue
     }
 
-    if (file.path.endsWith('.d.ts')) {
-      continue
-    }
-
     const outFilePath = path.join(outDir, path.relative('src/', file.path))
     const outDirPath = path.dirname(outFilePath)
 
     await fsp.mkdir(outDirPath, { recursive: true })
+    const distCodePath = outFilePath.replace(/\.[tj]s$/g, extMap[module])
+
+    if (file.path.endsWith('.d.ts')) {
+      await fsp.copyFile(file.path, outFilePath)
+      continue
+    }
 
     try {
-      const result = await babel.transformAsync(fs.readFileSync(file.path).toString(), {
+      const result = await babel.transformAsync(await fsp.readFile(file.path, 'utf-8'), {
         filename: file.path,
         ...opt,
       })
 
-      const distCodePath = outFilePath.replace(/\.[tj]s$/g, extMap[module])
-
-      fs.writeFileSync(distCodePath, result.code)
+      await fsp.writeFile(distCodePath, result.code)
     } catch (e) {
       console.error(`failed to transpile ${file.path}`)
       throw e
@@ -93,17 +94,11 @@ async function main() {
   await fsp.rm('dist', { recursive: true, force: true })
 
   const entries = fsWalk.walkSync('src/')
-  await buildFiles({
-    files: entries,
-    module: 'cjs',
-    outDir: './dist/main/',
-  })
 
-  await buildFiles({
-    files: entries,
-    module: 'esm',
-    outDir: './dist/esm/',
-  })
+  await Promise.all([
+    buildFiles({ files: entries, module: 'cjs', outDir: './dist/main/' }),
+    buildFiles({ files: entries, module: 'esm', outDir: './dist/esm/' }),
+  ])
 
   for (const file of fsWalk.walkSync('dist/esm/')) {
     if (file.dirent.isDirectory()) {
