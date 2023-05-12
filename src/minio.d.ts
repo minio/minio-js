@@ -4,19 +4,20 @@ import { EventEmitter } from 'node:events'
 import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
+import type {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from './helpers.ts'
+import type { Region } from './internal/s3-endpoints.ts'
+import type { Transport } from './internal/type.ts'
+
+export * from './helpers.ts'
+export type { Region } from './internal/s3-endpoints.ts'
+
 // Exports only from typings
-export type Region =
-  | 'us-east-1'
-  | 'us-west-1'
-  | 'us-west-2'
-  | 'eu-west-1'
-  | 'eu-central-1'
-  | 'ap-southeast-1'
-  | 'ap-northeast-1'
-  | 'ap-southeast-2'
-  | 'sa-east-1'
-  | 'cn-north-1'
-  | string
 export type NotificationEvent =
   | 's3:ObjectCreated:*'
   | 's3:ObjectCreated:Put'
@@ -35,9 +36,22 @@ export type NotificationEvent =
   | 's3:Replication:OperationReplicatedAfterThreshold'
   | 's3:Replication:OperationNotTracked'
   | string
-export type Mode = 'COMPLIANCE' | 'GOVERNANCE'
-export type LockUnit = 'Days' | 'Years'
-export type LegalHoldStatus = 'ON' | 'OFF'
+
+/**
+ * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
+ */
+export type Mode = RETENTION_MODES
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LockUnit = RETENTION_VALIDITY_UNITS
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+
 export type NoResultCallback = (error: Error | null) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
@@ -57,7 +71,7 @@ export interface ClientOptions {
   useSSL?: boolean | undefined
   port?: number | undefined
   region?: Region | undefined
-  transport?: any
+  transport?: Transport
   sessionToken?: string | undefined
   partSize?: number | undefined
   pathStyle?: boolean | undefined
@@ -147,8 +161,8 @@ export interface LifecycleRule {
 }
 
 export interface LockConfig {
-  mode: Mode
-  unit: LockUnit
+  mode: RETENTION_MODES
+  unit: RETENTION_VALIDITY_UNITS
   validity: number
 }
 
@@ -171,14 +185,14 @@ export interface ReplicationConfig {
 
 export interface RetentionOptions {
   versionId: string
-  mode?: Mode
+  mode?: RETENTION_MODES
   retainUntilDate?: IsoDate
   governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
   versionId: string
-  status: LegalHoldStatus
+  status: LEGAL_HOLD_STATUS
 }
 
 export interface InputSerialization {
@@ -230,13 +244,13 @@ export interface SourceObjectStats {
 
 // No need to export this. But without it - linter error.
 export class TargetConfig {
-  setId(id: any): void
+  setId(id: unknown): void
 
-  addEvent(newEvent: any): void
+  addEvent(newEvent: unknown): void
 
-  addFilterSuffix(suffix: any): void
+  addFilterSuffix(suffix: string): void
 
-  addFilterPrefix(prefix: any): void
+  addFilterPrefix(prefix: string): void
 }
 
 export interface MakeBucketOpt {
@@ -649,14 +663,7 @@ export class Client {
   }
 }
 
-export namespace Policy {
-  const NONE: 'none'
-  const READONLY: 'readonly'
-  const WRITEONLY: 'writeonly'
-  const READWRITE: 'readwrite'
-}
-
-export class CopyConditions {
+export declare class CopyConditions {
   setModified(date: Date): void
 
   setUnmodified(date: Date): void
@@ -666,7 +673,7 @@ export class CopyConditions {
   setMatchETagExcept(etag: string): void
 }
 
-export class PostPolicy {
+export declare class PostPolicy {
   setExpires(date: Date): void
 
   setKey(objectName: string): void
@@ -686,7 +693,7 @@ export class PostPolicy {
   setUserMetaData(metadata: Record<string, string>): void
 }
 
-export class NotificationPoller extends EventEmitter {
+export declare class NotificationPoller extends EventEmitter {
   stop(): void
 
   start(): void
@@ -695,68 +702,23 @@ export class NotificationPoller extends EventEmitter {
   checkForChanges(): void
 }
 
-export class NotificationConfig {
+export declare class NotificationConfig {
   add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
 }
 
-export class TopicConfig extends TargetConfig {
+export declare class TopicConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class QueueConfig extends TargetConfig {
+export declare class QueueConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class CloudFunctionConfig extends TargetConfig {
+export declare class CloudFunctionConfig extends TargetConfig {
   constructor(arn: string)
 }
 
-export class CopySourceOptions {
-  constructor(options: {
-    Bucket: string
-    Object: string
-    VersionID?: string
-    MatchETag?: string
-    NoMatchETag?: string
-    MatchModifiedSince?: string
-    MatchUnmodifiedSince?: string
-    MatchRange?: boolean
-    Start?: number
-    End?: number
-    Encryption?: {
-      type: string
-      SSEAlgorithm?: string
-      KMSMasterKeyID?: string
-    }
-  })
-
-  getHeaders(): Record<string, string>
-
-  validate(): boolean
-}
-
-export class CopyDestinationOptions {
-  constructor(options: {
-    Bucket: string
-    Object: string
-    Encryption?: {
-      type: string
-      SSEAlgorithm?: string
-      KMSMasterKeyID?: string
-    }
-    UserMetadata?: Record<string, unknown>
-    UserTags?: Record<string, unknown> | string
-    LegalHold?: LegalHoldStatus
-    RetainUntilDate?: string
-    Mode?: Mode
-  })
-
-  getHeaders(): Record<string, string>
-
-  validate(): boolean
-}
-
-export function buildARN(
+export declare function buildARN(
   partition: string,
   service: string,
   region: string,
@@ -764,12 +726,12 @@ export function buildARN(
   resource: string,
 ): string
 
-export const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
-export const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
-export const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
-export const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
-export const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
-export const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
-export const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
-export const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
-export const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject
+export declare const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
+export declare const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
+export declare const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
+export declare const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
+export declare const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
+export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
+export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
+export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
+export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject

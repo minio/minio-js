@@ -13,9 +13,9 @@ jobs:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 3
+      max-parallel: 2
       matrix:
-        node_version: [12.x, 14.x, 16.x, 17.x, 18.x, 20.x]
+        node_version: [12.x, 14.x, 16.x, 18.x, 20.x]
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
@@ -28,6 +28,7 @@ jobs:
       - run: npm i
 
       - name: Start Server -> Run Unit and Functional Tests
+        timeout-minutes: 10
         env:
           CI: true
           MINIO_CI_CD: true
