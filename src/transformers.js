@@ -22,6 +22,7 @@ import Through2 from 'through2'
 
 import * as errors from './errors.ts'
 import { isFunction } from './internal/helper.ts'
+import { parseBucketRegion } from './internal/xml-parser.ts'
 import * as xmlParsers from './xml-parsers.js'
 
 // getConcater returns a stream that concatenates the input and emits
@@ -206,7 +207,7 @@ export function getCompleteMultipartTransformer() {
 
 // Parses getBucketLocation response.
 export function getBucketRegionTransformer() {
-  return getConcater(xmlParsers.parseBucketRegion)
+  return getConcater(parseBucketRegion)
 }
 
 // Parses GET/SET BucketNotification response
