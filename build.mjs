@@ -49,7 +49,7 @@ function options(module) {
       constantReexports: true,
     },
     plugins: module === 'esm' ? plugins.splice(1) : plugins,
-    presets: [['@babel/env', { targets: { node: '8' }, modules: false }], ['@babel/preset-typescript']],
+    presets: [['@babel/env', { targets: { node: '14' }, modules: false }], ['@babel/preset-typescript']],
   }
 }
 

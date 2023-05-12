@@ -177,6 +177,7 @@ export class AssumeRoleProvider extends CredentialProvider {
       this.secretKey,
       this.region,
       date,
+      contentSha256,
       'sts',
     )
 

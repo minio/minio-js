@@ -16,6 +16,7 @@ import type { UploadedObjectInfo } from './internal/type.ts'
 import { TypedClient } from './internal/typed-client.ts'
 
 export { UploadedObjectInfo }
+
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 
