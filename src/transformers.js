@@ -17,10 +17,8 @@
 import * as Crypto from 'node:crypto'
 
 import JSONParser from 'json-stream'
-import _ from 'lodash'
 import Through2 from 'through2'
 
-import * as errors from './errors.ts'
 import { isFunction } from './internal/helper.ts'
 import { parseBucketRegion } from './internal/xml-parser.ts'
 import * as xmlParsers from './xml-parsers.js'
@@ -64,67 +62,6 @@ export function getConcater(parser, emitError) {
       cb()
     },
   )
-}
-
-// Generates an Error object depending on http statusCode and XML body
-export function getErrorTransformer(response) {
-  var statusCode = response.statusCode
-  var code, message
-  if (statusCode === 301) {
-    code = 'MovedPermanently'
-    message = 'Moved Permanently'
-  } else if (statusCode === 307) {
-    code = 'TemporaryRedirect'
-    message = 'Are you using the correct endpoint URL?'
-  } else if (statusCode === 403) {
-    code = 'AccessDenied'
-    message = 'Valid and authorized credentials required'
-  } else if (statusCode === 404) {
-    code = 'NotFound'
-    message = 'Not Found'
-  } else if (statusCode === 405) {
-    code = 'MethodNotAllowed'
-    message = 'Method Not Allowed'
-  } else if (statusCode === 501) {
-    code = 'MethodNotAllowed'
-    message = 'Method Not Allowed'
-  } else {
-    code = 'UnknownError'
-    message = `${statusCode}`
-  }
-
-  var headerInfo = {}
-  // A value created by S3 compatible server that uniquely identifies
-  // the request.
-  headerInfo.amzRequestid = response.headersSent ? response.getHeader('x-amz-request-id') : null
-  // A special token that helps troubleshoot API replies and issues.
-  headerInfo.amzId2 = response.headersSent ? response.getHeader('x-amz-id-2') : null
-  // Region where the bucket is located. This header is returned only
-  // in HEAD bucket and ListObjects response.
-  headerInfo.amzBucketRegion = response.headersSent ? response.getHeader('x-amz-bucket-region') : null
-
-  return getConcater((xmlString) => {
-    let getError = () => {
-      // Message should be instantiated for each S3Errors.
-      var e = new errors.S3Error(message)
-      // S3 Error code.
-      e.code = code
-      _.each(headerInfo, (value, key) => {
-        e[key] = value
-      })
-      return e
-    }
-    if (!xmlString) {
-      return getError()
-    }
-    let e
-    try {
-      e = xmlParsers.parseError(xmlString, headerInfo)
-    } catch (ex) {
-      return getError()
-    }
-    return e
-  }, true)
 }
 
 // A through stream that calculates md5sum and sha256sum

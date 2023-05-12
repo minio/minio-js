@@ -15,35 +15,11 @@
  */
 
 import crc32 from 'buffer-crc32'
-import { XMLParser } from 'fast-xml-parser'
-import _ from 'lodash'
 
 import * as errors from './errors.ts'
 import { SelectResults } from './helpers.ts'
 import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
 import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
-
-// Parse XML and return information as Javascript types
-const fxp = new XMLParser()
-
-// parse error XML response
-export function parseError(xml, headerInfo) {
-  var xmlErr = {}
-  var xmlObj = fxp.parse(xml)
-  if (xmlObj.Error) {
-    xmlErr = xmlObj.Error
-  }
-
-  var e = new errors.S3Error()
-  _.each(xmlErr, (value, key) => {
-    e[key.toLowerCase()] = value
-  })
-
-  _.each(headerInfo, (value, key) => {
-    e[key] = value
-  })
-  return e
-}
 
 // parse XML response for copy object
 export function parseCopyObject(xml) {
@@ -224,7 +200,7 @@ export function parseListParts(xml) {
   }
   xmlobj = xmlobj.ListPartsResult
   if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncatFed
+    result.isTruncated = xmlobj.IsTruncated
   }
   if (xmlobj.NextPartNumberMarker) {
     result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
@@ -524,6 +500,7 @@ export function parseBucketEncryptionConfig(xml) {
   let encConfig = parseXml(xml)
   return encConfig
 }
+
 export function parseReplicationConfig(xml) {
   const xmlObj = parseXml(xml)
   const replicationConfig = {
