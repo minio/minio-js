@@ -29,11 +29,11 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { CopyConditions } from './copy-conditions.ts'
 import { CredentialProvider } from './CredentialProvider.js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { CopyConditions } from './internal/copy-conditions.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
