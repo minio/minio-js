@@ -14,11 +14,10 @@ import type {
 import type { ClientOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import type { Region } from './internal/s3-endpoints.ts'
-import type { UploadedObjectInfo } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
-export type { ClientOptions, UploadedObjectInfo }
+export type { ClientOptions }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -130,6 +129,11 @@ export interface ItemBucketMetadataList {
 
 export interface ItemBucketMetadata {
   [key: string]: any
+}
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
 }
 
 export interface Tag {

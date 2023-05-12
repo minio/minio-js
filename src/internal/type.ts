@@ -57,8 +57,3 @@ export interface IRequest {
 }
 
 export type ICanonicalRequest = string
-
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
-}
