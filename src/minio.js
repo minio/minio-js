@@ -699,9 +699,11 @@ export class Client extends TypedClient {
         (result, cb) => {
           objStat = result
           // Create any missing top level directories.
-          fs.mkdir(path.dirname(filePath), { recursive: true }, cb)
+          fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => {
+            cb(err)
+          })
         },
-        (ignore, cb) => {
+        (cb) => {
           partFile = `${filePath}.${objStat.etag}.part.minio`
           fs.stat(partFile, (e, stats) => {
             var offset = 0

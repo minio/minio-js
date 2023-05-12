@@ -362,7 +362,7 @@ export class TypedClient {
 
   public async setCredentialsProvider(credentialsProvider: CredentialProvider) {
     if (!(credentialsProvider instanceof CredentialProvider)) {
-      throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
+      throw new Error('Unable to get credentials. Expected instance of CredentialProvider')
     }
     this.credentialsProvider = credentialsProvider
     await this.checkAndRefreshCreds()
@@ -370,22 +370,10 @@ export class TypedClient {
 
   private async checkAndRefreshCreds() {
     if (this.credentialsProvider) {
-      return await this.fetchCredentials()
-    }
-  }
-
-  private async fetchCredentials() {
-    if (this.credentialsProvider) {
       const credentialsConf = await this.credentialsProvider.getCredentials()
-      if (credentialsConf) {
-        this.accessKey = credentialsConf.getAccessKey()
-        this.secretKey = credentialsConf.getSecretKey()
-        this.sessionToken = credentialsConf.getSessionToken()
-      } else {
-        throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
-      }
-    } else {
-      throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
+      this.accessKey = credentialsConf.getAccessKey()
+      this.secretKey = credentialsConf.getSecretKey()
+      this.sessionToken = credentialsConf.getSessionToken()
     }
   }
 }
