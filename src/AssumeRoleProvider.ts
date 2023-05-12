@@ -7,6 +7,7 @@ import { Credentials } from './Credentials.ts'
 import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
 import { request } from './internal/request.ts'
 import { readAsString } from './internal/response.ts'
+import type { Transport } from './internal/type.ts'
 import { signV4ByServiceName } from './signing.ts'
 
 /**
@@ -66,7 +67,11 @@ export class AssumeRoleProvider extends CredentialProvider {
   private _credentials: Credentials | null
   private expirySeconds: number | null
   private accessExpiresAt = ''
-  private readonly transportAgent?: http.Agent
+  private readonly transportAgent?: http.Agent | https.Agent
+
+  private readonly transport: Transport
+  private readonly requestData: string
+  private readonly requestOptions: http.RequestOptions
 
   constructor({
     stsEndpoint,
@@ -109,6 +114,12 @@ export class AssumeRoleProvider extends CredentialProvider {
      */
     this._credentials = null
     this.expirySeconds = null
+
+    const { isHttp, requestData, requestOptions } = this.getRequestConfig()
+
+    this.transport = isHttp ? http : https
+    this.requestData = requestData
+    this.requestOptions = requestOptions
   }
 
   getRequestConfig(): {
@@ -192,13 +203,7 @@ export class AssumeRoleProvider extends CredentialProvider {
   }
 
   async performRequest(): Promise<CredentialResponse> {
-    const reqObj = this.getRequestConfig()
-    const requestOptions = reqObj.requestOptions
-    const requestData = reqObj.requestData
-
-    const isHttp = reqObj.isHttp
-
-    const res = await request(isHttp ? http : https, requestOptions, requestData)
+    const res = await request(this.transport, this.requestOptions, this.requestData)
 
     const body = await readAsString(res)
 
