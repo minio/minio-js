@@ -29,7 +29,7 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { CopyConditions } from './CopyConditions.ts'
+import { CopyConditions } from './copy-conditions.ts'
 import { CredentialProvider } from './CredentialProvider.js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
@@ -67,6 +67,7 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
+import { PostPolicy } from './internal/post-policy.ts'
 import { getS3Endpoint } from './internal/s3-endpoints.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
@@ -75,12 +76,13 @@ import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.ts'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
-// will be replaced by bundler
-const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 
 export * from './helpers.ts'
 export * from './notification.js'
-export { CopyConditions }
+export { CopyConditions, PostPolicy }
+
+// will be replaced by bundler
+const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 
 export class Client {
   constructor(params) {
@@ -3850,101 +3852,3 @@ Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalH
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
-
-// Build PostPolicy object that can be signed by presignedPostPolicy
-export class PostPolicy {
-  constructor() {
-    this.policy = {
-      conditions: [],
-    }
-    this.formData = {}
-  }
-
-  // set expiration date
-  setExpires(date) {
-    if (!date) {
-      throw new errors.InvalidDateError('Invalid date : cannot be null')
-    }
-    this.policy.expiration = date.toISOString()
-  }
-
-  // set object name
-  setKey(objectName) {
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name : ${objectName}`)
-    }
-    this.policy.conditions.push(['eq', '$key', objectName])
-    this.formData.key = objectName
-  }
-
-  // set object name prefix, i.e policy allows any keys with this prefix
-  setKeyStartsWith(prefix) {
-    if (!isValidPrefix(prefix)) {
-      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
-    }
-    this.policy.conditions.push(['starts-with', '$key', prefix])
-    this.formData.key = prefix
-  }
-
-  // set bucket name
-  setBucket(bucketName) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
-    }
-    this.policy.conditions.push(['eq', '$bucket', bucketName])
-    this.formData.bucket = bucketName
-  }
-
-  // set Content-Type
-  setContentType(type) {
-    if (!type) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Type', type])
-    this.formData['Content-Type'] = type
-  }
-
-  // set Content-Type prefix, i.e image/ allows any image
-  setContentTypeStartsWith(prefix) {
-    if (!prefix) {
-      throw new Error('content-type cannot be null')
-    }
-    this.policy.conditions.push(['starts-with', '$Content-Type', prefix])
-    this.formData['Content-Type'] = prefix
-  }
-
-  // set Content-Disposition
-  setContentDisposition(value) {
-    if (!value) {
-      throw new Error('content-disposition cannot be null')
-    }
-    this.policy.conditions.push(['eq', '$Content-Disposition', value])
-    this.formData['Content-Disposition'] = value
-  }
-
-  // set minimum/maximum length of what Content-Length can be.
-  setContentLengthRange(min, max) {
-    if (min > max) {
-      throw new Error('min cannot be more than max')
-    }
-    if (min < 0) {
-      throw new Error('min should be > 0')
-    }
-    if (max < 0) {
-      throw new Error('max should be > 0')
-    }
-    this.policy.conditions.push(['content-length-range', min, max])
-  }
-
-  // set user defined metadata
-  setUserMetaData(metaData) {
-    if (!isObject(metaData)) {
-      throw new TypeError('metadata should be of type "object"')
-    }
-    Object.entries(metaData).forEach(([key, value]) => {
-      const amzMetaDataKey = `x-amz-meta-${key}`
-      this.policy.conditions.push(['eq', `$${amzMetaDataKey}`, value])
-      this.formData[amzMetaDataKey] = value
-    })
-  }
-}

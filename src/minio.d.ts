@@ -11,13 +11,14 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
-import { CopyConditions } from './internal/CopyConditions.ts'
+import { CopyConditions } from './internal/copy-conditions.ts'
+import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import type { Transport } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
-export { CopyConditions }
+export { CopyConditions, PostPolicy }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -663,26 +664,6 @@ export class Client {
       startAfter?: string,
     ): BucketStream<BucketItemWithMetadata>
   }
-}
-
-export declare class PostPolicy {
-  setExpires(date: Date): void
-
-  setKey(objectName: string): void
-
-  setKeyStartsWith(prefix: string): void
-
-  setBucket(bucketName: string): void
-
-  setContentType(type: string): void
-
-  setContentTypeStartsWith(prefix: string): void
-
-  setContentLengthRange(min: number, max: number): void
-
-  setContentDisposition(disposition: string): void
-
-  setUserMetaData(metadata: Record<string, string>): void
 }
 
 export declare class NotificationPoller extends EventEmitter {
