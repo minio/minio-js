@@ -11,7 +11,7 @@ export class CredentialProvider {
     })
   }
 
-  async getCredentials(): Promise<Credentials | null> {
+  async getCredentials(): Promise<Credentials> {
     return this.credentials.get()
   }
 

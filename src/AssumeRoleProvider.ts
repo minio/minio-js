@@ -203,7 +203,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     return parseXml(body)
   }
 
-  parseCredentials(respObj: CredentialResponse) {
+  parseCredentials(respObj: CredentialResponse): Credentials {
     if (respObj.ErrorResponse) {
       throw new Error(
         `Unable to obtain credentials: ${respObj.ErrorResponse?.Error?.Code} ${respObj.ErrorResponse?.Error?.Message}`,
@@ -226,23 +226,21 @@ export class AssumeRoleProvider extends CredentialProvider {
 
     this.accessExpiresAt = expiresAt
 
-    const credentials = new Credentials({ accessKey, secretKey, sessionToken })
-
-    this.setCredentials(credentials)
-    return this._credentials
+    return new Credentials({ accessKey, secretKey, sessionToken })
   }
 
-  async refreshCredentials(): Promise<Credentials | null> {
+  async refreshCredentials(): Promise<Credentials> {
     try {
       const assumeRoleCredentials = await this.performRequest()
       this._credentials = this.parseCredentials(assumeRoleCredentials)
     } catch (err) {
-      this._credentials = null
+      throw new Error(`Failed to get Credentials: ${err}`, { cause: err })
     }
+
     return this._credentials
   }
 
-  async getCredentials(): Promise<Credentials | null> {
+  async getCredentials(): Promise<Credentials> {
     let credConfig: Credentials | null
     if (!this._credentials || (this._credentials && this.isAboutToExpire())) {
       credConfig = await this.refreshCredentials()
