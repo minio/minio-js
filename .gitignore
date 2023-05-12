@@ -13,3 +13,4 @@ node_modules
 yarn.lock
 .yarn/
 .yarnrc.yml
+pnpm-lock.yaml

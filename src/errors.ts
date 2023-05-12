@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-import { ExtendableError } from './base-error.ts'
+/// <reference lib="ES2022.Error" />
+
+class ExtendableError extends Error {
+  constructor(message?: string, opt?: ErrorOptions) {
+    // error Option {cause?: unknown} is a 'nice to have',
+    // don't use it internally
+    super(message, opt)
+    // set error name, otherwise it's always 'Error'
+    this.name = this.constructor.name
+  }
+}
 
 /**
  * AnonymousRequestError is generated for anonymous keys on specific
