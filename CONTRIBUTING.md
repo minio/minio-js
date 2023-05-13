@@ -6,7 +6,7 @@ $ git clone https://github.com/$USER_ID/minio-js
 $ cd minio-js
 ```
 
-### Install npm deps
+### Install npm dependencies
 
 ```bash
 $ npm install
