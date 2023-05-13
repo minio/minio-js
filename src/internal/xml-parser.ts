@@ -1,11 +1,10 @@
-import type { ServerResponse } from 'node:http'
-import type stream from 'node:stream'
+import type * as http from 'node:http'
 
 import { XMLParser } from 'fast-xml-parser'
-import Through2 from 'through2'
 
 import * as errors from '../errors.ts'
-import { isFunction, parseXml } from './helper.ts'
+import { parseXml } from './helper.ts'
+import { readAsString } from './response.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -34,7 +33,7 @@ export function parseError(xml: string, headerInfo: Record<string, any>) {
 }
 
 // Generates an Error object depending on http statusCode and XML body
-export function getErrorTransformer(response: ServerResponse) {
+export async function parseResponseError(response: http.IncomingMessage) {
   const statusCode = response.statusCode
   let code: string, message: string
   if (statusCode === 301) {
@@ -61,78 +60,28 @@ export function getErrorTransformer(response: ServerResponse) {
   }
   const headerInfo: Record<string, string | undefined | null> = {}
   // A value created by S3 compatible server that uniquely identifies the request.
-  headerInfo.amzRequestid = response.headersSent ? (response.getHeader('x-amz-request-id') as string | undefined) : null
+  headerInfo.amzRequestid = response.headers['x-amz-request-id'] as string | undefined
   // A special token that helps troubleshoot API replies and issues.
-  headerInfo.amzId2 = response.headersSent ? (response.getHeader('x-amz-id-2') as string | undefined) : null
+  headerInfo.amzId2 = response.headers['x-amz-id-2'] as string | undefined
+
   // Region where the bucket is located. This header is returned only
   // in HEAD bucket and ListObjects response.
-  headerInfo.amzBucketRegion = response.headersSent
-    ? (response.getHeader('x-amz-bucket-region') as string | undefined)
-    : null
+  headerInfo.amzBucketRegion = response.headers['x-amz-bucket-region'] as string | undefined
 
-  return getConcater((xmlString) => {
-    const getError = () => {
-      // Message should be instantiated for each S3Errors.
-      const e = new errors.S3Error(message, { cause: headerInfo })
-      // S3 Error code.
-      e.code = code
-      Object.entries(headerInfo).forEach(([key, value]) => {
-        // @ts-expect-error force set error properties
-        e[key] = value
-      })
-      return e
-    }
-    if (!xmlString) {
-      return getError()
-    }
-    let e
-    try {
-      e = parseError(xmlString, headerInfo)
-    } catch (ex) {
-      return getError()
-    }
-    return e
-  }, true)
-}
+  const xmlString = await readAsString(response)
 
-// getConcater returns a stream that concatenates the input and emits
-// the concatenated output when 'end' has reached. If an optional
-// parser function is passed upon reaching the 'end' of the stream,
-// `parser(concatenated_data)` will be emitted.
-export function getConcater(parser?: undefined | ((xml: string) => any), emitError?: boolean): stream.Transform {
-  let objectMode = false
-  const bufs: Buffer[] = []
-  if (parser && !isFunction(parser)) {
-    throw new TypeError('parser should be of type "function"')
+  if (xmlString) {
+    throw parseError(xmlString, headerInfo)
   }
-  if (parser) {
-    objectMode = true
-  }
-  return Through2(
-    { objectMode },
-    function (chunk, enc, cb) {
-      bufs.push(chunk)
-      cb()
-    },
-    function (cb) {
-      if (emitError) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        cb(parser(Buffer.concat(bufs).toString()))
-        // cb(e) would mean we have to emit 'end' by explicitly calling this.push(null)
-        this.push(null)
-        return
-      }
-      if (bufs.length) {
-        if (parser) {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          this.push(parser(Buffer.concat(bufs).toString()))
-        } else {
-          this.push(Buffer.concat(bufs))
-        }
-      }
-      cb()
-    },
-  )
+
+  // Message should be instantiated for each S3Errors.
+  const e = new errors.S3Error(message, { cause: headerInfo })
+  // S3 Error code.
+  e.code = code
+  Object.entries(headerInfo).forEach(([key, value]) => {
+    // @ts-expect-error force set error properties
+    e[key] = value
+  })
+
+  throw e
 }

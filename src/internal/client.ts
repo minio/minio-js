@@ -32,7 +32,7 @@ import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
-import { getErrorTransformer, parseBucketRegion } from './xml-parser.ts'
+import { parseBucketRegion, parseResponseError } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -553,21 +553,22 @@ export class TypedClient {
 
     void this.checkAndRefreshCreds()
 
-    return new Promise<http.IncomingMessage>((resolve, reject) => {
-      const reqOptions = this.getRequestOptions(options)
-      if (!this.anonymous) {
-        // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
-        if (!this.enableSHA256) {
-          sha256sum = 'UNSIGNED-PAYLOAD'
-        }
-        const date = new Date()
-        reqOptions.headers['x-amz-date'] = makeDateLong(date)
-        reqOptions.headers['x-amz-content-sha256'] = sha256sum
-        if (this.sessionToken) {
-          reqOptions.headers['x-amz-security-token'] = this.sessionToken
-        }
-        reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
+    const reqOptions = this.getRequestOptions(options)
+    if (!this.anonymous) {
+      // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
+      if (!this.enableSHA256) {
+        sha256sum = 'UNSIGNED-PAYLOAD'
       }
+      const date = new Date()
+      reqOptions.headers['x-amz-date'] = makeDateLong(date)
+      reqOptions.headers['x-amz-content-sha256'] = sha256sum
+      if (this.sessionToken) {
+        reqOptions.headers['x-amz-security-token'] = this.sessionToken
+      }
+      reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
+    }
+
+    return new Promise<http.IncomingMessage>((resolve, reject) => {
       const req = this.transport.request(reqOptions, (response) => {
         if (!response.statusCode) {
           return reject(new Error("BUG: response doesn't have a statusCode"))
@@ -578,14 +579,10 @@ export class TypedClient {
           // in future, if AWS S3 decides to send a different status code or
           // XML error code we will still work fine.
           delete this.regionMap[options.bucketName!]
-          // @ts-expect-error looks like `getErrorTransformer` want a `http.ServerResponse`,
-          // but we only have a http.IncomingMessage here
-          const errorTransformer = getErrorTransformer(response)
-          pipesetup(response, errorTransformer).on('error', (e) => {
+          return parseResponseError(response).catch((e) => {
             this.logHTTP(reqOptions, response, e)
             reject(e)
           })
-          return
         }
 
         this.logHTTP(reqOptions, response)
