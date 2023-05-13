@@ -26,7 +26,7 @@ npm install -g
 
 ## Using with TypeScript
 
-`minio>7.1.0` is shipped with builtin type definition, `@types/minio` is no longer need.
+`minio>7.1.0` is shipped with builtin type definition, `@types/minio` is no longer needed.
 
 ## Initialize MinIO Client
 
