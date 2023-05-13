@@ -71,11 +71,10 @@
   },
   "author": {
     "name": "MinIO, Inc.",
-    "email": "",
     "url": "https://min.io"
   },
   "engines": {
-    "node": ">8  <=19"
+    "node": "^16 || ^18 || >=20"
   },
   "license": "Apache-2.0",
   "bugs": {
@@ -85,14 +84,13 @@
   "homepage": "https://github.com/minio/minio-js#readme",
   "dependencies": {
     "async": "^3.2.4",
-    "block-stream2": "^2.0.0",
+    "block-stream2": "^2.1.0",
     "browser-or-node": "^2.1.1",
     "crc-32": "^1.2.2",
     "fast-xml-parser": "^4.2.2",
     "ipaddr.js": "^2.0.1",
     "lodash": "^4.17.21",
-    "mime-types": "^2.1.14",
-    "mkdirp": "^3.0.1",
+    "mime-types": "^2.1.35",
     "query-string": "^7.1.1",
     "stream-json": "^1.7.5",
     "through2": "^4.0.2",
@@ -133,12 +131,12 @@
     "eventemitter3": "^5.0.1",
     "husky": "^8.0.3",
     "lint-staged": "^13.2.2",
-    "mocha": "^9.2.2",
+    "mocha": "^10.2.0",
     "mocha-steps": "^1.3.0",
     "nock": "^13.3.1",
     "prettier": "^2.8.8",
     "source-map-support": "^0.5.21",
-    "split-file": "^2.2.2",
+    "split-file": "^2.3.0",
     "superagent": "^8.0.1",
     "typescript": "^5.0.4",
     "uuid": "^9.0.0"

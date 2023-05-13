@@ -1,3 +1,4 @@
+import * as fsp from 'node:fs/promises'
 import * as stream from 'node:stream'
 
 import async from 'async'
@@ -18,7 +19,7 @@ import {
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
-import { fsp } from './internal/async.ts'
+import { fstat } from './internal/async.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
@@ -933,7 +934,7 @@ async function getContentLength(s: stream.Readable | Buffer | string): Promise<n
   const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
 
   if (fd) {
-    const stat = await fsp.fstat(fd)
+    const stat = await fstat(fd)
     return stat.size
   }
 

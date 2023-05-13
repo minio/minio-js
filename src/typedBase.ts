@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
+import * as fsp from 'node:fs/promises'
 import type { IncomingMessage } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
@@ -10,7 +11,6 @@ import async from 'async'
 import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
-import { mkdirp } from 'mkdirp'
 import * as querystring from 'query-string'
 import xml2js from 'xml2js'
 
@@ -32,7 +32,7 @@ import * as errors from './errors.ts'
 import { S3Error } from './errors.ts'
 import { extensions } from './extensions.ts'
 import { DEFAULT_REGION } from './helpers.ts'
-import { fsp, streamPromise } from './internal/async.ts'
+import { streamPromise } from './internal/async.ts'
 import {
   extractMetadata,
   getVersionId,
@@ -680,7 +680,14 @@ export class TypedBase {
               reqOptions.headers['x-amz-security-token'] = this.sessionToken
             }
 
-            reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, finalRegion, date)
+            reqOptions.headers.authorization = signV4(
+              reqOptions,
+              this.accessKey,
+              this.secretKey,
+              finalRegion,
+              date,
+              sha256sum,
+            )
           }
 
           const req = this.transport.request(reqOptions, (response) => {
@@ -1056,7 +1063,7 @@ export class TypedBase {
       const objStat = await this.statObject(bucketName, objectName, getOpts)
       const partFile = `${filePath}.${objStat.etag}.part.minio`
 
-      await mkdirp(path.dirname(filePath))
+      await fsp.mkdir(path.dirname(filePath), { recursive: true })
 
       let offset = 0
       try {
@@ -1274,7 +1281,7 @@ export class TypedBase {
     metaData = insertContentType(metaData, filePath)
 
     // Updates metaData to have the correct prefix if needed
-    metaData = prependXAMZMeta(metaData)
+    const headers = prependXAMZMeta(metaData)
     const apiCallback = callback
 
     type Part = {
@@ -1282,8 +1289,8 @@ export class TypedBase {
       etag: string
     }
 
-    const executor = async (fd: number) => {
-      const stats = await fsp.fstat(fd)
+    const executor = async (fd: fsp.FileHandle) => {
+      const stats = await fd.stat()
       const fileSize = stats.size
       if (fileSize > this.maxObjectSize) {
         throw new Error(`${filePath} size : ${stats.size}, max allowed size: 5TB`)
@@ -1291,8 +1298,8 @@ export class TypedBase {
 
       if (fileSize <= this.partSize) {
         // simple PUT request, no multipart
-        const uploader = this.getUploader(bucketName, objectName, metaData, false)
-        const buf = await fsp.readfile(fd)
+        const uploader = this.getUploader(bucketName, objectName, headers, false)
+        const buf = await fd.readFile()
         const { md5sum, sha256sum } = transformers.hashBinary(buf, this.enableSHA256)
         return await uploader(buf, fileSize, sha256sum, md5sum)
       }
@@ -1306,12 +1313,12 @@ export class TypedBase {
         uploadId = previousUploadId
       } else {
         // there was no previous upload, initiate a new one
-        uploadId = await this.initiateNewMultipartUpload(bucketName, objectName, metaData)
+        uploadId = await this.initiateNewMultipartUpload(bucketName, objectName, headers)
       }
 
       {
         const partSize = this.calculatePartSize(fileSize)
-        const uploader = this.getUploader(bucketName, objectName, metaData, true)
+        const uploader = this.getUploader(bucketName, objectName, headers, true)
         // convert array to object to make things easy
         const parts = eTags.reduce(function (acc, item) {
           if (!acc[item.part]) {
@@ -1333,7 +1340,7 @@ export class TypedBase {
             length = fileSize - uploadedSize
           }
 
-          await fsp.read(fd, buf, 0, length, 0)
+          await fd.read(buf, 0, length, 0)
           const { md5sum, sha256sum } = transformers.hashBinary(buf.subarray(0, length), this.enableSHA256)
 
           const md5sumHex = Buffer.from(md5sum, 'base64').toString('hex')
@@ -1358,7 +1365,7 @@ export class TypedBase {
       return this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
     }
 
-    const ensureFileClose = async <T>(executor: (fd: number) => Promise<T>) => {
+    const ensureFileClose = async <T>(executor: (fd: fsp.FileHandle) => Promise<T>) => {
       let fd
       try {
         fd = await fsp.open(filePath, 'r')
@@ -1370,7 +1377,7 @@ export class TypedBase {
         // make sure to keep await, otherwise file will be closed early.
         return await executor(fd)
       } finally {
-        await fsp.fclose(fd)
+        await fd.close()
       }
     }
 

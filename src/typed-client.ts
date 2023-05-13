@@ -1,3 +1,4 @@
+import * as fsp from 'node:fs/promises'
 import * as stream from 'node:stream'
 
 import { TextEncoder } from 'web-encoding'
@@ -17,7 +18,6 @@ import {
 import * as errors from './errors.ts'
 import type { SelectResults } from './helpers.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
-import { fsp } from './internal/async.ts'
 import {
   getScope,
   insertContentType,
@@ -1606,14 +1606,14 @@ export class Helper {
     metaData = insertContentType(metaData, filePath)
 
     // Updates metaData to have the correct prefix if needed
-    metaData = prependXAMZMeta(metaData)
+    const headers = prependXAMZMeta(metaData)
     type Part = {
       part: number
       etag: string
     }
 
-    const executor = async (fd: number) => {
-      const stats = await fsp.fstat(fd)
+    const executor = async (fd: fsp.FileHandle) => {
+      const stats = await fd.stat()
       const fileSize = stats.size
       if (fileSize > this.client.maxObjectSize) {
         throw new Error(`${filePath} size : ${stats.size}, max allowed size: 5TB`)
@@ -1621,8 +1621,8 @@ export class Helper {
 
       if (fileSize <= this.client.partSize) {
         // simple PUT request, no multipart
-        const uploader = this.client.getUploader(bucketName, objectName, metaData, false)
-        const buf = await fsp.readfile(fd)
+        const uploader = this.client.getUploader(bucketName, objectName, headers, false)
+        const buf = await fd.readFile()
         const { md5sum, sha256sum } = transformers.hashBinary(buf, this.client.enableSHA256)
         return await uploader(buf, fileSize, sha256sum, md5sum)
       }
@@ -1636,12 +1636,12 @@ export class Helper {
         uploadId = previousUploadId
       } else {
         // there was no previous upload, initiate a new one
-        uploadId = await this.client.initiateNewMultipartUpload(bucketName, objectName, metaData)
+        uploadId = await this.client.initiateNewMultipartUpload(bucketName, objectName, headers)
       }
 
       {
         const partSize = this.client.calculatePartSize(fileSize)
-        const uploader = this.client.getUploader(bucketName, objectName, metaData, true)
+        const uploader = this.client.getUploader(bucketName, objectName, headers, true)
         // convert array to object to make things easy
         const parts = eTags.reduce(function (acc, item) {
           if (!acc[item.part]) {
@@ -1663,7 +1663,7 @@ export class Helper {
             length = fileSize - uploadedSize
           }
 
-          await fsp.read(fd, buf, 0, length, 0)
+          await fd.read(buf, 0, length, 0)
           const { md5sum, sha256sum } = transformers.hashBinary(buf.subarray(0, length), this.client.enableSHA256)
 
           const md5sumHex = Buffer.from(md5sum, 'base64').toString('hex')
@@ -1688,7 +1688,7 @@ export class Helper {
       return this.client.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
     }
 
-    const ensureFileClose = async <T>(executor: (fd: number) => Promise<T>) => {
+    const ensureFileClose = async <T>(executor: (fd: fsp.FileHandle) => Promise<T>) => {
       let fd
       try {
         fd = await fsp.open(filePath, 'r')
@@ -1700,7 +1700,7 @@ export class Helper {
         // make sure to keep await, otherwise file will be closed early.
         return await executor(fd)
       } finally {
-        await fsp.fclose(fd)
+        await fd.close()
       }
     }
 

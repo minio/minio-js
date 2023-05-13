@@ -17,18 +17,12 @@
 import * as crc32 from 'crc-32'
 import { XMLParser } from 'fast-xml-parser'
 
-import { isObject } from './assert.ts'
 import * as errors from './errors.ts'
 import type { RETENTION_MODES } from './helpers.ts'
-import { RETENTION_VALIDITY_UNITS, SelectResults } from './helpers.ts'
-import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
-import type {
-  BucketItemCopy,
-  BucketItemFromList,
-  ObjectMetaData as MetaData,
-  Retention,
-  UploadID,
-} from './internal/type.ts'
+import { SelectResults } from './helpers.ts'
+import { isObject, parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
+import type { BucketItemCopy, BucketItemFromList, ObjectMetaData, Retention, UploadID } from './internal/type.ts'
+import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 
 const fxp = new XMLParser()
 
@@ -520,7 +514,7 @@ export function parseListObjectsV2WithMetadata(xml: string) {
           lastModified: Date
           etag: string
           size: number
-          metadata: MetaData | null
+          metadata: ObjectMetaData | null
         }
     )[]
     isTruncated: boolean

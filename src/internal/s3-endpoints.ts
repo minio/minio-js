@@ -40,7 +40,7 @@ const awsS3Endpoint = {
 export type Region = keyof typeof awsS3Endpoint | string
 
 // getS3Endpoint get relevant endpoint for the region.
-export function getS3Endpoint(region: string): string {
+export function getS3Endpoint(region: Region): string {
   if (!isString(region)) {
     throw new TypeError(`Invalid region: ${region}`)
   }
