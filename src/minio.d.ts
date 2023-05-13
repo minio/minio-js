@@ -1,8 +1,8 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 
 import { EventEmitter } from 'node:events'
-import type { Agent as HttpAgent } from "node:http";
-import type { RequestOptions, Agent as HttpsAgent } from 'node:https'
+import type { Agent as HttpAgent } from 'node:http'
+import type { Agent as HttpsAgent, RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
