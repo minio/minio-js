@@ -12,7 +12,7 @@ $ cd minio-js
 $ npm install
 ```
 
-### format code (with prettier)
+### Format code (with prettier)
 
 ```shell
 $ npm run format
