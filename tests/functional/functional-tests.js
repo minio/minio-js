@@ -31,14 +31,8 @@ import superagent from 'superagent'
 import * as uuid from 'uuid'
 
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.js'
-import {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  DEFAULT_REGION,
-  getVersionId,
-  isArray,
-  removeDirAndFiles,
-} from '../../src/helpers.js'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, removeDirAndFiles } from '../../src/helpers.ts'
+import { getVersionId } from '../../src/internal/helper.ts'
 import * as minio from '../../src/minio.js'
 
 const assert = chai.assert
@@ -2447,7 +2441,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2507,7 +2501,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2604,7 +2598,7 @@ describe('functional tests', function () {
             if (err) {
               return done(err)
             }
-            if (isArray(tagList)) {
+            if (Array.isArray(tagList)) {
               done()
             }
           })
@@ -3777,7 +3771,7 @@ describe('functional tests', function () {
     const objContent = Buffer.alloc(100 * 1024, 0)
 
     const canRunAssumeRoleTest = clientConfigParams.endPoint.includes('localhost')
-    const stsEndPoint = 'http://localhost:9000'
+    const stsEndPoint = 'http://' + clientConfigParams.endPoint + ':' + clientConfigParams.port
 
     try {
       if (canRunAssumeRoleTest) {

@@ -1,0 +1,64 @@
+name: CI - Test
+
+on:
+  push:
+    branches-ignore:
+      - dependabot/**
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 5
+      matrix:
+        node_version: [ 20.x, 18.x, 16.x, 14.x, 12.x, ]
+        os: [ ubuntu-latest, windows-latest ]
+
+    env:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+      MINIO_KMS_SECRET_KEY: 'my-minio-key:OSMM+vkKUTCvQs9YL/CVMIMt43HFhkUpqJxTmGl6rYw='
+      MINIO_CI_CD: true
+      SERVER_ENDPOINT: localhost:9000
+
+    steps:
+      - name: Start Server
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          wget --quiet -O /tmp/minio https://dl.min.io/server/minio/release/linux-amd64/minio
+          chmod +x /tmp/minio
+          /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
+
+
+      - run: Invoke-WebRequest -Uri https://dl.minio.io/server/minio/release/windows-amd64/minio.exe -OutFile $HOME/minio.exe
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      - name: Start MinIO Server
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: bash
+        run: |
+          $HOME/minio.exe -C $HOME/tmp/minio-config server $HOME/tmp/data{1...4} &
+
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+          cache: 'npm'
+
+      - run: npm i
+
+      - name: Run Unit and Functional Tests
+        timeout-minutes: 10
+        env:
+          CI: true
+          MINIO_CI_CD: true
+          MINT_MODE: full
+          ACCESS_KEY: minio
+          SECRET_KEY: minio123
+          ENABLE_HTTPS: 0
+        run: npm run test
