@@ -1,6 +1,7 @@
 import * as fsp from 'node:fs/promises'
 import * as stream from 'node:stream'
 
+import queryString from 'query-string'
 import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
@@ -52,7 +53,6 @@ import type {
   VersioningConfig,
 } from './internal/type.ts'
 import { PostPolicy } from './postPolicy.ts'
-import { qs } from './qs.ts'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type { RequestMethod, RequestOption } from './typedBase.ts'
@@ -737,7 +737,7 @@ export class TypedClient extends TypedBase {
       headers['x-minio-force-delete'] = true
     }
 
-    const query = qs(queryParams)
+    const query = queryString.stringify(queryParams)
 
     const requestOptions: RequestOption = { method, bucketName, objectName, headers }
     if (query) {
@@ -829,7 +829,7 @@ export class TypedClient extends TypedBase {
     if (!isOptionalFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    const query = qs(reqParams)
+    const query = queryString.stringify(reqParams)
     return asCallbackFn(cb, async () => {
       const region = await this.getBucketRegionAsync(bucketName)
 

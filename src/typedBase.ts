@@ -12,6 +12,7 @@ import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as querystring from 'query-string'
+import queryString from 'query-string'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
@@ -71,7 +72,6 @@ import type {
   StatObjectOpts,
   UploadedObjectInfo,
 } from './internal/type.ts'
-import { qs } from './qs.ts'
 import { signV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type { Part } from './xml-parsers.ts'
@@ -1223,7 +1223,7 @@ export class TypedBase {
     }
 
     const method = 'GET'
-    const query = qs(getOpts)
+    const query = queryString.stringify(getOpts)
     return asCallback(
       cb,
       this.makeRequestAsync({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes),
@@ -2043,7 +2043,7 @@ export async function uploadStream({
         // now start to upload missing part
         const options: RequestOption = {
           method: 'PUT',
-          query: qs({ partNumber, uploadId }),
+          query: queryString.stringify({ partNumber, uploadId }),
           headers: {
             'Content-Length': chunk.length,
             'Content-MD5': md5.toString('base64'),
