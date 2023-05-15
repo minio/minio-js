@@ -13,22 +13,21 @@ export async function request(
       resolve(resp)
     })
 
-    requestObj.on('error', (e: unknown) => {
-      reject(e)
-    })
-
-    if (body) {
-      if (!Buffer.isBuffer(body) && typeof body !== 'string') {
-        pipeline(body, requestObj, (err) => {
-          if (err) {
-            reject(err)
-          }
+    if (!body || Buffer.isBuffer(body) || typeof body === 'string') {
+      requestObj
+        .on('error', (e: unknown) => {
+          reject(e)
         })
-      } else {
-        requestObj.write(body)
-      }
+        .end(body)
+
+      return
     }
 
-    requestObj.end()
+    // pump readable stream
+    pipeline(body, requestObj, (err) => {
+      if (err) {
+        reject(err)
+      }
+    })
   })
 }
