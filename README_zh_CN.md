@@ -10,9 +10,7 @@ MinIO JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的�
 
 ## 使用NPM下载
 
-```sh
-npm install --save minio
-```
+`minio>7.1.0` 拥有自带的类型定义，不再需要安装 `@types/minio`。
 
 ## 下载并安装源码
 
