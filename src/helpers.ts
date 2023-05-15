@@ -171,6 +171,7 @@ export interface ICopyDestinationOptions {
    */
   RetainUntilDate?: string
   Mode?: RETENTION_MODES
+  MetadataDirective?: 'COPY' | 'REPLACE'
 }
 
 export class CopyDestinationOptions {
@@ -182,6 +183,7 @@ export class CopyDestinationOptions {
   private readonly LegalHold?: 'on' | 'off'
   private readonly RetainUntilDate?: string
   private readonly Mode?: RETENTION_MODES
+  private readonly MetadataDirective?: string
 
   constructor({
     Bucket,
@@ -192,6 +194,7 @@ export class CopyDestinationOptions {
     LegalHold,
     RetainUntilDate,
     Mode,
+    MetadataDirective,
   }: ICopyDestinationOptions) {
     this.Bucket = Bucket
     this.Object = Object
@@ -201,6 +204,7 @@ export class CopyDestinationOptions {
     this.LegalHold = LegalHold
     this.Mode = Mode // retention mode
     this.RetainUntilDate = RetainUntilDate
+    this.MetadataDirective = MetadataDirective
   }
 
   getHeaders(): RequestHeaders {
@@ -233,6 +237,10 @@ export class CopyDestinationOptions {
       for (const [key, value] of Object.entries(this.UserMetadata)) {
         headerOptions[`X-Amz-Meta-${key}`] = value.toString()
       }
+    }
+
+    if (this.MetadataDirective) {
+      headerOptions[`X-Amz-Metadata-Directive`] = this.MetadataDirective
     }
 
     if (this.Encryption) {
