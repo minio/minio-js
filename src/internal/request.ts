@@ -3,8 +3,10 @@ import type * as https from 'node:https'
 import type * as stream from 'node:stream'
 import { pipeline } from 'node:stream'
 
+import type { Transport } from './type.ts'
+
 export async function request(
-  transport: typeof http | typeof https,
+  transport: Transport,
   opt: https.RequestOptions,
   body: Buffer | string | stream.Readable | null = null,
 ): Promise<http.IncomingMessage> {
