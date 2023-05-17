@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-require('source-map-support').install()
+import * as Stream from 'node:stream'
 
 import { assert } from 'chai'
 import Nock from 'nock'
-import Stream from 'stream'
 
+import { CopyDestinationOptions, CopySourceOptions } from '../../src/helpers.ts'
 import {
   calculateEvenSplits,
-  CopyDestinationOptions,
-  CopySourceOptions,
-  isArray,
   isValidEndpoint,
   isValidIP,
   makeDateLong,
   makeDateShort,
   partsRequired,
-} from '../../../dist/main/helpers'
-import * as Minio from '../../../dist/main/minio'
+} from '../../src/internal/helper.ts'
+import * as Minio from '../../src/minio.js'
 
-var Package = require('../../../package.json')
+const Package = { version: 'development' }
 
 describe('Helpers', () => {
   it('should validate for s3 endpoint', () => {
@@ -175,7 +172,7 @@ describe('Helpers', () => {
       const fnResult = calculateEvenSplits(testCase.size, testCase)
       const { startIndex, endIndex } = fnResult || {}
 
-      if (isArray(startIndex) && isArray(endIndex)) {
+      if (Array.isArray(startIndex) && Array.isArray(endIndex)) {
         const isExpectedResult =
           startIndex.length === testCase.expectedStart.length && endIndex.length === testCase.expectedEnd.length
         assert.equal(isExpectedResult, true)

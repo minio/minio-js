@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events'
+import { EventEmitter } from 'node:events'
 
-import { DEFAULT_REGION, pipesetup, uriEscape } from './helpers'
-import * as transformers from './transformers'
+import { DEFAULT_REGION } from './helpers.ts'
+import { pipesetup, uriEscape } from './internal/helper.ts'
+import * as transformers from './transformers.js'
 
 // Notification config - array of target configs.
 // Target configs can be

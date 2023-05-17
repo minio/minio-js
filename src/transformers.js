@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import Crypto from 'crypto'
+import * as Crypto from 'node:crypto'
+
 import JSONParser from 'json-stream'
-import * as _ from 'lodash'
+import _ from 'lodash'
 import Through2 from 'through2'
 
-import * as errors from './errors.js'
-import { isFunction } from './helpers.js'
+import * as errors from './errors.ts'
+import { isFunction } from './internal/helper.ts'
 import * as xmlParsers from './xml-parsers.js'
 
 // getConcater returns a stream that concatenates the input and emits

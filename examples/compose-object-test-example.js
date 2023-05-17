@@ -113,7 +113,7 @@ function sampleRunComposeObject() {
                 /** End Clean up **/
 
                 // Clean up generated parts locally
-                Helpers.removeDirAndFiles(tmpSubDir)
+                fs.rmSync(tmpSubDir, { recursive: true, force: true })
                 console.log('Clean up temp parts directory : ')
               })
               .catch((e) => {

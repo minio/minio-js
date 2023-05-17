@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-import Stream from 'stream'
+import * as Stream from 'node:stream'
 
-import * as errors from './errors.js'
-import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helpers.js'
-import * as transformers from './transformers'
+import * as errors from './errors.ts'
+import {
+  isBoolean,
+  isNumber,
+  isString,
+  isValidBucketName,
+  isValidPrefix,
+  pipesetup,
+  uriEscape,
+} from './internal/helper.ts'
+import * as transformers from './transformers.js'
 
-export default class extensions {
+export class extensions {
   constructor(client) {
     this.client = client
   }
@@ -170,3 +178,8 @@ export default class extensions {
     return transformer
   }
 }
+
+// deprecated default export, please use named exports.
+// keep for backward compatibility.
+// eslint-disable-next-line import/no-default-export
+export default extensions

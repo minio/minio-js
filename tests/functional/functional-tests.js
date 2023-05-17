@@ -14,47 +14,28 @@
  * limitations under the License.
  */
 
-const os = require('os')
-const stream = require('stream')
-const crypto = require('crypto')
-const async = require('async')
-const _ = require('lodash')
-const fs = require('fs')
-const http = require('http')
-const https = require('https')
-const url = require('url')
-const chai = require('chai')
+import * as crypto from 'node:crypto'
+import * as fs from 'node:fs'
+import * as http from 'node:http'
+import * as https from 'node:https'
+import * as os from 'node:os'
+import * as stream from 'node:stream'
+import * as url from 'node:url'
+
+import async from 'async'
+import chai from 'chai'
+import _ from 'lodash'
+import { step } from 'mocha-steps'
+import splitFile from 'split-file'
+import superagent from 'superagent'
+import * as uuid from 'uuid'
+
+import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, removeDirAndFiles } from '../../src/helpers.ts'
+import { getVersionId } from '../../src/internal/helper.ts'
+import * as minio from '../../src/minio.js'
+
 const assert = chai.assert
-const superagent = require('superagent')
-const uuid = require('uuid')
-const splitFile = require('split-file')
-const step = require('mocha-steps').step
-
-let helpers
-try {
-  helpers = require('../../../dist/main/helpers')
-} catch (err) {
-  helpers = require('minio/dist/main/helpers')
-}
-
-let AssumeRoleProvider
-try {
-  AssumeRoleProvider = require('../../../dist/main/AssumeRoleProvider')
-} catch (err) {
-  AssumeRoleProvider = require('minio/dist/main/AssumeRoleProvider')
-}
-AssumeRoleProvider = AssumeRoleProvider.default
-
-let minio
-try {
-  minio = require('../../../dist/main/minio')
-} catch (err) {
-  minio = require('minio')
-}
-
-const { getVersionId, isArray, CopyDestinationOptions, CopySourceOptions, removeDirAndFiles, DEFAULT_REGION } = helpers
-
-require('source-map-support').install()
 
 const isWindowsPlatform = process.platform === 'win32'
 
@@ -2460,7 +2441,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2520,7 +2501,7 @@ describe('functional tests', function () {
           if (err) {
             return done(err)
           }
-          if (isArray(tagList)) {
+          if (Array.isArray(tagList)) {
             done()
           }
         })
@@ -2617,7 +2598,7 @@ describe('functional tests', function () {
             if (err) {
               return done(err)
             }
-            if (isArray(tagList)) {
+            if (Array.isArray(tagList)) {
               done()
             }
           })
@@ -3790,7 +3771,7 @@ describe('functional tests', function () {
     const objContent = Buffer.alloc(100 * 1024, 0)
 
     const canRunAssumeRoleTest = clientConfigParams.endPoint.includes('localhost')
-    const stsEndPoint = 'http://localhost:9000'
+    const stsEndPoint = 'http://' + clientConfigParams.endPoint + ':' + clientConfigParams.port
 
     try {
       if (canRunAssumeRoleTest) {
@@ -4541,7 +4522,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucketName = 'minio-js-fd-version-' + uuid.v4()
     const fdPrefixObjName = 'my-prefix/datafile-100-kB'
-    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/' + fdPrefixObjName) : Buffer.alloc(100 * 1024, 0)
+    const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucketName, '', done))
     after((done) => client.removeBucket(fdPrefixBucketName, done))
@@ -4686,7 +4667,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const fdPrefixBucket = 'minio-js-fd-nv-' + uuid.v4()
     const fdObjectName = 'my-prefix/datafile-100-kB'
-    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucket, '', done))
     after((done) => client.removeBucket(fdPrefixBucket, done))

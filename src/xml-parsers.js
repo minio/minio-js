@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const { XMLParser } = require('fast-xml-parser')
-const fxp = new XMLParser()
+
+import crc32 from 'buffer-crc32'
+import { XMLParser } from 'fast-xml-parser'
 import _ from 'lodash'
 
-import * as errors from './errors.js'
-import {
-  isObject,
-  parseXml,
-  readableStream,
-  RETENTION_VALIDITY_UNITS,
-  sanitizeETag,
-  sanitizeObjectKey,
-  SelectResults,
-  toArray,
-} from './helpers'
-var crc32 = require('buffer-crc32')
+import * as errors from './errors.ts'
+import { SelectResults } from './helpers.ts'
+import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
+import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 
 // Parse XML and return information as Javascript types
+const fxp = new XMLParser()
 
 // parse error XML response
 export function parseError(xml, headerInfo) {
