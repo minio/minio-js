@@ -15,8 +15,6 @@
  */
 
 import * as fs from 'node:fs'
-import * as Http from 'node:http'
-import * as Https from 'node:https'
 import * as path from 'node:path'
 import * as Stream from 'node:stream'
 
@@ -29,10 +27,10 @@ import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
 import xml2js from 'xml2js'
 
-import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import {
   calculateEvenSplits,
@@ -41,7 +39,6 @@ import {
   getSourceVersionId,
   getVersionId,
   insertContentType,
-  isAmazonEndpoint,
   isBoolean,
   isFunction,
   isNumber,
@@ -50,11 +47,8 @@ import {
   isString,
   isValidBucketName,
   isValidDate,
-  isValidEndpoint,
   isValidObjectName,
-  isValidPort,
   isValidPrefix,
-  isVirtualHostStyle,
   makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
@@ -68,7 +62,6 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import { getS3Endpoint } from './internal/s3-endpoints.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
@@ -81,294 +74,7 @@ export * from './helpers.ts'
 export * from './notification.js'
 export { CopyConditions, PostPolicy }
 
-// will be replaced by bundler
-const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
-
-export class Client {
-  constructor(params) {
-    if (typeof params.secure !== 'undefined') {
-      throw new Error('"secure" option deprecated, "useSSL" should be used instead')
-    }
-    // Default values if not specified.
-    if (typeof params.useSSL === 'undefined') {
-      params.useSSL = true
-    }
-    if (!params.port) {
-      params.port = 0
-    }
-    // Validate input params.
-    if (!isValidEndpoint(params.endPoint)) {
-      throw new errors.InvalidEndpointError(`Invalid endPoint : ${params.endPoint}`)
-    }
-    if (!isValidPort(params.port)) {
-      throw new errors.InvalidArgumentError(`Invalid port : ${params.port}`)
-    }
-    if (!isBoolean(params.useSSL)) {
-      throw new errors.InvalidArgumentError(
-        `Invalid useSSL flag type : ${params.useSSL}, expected to be of type "boolean"`,
-      )
-    }
-
-    // Validate region only if its set.
-    if (params.region) {
-      if (!isString(params.region)) {
-        throw new errors.InvalidArgumentError(`Invalid region : ${params.region}`)
-      }
-    }
-
-    var host = params.endPoint.toLowerCase()
-    var port = params.port
-    var protocol = ''
-    var transport
-    var transportAgent
-    // Validate if configuration is not using SSL
-    // for constructing relevant endpoints.
-    if (params.useSSL === false) {
-      transport = Http
-      protocol = 'http:'
-      if (port === 0) {
-        port = 80
-      }
-      transportAgent = Http.globalAgent
-    } else {
-      // Defaults to secure.
-      transport = Https
-      protocol = 'https:'
-      if (port === 0) {
-        port = 443
-      }
-      transportAgent = Https.globalAgent
-    }
-
-    // if custom transport is set, use it.
-    if (params.transport) {
-      if (!isObject(params.transport)) {
-        throw new errors.InvalidArgumentError(
-          `Invalid transport type : ${params.transport}, expected to be type "object"`,
-        )
-      }
-      transport = params.transport
-    }
-
-    // if custom transport agent is set, use it.
-    if (params.transportAgent) {
-      if (!isObject(params.transportAgent)) {
-        throw new errors.InvalidArgumentError(
-          `Invalid transportAgent type: ${params.transportAgent}, expected to be type "object"`,
-        )
-      }
-
-      transportAgent = params.transportAgent
-    }
-
-    // User Agent should always following the below style.
-    // Please open an issue to discuss any new changes here.
-    //
-    //       MinIO (OS; ARCH) LIB/VER APP/VER
-    //
-    var libraryComments = `(${process.platform}; ${process.arch})`
-    var libraryAgent = `MinIO ${libraryComments} minio-js/${Package.version}`
-    // User agent block ends.
-
-    this.transport = transport
-    this.transportAgent = transportAgent
-    this.host = host
-    this.port = port
-    this.protocol = protocol
-    this.accessKey = params.accessKey
-    this.secretKey = params.secretKey
-    this.sessionToken = params.sessionToken
-    this.userAgent = `${libraryAgent}`
-
-    // Default path style is true
-    if (params.pathStyle === undefined) {
-      this.pathStyle = true
-    } else {
-      this.pathStyle = params.pathStyle
-    }
-
-    if (!this.accessKey) {
-      this.accessKey = ''
-    }
-    if (!this.secretKey) {
-      this.secretKey = ''
-    }
-    this.anonymous = !this.accessKey || !this.secretKey
-
-    if (params.credentialsProvider) {
-      this.credentialsProvider = params.credentialsProvider
-      this.checkAndRefreshCreds()
-    }
-
-    this.regionMap = {}
-    if (params.region) {
-      this.region = params.region
-    }
-
-    this.partSize = 64 * 1024 * 1024
-    if (params.partSize) {
-      this.partSize = params.partSize
-      this.overRidePartSize = true
-    }
-    if (this.partSize < 5 * 1024 * 1024) {
-      throw new errors.InvalidArgumentError(`Part size should be greater than 5MB`)
-    }
-    if (this.partSize > 5 * 1024 * 1024 * 1024) {
-      throw new errors.InvalidArgumentError(`Part size should be less than 5GB`)
-    }
-
-    this.maximumPartSize = 5 * 1024 * 1024 * 1024
-    this.maxObjectSize = 5 * 1024 * 1024 * 1024 * 1024
-    // SHA256 is enabled only for authenticated http requests. If the request is authenticated
-    // and the connection is https we use x-amz-content-sha256=UNSIGNED-PAYLOAD
-    // header for signature calculation.
-    this.enableSHA256 = !this.anonymous && !params.useSSL
-
-    this.s3AccelerateEndpoint = params.s3AccelerateEndpoint || null
-    this.reqOptions = {}
-  }
-
-  // This is s3 Specific and does not hold validity in any other Object storage.
-  getAccelerateEndPointIfSet(bucketName, objectName) {
-    if (!_.isEmpty(this.s3AccelerateEndpoint) && !_.isEmpty(bucketName) && !_.isEmpty(objectName)) {
-      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
-      // Disable transfer acceleration for non-compliant bucket names.
-      if (bucketName.indexOf('.') !== -1) {
-        throw new Error(`Transfer Acceleration is not supported for non compliant bucket:${bucketName}`)
-      }
-      // If transfer acceleration is requested set new host.
-      // For more details about enabling transfer acceleration read here.
-      // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
-      return this.s3AccelerateEndpoint
-    }
-    return false
-  }
-
-  /**
-   * @param endPoint _string_ valid S3 acceleration end point
-   */
-  setS3TransferAccelerate(endPoint) {
-    this.s3AccelerateEndpoint = endPoint
-  }
-
-  // Sets the supported request options.
-  setRequestOptions(options) {
-    if (!isObject(options)) {
-      throw new TypeError('request options should be of type "object"')
-    }
-    this.reqOptions = _.pick(options, [
-      'agent',
-      'ca',
-      'cert',
-      'ciphers',
-      'clientCertEngine',
-      'crl',
-      'dhparam',
-      'ecdhCurve',
-      'family',
-      'honorCipherOrder',
-      'key',
-      'passphrase',
-      'pfx',
-      'rejectUnauthorized',
-      'secureOptions',
-      'secureProtocol',
-      'servername',
-      'sessionIdContext',
-    ])
-  }
-
-  // returns *options* object that can be used with http.request()
-  // Takes care of constructing virtual-host-style or path-style hostname
-  getRequestOptions(opts) {
-    var method = opts.method
-    var region = opts.region
-    var bucketName = opts.bucketName
-    var objectName = opts.objectName
-    var headers = opts.headers
-    var query = opts.query
-
-    var reqOptions = { method }
-    reqOptions.headers = {}
-
-    // If custom transportAgent was supplied earlier, we'll inject it here
-    reqOptions.agent = this.transportAgent
-
-    // Verify if virtual host supported.
-    var virtualHostStyle
-    if (bucketName) {
-      virtualHostStyle = isVirtualHostStyle(this.host, this.protocol, bucketName, this.pathStyle)
-    }
-
-    if (this.port) {
-      reqOptions.port = this.port
-    }
-    reqOptions.protocol = this.protocol
-
-    if (objectName) {
-      objectName = `${uriResourceEscape(objectName)}`
-    }
-
-    reqOptions.path = '/'
-
-    // Save host.
-    reqOptions.host = this.host
-    // For Amazon S3 endpoint, get endpoint based on region.
-    if (isAmazonEndpoint(reqOptions.host)) {
-      const accelerateEndPoint = this.getAccelerateEndPointIfSet(bucketName, objectName)
-      if (accelerateEndPoint) {
-        reqOptions.host = `${accelerateEndPoint}`
-      } else {
-        reqOptions.host = getS3Endpoint(region)
-      }
-    }
-
-    if (virtualHostStyle && !opts.pathStyle) {
-      // For all hosts which support virtual host style, `bucketName`
-      // is part of the hostname in the following format:
-      //
-      //  var host = 'bucketName.example.com'
-      //
-      if (bucketName) {
-        reqOptions.host = `${bucketName}.${reqOptions.host}`
-      }
-      if (objectName) {
-        reqOptions.path = `/${objectName}`
-      }
-    } else {
-      // For all S3 compatible storage services we will fallback to
-      // path style requests, where `bucketName` is part of the URI
-      // path.
-      if (bucketName) {
-        reqOptions.path = `/${bucketName}`
-      }
-      if (objectName) {
-        reqOptions.path = `/${bucketName}/${objectName}`
-      }
-    }
-
-    if (query) {
-      reqOptions.path += `?${query}`
-    }
-    reqOptions.headers.host = reqOptions.host
-    if (
-      (reqOptions.protocol === 'http:' && reqOptions.port !== 80) ||
-      (reqOptions.protocol === 'https:' && reqOptions.port !== 443)
-    ) {
-      reqOptions.headers.host = `${reqOptions.host}:${reqOptions.port}`
-    }
-    reqOptions.headers['user-agent'] = this.userAgent
-    if (headers) {
-      // have all header keys in lower case - to make signing easy
-      _.map(headers, (v, k) => (reqOptions.headers[k.toLowerCase()] = v))
-    }
-
-    // Use any request option specified in minioClient.setRequestOptions()
-    reqOptions = Object.assign({}, this.reqOptions, reqOptions)
-
-    return reqOptions
-  }
-
+export class Client extends TypedClient {
   // Set application specific information.
   //
   // Generates User-Agent in the following style.
@@ -3454,34 +3160,6 @@ export class Client {
     headers['Content-MD5'] = toMd5(payload)
 
     this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200], '', false, cb)
-  }
-  async setCredentialsProvider(credentialsProvider) {
-    if (!(credentialsProvider instanceof CredentialProvider)) {
-      throw new Error('Unable to get  credentials. Expected instance of CredentialProvider')
-    }
-    this.credentialsProvider = credentialsProvider
-    await this.checkAndRefreshCreds()
-  }
-
-  async checkAndRefreshCreds() {
-    if (this.credentialsProvider) {
-      return await this.fetchCredentials()
-    }
-  }
-
-  async fetchCredentials() {
-    if (this.credentialsProvider) {
-      const credentialsConf = await this.credentialsProvider.getCredentials()
-      if (credentialsConf) {
-        this.accessKey = credentialsConf.getAccessKey()
-        this.secretKey = credentialsConf.getSecretKey()
-        this.sessionToken = credentialsConf.getSessionToken()
-      } else {
-        throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
-      }
-    } else {
-      throw new Error('Unable to get  credentials. Expected instance of BaseCredentialsProvider')
-    }
   }
 
   /**

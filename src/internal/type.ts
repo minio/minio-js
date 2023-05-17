@@ -1,5 +1,4 @@
 import type * as http from 'node:http'
-import type * as https from 'node:https'
 
 export type Binary = string | Buffer
 
@@ -46,7 +45,7 @@ export enum LEGAL_HOLD_STATUS {
   DISABLED = 'OFF',
 }
 
-export type Transport = typeof http | typeof https
+export type Transport = Pick<typeof http, 'request'>
 
 export interface IRequest {
   protocol: string
