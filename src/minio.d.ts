@@ -1,7 +1,6 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 
 import { EventEmitter } from 'node:events'
-import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
@@ -635,13 +634,8 @@ export class Client {
     events: NotificationEvent[],
   ): NotificationPoller
 
-  // Custom Settings
-  setS3TransferAccelerate(endpoint: string): void
-
   // Other
   newPostPolicy(): PostPolicy
-
-  setRequestOptions(options: RequestOptions): void
 
   // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
   extensions: {
