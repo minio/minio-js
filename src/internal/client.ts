@@ -246,7 +246,7 @@ export class TypedClient {
   /**
    *  This is s3 Specific and does not hold validity in any other Object storage.
    */
-  private getAccelerateEndPointIfSet(bucketName: string, objectName?: string) {
+  private getAccelerateEndPointIfSet(bucketName?: string, objectName?: string) {
     if (!isEmpty(this.s3AccelerateEndpoint) && !isEmpty(bucketName) && !isEmpty(objectName)) {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
       // Disable transfer acceleration for non-compliant bucket names.
@@ -301,7 +301,7 @@ export class TypedClient {
 
     // For Amazon S3 endpoint, get endpoint based on region.
     if (isAmazonEndpoint(host)) {
-      const accelerateEndPoint = this.getAccelerateEndPointIfSet(bucketName!, objectName)
+      const accelerateEndPoint = this.getAccelerateEndPointIfSet(bucketName, objectName)
       if (accelerateEndPoint) {
         host = `${accelerateEndPoint}`
       } else {
