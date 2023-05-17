@@ -1,3 +1,4 @@
+import type http from 'node:http'
 import type stream from 'node:stream'
 
 export async function readAsBuffer(res: stream.Readable): Promise<Buffer> {
@@ -10,7 +11,7 @@ export async function readAsBuffer(res: stream.Readable): Promise<Buffer> {
   })
 }
 
-export async function readAsString(res: stream.Readable): Promise<string> {
+export async function readAsString(res: http.IncomingMessage): Promise<string> {
   const body = await readAsBuffer(res)
   return body.toString()
 }

@@ -26,9 +26,7 @@ npm install -g
 
 ## Using with TypeScript
 
-```sh
-npm install --save-dev @types/minio
-```
+`minio>7.1.0` is shipped with builtin type definition, `@types/minio` is no longer needed.
 
 ## Initialize MinIO Client
 
@@ -244,5 +242,4 @@ The full API Reference is available here.
 
 [Contributors Guide](https://github.com/minio/minio-js/blob/master/CONTRIBUTING.md)
 
-[![Build Status](https://travis-ci.org/minio/minio-js.svg)](https://travis-ci.org/minio/minio-js)
-[![Build status](https://ci.appveyor.com/api/projects/status/1d05e6nvxcelmrak?svg=true)](https://ci.appveyor.com/project/harshavardhana/minio-js)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/minio/minio-js/nodejs.yml)

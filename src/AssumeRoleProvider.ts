@@ -50,7 +50,7 @@ export interface AssumeRoleProviderOptions {
   transportAgent?: http.Agent
 }
 
-const defaultExpiry = 900
+const defaultExpirySeconds = 900
 
 export class AssumeRoleProvider extends CredentialProvider {
   private readonly stsEndpoint: URL
@@ -77,7 +77,7 @@ export class AssumeRoleProvider extends CredentialProvider {
     stsEndpoint,
     accessKey,
     secretKey,
-    durationSeconds = defaultExpiry,
+    durationSeconds = defaultExpirySeconds,
     sessionToken,
     policy,
     region = '',
@@ -106,8 +106,8 @@ export class AssumeRoleProvider extends CredentialProvider {
     this.durationSeconds = parseInt(durationSeconds as unknown as string)
 
     let expirySeconds = this.durationSeconds
-    if (this.durationSeconds < defaultExpiry) {
-      expirySeconds = defaultExpiry
+    if (this.durationSeconds < defaultExpirySeconds) {
+      expirySeconds = defaultExpirySeconds
     }
     this.expirySeconds = expirySeconds // for calculating refresh of credentials.
 
@@ -241,13 +241,12 @@ export class AssumeRoleProvider extends CredentialProvider {
   }
 
   async getCredentials(): Promise<Credentials> {
-    let credConfig: Credentials | null
-    if (!this._credentials || (this._credentials && this.isAboutToExpire())) {
-      credConfig = await this.refreshCredentials()
-    } else {
-      credConfig = this._credentials
+    if (this._credentials && !this.isAboutToExpire()) {
+      return this._credentials
     }
-    return credConfig
+
+    this._credentials = await this.refreshCredentials()
+    return this._credentials
   }
 
   isAboutToExpire() {
