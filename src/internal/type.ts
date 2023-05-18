@@ -9,6 +9,8 @@ export type ResponseHeader = Record<string, string>
 
 export type ObjectMetaData = Record<string, string | number>
 
+export type RequestHeaders = Record<string, string | boolean | number | undefined>
+
 export type Encryption =
   | {
       type: ENCRYPTION_TYPES.SSEC
@@ -46,7 +48,6 @@ export enum LEGAL_HOLD_STATUS {
 }
 
 export type Transport = typeof http | typeof https
-export type RequestHeaders = Record<string, string | boolean | number | undefined>
 
 export interface UploadedObjectInfo {
   etag: string
