@@ -35,7 +35,7 @@ const awsS3Endpoint = {
   'ap-east-1': 's3.ap-east-1.amazonaws.com',
   'eu-north-1': 's3.eu-north-1.amazonaws.com',
   // Add new endpoints here.
-} as const
+}
 
 export type Region = keyof typeof awsS3Endpoint | string
 
@@ -49,6 +49,5 @@ export function getS3Endpoint(region: Region): string {
   if (endpoint) {
     return endpoint
   }
-
   return 's3.amazonaws.com'
 }
