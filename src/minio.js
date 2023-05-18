@@ -23,7 +23,6 @@ import * as Stream from 'node:stream'
 import async from 'async'
 import BlockStream2 from 'block-stream2'
 import _ from 'lodash'
-import mkdirp from 'mkdirp'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
 import Xml from 'xml'
@@ -997,9 +996,9 @@ export class Client {
         (result, cb) => {
           objStat = result
           // Create any missing top level directories.
-          mkdirp(path.dirname(filePath), cb)
+          fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => cb(err))
         },
-        (ignore, cb) => {
+        (cb) => {
           partFile = `${filePath}.${objStat.etag}.part.minio`
           fs.stat(partFile, (e, stats) => {
             var offset = 0
