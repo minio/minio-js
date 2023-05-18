@@ -15,10 +15,11 @@
  */
 
 export { AssumeRoleProvider } from './AssumeRoleProvider.ts'
-export { CopyConditions } from './copyConditions.ts'
 export { CredentialProvider } from './CredentialProvider.ts'
 export { Credentials } from './Credentials.ts'
 export { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION, ENCRYPTION_TYPES } from './helpers.ts'
+export { CopyConditions } from './internal/copy-conditions.ts'
+export { PostPolicy } from './internal/post-policy.ts'
 export type { NotificationEvent, NotificationRecord } from './notification.ts'
 export {
   buildARN,
@@ -28,5 +29,4 @@ export {
   QueueConfig,
   TopicConfig,
 } from './notification.ts'
-export { PostPolicy } from './postPolicy.ts'
 export { Client } from './typed-client2.ts'

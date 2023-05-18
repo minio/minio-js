@@ -16,23 +16,15 @@
 
 import * as stream from 'node:stream'
 
-import * as errors from './errors.ts'
-import {
-  isBoolean,
-  isNumber,
-  isString,
-  isValidBucketName,
-  isValidPrefix,
-  pipesetup,
-  uriEscape,
-} from './internal/helper.ts'
-import * as transformers from './transformers.ts'
-import type { Client } from './typed-client2.ts'
+import * as errors from '../errors.ts'
+import * as transformers from '../transformers.ts'
+import type { Client } from '../typed-client2.ts'
+import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helper.ts'
 
 // TODO
 type S3Object = unknown
 
-export class extensions {
+export class Extensions {
   constructor(readonly client: Client) {}
 
   // List the objects in the bucket using S3 ListObjects V2 With Metadata

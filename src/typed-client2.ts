@@ -5,11 +5,11 @@ import async from 'async'
 import _ from 'lodash'
 import xml2js from 'xml2js'
 
-import { asCallback, asCallbackFn } from './as-callback.ts'
-import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import { asCallback, asCallbackFn } from './internal/as-callback.ts'
 import { fstat } from './internal/async.ts'
+import { CopyConditions } from './internal/copy-conditions.ts'
 import {
   calculateEvenSplits,
   extractMetadata,

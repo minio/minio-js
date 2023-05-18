@@ -4,10 +4,10 @@ import queryString from 'query-string'
 import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
-import { asCallback, asCallbackFn } from './as-callback.ts'
 import * as errors from './errors.ts'
 import type { SelectResults } from './helpers.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
+import { asCallback, asCallbackFn } from './internal/as-callback.ts'
 import { fsp } from './internal/async.ts'
 import {
   isBoolean,
@@ -30,6 +30,7 @@ import {
   toMd5,
   uriEscape,
 } from './internal/helper.ts'
+import { PostPolicy } from './internal/post-policy.ts'
 import { readAsBuffer } from './internal/response.ts'
 import type {
   BucketStream,
@@ -52,7 +53,6 @@ import type {
   VersionIdentification,
   VersioningConfig,
 } from './internal/type.ts'
-import { PostPolicy } from './postPolicy.ts'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.ts'
 import type { RequestMethod, RequestOption } from './typedBase.ts'

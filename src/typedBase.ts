@@ -14,13 +14,13 @@ import * as querystring from 'query-string'
 import queryString from 'query-string'
 import xml2js from 'xml2js'
 
-import { asCallback, asCallbackFn } from './as-callback.ts'
 import { CredentialProvider } from './CredentialProvider.ts'
 import * as errors from './errors.ts'
 import { S3Error } from './errors.ts'
-import { extensions } from './extensions.ts'
 import { DEFAULT_REGION } from './helpers.ts'
+import { asCallback, asCallbackFn } from './internal/as-callback.ts'
 import { fsp, streamPromise } from './internal/async.ts'
+import { Extensions } from './internal/extensions.ts'
 import type { AnyFunction } from './internal/helper.ts'
 import {
   isBoolean,
@@ -162,9 +162,9 @@ export class TypedBase {
   protected s3AccelerateEndpoint?: string
   protected reqOptions: Record<string, unknown>
 
-  private readonly clientExtensions: extensions
+  private readonly clientExtensions: Extensions
   private logStream?: stream.Writable
-  private transportAgent: http.Agent
+  private readonly transportAgent: http.Agent
 
   constructor(params: ClientOptions) {
     // @ts-expect-error deprecated property
@@ -298,7 +298,7 @@ export class TypedBase {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    this.clientExtensions = new extensions(this)
+    this.clientExtensions = new Extensions(this)
   }
 
   /**
