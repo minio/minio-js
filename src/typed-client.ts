@@ -1,4 +1,3 @@
-import { promises as fsp } from 'node:fs'
 import * as stream from 'node:stream'
 
 import queryString from 'query-string'
@@ -9,6 +8,7 @@ import { asCallback, asCallbackFn } from './as-callback.ts'
 import * as errors from './errors.ts'
 import type { SelectResults } from './helpers.ts'
 import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
+import { fsp } from './internal/async.ts'
 import {
   isBoolean,
   isEmpty,

@@ -1,6 +1,5 @@
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
-import { promises as fsp } from 'node:fs'
 import type { IncomingMessage } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
@@ -21,7 +20,7 @@ import * as errors from './errors.ts'
 import { S3Error } from './errors.ts'
 import { extensions } from './extensions.ts'
 import { DEFAULT_REGION } from './helpers.ts'
-import { streamPromise } from './internal/async.ts'
+import { fsp, streamPromise } from './internal/async.ts'
 import type { AnyFunction } from './internal/helper.ts'
 import {
   isBoolean,
