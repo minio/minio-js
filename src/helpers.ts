@@ -136,6 +136,9 @@ export class CopySourceOptions {
   }
 }
 
+/**
+ * @deprecated use nodejs fs module
+ */
 export function removeDirAndFiles(dirPath: string, removeSelf = true) {
   if (removeSelf) {
     return fs.rmSync(dirPath, { recursive: true, force: true })
