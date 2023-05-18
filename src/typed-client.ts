@@ -1,4 +1,4 @@
-import * as fsp from 'node:fs/promises'
+import { promises as fsp } from 'node:fs'
 import * as stream from 'node:stream'
 
 import queryString from 'query-string'
@@ -6,6 +6,9 @@ import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
+import * as errors from './errors.ts'
+import type { SelectResults } from './helpers.ts'
+import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
 import {
   isBoolean,
   isEmpty,
@@ -15,10 +18,7 @@ import {
   isOptionalFunction,
   isString,
   isValidDate,
-} from './assert.ts'
-import * as errors from './errors.ts'
-import type { SelectResults } from './helpers.ts'
-import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
+} from './internal/helper.ts'
 import {
   getScope,
   insertContentType,

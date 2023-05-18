@@ -1,6 +1,6 @@
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
-import * as fsp from 'node:fs/promises'
+import { promises as fsp } from 'node:fs'
 import type { IncomingMessage } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
@@ -16,7 +16,13 @@ import queryString from 'query-string'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
-import type { AnyFunction } from './assert.ts'
+import { CredentialProvider } from './CredentialProvider.ts'
+import * as errors from './errors.ts'
+import { S3Error } from './errors.ts'
+import { extensions } from './extensions.ts'
+import { DEFAULT_REGION } from './helpers.ts'
+import { streamPromise } from './internal/async.ts'
+import type { AnyFunction } from './internal/helper.ts'
 import {
   isBoolean,
   isDefined,
@@ -27,13 +33,7 @@ import {
   isOptionalFunction,
   isReadableStream,
   isString,
-} from './assert.ts'
-import { CredentialProvider } from './CredentialProvider.ts'
-import * as errors from './errors.ts'
-import { S3Error } from './errors.ts'
-import { extensions } from './extensions.ts'
-import { DEFAULT_REGION } from './helpers.ts'
-import { streamPromise } from './internal/async.ts'
+} from './internal/helper.ts'
 import {
   extractMetadata,
   getVersionId,

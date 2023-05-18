@@ -1,4 +1,4 @@
-import * as fsp from 'node:fs/promises'
+import { promises as fsp } from 'node:fs'
 import * as stream from 'node:stream'
 
 import async from 'async'
@@ -6,16 +6,6 @@ import _ from 'lodash'
 import xml2js from 'xml2js'
 
 import { asCallback, asCallbackFn } from './as-callback.ts'
-import {
-  isBoolean,
-  isEmpty,
-  isFunction,
-  isNumber,
-  isObject,
-  isOptionalFunction,
-  isReadableStream,
-  isString,
-} from './assert.ts'
 import { CopyConditions } from './copyConditions.ts'
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
@@ -25,6 +15,14 @@ import {
   extractMetadata,
   getSourceVersionId,
   getVersionId,
+  isBoolean,
+  isEmpty,
+  isFunction,
+  isNumber,
+  isObject,
+  isOptionalFunction,
+  isReadableStream,
+  isString,
   isValidBucketName,
   isValidObjectName,
   isValidPrefix,

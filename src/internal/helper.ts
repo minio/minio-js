@@ -235,6 +235,16 @@ export function isFunction(arg: unknown): arg is AnyFunction {
 }
 
 /**
+ * check if typeof arg function or undefined
+ */
+export function isOptionalFunction(arg: unknown): arg is undefined | AnyFunction {
+  if (arg === undefined) {
+    return true
+  }
+  return typeof arg === 'function'
+}
+
+/**
  * check if typeof arg string
  */
 export function isString(arg: unknown): arg is string {
@@ -261,6 +271,10 @@ export function isReadableStream(arg: unknown): arg is stream.Readable {
  */
 export function isBoolean(arg: unknown): arg is boolean {
   return typeof arg === 'boolean'
+}
+
+export function isDefined<T>(o: T): o is NonNullable<T> {
+  return o !== null && o !== undefined
 }
 
 export function isEmpty(o: unknown): o is null | undefined {
