@@ -255,7 +255,7 @@ export function presignSignatureV4(
   request: IRequest,
   accessKey: string,
   secretKey: string,
-  sessionToken: string,
+  sessionToken: string | undefined,
   region: string,
   requestDate: Date,
   expires: number,

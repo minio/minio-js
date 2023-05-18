@@ -4171,7 +4171,7 @@ describe('functional tests', function () {
 
     step('Clean up temp directory part files', (done) => {
       if (isSplitSuccess) {
-        fs.rmdirSync(tmpSubDir, { recursive: true })
+        fs.rmdirSync(tmpSubDir)
       }
       done()
     })

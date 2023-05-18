@@ -4,10 +4,30 @@ Fork [minio-js upstream](https://github.com/minio/minio-js/fork) source reposito
 ```bash
 $ git clone https://github.com/$USER_ID/minio-js
 $ cd minio-js
+```
+
+### Install npm dependencies
+
+```bash
 $ npm install
-$ npm test
-$ npm build
-...
+```
+
+### Format code (with prettier)
+
+```shell
+$ npm run format
+```
+
+### Check Code Style
+
+```shell
+$ npm run lint
+```
+
+### Tests
+
+```shell
+$ npm run test
 ```
 
 ###  Developer Guidelines

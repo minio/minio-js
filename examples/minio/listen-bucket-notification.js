@@ -17,7 +17,7 @@
 // Note that `listenBucketNotification` is only available for MinIO, and not
 // Amazon.
 
-const Minio = require('../')
+const Minio = require('minio')
 
 var s3Client = new Minio.Client({
   endPoint: '...',

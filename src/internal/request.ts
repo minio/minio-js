@@ -1,9 +1,12 @@
 import type * as http from 'node:http'
 import type * as https from 'node:https'
 import type * as stream from 'node:stream'
+import { pipeline } from 'node:stream'
+
+import type { Transport } from './type.ts'
 
 export async function request(
-  transport: typeof http | typeof https,
+  transport: Transport,
   opt: https.RequestOptions,
   body: Buffer | string | stream.Readable | null = null,
 ): Promise<http.IncomingMessage> {
@@ -12,18 +15,21 @@ export async function request(
       resolve(resp)
     })
 
-    requestObj.on('error', (e: unknown) => {
-      reject(e)
-    })
+    if (!body || Buffer.isBuffer(body) || typeof body === 'string') {
+      requestObj
+        .on('error', (e: unknown) => {
+          reject(e)
+        })
+        .end(body)
 
-    if (body) {
-      if (!Buffer.isBuffer(body) && typeof body !== 'string') {
-        body.on('error', reject)
-      }
-
-      requestObj.end(body)
-    } else {
-      requestObj.end(null)
+      return
     }
+
+    // pump readable stream
+    pipeline(body, requestObj, (err) => {
+      if (err) {
+        reject(err)
+      }
+    })
   })
 }
