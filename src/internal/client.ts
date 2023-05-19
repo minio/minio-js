@@ -198,7 +198,6 @@ export class TypedClient {
 
     if (params.credentialsProvider) {
       this.credentialsProvider = params.credentialsProvider
-      void this.checkAndRefreshCreds()
     }
 
     this.regionMap = {}
