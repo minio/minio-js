@@ -42,7 +42,7 @@ var s3Client = new Minio.Client({
 | [`getBucketTagging`](#getBucketTagging)               | [`removeIncompleteUpload`](#removeIncompleteUpload) |                                               |                                                               |                                                       |     |
 | [`setBucketTagging`](#setBucketTagging)               | [`putObjectRetention`](#putObjectRetention)         |                                               |                                                               |                                                       |     |
 | [`removeBucketTagging`](#removeBucketTagging)         | [`getObjectRetention`](#getObjectRetention)         |                                               |                                                               |                                                       |     |
-| [`setBucketLifecycle`](#setBucketLifecycle)           | [`putObjectTagging`](#putObjectTagging)             |                                               |                                                               |                                                       |     |
+| [`setBucketLifecycle`](#setBucketLifecycle)           | [`setObjectTagging`](#setObjectTagging)             |                                               |                                                               |                                                       |     |
 | [`getBucketLifecycle`](#getBucketLifecycle)           | [`removeObjectTagging`](#removeObjectTagging)       |                                               |                                                               |                                                       |     |
 | [`removeBucketLifecycle`](#removeBucketLifecycle)     | [`getObjectTagging`](#getObjectTagging)             |                                               |                                                               |                                                       |     |
 | [`setObjectLockConfig`](#setObjectLockConfig)         | [`getObjectLegalHold`](#getObjectLegalHold)         |                                               |                                                               |                                                       |     |
@@ -1487,8 +1487,6 @@ minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: "my-vers
 })
 ```
 
-<a name="putObjectTagging"></a>
-### putObjectTagging(bucketName, objectName, tags[, putOpts, callback])
 <a name="setObjectTagging"></a>
 ### setObjectTagging(bucketName, objectName, tags[, putOpts, callback])
 
