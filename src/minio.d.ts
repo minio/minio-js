@@ -19,8 +19,8 @@ import type { Region } from './internal/s3-endpoints.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
-export type { ClientOptions }
 export { CopyConditions, PostPolicy }
+export type { ClientOptions }
 
 // Exports only from typings
 export type NotificationEvent =

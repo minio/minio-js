@@ -20,7 +20,6 @@ import JSONParser from 'json-stream'
 import Through2 from 'through2'
 
 import { isFunction } from './internal/helper.ts'
-import { parseBucketRegion } from './internal/xml-parser.ts'
 import * as xmlParsers from './xml-parsers.js'
 
 // getConcater returns a stream that concatenates the input and emits
@@ -140,11 +139,6 @@ export function getListObjectsV2WithMetadataTransformer() {
 // Parses completeMultipartUpload response.
 export function getCompleteMultipartTransformer() {
   return getConcater(xmlParsers.parseCompleteMultipart)
-}
-
-// Parses getBucketLocation response.
-export function getBucketRegionTransformer() {
-  return getConcater(parseBucketRegion)
 }
 
 // Parses GET/SET BucketNotification response

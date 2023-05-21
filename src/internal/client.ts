@@ -23,16 +23,16 @@ import {
   isValidPort,
   isVirtualHostStyle,
   makeDateLong,
-  pipesetup,
   readableStream,
   toSha256,
   uriResourceEscape,
 } from './helper.ts'
+import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
-import { parseBucketRegion, parseResponseError } from './xml-parser.ts'
+import * as xmlParsers from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -522,15 +522,15 @@ export class TypedClient {
    */
   async makeRequestStreamAsync(
     options: RequestOption,
-    stream: stream.Readable | Buffer,
+    body: stream.Readable | Buffer,
     sha256sum: string,
     statusCodes: number[],
     region: string,
-  ) {
+  ): Promise<http.IncomingMessage> {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
-    if (!(Buffer.isBuffer(stream) || isReadableStream(stream))) {
+    if (!(Buffer.isBuffer(body) || isReadableStream(body))) {
       throw new errors.InvalidArgumentError('stream should be a Buffer or readable Stream')
     }
     if (!isString(sha256sum)) {
@@ -572,36 +572,26 @@ export class TypedClient {
       reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
-    return new Promise<http.IncomingMessage>((resolve, reject) => {
-      const req = this.transport.request(reqOptions, (response) => {
-        if (!response.statusCode) {
-          return reject(new Error("BUG: response doesn't have a statusCode"))
-        }
-        if (!statusCodes.includes(response.statusCode)) {
-          // For an incorrect region, S3 server always sends back 400.
-          // But we will do cache invalidation for all errors so that,
-          // in future, if AWS S3 decides to send a different status code or
-          // XML error code we will still work fine.
-          delete this.regionMap[options.bucketName!]
-          return parseResponseError(response).catch((e) => {
-            this.logHTTP(reqOptions, response, e)
-            reject(e)
-          })
-        }
+    const response = await request(this.transport, reqOptions, body)
+    if (!response.statusCode) {
+      throw new Error("BUG: response doesn't have a statusCode")
+    }
 
-        this.logHTTP(reqOptions, response)
-        return resolve(response)
-      })
-      req.on('error', (e) => {
-        this.logHTTP(reqOptions, null, e)
-        reject(e)
-      })
-      if (Buffer.isBuffer(stream)) {
-        req.end(stream)
-      } else {
-        pipesetup(stream, req)
-      }
-    })
+    if (!statusCodes.includes(response.statusCode)) {
+      // For an incorrect region, S3 server always sends back 400.
+      // But we will do cache invalidation for all errors so that,
+      // in future, if AWS S3 decides to send a different status code or
+      // XML error code we will still work fine.
+      delete this.regionMap[options.bucketName!]
+
+      const err = await xmlParsers.parseResponseError(response)
+      this.logHTTP(reqOptions, response, err)
+      throw err
+    }
+
+    this.logHTTP(reqOptions, response)
+
+    return response
   }
 
   /**
@@ -628,7 +618,7 @@ export class TypedClient {
 
     const extractRegionAsync = async (response: http.IncomingMessage) => {
       const body = await readAsString(response)
-      const region = parseBucketRegion(body)
+      const region = xmlParsers.parseBucketRegion(body)
       this.regionMap[bucketName] = region
       return region
     }
