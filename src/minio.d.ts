@@ -1,8 +1,7 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { EventEmitter } from 'node:events'
-import type { Agent as HttpAgent } from 'node:http'
-import type { Agent as HttpsAgent, RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
@@ -12,14 +11,15 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import type { ClientOptions } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
-import type { Transport } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
+export type { ClientOptions }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -67,20 +67,6 @@ export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
-
-export interface ClientOptions {
-  endPoint: string
-  accessKey: string
-  secretKey: string
-  useSSL?: boolean | undefined
-  port?: number | undefined
-  region?: Region | undefined
-  transport?: Transport
-  sessionToken?: string | undefined
-  partSize?: number | undefined
-  pathStyle?: boolean | undefined
-  transportAgent?: HttpAgent | HttpsAgent
-}
 
 export interface BucketItemFromList {
   name: string
@@ -624,13 +610,8 @@ export class Client {
     events: NotificationEvent[],
   ): NotificationPoller
 
-  // Custom Settings
-  setS3TransferAccelerate(endpoint: string): void
-
   // Other
   newPostPolicy(): PostPolicy
-
-  setRequestOptions(options: RequestOptions): void
 
   // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
   extensions: {
