@@ -1,5 +1,4 @@
 import type * as http from 'node:http'
-import type * as https from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 export type Binary = string | Buffer
@@ -47,7 +46,7 @@ export enum LEGAL_HOLD_STATUS {
   DISABLED = 'OFF',
 }
 
-export type Transport = typeof http | typeof https
+export type Transport = Pick<typeof http, 'request'>
 
 export interface UploadedObjectInfo {
   etag: string
