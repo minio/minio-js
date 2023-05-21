@@ -529,7 +529,9 @@ export class TypedClient {
       throw new TypeError('options should be of type "object"')
     }
     if (!(Buffer.isBuffer(body) || typeof body === 'string' || isReadableStream(body))) {
-      throw new errors.InvalidArgumentError('stream should be a Buffer or readable Stream')
+      throw new errors.InvalidArgumentError(
+        `stream should be a Buffer, string or readable Stream, got ${typeof body} instead`,
+      )
     }
     if (!isString(sha256sum)) {
       throw new TypeError('sha256sum should be of type "string"')

@@ -2172,7 +2172,7 @@ export class Client extends TypedClient {
     const headers = {}
     const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
     let payload = builder.buildObject(taggingConfig)
-    payload = encoder.encode(payload)
+    payload = Buffer.from(encoder.encode(payload))
     headers['Content-MD5'] = toMd5(payload)
     const requestOptions = { method, bucketName, query, headers }
 
