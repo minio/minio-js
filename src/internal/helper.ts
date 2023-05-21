@@ -273,16 +273,16 @@ export function isBoolean(arg: unknown): arg is boolean {
   return typeof arg === 'boolean'
 }
 
-export function isDefined<T>(o: T): o is NonNullable<T> {
-  return o !== null && o !== undefined
-}
-
 export function isEmpty(o: unknown): o is null | undefined {
   return _.isEmpty(o)
 }
 
 export function isEmptyObject(o: Record<string, unknown>): boolean {
   return Object.values(o).filter((x) => x !== undefined).length !== 0
+}
+
+export function isDefined<T>(o: T): o is NonNullable<T> {
+  return o !== null && o !== undefined
 }
 
 /**
