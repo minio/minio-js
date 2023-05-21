@@ -958,40 +958,6 @@ describe('Client', function () {
         }
       })
     })
-    describe('Put Object Tags', () => {
-      it('should fail on null object', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, {}, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty object', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, {}, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on non object tags', (done) => {
-        try {
-          client.putObjectTagging('my-bucket-name', null, 'non-obj-tag', function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail if tags are more than 50 on an object', (done) => {
-        const _50_plus_key_tags = {}
-        for (let i = 0; i < 51; i += 1) {
-          _50_plus_key_tags[i] = i
-        }
-        try {
-          client.putObjectTagging('my-bucket-name', null, _50_plus_key_tags, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-    })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
         try {

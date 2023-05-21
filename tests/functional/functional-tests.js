@@ -2481,7 +2481,7 @@ describe('functional tests', function () {
         },
       )
 
-      step(`putObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
+      step(`setObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
         client.setObjectTagging(tagsBucketName, tagObjName, { 'test-tag-key-obj': 'test-tag-value-obj' }, (err) => {
           if (err && err.code === 'NotImplemented') {
             return done()

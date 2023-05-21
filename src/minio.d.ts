@@ -446,31 +446,6 @@ export class Client {
   ): void
   getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
 
-  // It seems, putObjectTagging is deprecated in favor or setObjectTagging - there is no such a method in the library source code
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions?: VersionIdentificator,
-  ): Promise<void>
-
   setObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
   setObjectTagging(
     bucketName: string,
