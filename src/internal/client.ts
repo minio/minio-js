@@ -23,7 +23,6 @@ import {
   isValidPort,
   isVirtualHostStyle,
   makeDateLong,
-  readableStream,
   toSha256,
   uriResourceEscape,
 } from './helper.ts'
@@ -494,8 +493,7 @@ export class TypedClient {
       options.headers['content-length'] = payload.length.toString()
     }
     const sha256sum = this.enableSHA256 ? toSha256(payload) : ''
-    const stream = readableStream(payload)
-    return this.makeRequestStreamAsync(options, stream, sha256sum, expectedCodes, region)
+    return this.makeRequestStreamAsync(options, payload, sha256sum, expectedCodes, region)
   }
 
   /**
@@ -522,7 +520,7 @@ export class TypedClient {
    */
   async makeRequestStreamAsync(
     options: RequestOption,
-    body: stream.Readable | Buffer,
+    body: stream.Readable | Binary,
     sha256sum: string,
     statusCodes: number[],
     region: string,
@@ -530,7 +528,7 @@ export class TypedClient {
     if (!isObject(options)) {
       throw new TypeError('options should be of type "object"')
     }
-    if (!(Buffer.isBuffer(body) || isReadableStream(body))) {
+    if (!(Buffer.isBuffer(body) || typeof body === 'string' || isReadableStream(body))) {
       throw new errors.InvalidArgumentError('stream should be a Buffer or readable Stream')
     }
     if (!isString(sha256sum)) {
