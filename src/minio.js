@@ -1401,7 +1401,7 @@ export class Client extends TypedClient {
         let deleteObjects = { Delete: { Quiet: true, Object: objects } }
         const builder = new xml2js.Builder({ headless: true })
         let payload = builder.buildObject(deleteObjects)
-        payload = encoder.encode(payload)
+        payload = Buffer.from(encoder.encode(payload))
         const headers = {}
 
         headers['Content-MD5'] = toMd5(payload)
