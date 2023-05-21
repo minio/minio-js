@@ -317,6 +317,7 @@ export class TypedClient {
       if (accelerateEndPoint) {
         host = `${accelerateEndPoint}`
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         host = getS3Endpoint(region!)
       }
     }
@@ -552,9 +553,9 @@ export class TypedClient {
       throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
     }
 
-    region = region || (await this.getBucketRegionAsync(options.bucketName!))
+    await this.checkAndRefreshCreds()
 
-    void this.checkAndRefreshCreds()
+    region = region || (await this.getBucketRegionAsync(options.bucketName!))
 
     const reqOptions = this.getRequestOptions(options)
     if (!this.anonymous) {
