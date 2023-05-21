@@ -674,12 +674,14 @@ export class TypedClient {
     expectedCodes: number[] = [200],
     region = '',
     returnResponse: boolean,
-    cb: (cb: unknown, result: any) => void,
+    cb: (cb: unknown, result: http.IncomingMessage) => void,
   ) {
-    let prom
+    let prom: Promise<http.IncomingMessage>
     if (returnResponse) {
       prom = this.makeRequestAsync(options, payload, expectedCodes, region)
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error compatible for old behaviour
       prom = this.makeRequestAsyncOmit(options, payload, expectedCodes, region)
     }
 
