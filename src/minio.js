@@ -2400,7 +2400,7 @@ export class Client extends TypedClient {
       renderOpts: { pretty: false },
     })
     let payload = builder.buildObject(policyConfig)
-    payload = encoder.encode(payload)
+    payload = Buffer.from(encoder.encode(payload))
     const requestOptions = { method, bucketName, query, headers }
     headers['Content-MD5'] = toMd5(payload)
 
