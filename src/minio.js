@@ -56,7 +56,6 @@ import {
   readableStream,
   sanitizeETag,
   toMd5,
-  toSha256,
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
@@ -65,7 +64,7 @@ import { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
-import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.ts'
+import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
@@ -120,264 +119,6 @@ export class Client extends TypedClient {
       // Try part sizes as 64MB, 80MB, 96MB etc.
       partSize += 16 * 1024 * 1024
     }
-  }
-
-  // log the request, response, error
-  logHTTP(reqOptions, response, err) {
-    // if no logstreamer available return.
-    if (!this.logStream) {
-      return
-    }
-    if (!isObject(reqOptions)) {
-      throw new TypeError('reqOptions should be of type "object"')
-    }
-    if (response && !isReadableStream(response)) {
-      throw new TypeError('response should be of type "Stream"')
-    }
-    if (err && !(err instanceof Error)) {
-      throw new TypeError('err should be of type "Error"')
-    }
-    var logHeaders = (headers) => {
-      _.forEach(headers, (v, k) => {
-        if (k == 'authorization') {
-          var redacter = new RegExp('Signature=([0-9a-f]+)')
-          v = v.replace(redacter, 'Signature=**REDACTED**')
-        }
-        this.logStream.write(`${k}: ${v}\n`)
-      })
-      this.logStream.write('\n')
-    }
-    this.logStream.write(`REQUEST: ${reqOptions.method} ${reqOptions.path}\n`)
-    logHeaders(reqOptions.headers)
-    if (response) {
-      this.logStream.write(`RESPONSE: ${response.statusCode}\n`)
-      logHeaders(response.headers)
-    }
-    if (err) {
-      this.logStream.write('ERROR BODY:\n')
-      var errJSON = JSON.stringify(err, null, '\t')
-      this.logStream.write(`${errJSON}\n`)
-    }
-  }
-
-  // Enable tracing
-  traceOn(stream) {
-    if (!stream) {
-      stream = process.stdout
-    }
-    this.logStream = stream
-  }
-
-  // Disable tracing
-  traceOff() {
-    this.logStream = null
-  }
-
-  // makeRequest is the primitive used by the apis for making S3 requests.
-  // payload can be empty string in case of no payload.
-  // statusCode is the expected statusCode. If response.statusCode does not match
-  // we parse the XML error and call the callback with the error message.
-  // A valid region is passed by the calls - listBuckets, makeBucket and
-  // getBucketRegion.
-  makeRequest(options, payload, statusCodes, region, returnResponse, cb) {
-    if (!isObject(options)) {
-      throw new TypeError('options should be of type "object"')
-    }
-    if (!isString(payload) && !isObject(payload)) {
-      // Buffer is of type 'object'
-      throw new TypeError('payload should be of type "string" or "Buffer"')
-    }
-    statusCodes.forEach((statusCode) => {
-      if (!isNumber(statusCode)) {
-        throw new TypeError('statusCode should be of type "number"')
-      }
-    })
-    if (!isString(region)) {
-      throw new TypeError('region should be of type "string"')
-    }
-    if (!isBoolean(returnResponse)) {
-      throw new TypeError('returnResponse should be of type "boolean"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    if (!options.headers) {
-      options.headers = {}
-    }
-    if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
-      options.headers['content-length'] = payload.length
-    }
-    var sha256sum = ''
-    if (this.enableSHA256) {
-      sha256sum = toSha256(payload)
-    }
-    var stream = readableStream(payload)
-    this.makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb)
-  }
-
-  // makeRequestStream will be used directly instead of makeRequest in case the payload
-  // is available as a stream. for ex. putObject
-  makeRequestStream(options, stream, sha256sum, statusCodes, region, returnResponse, cb) {
-    if (!isObject(options)) {
-      throw new TypeError('options should be of type "object"')
-    }
-    if (!isReadableStream(stream)) {
-      throw new errors.InvalidArgumentError('stream should be a readable Stream')
-    }
-    if (!isString(sha256sum)) {
-      throw new TypeError('sha256sum should be of type "string"')
-    }
-    statusCodes.forEach((statusCode) => {
-      if (!isNumber(statusCode)) {
-        throw new TypeError('statusCode should be of type "number"')
-      }
-    })
-    if (!isString(region)) {
-      throw new TypeError('region should be of type "string"')
-    }
-    if (!isBoolean(returnResponse)) {
-      throw new TypeError('returnResponse should be of type "boolean"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    // sha256sum will be empty for anonymous or https requests
-    if (!this.enableSHA256 && sha256sum.length !== 0) {
-      throw new errors.InvalidArgumentError(`sha256sum expected to be empty for anonymous or https requests`)
-    }
-    // sha256sum should be valid for non-anonymous http requests.
-    if (this.enableSHA256 && sha256sum.length !== 64) {
-      throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
-    }
-
-    var _makeRequest = (e, region) => {
-      if (e) {
-        return cb(e)
-      }
-      options.region = region
-      var reqOptions = this.getRequestOptions(options)
-      if (!this.anonymous) {
-        // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
-        if (!this.enableSHA256) {
-          sha256sum = 'UNSIGNED-PAYLOAD'
-        }
-
-        let date = new Date()
-
-        reqOptions.headers['x-amz-date'] = makeDateLong(date)
-        reqOptions.headers['x-amz-content-sha256'] = sha256sum
-        if (this.sessionToken) {
-          reqOptions.headers['x-amz-security-token'] = this.sessionToken
-        }
-
-        this.checkAndRefreshCreds()
-        var authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
-        reqOptions.headers.authorization = authorization
-      }
-      var req = this.transport.request(reqOptions, (response) => {
-        if (!statusCodes.includes(response.statusCode)) {
-          // For an incorrect region, S3 server always sends back 400.
-          // But we will do cache invalidation for all errors so that,
-          // in future, if AWS S3 decides to send a different status code or
-          // XML error code we will still work fine.
-          delete this.regionMap[options.bucketName]
-          var errorTransformer = transformers.getErrorTransformer(response)
-          pipesetup(response, errorTransformer).on('error', (e) => {
-            this.logHTTP(reqOptions, response, e)
-            cb(e)
-          })
-          return
-        }
-        this.logHTTP(reqOptions, response)
-        if (returnResponse) {
-          return cb(null, response)
-        }
-        // We drain the socket so that the connection gets closed. Note that this
-        // is not expensive as the socket will not have any data.
-        response.on('data', () => {})
-        cb(null)
-      })
-      let pipe = pipesetup(stream, req)
-      pipe.on('error', (e) => {
-        this.logHTTP(reqOptions, null, e)
-        cb(e)
-      })
-    }
-    if (region) {
-      return _makeRequest(null, region)
-    }
-    this.getBucketRegion(options.bucketName, _makeRequest)
-  }
-
-  // gets the region of the bucket
-  getBucketRegion(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-
-    // Region is set with constructor, return the region right here.
-    if (this.region) {
-      return cb(null, this.region)
-    }
-
-    if (this.regionMap[bucketName]) {
-      return cb(null, this.regionMap[bucketName])
-    }
-    var extractRegion = (response) => {
-      var transformer = transformers.getBucketRegionTransformer()
-      var region = DEFAULT_REGION
-      pipesetup(response, transformer)
-        .on('error', cb)
-        .on('data', (data) => {
-          if (data) {
-            region = data
-          }
-        })
-        .on('end', () => {
-          this.regionMap[bucketName] = region
-          cb(null, region)
-        })
-    }
-
-    var method = 'GET'
-    var query = 'location'
-
-    // `getBucketLocation` behaves differently in following ways for
-    // different environments.
-    //
-    // - For nodejs env we default to path style requests.
-    // - For browser env path style requests on buckets yields CORS
-    //   error. To circumvent this problem we make a virtual host
-    //   style request signed with 'us-east-1'. This request fails
-    //   with an error 'AuthorizationHeaderMalformed', additionally
-    //   the error XML also provides Region of the bucket. To validate
-    //   this region is proper we retry the same request with the newly
-    //   obtained region.
-    var pathStyle = this.pathStyle && typeof window === 'undefined'
-
-    this.makeRequest({ method, bucketName, query, pathStyle }, '', [200], DEFAULT_REGION, true, (e, response) => {
-      if (e) {
-        if (e.name === 'AuthorizationHeaderMalformed') {
-          var region = e.Region
-          if (!region) {
-            return cb(e)
-          }
-          this.makeRequest({ method, bucketName, query }, '', [200], region, true, (e, response) => {
-            if (e) {
-              return cb(e)
-            }
-            extractRegion(response)
-          })
-          return
-        }
-        return cb(e)
-      }
-      extractRegion(response)
-    })
   }
 
   // Creates the bucket `bucketName`.
@@ -2572,6 +2313,10 @@ export class Client extends TypedClient {
    * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
    */
   getBucketTagging(bucketName, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+
     const method = 'GET'
     const query = 'tagging'
     const requestOptions = { method, bucketName, query }

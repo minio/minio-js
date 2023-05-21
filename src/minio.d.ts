@@ -12,14 +12,15 @@ import type {
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
 import type { ClientOptions } from './internal/client.ts'
+import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
-export { CopyConditions, PostPolicy }
 export type { ClientOptions }
+export { CopyConditions, PostPolicy }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -254,9 +255,7 @@ export interface RemoveOptions {
 }
 
 // Exports from library
-export class Client {
-  constructor(options: ClientOptions)
-
+export class Client extends TypedClient {
   // Bucket operations
   makeBucket(bucketName: string, region: Region, makeOpts: MakeBucketOpt, callback: NoResultCallback): void
   makeBucket(bucketName: string, region: Region, callback: NoResultCallback): void
