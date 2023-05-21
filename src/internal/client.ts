@@ -466,7 +466,7 @@ export class TypedClient {
    *
    * @internal
    */
-  makeRequestAsync(
+  async makeRequestAsync(
     options: RequestOption,
     payload: Binary = '',
     expectedCodes: number[] = [200],
