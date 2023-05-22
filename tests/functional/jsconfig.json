@@ -1,0 +1,5 @@
+{
+  "moduleResolution": "classic",
+  "allowSyntheticDefaultImports": true,
+  "exclude": ["dist/**/*", "node_modules/**/*"]
+}

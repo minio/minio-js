@@ -25,19 +25,21 @@ import * as url from 'node:url'
 import async from 'async'
 import chai from 'chai'
 import _ from 'lodash'
+import { AssumeRoleProvider } from 'minio/dist/main/AssumeRoleProvider.js'
+import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from 'minio/dist/main/helpers.js'
+import * as minio from 'minio/dist/main/minio.js'
 import { step } from 'mocha-steps'
 import splitFile from 'split-file'
 import superagent from 'superagent'
 import * as uuid from 'uuid'
 
-import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
-import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
-import { getVersionId } from '../../src/internal/helper.ts'
-import * as minio from '../../src/minio.js'
-
 const assert = chai.assert
 
 const isWindowsPlatform = process.platform === 'win32'
+
+function getVersionId(headers = {}) {
+  return headers['x-amz-version-id'] || null
+}
 
 describe('functional tests', function () {
   this.timeout(30 * 60 * 1000)
