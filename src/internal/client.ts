@@ -555,6 +555,7 @@ export class TypedClient {
 
     await this.checkAndRefreshCreds()
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     region = region || (await this.getBucketRegionAsync(options.bucketName!))
 
     const reqOptions = this.getRequestOptions(options)
@@ -582,6 +583,7 @@ export class TypedClient {
       // But we will do cache invalidation for all errors so that,
       // in future, if AWS S3 decides to send a different status code or
       // XML error code we will still work fine.
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       delete this.regionMap[options.bucketName!]
 
       const err = await xmlParsers.parseResponseError(response)

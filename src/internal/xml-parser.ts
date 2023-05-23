@@ -16,13 +16,13 @@ const fxp = new XMLParser()
 
 // Parse XML and return information as Javascript types
 // parse error XML response
-export function parseError(xml: string, headerInfo: Record<string, any>) {
+export function parseError(xml: string, headerInfo: Record<string, unknown>) {
   let xmlErr = {}
   const xmlObj = fxp.parse(xml)
   if (xmlObj.Error) {
     xmlErr = xmlObj.Error
   }
-  const e = new errors.S3Error() as unknown as Record<string, any>
+  const e = new errors.S3Error() as unknown as Record<string, unknown>
   Object.entries(xmlErr).forEach(([key, value]) => {
     e[key.toLowerCase()] = value
   })
