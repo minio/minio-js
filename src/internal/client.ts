@@ -10,7 +10,7 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
-import { asCallbackFn } from './as-callback.ts'
+import { asCallback } from './as-callback.ts'
 import type { AnyFunction } from './helper.ts'
 import {
   isAmazonEndpoint,
@@ -753,6 +753,10 @@ export class TypedClient {
   removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
   removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
+
+  /**
+   * keep backward compatibility
+   */
   removeObject(
     bucketName: string,
     objectName: string,
@@ -774,6 +778,11 @@ export class TypedClient {
     if (!isOptionalFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
+
+    return asCallback<void>(cb, this._removeObject(bucketName, objectName, removeOpts))
+  }
+
+  private async _removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions): Promise<void> {
     const method = 'DELETE'
     const queryParams: Record<string, string> = {}
 
@@ -795,9 +804,7 @@ export class TypedClient {
       requestOptions['query'] = query
     }
 
-    return asCallbackFn<void>(cb, async () => {
-      await this.makeRequestAsyncOmit(requestOptions, '', [200, 204])
-    })
+    await this.makeRequestAsyncOmit(requestOptions, '', [200, 204])
   }
 }
 
