@@ -1,5 +1,4 @@
 import type * as http from 'node:http'
-import type { Readable as ReadableStream } from 'node:stream'
 
 export type Binary = string | Buffer
 
@@ -58,25 +57,8 @@ export interface IRequest {
 
 export type ICanonicalRequest = string
 
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
-}
-
 export interface IncompleteUploadedBucketItem {
   key: string
   uploadId: string
   size: number
 }
-
-export interface BucketStream<T> extends ReadableStream {
-  on(event: 'data', listener: (item: T) => void): this
-
-  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
-
-  on(event: 'error', listener: (err: Error) => void): this
-
-  on(event: string | symbol, listener: (...args: any[]) => void): this
-}
-
-export type ResultCallback<T> = (error: unknown, result: T) => void

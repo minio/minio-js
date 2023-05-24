@@ -105,6 +105,7 @@ export type UploadedPart = {
   part: number
   lastModified?: Date
   etag: string
+  size: number
 }
 
 // parse XML response for list parts of an in progress multipart upload
@@ -139,7 +140,7 @@ export function parseListParts(xml: string): {
         .replace(/&quot;$/g, '')
         .replace(/^&#34;/g, '')
         .replace(/&#34;$/g, '')
-      result.parts.push({ part, lastModified, etag })
+      result.parts.push({ part, lastModified, etag, size: parseInt(p.Size, 10) })
     })
   }
   return result
