@@ -16,12 +16,12 @@ import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
-import type { BucketStream, IncompleteUploadedBucketItem, ResultCallback,UploadedObjectInfo } from './internal/type.ts'
+import type { BucketStream, IncompleteUploadedBucketItem, ResultCallback, UploadedObjectInfo } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
-export type { BucketStream,ClientOptions, IncompleteUploadedBucketItem, ResultCallback, UploadedObjectInfo }
+export type { BucketStream, ClientOptions, IncompleteUploadedBucketItem, ResultCallback, UploadedObjectInfo }
 
 // Exports only from typings
 export type NotificationEvent =

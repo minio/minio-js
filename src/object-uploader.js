@@ -142,26 +142,27 @@ export class ObjectUploader extends Transform {
         this.id = id
 
         // Retrieve the pre-uploaded parts, if we need to resume the upload.
-        this.client.listParts(this.bucketName, this.objectName, id, (err, etags) => {
-          if (err) {
-            return this.emit('error', err)
-          }
-
-          // It is possible for no parts to be already uploaded.
-          if (!etags) {
-            etags = []
-          }
-
-          // oldParts will become an object, allowing oldParts[partNumber].etag
-          this.oldParts = etags.reduce(function (prev, item) {
-            if (!prev[item.part]) {
-              prev[item.part] = item
+        this.client.listParts(this.bucketName, this.objectName, id).then(
+          (etags) => {
+            // It is possible for no parts to be already uploaded.
+            if (!etags) {
+              etags = []
             }
-            return prev
-          }, {})
 
-          this.emit('ready')
-        })
+            // oldParts will become an object, allowing oldParts[partNumber].etag
+            this.oldParts = etags.reduce(function (prev, item) {
+              if (!prev[item.part]) {
+                prev[item.part] = item
+              }
+              return prev
+            }, {})
+
+            this.emit('ready')
+          },
+          (err) => {
+            return this.emit('error', err)
+          },
+        )
       })
 
       return

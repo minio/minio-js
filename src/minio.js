@@ -110,7 +110,7 @@ export class Client extends TypedClient {
       return this.partSize
     }
     var partSize = this.partSize
-    for (; ;) {
+    for (;;) {
       // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
       if (partSize * 10000 > size) {
@@ -285,14 +285,11 @@ export class Client extends TypedClient {
             result.uploads,
             (upload, cb) => {
               // for each incomplete upload add the sizes of its uploaded parts
-              this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
-                if (err) {
-                  return cb(err)
-                }
+              this.listParts(bucket, upload.key, upload.uploadId).then((parts) => {
                 upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                 uploads.push(upload)
                 cb()
-              })
+              }, cb)
             },
             (err) => {
               if (err) {

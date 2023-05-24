@@ -1,8 +1,7 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
-import * as stream from 'node:stream'
+import type * as stream from 'node:stream'
 
-import async from 'async'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 
@@ -21,29 +20,21 @@ import {
   isString,
   isValidBucketName,
   isValidEndpoint,
+  isValidObjectName,
   isValidPort,
-  isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
   toSha256,
   uriEscape,
-  uriResourceEscape, isValidObjectName, isFunction, pipesetup,
+  uriResourceEscape,
 } from './helper.ts'
 import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type {
-  Binary,
-  BucketStream,
-  IncompleteUploadedBucketItem,
-  IRequest,
-  RequestHeaders,
-  Transport,
-} from './type.ts'
-import type { Multipart } from './xml-parser.ts'
+import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
+import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
-import { parseListParts } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -753,9 +744,8 @@ export class TypedClient {
     )
   }
 
-
   // Get part-info of all parts of an incomplete upload specified by uploadId.
-  listParts(bucketName, objectName, uploadId, cb) {
+  async listParts(bucketName: string, objectName: string, uploadId: string): Promise<UploadedPart[]> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -769,30 +759,20 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('uploadId cannot be empty')
     }
 
-    const exec=async ()=>{};
+    const parts: UploadedPart[] = []
+    let marker: number | undefined = undefined
+    let result
+    do {
+      result = await this.listPartsQuery(bucketName, objectName, uploadId, marker)
+      marker = result.marker
+      parts.push(...result.parts)
+    } while (result.isTruncated)
 
-    exec().then()
-
-    var parts = []
-    var listNext = (marker) => {
-      this.listPartsQuery(bucketName, objectName, uploadId, marker, (e, result) => {
-        if (e) {
-          cb(e)
-          return
-        }
-        parts = parts.concat(result.parts)
-        if (result.isTruncated) {
-          listNext(result.marker)
-          return
-        }
-        cb(null, parts)
-      })
-    }
-    listNext(0)
+    return parts
   }
 
   // Called by listParts to fetch a batch of part-info
-  async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker: string) {
+  async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker?: number) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -810,7 +790,7 @@ export class TypedClient {
     }
 
     let query = ''
-    if (marker && marker !== 0) {
+    if (marker) {
       query += `part-number-marker=${marker}&`
     }
     query += `uploadId=${uriEscape(uploadId)}`

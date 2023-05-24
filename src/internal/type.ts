@@ -1,5 +1,5 @@
 import type * as http from 'node:http'
-import { Readable as ReadableStream } from 'stream'
+import type { Readable as ReadableStream } from 'node:stream'
 
 export type Binary = string | Buffer
 
@@ -79,4 +79,4 @@ export interface BucketStream<T> extends ReadableStream {
   on(event: string | symbol, listener: (...args: any[]) => void): this
 }
 
-export type ResultCallback<T> = (error: Error | null, result: T) => void
+export type ResultCallback<T> = (error: unknown, result: T) => void

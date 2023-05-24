@@ -3,7 +3,7 @@ import type * as http from 'node:http'
 import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
-import { parseXml, sanitizeObjectKey, toArray } from './helper.ts'
+import { parseXml, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
 
 // parse XML response for bucket region
@@ -101,7 +101,6 @@ export type Multipart = {
   nextUploadIdMarker: undefined
 }
 
-
 export type UploadedPart = {
   part: number
   lastModified?: Date
@@ -110,8 +109,8 @@ export type UploadedPart = {
 
 // parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml: string): {
-  isTruncated: boolean;
-  marker: number | undefined;
+  isTruncated: boolean
+  marker: number | undefined
   parts: UploadedPart[]
 } {
   let xmlobj = parseXml(xml)
