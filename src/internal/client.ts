@@ -754,7 +754,7 @@ export class TypedClient {
 
   async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
@@ -765,11 +765,7 @@ export class TypedClient {
     }
 
     const method = 'DELETE'
-    const queryParams: Record<string, string> = {}
 
-    if (removeOpts.versionId) {
-      queryParams.versionId = `${removeOpts.versionId}`
-    }
     const headers: RequestHeaders = {}
     if (removeOpts.governanceBypass) {
       headers['X-Amz-Bypass-Governance-Retention'] = true
@@ -778,13 +774,12 @@ export class TypedClient {
       headers['x-minio-force-delete'] = true
     }
 
+    const queryParams: Record<string, string> = {}
+    if (removeOpts.versionId) {
+      queryParams.versionId = `${removeOpts.versionId}`
+    }
     const query = qs.stringify(queryParams)
 
-    const requestOptions: RequestOption = { method, bucketName, objectName, headers }
-    if (query) {
-      requestOptions['query'] = query
-    }
-
-    await this.makeRequestAsyncOmit(requestOptions, '', [200, 204])
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
 }
