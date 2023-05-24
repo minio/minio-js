@@ -235,16 +235,6 @@ export function isFunction(arg: unknown): arg is AnyFunction {
 }
 
 /**
- * check if typeof arg function or undefined
- */
-export function isOptionalFunction(arg: unknown): arg is undefined | AnyFunction {
-  if (arg === undefined) {
-    return true
-  }
-  return typeof arg === 'function'
-}
-
-/**
  * check if typeof arg string
  */
 export function isString(arg: unknown): arg is string {

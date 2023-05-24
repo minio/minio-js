@@ -10,13 +10,11 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
-import type { AnyFunction } from './helper.ts'
 import {
   isAmazonEndpoint,
   isBoolean,
   isDefined,
   isEmpty,
-  isFunction,
   isNumber,
   isObject,
   isReadableStream,
@@ -789,22 +787,4 @@ export class TypedClient {
 
     await this.makeRequestAsyncOmit(requestOptions, '', [200, 204])
   }
-}
-
-/**
- * internal helper to add arguments without breaking callback
- *
- * @example
- * ```ts
- *     const [[removeOpts], cb] = findCallback<[VersionIdentification?], NoResultCallback>([removeOptsArg, cbArg])
- * ```
- *
- * @internal
- */
-export function findCallback<A extends unknown[], T extends AnyFunction>(args: unknown[]): [A, T | undefined] {
-  const index = args.findIndex((v) => isFunction(v))
-  if (index === -1) {
-    return [args as A, undefined]
-  }
-  return [args.slice(0, index) as A, args[index] as T]
 }
