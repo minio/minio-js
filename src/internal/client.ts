@@ -1,25 +1,37 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
+import type * as stream from 'node:stream'
 
+import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
+import { DEFAULT_REGION } from '../helpers.ts'
+import { signV4 } from '../signing.ts'
 import {
   isAmazonEndpoint,
   isBoolean,
   isDefined,
   isEmpty,
+  isNumber,
   isObject,
+  isReadableStream,
   isString,
+  isValidBucketName,
   isValidEndpoint,
   isValidPort,
   isVirtualHostStyle,
+  makeDateLong,
+  toSha256,
   uriResourceEscape,
 } from './helper.ts'
+import { request } from './request.ts'
+import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { IRequest, RequestHeaders, Transport } from './type.ts'
+import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
+import * as xmlParsers from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -304,6 +316,7 @@ export class TypedClient {
       if (accelerateEndPoint) {
         host = `${accelerateEndPoint}`
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         host = getS3Endpoint(region!)
       }
     }
@@ -378,5 +391,353 @@ export class TypedClient {
         throw new Error(`Unable to get credentials: ${e}`, { cause: e })
       }
     }
+  }
+
+  private logStream?: stream.Writable
+
+  /**
+   * log the request, response, error
+   */
+  private logHTTP(reqOptions: IRequest, response: http.IncomingMessage | null, err?: unknown) {
+    // if no logStream available return.
+    if (!this.logStream) {
+      return
+    }
+    if (!isObject(reqOptions)) {
+      throw new TypeError('reqOptions should be of type "object"')
+    }
+    if (response && !isReadableStream(response)) {
+      throw new TypeError('response should be of type "Stream"')
+    }
+    if (err && !(err instanceof Error)) {
+      throw new TypeError('err should be of type "Error"')
+    }
+    const logStream = this.logStream
+    const logHeaders = (headers: RequestHeaders) => {
+      Object.entries(headers).forEach(([k, v]) => {
+        if (k == 'authorization') {
+          if (isString(v)) {
+            const redactor = new RegExp('Signature=([0-9a-f]+)')
+            v = v.replace(redactor, 'Signature=**REDACTED**')
+          }
+        }
+        logStream.write(`${k}: ${v}\n`)
+      })
+      logStream.write('\n')
+    }
+    logStream.write(`REQUEST: ${reqOptions.method} ${reqOptions.path}\n`)
+    logHeaders(reqOptions.headers)
+    if (response) {
+      this.logStream.write(`RESPONSE: ${response.statusCode}\n`)
+      logHeaders(response.headers as RequestHeaders)
+    }
+    if (err) {
+      logStream.write('ERROR BODY:\n')
+      const errJSON = JSON.stringify(err, null, '\t')
+      logStream.write(`${errJSON}\n`)
+    }
+  }
+
+  /**
+   * Enable tracing
+   */
+  public traceOn(stream?: stream.Writable) {
+    if (!stream) {
+      stream = process.stdout
+    }
+    this.logStream = stream
+  }
+
+  /**
+   * Disable tracing
+   */
+  public traceOff() {
+    this.logStream = undefined
+  }
+
+  /**
+   * makeRequest is the primitive used by the apis for making S3 requests.
+   * payload can be empty string in case of no payload.
+   * statusCode is the expected statusCode. If response.statusCode does not match
+   * we parse the XML error and call the callback with the error message.
+   *
+   * A valid region is passed by the calls - listBuckets, makeBucket and getBucketRegion.
+   *
+   * @internal
+   */
+  async makeRequestAsync(
+    options: RequestOption,
+    payload: Binary = '',
+    expectedCodes: number[] = [200],
+    region = '',
+  ): Promise<http.IncomingMessage> {
+    if (!isObject(options)) {
+      throw new TypeError('options should be of type "object"')
+    }
+    if (!isString(payload) && !isObject(payload)) {
+      // Buffer is of type 'object'
+      throw new TypeError('payload should be of type "string" or "Buffer"')
+    }
+    expectedCodes.forEach((statusCode) => {
+      if (!isNumber(statusCode)) {
+        throw new TypeError('statusCode should be of type "number"')
+      }
+    })
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
+    }
+    if (!options.headers) {
+      options.headers = {}
+    }
+    if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
+      options.headers['content-length'] = payload.length.toString()
+    }
+    const sha256sum = this.enableSHA256 ? toSha256(payload) : ''
+    return this.makeRequestStreamAsync(options, payload, sha256sum, expectedCodes, region)
+  }
+
+  /**
+   * new request with promise
+   *
+   * No need to drain response, response body is not valid
+   */
+  async makeRequestAsyncOmit(
+    options: RequestOption,
+    payload: Binary = '',
+    statusCodes: number[] = [200],
+    region = '',
+  ): Promise<Omit<http.IncomingMessage, 'on'>> {
+    const res = await this.makeRequestAsync(options, payload, statusCodes, region)
+    await drainResponse(res)
+    return res
+  }
+
+  /**
+   * makeRequestStream will be used directly instead of makeRequest in case the payload
+   * is available as a stream. for ex. putObject
+   *
+   * @internal
+   */
+  async makeRequestStreamAsync(
+    options: RequestOption,
+    body: stream.Readable | Binary,
+    sha256sum: string,
+    statusCodes: number[],
+    region: string,
+  ): Promise<http.IncomingMessage> {
+    if (!isObject(options)) {
+      throw new TypeError('options should be of type "object"')
+    }
+    if (!(Buffer.isBuffer(body) || typeof body === 'string' || isReadableStream(body))) {
+      throw new errors.InvalidArgumentError(
+        `stream should be a Buffer, string or readable Stream, got ${typeof body} instead`,
+      )
+    }
+    if (!isString(sha256sum)) {
+      throw new TypeError('sha256sum should be of type "string"')
+    }
+    statusCodes.forEach((statusCode) => {
+      if (!isNumber(statusCode)) {
+        throw new TypeError('statusCode should be of type "number"')
+      }
+    })
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
+    }
+    // sha256sum will be empty for anonymous or https requests
+    if (!this.enableSHA256 && sha256sum.length !== 0) {
+      throw new errors.InvalidArgumentError(`sha256sum expected to be empty for anonymous or https requests`)
+    }
+    // sha256sum should be valid for non-anonymous http requests.
+    if (this.enableSHA256 && sha256sum.length !== 64) {
+      throw new errors.InvalidArgumentError(`Invalid sha256sum : ${sha256sum}`)
+    }
+
+    await this.checkAndRefreshCreds()
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    region = region || (await this.getBucketRegionAsync(options.bucketName!))
+
+    const reqOptions = this.getRequestOptions(options)
+    if (!this.anonymous) {
+      // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
+      if (!this.enableSHA256) {
+        sha256sum = 'UNSIGNED-PAYLOAD'
+      }
+      const date = new Date()
+      reqOptions.headers['x-amz-date'] = makeDateLong(date)
+      reqOptions.headers['x-amz-content-sha256'] = sha256sum
+      if (this.sessionToken) {
+        reqOptions.headers['x-amz-security-token'] = this.sessionToken
+      }
+      reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
+    }
+
+    const response = await request(this.transport, reqOptions, body)
+    if (!response.statusCode) {
+      throw new Error("BUG: response doesn't have a statusCode")
+    }
+
+    if (!statusCodes.includes(response.statusCode)) {
+      // For an incorrect region, S3 server always sends back 400.
+      // But we will do cache invalidation for all errors so that,
+      // in future, if AWS S3 decides to send a different status code or
+      // XML error code we will still work fine.
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      delete this.regionMap[options.bucketName!]
+
+      const err = await xmlParsers.parseResponseError(response)
+      this.logHTTP(reqOptions, response, err)
+      throw err
+    }
+
+    this.logHTTP(reqOptions, response)
+
+    return response
+  }
+
+  /**
+   * gets the region of the bucket
+   *
+   * @param bucketName
+   *
+   * @internal
+   */
+  protected async getBucketRegionAsync(bucketName: string): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
+    }
+
+    // Region is set with constructor, return the region right here.
+    if (this.region) {
+      return this.region
+    }
+
+    const cached = this.regionMap[bucketName]
+    if (cached) {
+      return cached
+    }
+
+    const extractRegionAsync = async (response: http.IncomingMessage) => {
+      const body = await readAsString(response)
+      const region = xmlParsers.parseBucketRegion(body)
+      this.regionMap[bucketName] = region
+      return region
+    }
+
+    const method = 'GET'
+    const query = 'location'
+    // `getBucketLocation` behaves differently in following ways for
+    // different environments.
+    //
+    // - For nodejs env we default to path style requests.
+    // - For browser env path style requests on buckets yields CORS
+    //   error. To circumvent this problem we make a virtual host
+    //   style request signed with 'us-east-1'. This request fails
+    //   with an error 'AuthorizationHeaderMalformed', additionally
+    //   the error XML also provides Region of the bucket. To validate
+    //   this region is proper we retry the same request with the newly
+    //   obtained region.
+    const pathStyle = this.pathStyle && !isBrowser
+    let region: string
+    try {
+      const res = await this.makeRequestAsync({ method, bucketName, query, pathStyle }, '', [200], DEFAULT_REGION)
+      return extractRegionAsync(res)
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      if (!(e.name === 'AuthorizationHeaderMalformed')) {
+        throw e
+      }
+      // @ts-expect-error we set extra properties on error object
+      region = e.Region as string
+      if (!region) {
+        throw e
+      }
+    }
+
+    const res = await this.makeRequestAsync({ method, bucketName, query, pathStyle }, '', [200], region)
+    return await extractRegionAsync(res)
+  }
+
+  /**
+   * makeRequest is the primitive used by the apis for making S3 requests.
+   * payload can be empty string in case of no payload.
+   * statusCode is the expected statusCode. If response.statusCode does not match
+   * we parse the XML error and call the callback with the error message.
+   * A valid region is passed by the calls - listBuckets, makeBucket and
+   * getBucketRegion.
+   *
+   * @deprecated use `makeRequestAsync` instead
+   */
+  makeRequest(
+    options: RequestOption,
+    payload: Binary = '',
+    expectedCodes: number[] = [200],
+    region = '',
+    returnResponse: boolean,
+    cb: (cb: unknown, result: http.IncomingMessage) => void,
+  ) {
+    let prom: Promise<http.IncomingMessage>
+    if (returnResponse) {
+      prom = this.makeRequestAsync(options, payload, expectedCodes, region)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error compatible for old behaviour
+      prom = this.makeRequestAsyncOmit(options, payload, expectedCodes, region)
+    }
+
+    prom.then(
+      (result) => cb(null, result),
+      (err) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        cb(err)
+      },
+    )
+  }
+
+  /**
+   * makeRequestStream will be used directly instead of makeRequest in case the payload
+   * is available as a stream. for ex. putObject
+   *
+   * @deprecated use `makeRequestStreamAsync` instead
+   */
+  makeRequestStream(
+    options: RequestOption,
+    stream: stream.Readable | Buffer,
+    sha256sum: string,
+    statusCodes: number[],
+    region: string,
+    returnResponse: boolean,
+    cb: (cb: unknown, result: http.IncomingMessage) => void,
+  ) {
+    const executor = async () => {
+      const res = await this.makeRequestStreamAsync(options, stream, sha256sum, statusCodes, region)
+      if (!returnResponse) {
+        await drainResponse(res)
+      }
+
+      return res
+    }
+
+    executor().then(
+      (result) => cb(null, result),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      (err) => cb(err),
+    )
+  }
+
+  /**
+   * @deprecated use `getBucketRegionAsync` instead
+   */
+  getBucketRegion(bucketName: string, cb: (err: unknown, region: string) => void) {
+    return this.getBucketRegionAsync(bucketName).then(
+      (result) => cb(null, result),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      (err) => cb(err),
+    )
   }
 }
