@@ -187,40 +187,6 @@ export function parseBucketNotification(xml) {
   return result
 }
 
-// parse XML response for list parts of an in progress multipart upload
-export function parseListParts(xml) {
-  var xmlobj = parseXml(xml)
-  var result = {
-    isTruncated: false,
-    parts: [],
-    marker: undefined,
-  }
-  if (!xmlobj.ListPartsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')
-  }
-  xmlobj = xmlobj.ListPartsResult
-  if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncated
-  }
-  if (xmlobj.NextPartNumberMarker) {
-    result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
-  }
-  if (xmlobj.Part) {
-    toArray(xmlobj.Part).forEach((p) => {
-      var part = +toArray(p.PartNumber)[0]
-      var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, '')
-        .replace(/"$/g, '')
-        .replace(/^&quot;/g, '')
-        .replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '')
-        .replace(/&#34;$/g, '')
-      result.parts.push({ part, lastModified, etag })
-    })
-  }
-  return result
-}
-
 // parse XML response when a new multipart upload is initiated
 export function parseInitiateMultipart(xml) {
   var xmlobj = parseXml(xml)
