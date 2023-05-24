@@ -757,20 +757,15 @@ export class TypedClient {
   /**
    * keep backward compatibility
    */
-  removeObject(
-    bucketName: string,
-    objectName: string,
-    removeOptsOrCallback: RemoveOptions | NoResultCallback = {},
-    callback?: NoResultCallback,
-  ): void | Promise<void> {
+  removeObject(bucketName: string, objectName: string, ...rest: unknown[]): void | Promise<void> {
+    const [[removeOpts = {}], cb] = findCallback<[RemoveOptions], NoResultCallback>(rest)
+
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-
-    const [[removeOpts = {}], cb] = findCallback<[RemoveOptions], NoResultCallback>([removeOptsOrCallback, callback])
 
     if (!isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
