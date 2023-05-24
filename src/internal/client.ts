@@ -4,22 +4,29 @@ import type * as stream from 'node:stream'
 
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
+import * as qs from 'query-string'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
+import type { NoResultCallback, RemoveOptions } from '../minio'
 import { signV4 } from '../signing.ts'
+import { asCallbackFn } from './as-callback.ts'
+import type { AnyFunction } from './helper.ts'
 import {
   isAmazonEndpoint,
   isBoolean,
   isDefined,
   isEmpty,
+  isFunction,
   isNumber,
   isObject,
+  isOptionalFunction,
   isReadableStream,
   isString,
   isValidBucketName,
   isValidEndpoint,
+  isValidObjectName,
   isValidPort,
   isVirtualHostStyle,
   makeDateLong,
@@ -740,4 +747,75 @@ export class TypedClient {
       (err) => cb(err),
     )
   }
+
+  /**
+   * Remove the specified object.
+   */
+  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
+  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
+  removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
+  removeObject(
+    bucketName: string,
+    objectName: string,
+    removeOptsOrCallback: RemoveOptions | NoResultCallback = {},
+    callback?: NoResultCallback,
+  ): void | Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    const [[removeOpts = {}], cb] = findCallback<[RemoveOptions], NoResultCallback>([removeOptsOrCallback, callback])
+
+    if (!isObject(removeOpts)) {
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
+    if (!isOptionalFunction(cb)) {
+      throw new TypeError('callback should be of type "function"')
+    }
+    const method = 'DELETE'
+    const queryParams: Record<string, string> = {}
+
+    if (removeOpts.versionId) {
+      queryParams.versionId = `${removeOpts.versionId}`
+    }
+    const headers: RequestHeaders = {}
+    if (removeOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
+    }
+    if (removeOpts.forceDelete) {
+      headers['x-minio-force-delete'] = true
+    }
+
+    const query = qs.stringify(queryParams)
+
+    const requestOptions: RequestOption = { method, bucketName, objectName, headers }
+    if (query) {
+      requestOptions['query'] = query
+    }
+
+    return asCallbackFn<void>(cb, async () => {
+      await this.makeRequestAsyncOmit(requestOptions, '', [200, 204])
+    })
+  }
+}
+
+/**
+ * internal helper to add arguments without breaking callback
+ *
+ * @example
+ * ```ts
+ *     const [[removeOpts], cb] = findCallback<[VersionIdentification?], NoResultCallback>([removeOptsArg, cbArg])
+ * ```
+ *
+ * @internal
+ */
+export function findCallback<A extends unknown[], T extends AnyFunction>(args: unknown[]): [A, T | undefined] {
+  const index = args.findIndex((v) => isFunction(v))
+  if (index === -1) {
+    return [args as A, undefined]
+  }
+  return [args.slice(0, index) as A, args[index] as T]
 }

@@ -113,7 +113,7 @@ module.exports = {
     {
       files: ['./src/**/*.ts'],
       rules: {
-        'prefer-const': 'error',
+        'prefer-const': ['error', { destructuring: 'all' }],
       },
     },
     {

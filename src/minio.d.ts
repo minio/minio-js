@@ -57,7 +57,7 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
 
-export type NoResultCallback = (error: Error | null) => void
+export type NoResultCallback = (error: unknown) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
@@ -252,6 +252,7 @@ export interface MakeBucketOpt {
 export interface RemoveOptions {
   versionId?: string
   governanceBypass?: boolean
+  forceDelete?: boolean
 }
 
 // Exports from library
@@ -417,10 +418,6 @@ export class Client extends TypedClient {
 
   statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
   statObject(bucketName: string, objectName: string): Promise<BucketItemStat>
-
-  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
 
   removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: string[]): Promise<void>
