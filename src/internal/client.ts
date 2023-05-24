@@ -744,8 +744,10 @@ export class TypedClient {
     )
   }
 
-  // Get part-info of all parts of an incomplete upload specified by uploadId.
-  async listParts(bucketName: string, objectName: string, uploadId: string): Promise<UploadedPart[]> {
+  /**
+   * Get part-info of all parts of an incomplete upload specified by uploadId.
+   */
+  protected async listParts(bucketName: string, objectName: string, uploadId: string): Promise<UploadedPart[]> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -771,8 +773,10 @@ export class TypedClient {
     return parts
   }
 
-  // Called by listParts to fetch a batch of part-info
-  async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker?: number) {
+  /**
+   * Called by listParts to fetch a batch of part-info
+   */
+  private async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker?: number) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
