@@ -740,9 +740,9 @@ describe('Client', function () {
     })
 
     describe('#removeObject(bucket, object, callback)', () => {
-      it('should fail on null bucket', async (done) => {
+      it('should fail on null bucket', (done) => {
         try {
-          await client.removeObject(null, 'hello', function () {})
+          client.removeObject(null, 'hello', function () {})
         } catch (e) {
           done()
         }

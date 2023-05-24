@@ -56,3 +56,11 @@ export interface IRequest {
 }
 
 export type ICanonicalRequest = string
+
+export type NoResultCallback = (error: unknown) => void
+
+export interface RemoveOptions {
+  versionId?: string
+  governanceBypass?: boolean
+  forceDelete?: boolean
+}

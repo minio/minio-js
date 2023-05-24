@@ -16,11 +16,12 @@ import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
+import type { NoResultCallback, RemoveOptions } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
-export type { ClientOptions }
+export type { ClientOptions, NoResultCallback, RemoveOptions }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -56,8 +57,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  * @deprecated keep for backward compatible
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
-
-export type NoResultCallback = (error: unknown) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
@@ -247,12 +246,6 @@ export class TargetConfig {
 
 export interface MakeBucketOpt {
   ObjectLocking: boolean
-}
-
-export interface RemoveOptions {
-  versionId?: string
-  governanceBypass?: boolean
-  forceDelete?: boolean
 }
 
 // Exports from library
