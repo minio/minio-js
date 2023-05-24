@@ -741,55 +741,62 @@ describe('Client', function () {
 
     describe('#removeObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.removeObject(null, 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject(null, 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObject('', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('', 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObject('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('  \n  \t  ', 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on null object', (done) => {
-        try {
-          client.removeObject('hello', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.removeObject('hello', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', '', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       // Versioning related options as removeOpts
       it('should fail on empty (null) removeOpts object', (done) => {
-        try {
-          client.removeObject('hello', 'testRemoveOpts', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', 'testRemoveOpts', null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
 
       it('should fail on empty (string) removeOpts', (done) => {
-        try {
-          client.removeObject('hello', 'testRemoveOpts', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', 'testRemoveOpts', '', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
 

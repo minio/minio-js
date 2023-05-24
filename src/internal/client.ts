@@ -10,7 +10,6 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
-import { asCallback } from './as-callback.ts'
 import type { AnyFunction } from './helper.ts'
 import {
   isAmazonEndpoint,
@@ -20,7 +19,6 @@ import {
   isFunction,
   isNumber,
   isObject,
-  isOptionalFunction,
   isReadableStream,
   isString,
   isValidBucketName,
@@ -751,15 +749,12 @@ export class TypedClient {
    * Remove the specified object.
    */
   removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
 
-  /**
-   * keep backward compatibility
-   */
-  removeObject(bucketName: string, objectName: string, ...rest: unknown[]): void | Promise<void> {
-    const [[removeOpts = {}], cb] = findCallback<[RemoveOptions], NoResultCallback>(rest)
-
+  async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -770,14 +765,7 @@ export class TypedClient {
     if (!isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
-    if (!isOptionalFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
 
-    return asCallback<void>(cb, this._removeObject(bucketName, objectName, removeOpts))
-  }
-
-  private async _removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions): Promise<void> {
     const method = 'DELETE'
     const queryParams: Record<string, string> = {}
 

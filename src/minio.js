@@ -29,6 +29,7 @@ import xml2js from 'xml2js'
 import * as errors from './errors.ts'
 import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { callbackify } from './internal/callbackify.js'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import {
@@ -3223,3 +3224,6 @@ Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalH
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
+
+// refactored API use promise internally
+Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
