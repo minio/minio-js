@@ -762,11 +762,11 @@ export class TypedClient {
     }
 
     const parts: UploadedPart[] = []
-    let marker: number | undefined = undefined
+    let marker = 0
     let result
     do {
       result = await this.listPartsQuery(bucketName, objectName, uploadId, marker)
-      marker = result.marker
+      marker = result.marker as number
       parts.push(...result.parts)
     } while (result.isTruncated)
 
@@ -776,7 +776,7 @@ export class TypedClient {
   /**
    * Called by listParts to fetch a batch of part-info
    */
-  private async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker?: number) {
+  private async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker: number) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -793,11 +793,10 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('uploadId cannot be empty')
     }
 
-    let query = ''
+    let query = `uploadId=${uriEscape(uploadId)}`
     if (marker) {
-      query += `part-number-marker=${marker}&`
+      query += `&part-number-marker=${marker}`
     }
-    query += `uploadId=${uriEscape(uploadId)}`
 
     const method = 'GET'
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
