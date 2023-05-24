@@ -1,7 +1,8 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
-import type * as stream from 'node:stream'
+import * as stream from 'node:stream'
 
+import async from 'async'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 
@@ -21,17 +22,28 @@ import {
   isValidBucketName,
   isValidEndpoint,
   isValidPort,
+  isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
   toSha256,
-  uriResourceEscape,
+  uriEscape,
+  uriResourceEscape, isValidObjectName, isFunction, pipesetup,
 } from './helper.ts'
 import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
+import type {
+  Binary,
+  BucketStream,
+  IncompleteUploadedBucketItem,
+  IRequest,
+  RequestHeaders,
+  Transport,
+} from './type.ts'
+import type { Multipart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
+import { parseListParts } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -739,5 +751,72 @@ export class TypedClient {
       // @ts-ignore
       (err) => cb(err),
     )
+  }
+
+
+  // Get part-info of all parts of an incomplete upload specified by uploadId.
+  listParts(bucketName, objectName, uploadId, cb) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    const exec=async ()=>{};
+
+    exec().then()
+
+    var parts = []
+    var listNext = (marker) => {
+      this.listPartsQuery(bucketName, objectName, uploadId, marker, (e, result) => {
+        if (e) {
+          cb(e)
+          return
+        }
+        parts = parts.concat(result.parts)
+        if (result.isTruncated) {
+          listNext(result.marker)
+          return
+        }
+        cb(null, parts)
+      })
+    }
+    listNext(0)
+  }
+
+  // Called by listParts to fetch a batch of part-info
+  async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isNumber(marker)) {
+      throw new TypeError('marker should be of type "number"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    let query = ''
+    if (marker && marker !== 0) {
+      query += `part-number-marker=${marker}&`
+    }
+    query += `uploadId=${uriEscape(uploadId)}`
+
+    const method = 'GET'
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
+    return xmlParsers.parseListParts(await readAsString(res))
   }
 }

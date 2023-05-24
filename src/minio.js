@@ -110,7 +110,7 @@ export class Client extends TypedClient {
       return this.partSize
     }
     var partSize = this.partSize
-    for (;;) {
+    for (; ;) {
       // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
       if (partSize * 10000 > size) {
@@ -598,153 +598,12 @@ export class Client extends TypedClient {
     // Inserts correct `content-type` attribute based on metaData and filePath
     metaData = insertContentType(metaData, filePath)
 
-    // Updates metaData to have the correct prefix if needed
-    metaData = prependXAMZMeta(metaData)
-    var size
-    var partSize
-
-    async.waterfall(
-      [
-        (cb) => fs.stat(filePath, cb),
-        (stats, cb) => {
-          size = stats.size
-          var stream
-          var cbTriggered = false
-          var origCb = cb
-          cb = function () {
-            if (cbTriggered) {
-              return
-            }
-            cbTriggered = true
-            if (stream) {
-              stream.destroy()
-            }
-            return origCb.apply(this, arguments)
-          }
-          if (size > this.maxObjectSize) {
-            return cb(new Error(`${filePath} size : ${stats.size}, max allowed size : 5TB`))
-          }
-          if (size <= this.partSize) {
-            // simple PUT request, no multipart
-            var multipart = false
-            var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
-            var hash = transformers.getHashSummer(this.enableSHA256)
-            var start = 0
-            var end = size - 1
-            var autoClose = true
-            if (size === 0) {
-              end = 0
-            }
-            var options = { start, end, autoClose }
-            pipesetup(fs.createReadStream(filePath, options), hash)
-              .on('data', (data) => {
-                var md5sum = data.md5sum
-                var sha256sum = data.sha256sum
-                stream = fs.createReadStream(filePath, options)
-                uploader(stream, size, sha256sum, md5sum, (err, objInfo) => {
-                  callback(err, objInfo)
-                  cb(true)
-                })
-              })
-              .on('error', (e) => cb(e))
-            return
-          }
-          this.findUploadId(bucketName, objectName, cb)
-        },
-        (uploadId, cb) => {
-          // if there was a previous incomplete upload, fetch all its uploaded parts info
-          if (uploadId) {
-            return this.listParts(bucketName, objectName, uploadId, (e, etags) => cb(e, uploadId, etags))
-          }
-          // there was no previous upload, initiate a new one
-          this.initiateNewMultipartUpload(bucketName, objectName, metaData, (e, uploadId) => cb(e, uploadId, []))
-        },
-        (uploadId, etags, cb) => {
-          partSize = this.calculatePartSize(size)
-          var multipart = true
-          var uploader = this.getUploader(bucketName, objectName, metaData, multipart)
-
-          // convert array to object to make things easy
-          var parts = etags.reduce(function (acc, item) {
-            if (!acc[item.part]) {
-              acc[item.part] = item
-            }
-            return acc
-          }, {})
-          var partsDone = []
-          var partNumber = 1
-          var uploadedSize = 0
-          async.whilst(
-            (cb) => {
-              cb(null, uploadedSize < size)
-            },
-            (cb) => {
-              var stream
-              var cbTriggered = false
-              var origCb = cb
-              cb = function () {
-                if (cbTriggered) {
-                  return
-                }
-                cbTriggered = true
-                if (stream) {
-                  stream.destroy()
-                }
-                return origCb.apply(this, arguments)
-              }
-              var part = parts[partNumber]
-              var hash = transformers.getHashSummer(this.enableSHA256)
-              var length = partSize
-              if (length > size - uploadedSize) {
-                length = size - uploadedSize
-              }
-              var start = uploadedSize
-              var end = uploadedSize + length - 1
-              var autoClose = true
-              var options = { autoClose, start, end }
-              // verify md5sum of each part
-              pipesetup(fs.createReadStream(filePath, options), hash)
-                .on('data', (data) => {
-                  var md5sumHex = Buffer.from(data.md5sum, 'base64').toString('hex')
-                  if (part && md5sumHex === part.etag) {
-                    // md5 matches, chunk already uploaded
-                    partsDone.push({ part: partNumber, etag: part.etag })
-                    partNumber++
-                    uploadedSize += length
-                    return cb()
-                  }
-                  // part is not uploaded yet, or md5 mismatch
-                  stream = fs.createReadStream(filePath, options)
-                  uploader(uploadId, partNumber, stream, length, data.sha256sum, data.md5sum, (e, objInfo) => {
-                    if (e) {
-                      return cb(e)
-                    }
-                    partsDone.push({ part: partNumber, etag: objInfo.etag })
-                    partNumber++
-                    uploadedSize += length
-                    return cb()
-                  })
-                })
-                .on('error', (e) => cb(e))
-            },
-            (e) => {
-              if (e) {
-                return cb(e)
-              }
-              cb(null, partsDone, uploadId)
-            },
-          )
-        },
-        // all parts uploaded, complete the multipart upload
-        (etags, uploadId, cb) => this.completeMultipartUpload(bucketName, objectName, uploadId, etags, cb),
-      ],
-      (err, ...rest) => {
-        if (err === true) {
-          return
-        }
-        callback(err, ...rest)
-      },
-    )
+    fs.lstat(filePath, (err, stat) => {
+      if (err) {
+        return callback(err)
+      }
+      return this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData, callback)
+    })
   }
 
   // Uploads the object.
@@ -1768,76 +1627,6 @@ export class Client extends TypedClient {
             cb(null, completeMultipartResult)
           }
         })
-    })
-  }
-
-  // Get part-info of all parts of an incomplete upload specified by uploadId.
-  listParts(bucketName, objectName, uploadId, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-    var parts = []
-    var listNext = (marker) => {
-      this.listPartsQuery(bucketName, objectName, uploadId, marker, (e, result) => {
-        if (e) {
-          cb(e)
-          return
-        }
-        parts = parts.concat(result.parts)
-        if (result.isTruncated) {
-          listNext(result.marker)
-          return
-        }
-        cb(null, parts)
-      })
-    }
-    listNext(0)
-  }
-
-  // Called by listParts to fetch a batch of part-info
-  listPartsQuery(bucketName, objectName, uploadId, marker, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!isNumber(marker)) {
-      throw new TypeError('marker should be of type "number"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-    var query = ''
-    if (marker && marker !== 0) {
-      query += `part-number-marker=${marker}&`
-    }
-    query += `uploadId=${uriEscape(uploadId)}`
-
-    var method = 'GET'
-    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getListPartsTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (data) => cb(null, data))
     })
   }
 

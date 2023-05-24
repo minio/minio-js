@@ -16,11 +16,12 @@ import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
+import type { BucketStream, IncompleteUploadedBucketItem, ResultCallback,UploadedObjectInfo } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
-export type { ClientOptions }
+export type { BucketStream,ClientOptions, IncompleteUploadedBucketItem, ResultCallback, UploadedObjectInfo }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -58,7 +59,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
 
 export type NoResultCallback = (error: Error | null) => void
-export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
@@ -98,22 +98,6 @@ export interface BucketItemStat {
   metaData: ItemBucketMetadata
 }
 
-export interface IncompleteUploadedBucketItem {
-  key: string
-  uploadId: string
-  size: number
-}
-
-export interface BucketStream<T> extends ReadableStream {
-  on(event: 'data', listener: (item: T) => void): this
-
-  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
-
-  on(event: 'error', listener: (err: Error) => void): this
-
-  on(event: string | symbol, listener: (...args: any[]) => void): this
-}
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -132,11 +116,6 @@ export interface ItemBucketMetadataList {
 
 export interface ItemBucketMetadata {
   [key: string]: any
-}
-
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
 }
 
 export interface Tag {
@@ -274,12 +253,6 @@ export class Client extends TypedClient {
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  listIncompleteUploads(
-    bucketName: string,
-    prefix?: string,
-    recursive?: boolean,
-  ): BucketStream<IncompleteUploadedBucketItem>
 
   getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
   getBucketVersioning(bucketName: string): Promise<VersioningConfig>
