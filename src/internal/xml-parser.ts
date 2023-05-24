@@ -111,14 +111,14 @@ export type UploadedPart = {
 // parse XML response for list parts of an in progress multipart upload
 export function parseListParts(xml: string): {
   isTruncated: boolean
-  marker: number | undefined
+  marker: number
   parts: UploadedPart[]
 } {
   let xmlobj = parseXml(xml)
-  const result: { isTruncated: boolean; marker: number | undefined; parts: UploadedPart[] } = {
+  const result: { isTruncated: boolean; marker: number; parts: UploadedPart[] } = {
     isTruncated: false,
     parts: [],
-    marker: undefined as number | undefined,
+    marker: 0,
   }
   if (!xmlobj.ListPartsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')

@@ -766,7 +766,7 @@ export class TypedClient {
     let result
     do {
       result = await this.listPartsQuery(bucketName, objectName, uploadId, marker)
-      marker = result.marker as number
+      marker = result.marker
       parts.push(...result.parts)
     } while (result.isTruncated)
 
