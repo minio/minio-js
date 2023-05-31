@@ -30,7 +30,6 @@ import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
-import { Extensions } from './internal/extensions.ts'
 import {
   calculateEvenSplits,
   extractMetadata,
@@ -3213,13 +3212,6 @@ export class Client extends TypedClient {
           cb(null, selectResult)
         })
     })
-  }
-
-  get extensions() {
-    if (!this.clientExtensions) {
-      this.clientExtensions = new Extensions(this)
-    }
-    return this.clientExtensions
   }
 }
 
