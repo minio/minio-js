@@ -14,6 +14,7 @@ import type {
 import type { ClientOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
+import type { Extensions } from './internal/extensions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 
@@ -613,14 +614,7 @@ export class Client extends TypedClient {
   newPostPolicy(): PostPolicy
 
   // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
-  extensions: {
-    listObjectsV2WithMetadata(
-      bucketName: string,
-      prefix?: string,
-      recursive?: boolean,
-      startAfter?: string,
-    ): BucketStream<BucketItemWithMetadata>
-  }
+  extensions: Extensions
 }
 
 export declare class NotificationPoller extends EventEmitter {

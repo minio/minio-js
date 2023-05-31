@@ -3,8 +3,10 @@ import type * as http from 'node:http'
 import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
-import { parseXml } from './helper.ts'
+import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
+import type { ObjectMetaData } from './type.ts'
+import { BucketItemWithMetadata } from '../minio'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -84,4 +86,54 @@ export async function parseResponseError(response: http.IncomingMessage) {
   })
 
   throw e
+}
+
+/**
+ * parse XML response for list objects v2 with metadata in a bucket
+ */
+export function parseListObjectsV2WithMetadata(xml: string) {
+  const result: {
+    objects: Array<BucketItemWithMetadata>
+    isTruncated: boolean
+    nextContinuationToken: string
+  } = {
+    objects: [],
+    isTruncated: false,
+    nextContinuationToken: '',
+  }
+
+  let xmlobj = parseXml(xml)
+  if (!xmlobj.ListBucketResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  }
+  xmlobj = xmlobj.ListBucketResult
+  if (xmlobj.IsTruncated) {
+    result.isTruncated = xmlobj.IsTruncated
+  }
+  if (xmlobj.NextContinuationToken) {
+    result.nextContinuationToken = xmlobj.NextContinuationToken
+  }
+
+  if (xmlobj.Contents) {
+    toArray(xmlobj.Contents).forEach((content) => {
+      const name = sanitizeObjectKey(content.Key)
+      const lastModified = new Date(content.LastModified)
+      const etag = sanitizeETag(content.ETag)
+      const size = content.Size
+      let metadata
+      if (content.UserMetadata != null) {
+        metadata = toArray(content.UserMetadata)[0]
+      } else {
+        metadata = null
+      }
+      result.objects.push({ name, lastModified, etag, size, metadata })
+    })
+  }
+
+  if (xmlobj.CommonPrefixes) {
+    toArray(xmlobj.CommonPrefixes).forEach((commonPrefix) => {
+      result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
+    })
+  }
+  return result
 }
