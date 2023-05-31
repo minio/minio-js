@@ -66,6 +66,7 @@ export class Extensions {
       throw new TypeError('startAfter should be of type "string"')
     }
 
+    // if recursive is false set delimiter to '/'
     const delimiter = recursive ? '' : '/'
     return Stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), {
       objectMode: true,
@@ -78,7 +79,6 @@ export class Extensions {
     delimiter: string,
     startAfter: string,
   ): AsyncIterable<BucketItemWithMetadata> {
-    // if recursive is false set delimiter to '/'
     let ended = false
     let continuationToken = ''
     do {
