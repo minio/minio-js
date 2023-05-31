@@ -67,10 +67,12 @@ export class Extensions {
     }
 
     const delimiter = recursive ? '' : '/'
-    return Stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), { objectMode: true })
+    return Stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), {
+      objectMode: true,
+    })
   }
 
-  private async* listObjectsV2WithMetadataGen(
+  private async *listObjectsV2WithMetadataGen(
     bucketName: string,
     prefix: string,
     delimiter: string,
@@ -80,7 +82,13 @@ export class Extensions {
     let ended = false
     let continuationToken = ''
     do {
-      const result = await this.listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, startAfter)
+      const result = await this.listObjectsV2WithMetadataQuery(
+        bucketName,
+        prefix,
+        continuationToken,
+        delimiter,
+        startAfter,
+      )
       ended = !result.isTruncated
       continuationToken = result.nextContinuationToken
       for (const obj of result.objects) {
