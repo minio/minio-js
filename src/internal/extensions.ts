@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as Stream from 'node:stream'
+import * as stream from 'node:stream'
 
 import * as errors from '../errors.ts'
 import type { BucketItemWithMetadata, BucketStream } from '../minio'
@@ -68,7 +68,7 @@ export class Extensions {
 
     // if recursive is false set delimiter to '/'
     const delimiter = recursive ? '' : '/'
-    return Stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), {
+    return stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), {
       objectMode: true,
     })
   }
