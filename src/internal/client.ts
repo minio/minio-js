@@ -77,7 +77,6 @@ export type RequestOption = Partial<IRequest> & {
   method: string
   bucketName?: string
   objectName?: string
-  region?: string
   query?: string
   pathStyle?: boolean
 }
@@ -276,7 +275,9 @@ export class TypedClient {
    * returns options object that can be used with http.request()
    * Takes care of constructing virtual-host-style or path-style hostname
    */
-  protected getRequestOptions(opts: RequestOption): IRequest & { host: string; headers: Record<string, string> } {
+  protected getRequestOptions(
+    opts: RequestOption & { region: string },
+  ): IRequest & { host: string; headers: Record<string, string> } {
     const method = opts.method
     const region = opts.region
     const bucketName = opts.bucketName
@@ -316,8 +317,7 @@ export class TypedClient {
       if (accelerateEndPoint) {
         host = `${accelerateEndPoint}`
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        host = getS3Endpoint(region!)
+        host = getS3Endpoint(region)
       }
     }
 
@@ -556,9 +556,9 @@ export class TypedClient {
     await this.checkAndRefreshCreds()
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    region = region || (await this.getBucketRegionAsync(options.bucketName!))
+    const finalRegion = region || (await this.getBucketRegionAsync(options.bucketName!))
 
-    const reqOptions = this.getRequestOptions(options)
+    const reqOptions = this.getRequestOptions({ ...options, region: finalRegion })
     if (!this.anonymous) {
       // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
       if (!this.enableSHA256) {
@@ -570,7 +570,14 @@ export class TypedClient {
       if (this.sessionToken) {
         reqOptions.headers['x-amz-security-token'] = this.sessionToken
       }
-      reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
+      reqOptions.headers.authorization = signV4(
+        reqOptions,
+        this.accessKey,
+        this.secretKey,
+        finalRegion,
+        date,
+        sha256sum,
+      )
     }
 
     const response = await request(this.transport, reqOptions, body)
