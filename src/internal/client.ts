@@ -559,9 +559,9 @@ export class TypedClient {
     await this.checkAndRefreshCreds()
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const finalRegion = region || (await this.getBucketRegionAsync(options.bucketName!))
+    region = region || (await this.getBucketRegionAsync(options.bucketName!))
 
-    const reqOptions = this.getRequestOptions({ ...options, region: finalRegion })
+    const reqOptions = this.getRequestOptions({ ...options, region })
     if (!this.anonymous) {
       // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
       if (!this.enableSHA256) {
@@ -573,14 +573,7 @@ export class TypedClient {
       if (this.sessionToken) {
         reqOptions.headers['x-amz-security-token'] = this.sessionToken
       }
-      reqOptions.headers.authorization = signV4(
-        reqOptions,
-        this.accessKey,
-        this.secretKey,
-        finalRegion,
-        date,
-        sha256sum,
-      )
+      reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
     const response = await request(this.transport, reqOptions, body)
