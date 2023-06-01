@@ -571,7 +571,7 @@ export function calculateEvenSplits<T extends { Start?: number }>(
   return { startIndex: startIndexParts, endIndex: endIndexParts, objInfo: objInfo }
 }
 
-const fxp = new XMLParser({})
+const fxp = new XMLParser()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function parseXml(xml: string): any {
