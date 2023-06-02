@@ -621,7 +621,7 @@ export class TypedClient {
     const extractRegionAsync = async (response: http.IncomingMessage) => {
       const body = await readAsString(response)
       const region = xmlParsers.parseBucketRegion(body)
-      this.regionMap[bucketName] = region
+      this.regionMap[bucketName] = region || DEFAULT_REGION
       return region
     }
 
