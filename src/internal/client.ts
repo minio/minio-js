@@ -77,7 +77,6 @@ export type RequestOption = Partial<IRequest> & {
   method: string
   bucketName?: string
   objectName?: string
-  region?: string
   query?: string
   pathStyle?: boolean
 }
@@ -276,7 +275,9 @@ export class TypedClient {
    * returns options object that can be used with http.request()
    * Takes care of constructing virtual-host-style or path-style hostname
    */
-  protected getRequestOptions(opts: RequestOption): IRequest & { host: string; headers: Record<string, string> } {
+  protected getRequestOptions(
+    opts: RequestOption & { region: string },
+  ): IRequest & { host: string; headers: Record<string, string> } {
     const method = opts.method
     const region = opts.region
     const bucketName = opts.bucketName
@@ -316,8 +317,7 @@ export class TypedClient {
       if (accelerateEndPoint) {
         host = `${accelerateEndPoint}`
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        host = getS3Endpoint(region!)
+        host = getS3Endpoint(region)
       }
     }
 
@@ -558,7 +558,7 @@ export class TypedClient {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     region = region || (await this.getBucketRegionAsync(options.bucketName!))
 
-    const reqOptions = this.getRequestOptions(options)
+    const reqOptions = this.getRequestOptions({ ...options, region })
     if (!this.anonymous) {
       // For non-anonymous https requests sha256sum is 'UNSIGNED-PAYLOAD' for signature calculation.
       if (!this.enableSHA256) {
@@ -620,7 +620,7 @@ export class TypedClient {
 
     const extractRegionAsync = async (response: http.IncomingMessage) => {
       const body = await readAsString(response)
-      const region = xmlParsers.parseBucketRegion(body)
+      const region = xmlParsers.parseBucketRegion(body) || DEFAULT_REGION
       this.regionMap[bucketName] = region
       return region
     }
