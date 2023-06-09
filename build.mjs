@@ -58,6 +58,7 @@ const extMap = { cjs: '.js', esm: '.mjs' }
 async function buildFiles({ files, module, outDir }) {
   console.log(`building for ${module}`)
   await promisify(exec)(`npx tsc --outDir ${outDir}`, { stdio: 'inherit' })
+  const ext = extMap[module]
 
   const opt = options(module)
   for (const file of files) {
@@ -69,7 +70,7 @@ async function buildFiles({ files, module, outDir }) {
     const outDirPath = path.dirname(outFilePath)
 
     await fsp.mkdir(outDirPath, { recursive: true })
-    const distCodePath = outFilePath.replace(/\.[tj]s$/g, extMap[module])
+    const distCodePath = outFilePath.replace(/\.[tj]s$/g, ext)
 
     if (file.path.endsWith('.d.ts')) {
       await fsp.copyFile(file.path, outFilePath)
@@ -88,19 +89,8 @@ async function buildFiles({ files, module, outDir }) {
       throw e
     }
   }
-}
 
-async function main() {
-  await fsp.rm('dist', { recursive: true, force: true })
-
-  const entries = fsWalk.walkSync('src/')
-
-  await Promise.all([
-    buildFiles({ files: entries, module: 'cjs', outDir: './dist/main/' }),
-    buildFiles({ files: entries, module: 'esm', outDir: './dist/esm/' }),
-  ])
-
-  for (const file of fsWalk.walkSync('dist/esm/')) {
+  for (const file of fsWalk.walkSync(outDir)) {
     if (file.dirent.isDirectory()) {
       continue
     }
@@ -114,14 +104,28 @@ async function main() {
     const mts = babel.transformSync(fileContent, {
       filename: file.path,
       sourceMaps: true,
-      plugins: [['@babel/plugin-syntax-typescript'], ['replace-import-extension', { extMapping: { '.ts': '.mjs' } }]],
+      plugins: [['@babel/plugin-syntax-typescript'], ['replace-import-extension', { extMapping: { '.ts': ext } }]],
     })
 
     await fsp.unlink(file.path)
 
-    const outFilePath = file.path.slice(0, file.path.length - '.d.ts'.length) + '.d.mts'
+    let outFilePath = file.path.slice(0, file.path.length - '.d.ts'.length) + '.d.ts'
+    if (module === 'esm') {
+      outFilePath = file.path.slice(0, file.path.length - '.d.ts'.length) + '.d.mts'
+    }
     await fsp.writeFile(outFilePath, mts.code)
   }
+}
+
+async function main() {
+  await fsp.rm('dist', { recursive: true, force: true })
+
+  const entries = fsWalk.walkSync('src/')
+
+  await Promise.all([
+    buildFiles({ files: entries, module: 'cjs', outDir: './dist/main/' }),
+    buildFiles({ files: entries, module: 'esm', outDir: './dist/esm/' }),
+  ])
 }
 
 await main()
