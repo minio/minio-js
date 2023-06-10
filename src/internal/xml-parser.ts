@@ -128,7 +128,7 @@ export function parseListParts(xml: string): {
     result.isTruncated = xmlobj.IsTruncated
   }
   if (xmlobj.NextPartNumberMarker) {
-    result.marker = toArray(xmlobj.NextPartNumberMarker)[0]
+    result.marker = toArray(xmlobj.NextPartNumberMarker)[0] || ''
   }
   if (xmlobj.Part) {
     toArray(xmlobj.Part).forEach((p) => {
