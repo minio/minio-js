@@ -132,7 +132,7 @@ export function parseListParts(xml: string): {
   }
   if (xmlobj.Part) {
     toArray(xmlobj.Part).forEach((p) => {
-      const part = +toArray(p.PartNumber)[0]
+      const part = parseInt(toArray(p.PartNumber)[0], 10)
       const lastModified = new Date(p.LastModified)
       const etag = p.ETag.replace(/^"/g, '')
         .replace(/"$/g, '')
