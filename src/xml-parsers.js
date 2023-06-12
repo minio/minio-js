@@ -69,7 +69,7 @@ export function parseListMultipart(xml) {
     result.nextKeyMarker = xmlobj.NextKeyMarker
   }
   if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker || ''
   }
 
   if (xmlobj.CommonPrefixes) {
