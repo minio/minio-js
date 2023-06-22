@@ -245,7 +245,7 @@ export class TypedClient {
   /**
    * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
    */
-  get extensions(): Extensions {
+  get extensions() {
     return this.clientExtensions
   }
 

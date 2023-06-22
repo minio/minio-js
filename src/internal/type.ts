@@ -1,4 +1,7 @@
 import type * as http from 'node:http'
+import type { Readable as ReadableStream } from 'node:stream'
+
+import type { MetadataItem } from '../minio'
 
 export type Binary = string | Buffer
 
@@ -61,4 +64,48 @@ export interface IncompleteUploadedBucketItem {
   key: string
   uploadId: string
   size: number
+}
+
+export interface ItemBucketMetadataList {
+  Items: MetadataItem[]
+}
+
+export interface ItemBucketMetadata {
+  [key: string]: any
+}
+
+export interface BucketItemFromList {
+  name: string
+  creationDate: Date
+}
+
+export interface BucketItemCopy {
+  etag: string
+  lastModified: Date
+}
+
+export type BucketItem =
+  | {
+      name: string
+      size: number
+      etag: string
+      lastModified: Date
+    }
+  | {
+      prefix: string
+      size: 0
+    }
+
+export type BucketItemWithMetadata = BucketItem & {
+  metadata?: ItemBucketMetadata | ItemBucketMetadataList
+}
+
+export interface BucketStream<T> extends ReadableStream {
+  on(event: 'data', listener: (item: T) => void): this
+
+  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
+
+  on(event: 'error', listener: (err: Error) => void): this
+
+  on(event: string | symbol, listener: (...args: any[]) => void): this
 }

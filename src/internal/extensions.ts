@@ -17,10 +17,10 @@
 import * as stream from 'node:stream'
 
 import * as errors from '../errors.ts'
-import type { BucketItemWithMetadata, BucketStream } from '../minio'
 import type { TypedClient } from './client.ts'
 import { isBoolean, isString, isValidBucketName, isValidPrefix, uriEscape } from './helper.ts'
 import { readAsString } from './response.ts'
+import type { BucketItemWithMetadata, BucketStream } from './type.ts'
 import { parseListObjectsV2WithMetadata } from './xml-parser.ts'
 
 export class Extensions {
