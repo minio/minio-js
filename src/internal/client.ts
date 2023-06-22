@@ -26,6 +26,7 @@ import {
   isVirtualHostStyle,
   makeDateLong,
   toSha256,
+  uriEscape,
   uriResourceEscape,
 } from './helper.ts'
 import { request } from './request.ts'
@@ -33,6 +34,7 @@ import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type { Binary, IRequest, NoResultCallback, RemoveOptions, RequestHeaders, Transport } from './type.ts'
+import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
 // will be replaced by bundler.
@@ -747,7 +749,6 @@ export class TypedClient {
    * Remove the specified object.
    */
   removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
@@ -781,5 +782,64 @@ export class TypedClient {
     const query = qs.stringify(queryParams)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
+  }
+
+  /**
+   * Get part-info of all parts of an incomplete upload specified by uploadId.
+   */
+  protected async listParts(bucketName: string, objectName: string, uploadId: string): Promise<UploadedPart[]> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    const parts: UploadedPart[] = []
+    let marker = 0
+    let result
+    do {
+      result = await this.listPartsQuery(bucketName, objectName, uploadId, marker)
+      marker = result.marker
+      parts.push(...result.parts)
+    } while (result.isTruncated)
+
+    return parts
+  }
+
+  /**
+   * Called by listParts to fetch a batch of part-info
+   */
+  private async listPartsQuery(bucketName: string, objectName: string, uploadId: string, marker: number) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isNumber(marker)) {
+      throw new TypeError('marker should be of type "number"')
+    }
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    let query = `uploadId=${uriEscape(uploadId)}`
+    if (marker) {
+      query += `&part-number-marker=${marker}`
+    }
+
+    const method = 'GET'
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
+    return xmlParsers.parseListParts(await readAsString(res))
   }
 }

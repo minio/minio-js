@@ -64,3 +64,9 @@ export interface RemoveOptions {
   governanceBypass?: boolean
   forceDelete?: boolean
 }
+
+export interface IncompleteUploadedBucketItem {
+  key: string
+  uploadId: string
+  size: number
+}
