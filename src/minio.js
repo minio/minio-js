@@ -284,14 +284,11 @@ export class Client extends TypedClient {
             result.uploads,
             (upload, cb) => {
               // for each incomplete upload add the sizes of its uploaded parts
-              this.listParts(bucket, upload.key, upload.uploadId, (err, parts) => {
-                if (err) {
-                  return cb(err)
-                }
+              this.listParts(bucket, upload.key, upload.uploadId).then((parts) => {
                 upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                 uploads.push(upload)
                 cb()
-              })
+              }, cb)
             },
             (err) => {
               if (err) {
@@ -1626,76 +1623,6 @@ export class Client extends TypedClient {
             cb(null, completeMultipartResult)
           }
         })
-    })
-  }
-
-  // Get part-info of all parts of an incomplete upload specified by uploadId.
-  listParts(bucketName, objectName, uploadId, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-    var parts = []
-    var listNext = (marker) => {
-      this.listPartsQuery(bucketName, objectName, uploadId, marker, (e, result) => {
-        if (e) {
-          cb(e)
-          return
-        }
-        parts = parts.concat(result.parts)
-        if (result.isTruncated) {
-          listNext(result.marker)
-          return
-        }
-        cb(null, parts)
-      })
-    }
-    listNext(0)
-  }
-
-  // Called by listParts to fetch a batch of part-info
-  listPartsQuery(bucketName, objectName, uploadId, marker, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!isNumber(marker)) {
-      throw new TypeError('marker should be of type "number"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-    var query = ''
-    if (marker && marker !== 0) {
-      query += `part-number-marker=${marker}&`
-    }
-    query += `uploadId=${uriEscape(uploadId)}`
-
-    var method = 'GET'
-    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getListPartsTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (data) => cb(null, data))
     })
   }
 

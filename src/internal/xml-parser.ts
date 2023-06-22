@@ -134,6 +134,65 @@ export function parseListObjectsV2WithMetadata(xml: string) {
       result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
     })
   }
+  return result
+}
 
+export type Multipart = {
+  uploads: Array<{
+    key: string
+    uploadId: string
+    initiator: unknown
+    owner: unknown
+    storageClass: unknown
+    initiated: unknown
+  }>
+  prefixes: { prefix: string }[]
+  isTruncated: boolean
+  nextKeyMarker: undefined
+  nextUploadIdMarker: undefined
+}
+
+export type UploadedPart = {
+  part: number
+  lastModified?: Date
+  etag: string
+  size: number
+}
+
+// parse XML response for list parts of an in progress multipart upload
+export function parseListParts(xml: string): {
+  isTruncated: boolean
+  marker: number
+  parts: UploadedPart[]
+} {
+  let xmlobj = parseXml(xml)
+  const result: { isTruncated: boolean; marker: number; parts: UploadedPart[] } = {
+    isTruncated: false,
+    parts: [],
+    marker: 0,
+  }
+  if (!xmlobj.ListPartsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')
+  }
+  xmlobj = xmlobj.ListPartsResult
+  if (xmlobj.IsTruncated) {
+    result.isTruncated = xmlobj.IsTruncated
+  }
+  if (xmlobj.NextPartNumberMarker) {
+    result.marker = toArray(xmlobj.NextPartNumberMarker)[0] || ''
+  }
+  if (xmlobj.Part) {
+    toArray(xmlobj.Part).forEach((p) => {
+      const part = parseInt(toArray(p.PartNumber)[0], 10)
+      const lastModified = new Date(p.LastModified)
+      const etag = p.ETag.replace(/^"/g, '')
+        .replace(/"$/g, '')
+        .replace(/^&quot;/g, '')
+        .replace(/&quot;$/g, '')
+        .replace(/^&#34;/g, '')
+        .replace(/&#34;$/g, '')
+      result.parts.push({ part, lastModified, etag, size: parseInt(p.Size, 10) })
+    })
+  }
   return result
 }

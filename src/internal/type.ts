@@ -56,3 +56,9 @@ export interface IRequest {
 }
 
 export type ICanonicalRequest = string
+
+export interface IncompleteUploadedBucketItem {
+  key: string
+  uploadId: string
+  size: number
+}

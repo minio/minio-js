@@ -16,11 +16,12 @@ import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
+import type { IncompleteUploadedBucketItem } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
-export type { ClientOptions }
+export type { ClientOptions, IncompleteUploadedBucketItem }
 
 // Exports only from typings
 export type NotificationEvent =
@@ -100,12 +101,6 @@ export interface BucketItemStat {
   etag: string
   lastModified: Date
   metaData: ItemBucketMetadata
-}
-
-export interface IncompleteUploadedBucketItem {
-  key: string
-  uploadId: string
-  size: number
 }
 
 export interface BucketStream<T> extends ReadableStream {
