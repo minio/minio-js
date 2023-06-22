@@ -11,12 +11,12 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
-import type { ClientOptions } from './internal/client.ts'
+import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
-import type { IncompleteUploadedBucketItem, NoResultCallback, RemoveOptions } from './internal/type.ts'
+import type { IncompleteUploadedBucketItem } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'

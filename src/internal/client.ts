@@ -33,7 +33,7 @@ import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, IRequest, NoResultCallback, RemoveOptions, RequestHeaders, Transport } from './type.ts'
+import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -83,6 +83,14 @@ export type RequestOption = Partial<IRequest> & {
   objectName?: string
   query?: string
   pathStyle?: boolean
+}
+
+export type NoResultCallback = (error: unknown) => void
+
+export interface RemoveOptions {
+  versionId?: string
+  governanceBypass?: boolean
+  forceDelete?: boolean
 }
 
 export class TypedClient {
