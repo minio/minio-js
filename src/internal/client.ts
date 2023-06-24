@@ -765,11 +765,15 @@ export class TypedClient {
 
   /**
    * Remove the specified object.
+   * @deprecated use new promise style API
    */
   removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
+  /**
+   * @deprecated use new promise style API
+   */
   // @ts-ignore
   removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
+  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
 
   async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
