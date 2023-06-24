@@ -71,6 +71,7 @@ export interface ItemBucketMetadataList {
 }
 
 export interface ItemBucketMetadata {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
@@ -107,5 +108,6 @@ export interface BucketStream<T> extends ReadableStream {
 
   on(event: 'error', listener: (err: Error) => void): this
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string | symbol, listener: (...args: any[]) => void): this
 }
