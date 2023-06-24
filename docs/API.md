@@ -1287,35 +1287,28 @@ __Parameters__
 __Example 1__
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg')
-.then(
-  () => console.log('Removed the object'),
-  err => console.log('Unable to remove object', err)
-)
+await minioClient.removeObject('mybucket', 'photo.jpg')
+console.log('Removed the object')
 ```
 
 __Example 2__
 Delete a specific version of an object
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-versionId" }).then(() => {
+try {
+  await minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-versionId" })
   console.log('Removed the object')
-},
-err => {
-    return console.log('Unable to remove object', err)
-})
+} catch (err) {
+  console.log('Unable to remove object', err)
+}
 ```
 
 __Example 3__
 Remove an object version locked with retention mode `GOVERNANCE` using the `governanceBypass` remove option
 
 ```js
-s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true}).then(() => {
-  console.log("Success")
-},(err)=>{
- console.log(err)
-})
-
+await s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true})
+console.log("Success")
 ```
 
 <a name="removeObjects"></a>
