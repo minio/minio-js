@@ -16,12 +16,31 @@ import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
-import type { IncompleteUploadedBucketItem } from './internal/type.ts'
+import type {
+  BucketItem,
+  BucketItemCopy,
+  BucketItemFromList,
+  BucketItemWithMetadata,
+  BucketStream,
+  IncompleteUploadedBucketItem,
+  ItemBucketMetadata,
+  ItemBucketMetadataList,
+} from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
-export type { ClientOptions, IncompleteUploadedBucketItem }
+export type {
+  BucketItem,
+  BucketItemCopy,
+  BucketItemFromList,
+  BucketItemWithMetadata,
+  BucketStream,
+  ClientOptions,
+  IncompleteUploadedBucketItem,
+  ItemBucketMetadata,
+  ItemBucketMetadataList,
+}
 
 // Exports only from typings
 export type NotificationEvent =
@@ -70,43 +89,11 @@ export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
 
-export interface BucketItemFromList {
-  name: string
-  creationDate: Date
-}
-
-export interface BucketItemCopy {
-  etag: string
-  lastModified: Date
-}
-
-export interface BucketItem {
-  name: string
-  prefix: string
-  size: number
-  etag: string
-  lastModified: Date
-}
-
-export interface BucketItemWithMetadata extends BucketItem {
-  metadata: ItemBucketMetadata | ItemBucketMetadataList
-}
-
 export interface BucketItemStat {
   size: number
   etag: string
   lastModified: Date
   metaData: ItemBucketMetadata
-}
-
-export interface BucketStream<T> extends ReadableStream {
-  on(event: 'data', listener: (item: T) => void): this
-
-  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
-
-  on(event: 'error', listener: (err: Error) => void): this
-
-  on(event: string | symbol, listener: (...args: any[]) => void): this
 }
 
 export interface PostPolicyResult {
@@ -119,14 +106,6 @@ export interface PostPolicyResult {
 export interface MetadataItem {
   Key: string
   Value: string
-}
-
-export interface ItemBucketMetadataList {
-  Items: MetadataItem[]
-}
-
-export interface ItemBucketMetadata {
-  [key: string]: any
 }
 
 export interface UploadedObjectInfo {
@@ -606,16 +585,6 @@ export class Client extends TypedClient {
 
   // Other
   newPostPolicy(): PostPolicy
-
-  // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
-  extensions: {
-    listObjectsV2WithMetadata(
-      bucketName: string,
-      prefix?: string,
-      recursive?: boolean,
-      startAfter?: string,
-    ): BucketStream<BucketItemWithMetadata>
-  }
 }
 
 export declare class NotificationPoller extends EventEmitter {

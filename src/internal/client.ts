@@ -9,6 +9,7 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
+import { Extensions } from './extensions.ts'
 import {
   isAmazonEndpoint,
   isBoolean,
@@ -108,6 +109,7 @@ export class TypedClient {
   protected reqOptions: Record<string, unknown>
 
   protected transportAgent: http.Agent
+  private readonly clientExtensions: Extensions
 
   constructor(params: ClientOptions) {
     // @ts-expect-error deprecated property
@@ -237,6 +239,14 @@ export class TypedClient {
 
     this.s3AccelerateEndpoint = params.s3AccelerateEndpoint || undefined
     this.reqOptions = {}
+    this.clientExtensions = new Extensions(this)
+  }
+
+  /**
+   * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
+   */
+  get extensions() {
+    return this.clientExtensions
   }
 
   /**

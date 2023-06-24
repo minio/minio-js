@@ -27,7 +27,6 @@ import Xml from 'xml'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
-import { extensions } from './extensions.js'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
@@ -2905,13 +2904,6 @@ export class Client extends TypedClient {
           cb(null, selectResult)
         })
     })
-  }
-
-  get extensions() {
-    if (!this.clientExtensions) {
-      this.clientExtensions = new extensions(this)
-    }
-    return this.clientExtensions
   }
 }
 
