@@ -1287,8 +1287,10 @@ __Parameters__
 __Example 1__
 
 ```js
-await minioClient.removeObject('mybucket', 'photo.jpg')
-console.log('Removed the object')
+(async function () {
+  await minioClient.removeObject("mybucket", "photo.jpg");
+  console.log("Removed the object");
+})();
 ```
 
 __Example 2__
