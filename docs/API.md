@@ -1309,8 +1309,10 @@ __Example 3__
 Remove an object version locked with retention mode `GOVERNANCE` using the `governanceBypass` remove option
 
 ```js
-await s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true})
-console.log("Success")
+(async function () {
+  await s3Client.removeObject('my-bucketname', 'my-objectname', {versionId:"my-versionId", governanceBypass:true})
+  console.log("Success")
+})();
 ```
 
 <a name="removeObjects"></a>
