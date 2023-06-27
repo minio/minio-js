@@ -1297,12 +1297,14 @@ __Example 2__
 Delete a specific version of an object
 
 ```js
-try {
-  await minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-versionId" })
-  console.log('Removed the object')
-} catch (err) {
-  console.log('Unable to remove object', err)
-}
+(async function () {
+  try {
+    await minioClient.removeObject('mybucket', 'photo.jpg', { versionId : "my-versionId" })
+    console.log('Removed the object')
+  } catch (err) {
+    console.log('Unable to remove object', err)
+  }
+})();
 ```
 
 __Example 3__
