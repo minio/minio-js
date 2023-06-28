@@ -1,3 +1,4 @@
 /dist/
 *.md
+!docs/API.md
 /.github/workflows/
