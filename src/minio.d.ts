@@ -11,7 +11,7 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
-import type { ClientOptions } from './internal/client.ts'
+import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
@@ -40,6 +40,8 @@ export type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  NoResultCallback,
+  RemoveOptions,
 }
 
 // Exports only from typings
@@ -76,8 +78,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  * @deprecated keep for backward compatible
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
-
-export type NoResultCallback = (error: Error | null) => void
 export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
@@ -221,11 +221,6 @@ export class TargetConfig {
 
 export interface MakeBucketOpt {
   ObjectLocking: boolean
-}
-
-export interface RemoveOptions {
-  versionId?: string
-  governanceBypass?: boolean
 }
 
 // Exports from library
@@ -391,10 +386,6 @@ export class Client extends TypedClient {
 
   statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
   statObject(bucketName: string, objectName: string): Promise<BucketItemStat>
-
-  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
 
   removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: string[]): Promise<void>

@@ -4,6 +4,7 @@ import type * as stream from 'node:stream'
 
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
+import * as qs from 'query-string'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
@@ -83,6 +84,14 @@ export type RequestOption = Partial<IRequest> & {
   objectName?: string
   query?: string
   pathStyle?: boolean
+}
+
+export type NoResultCallback = (error: unknown) => void
+
+export interface RemoveOptions {
+  versionId?: string
+  governanceBypass?: boolean
+  forceDelete?: boolean
 }
 
 export class TypedClient {
@@ -752,6 +761,49 @@ export class TypedClient {
       // @ts-ignore
       (err) => cb(err),
     )
+  }
+
+  /**
+   * Remove the specified object.
+   * @deprecated use new promise style API
+   */
+  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
+  /**
+   * @deprecated use new promise style API
+   */
+  // @ts-ignore
+  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
+  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
+
+  async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isObject(removeOpts)) {
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
+
+    const method = 'DELETE'
+
+    const headers: RequestHeaders = {}
+    if (removeOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
+    }
+    if (removeOpts.forceDelete) {
+      headers['x-minio-force-delete'] = true
+    }
+
+    const queryParams: Record<string, string> = {}
+    if (removeOpts.versionId) {
+      queryParams.versionId = `${removeOpts.versionId}`
+    }
+    const query = qs.stringify(queryParams)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
 
   /**

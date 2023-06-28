@@ -28,6 +28,7 @@ import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { callbackify } from './internal/callbackify.js'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import {
@@ -1148,56 +1149,6 @@ export class Client extends TypedClient {
 
       cb(null, result)
     })
-  }
-
-  // Remove the specified object.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `removeOpts` _object_: Version of the object in the form `{versionId:'my-uuid', governanceBypass:true|false, forceDelete:true|false}`. Default is `{}`. (optional)
-  // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeObject(bucketName, objectName, removeOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    // backward compatibility
-    if (isFunction(removeOpts)) {
-      cb = removeOpts
-      removeOpts = {}
-    }
-
-    if (!isObject(removeOpts)) {
-      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    const method = 'DELETE'
-    const queryParams = {}
-
-    if (removeOpts.versionId) {
-      queryParams.versionId = `${removeOpts.versionId}`
-    }
-    const headers = {}
-    if (removeOpts.governanceBypass) {
-      headers['X-Amz-Bypass-Governance-Retention'] = true
-    }
-    if (removeOpts.forceDelete) {
-      headers['x-minio-force-delete'] = true
-    }
-
-    const query = querystring.stringify(queryParams)
-
-    let requestOptions = { method, bucketName, objectName, headers }
-    if (query) {
-      requestOptions['query'] = query
-    }
-
-    this.makeRequest(requestOptions, '', [200, 204], '', false, cb)
   }
 
   // Remove all the objects residing in the objectsList.
@@ -2920,7 +2871,6 @@ Client.prototype.putObject = promisify(Client.prototype.putObject)
 Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.statObject = promisify(Client.prototype.statObject)
-Client.prototype.removeObject = promisify(Client.prototype.removeObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
 Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
@@ -2958,3 +2908,6 @@ Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalH
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
+
+// refactored API use promise internally
+Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
