@@ -209,32 +209,6 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, headers }, payload, [200], region, false, processWithRetry)
   }
 
-  // List of buckets created.
-  //
-  // __Arguments__
-  // * `callback(err, buckets)` _function_ - callback function with error as the first argument. `buckets` is an array of bucket information
-  //
-  // `buckets` array element:
-  // * `bucket.name` _string_ : bucket name
-  // * `bucket.creationDate` _Date_: date when bucket was created
-  listBuckets(cb) {
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'GET'
-    this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getListBucketTransformer()
-      var buckets
-      pipesetup(response, transformer)
-        .on('data', (result) => (buckets = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, buckets))
-    })
-  }
-
   // Returns a stream that emits objects that are partially uploaded.
   //
   // __Arguments__
@@ -2860,7 +2834,6 @@ export class Client extends TypedClient {
 
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
-Client.prototype.listBuckets = promisify(Client.prototype.listBuckets)
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 Client.prototype.removeBucket = promisify(Client.prototype.removeBucket)
 
@@ -2911,3 +2884,4 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 
 // refactored API use promise internally
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
+Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)

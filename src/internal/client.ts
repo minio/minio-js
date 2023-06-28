@@ -9,6 +9,7 @@ import * as qs from 'query-string'
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
+import type { ResultCallback } from '../minio.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
@@ -34,7 +35,7 @@ import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
+import type { Binary, BucketItemFromList, IRequest, RequestHeaders, Transport } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -863,5 +864,13 @@ export class TypedClient {
     const method = 'GET'
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
     return xmlParsers.parseListParts(await readAsString(res))
+  }
+
+  listBuckets(callback: ResultCallback<BucketItemFromList[]>): Promise<BucketItemFromList[]>
+  async listBuckets(): Promise<BucketItemFromList[]> {
+    const method = 'GET'
+    const httpRes = await this.makeRequestAsync({ method }, '', [200], DEFAULT_REGION)
+    const xmlResult = await readAsString(httpRes)
+    return xmlParsers.parseListBucket(xmlResult)
   }
 }
