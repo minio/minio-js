@@ -774,7 +774,7 @@ export class TypedClient {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     const method = 'DELETE'
-    this.makeRequestAsyncOmit({ method, bucketName }, '', [204])
+    await this.makeRequestAsyncOmit({ method, bucketName }, '', [204])
     delete this.regionMap[bucketName]
   }
 
