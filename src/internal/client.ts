@@ -763,11 +763,12 @@ export class TypedClient {
     )
   }
 
+  async removeBucket(bucketName: string): Promise<void>
+
   /**
    * @deprecated use promise style API
    */
   removeBucket(bucketName: string, callback: NoResultCallback): void
-  async removeBucket(bucketName: string): Promise<void>
 
   async removeBucket(bucketName: string): Promise<void> {
     if (!isValidBucketName(bucketName)) {
