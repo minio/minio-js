@@ -764,6 +764,21 @@ export class TypedClient {
   }
 
   /**
+   * @deprecated use promise style API
+   */
+  removeBucket(bucketName: string, callback: NoResultCallback): void
+  async removeBucket(bucketName: string): Promise<void>
+
+  async removeBucket(bucketName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    this.makeRequestAsyncOmit({ method, bucketName }, '', [204])
+    delete this.regionMap[bucketName]
+  }
+
+  /**
    * Remove the specified object.
    * @deprecated use new promise style API
    */
