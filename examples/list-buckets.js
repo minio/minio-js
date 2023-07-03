@@ -25,17 +25,7 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-//Callback Style
-s3Client.listBuckets(function (e, buckets) {
-  if (e) {
-    return console.log(e.message)
-  }
-  console.log('Success', buckets)
-})
-
-//Async/Await Style
-//==================
-const listBucketsTest = async () => {
+const listBucketsExample = async () => {
   try {
     const buckets = await s3Client.listBuckets()
     console.log('Success', buckets)
@@ -43,5 +33,4 @@ const listBucketsTest = async () => {
     console.log(err.message)
   }
 }
-listBucketsTest()
-//=====================
+listBucketsExample()

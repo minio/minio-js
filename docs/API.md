@@ -189,11 +189,9 @@ Lists all buckets.
 
 **Parameters**
 
-| Param                          | Type       | Description                                                                                                                                                      |
-| ------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `callback(err, bucketStream) ` | _function_ | Callback function with error as the first argument. `bucketStream` is the stream emitting bucket information. If no callback is passed, a `Promise` is returned. |
+NIL
 
-bucketStream emits Object with the format:-
+Returns Object with the format:-
 
 | Param                 | Type     | Description                   |
 | --------------------- | -------- | ----------------------------- |
@@ -203,10 +201,16 @@ bucketStream emits Object with the format:-
 **Example**
 
 ```js
-minioClient.listBuckets(function (err, buckets) {
-  if (err) return console.log(err)
-  console.log('buckets :', buckets)
-})
+const listBuckets = async () => {
+  try {
+    const buckets = await s3Client.listBuckets()
+    console.log('Success', buckets)
+  } catch (err) {
+    console.log(err.message)
+  }
+}
+
+listBuckets()
 ```
 
 <a name="bucketExists"></a>

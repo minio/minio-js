@@ -9,7 +9,6 @@ import * as qs from 'query-string'
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION } from '../helpers.ts'
-import type { ResultCallback } from '../minio.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
@@ -866,7 +865,6 @@ export class TypedClient {
     return xmlParsers.parseListParts(await readAsString(res))
   }
 
-  listBuckets(callback: ResultCallback<BucketItemFromList[]>): Promise<BucketItemFromList[]>
   async listBuckets(): Promise<BucketItemFromList[]> {
     const method = 'GET'
     const httpRes = await this.makeRequestAsync({ method }, '', [200], DEFAULT_REGION)
