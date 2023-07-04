@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+// Using the top-level await as we use .mjs extension
+// run it like: node list-buckets.mjs
+
+
 // Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
 // replace them with original values.
 
-var Minio = require('minio')
+
+import * as Minio from 'minio'
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -25,12 +30,9 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const listBucketsExample = async () => {
-  try {
-    const buckets = await s3Client.listBuckets()
-    console.log('Success', buckets)
-  } catch (err) {
-    console.log(err.message)
-  }
+try {
+  const buckets = await s3Client.listBuckets()
+  console.log('Success', buckets)
+} catch (err) {
+  console.log(err.message)
 }
-listBucketsExample()

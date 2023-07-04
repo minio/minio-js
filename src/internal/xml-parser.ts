@@ -3,10 +3,9 @@ import type * as http from 'node:http'
 import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
-import type { BucketItemWithMetadata } from '../minio'
-import type { BucketItemFromList } from '../minio'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
+import type { BucketItemFromList, BucketItemWithMetadata } from './type.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
