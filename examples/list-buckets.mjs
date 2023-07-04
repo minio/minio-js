@@ -17,10 +17,8 @@
 // Using the top-level await as we use .mjs extension
 // run it like: node list-buckets.mjs
 
-
 // Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
 // replace them with original values.
-
 
 import * as Minio from 'minio'
 
