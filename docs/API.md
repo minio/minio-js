@@ -183,7 +183,7 @@ minioClient.makeBucket('mybucket', 'us-east-1', { ObjectLocking: true }, functio
 
 <a name="listBuckets"></a>
 
-### listBuckets([callback])
+### listBuckets()
 
 Lists all buckets.
 
@@ -191,7 +191,7 @@ Lists all buckets.
 
 NIL
 
-Returns Object with the format:-
+Returns Array of Objects with the format:-
 
 | Param                 | Type     | Description                   |
 | --------------------- | -------- | ----------------------------- |
@@ -200,17 +200,17 @@ Returns Object with the format:-
 
 **Example**
 
-```js
-const listBuckets = async () => {
-  try {
-    const buckets = await s3Client.listBuckets()
-    console.log('Success', buckets)
-  } catch (err) {
-    console.log(err.message)
-  }
-}
+Please refer to: [list-buckets.mjs](..%2Fexamples%2Flist-buckets.mjs)
 
-listBuckets()
+_Note_: the below example relies on top level await.
+
+```js
+try {
+  const buckets = await s3Client.listBuckets()
+  console.log('Success', buckets)
+} catch (err) {
+  console.log(err.message)
+}
 ```
 
 <a name="bucketExists"></a>
