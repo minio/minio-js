@@ -145,6 +145,8 @@ var s3Client = new Minio.Client({
 })
 ```
 
+### _Note_: The below examples rely on top level await .
+
 ## 2. Bucket operations
 
 <a name="makeBucket"></a>
@@ -170,6 +172,8 @@ minioClient.makeBucket('mybucket', 'us-east-1', function (err) {
   console.log('Bucket created successfully in "us-east-1".')
 })
 ```
+
+
 
 **Example 1**
 Create a bucket with object locking enabled.
@@ -201,8 +205,6 @@ Returns Array of Objects with the format:-
 **Example**
 
 Please refer to: [list-buckets.mjs](..%2Fexamples%2Flist-buckets.mjs)
-
-_Note_: the below example relies on top level await.
 
 ```js
 try {
