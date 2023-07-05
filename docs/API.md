@@ -173,8 +173,6 @@ minioClient.makeBucket('mybucket', 'us-east-1', function (err) {
 })
 ```
 
-
-
 **Example 1**
 Create a bucket with object locking enabled.
 
