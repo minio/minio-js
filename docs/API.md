@@ -256,11 +256,10 @@ Removes a bucket.
 
 ```js
 try {
-  
-await minioClient.removeBucket('mybucket')
+  await minioClient.removeBucket('mybucket')
   console.log('Bucket removed successfully.')
-}catch (err){
-   console.log('unable to remove bucket.')
+} catch (err) {
+  console.log('unable to remove bucket.')
 }
 ```
 
