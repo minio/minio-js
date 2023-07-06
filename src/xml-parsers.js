@@ -93,26 +93,6 @@ export function parseListMultipart(xml) {
 }
 
 // parse XML response to list all the owned buckets
-export function parseListBucket(xml) {
-  var result = []
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.ListAllMyBucketsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
-  }
-  xmlobj = xmlobj.ListAllMyBucketsResult
-
-  if (xmlobj.Buckets) {
-    if (xmlobj.Buckets.Bucket) {
-      toArray(xmlobj.Buckets.Bucket).forEach((bucket) => {
-        var name = bucket.Name
-        var creationDate = new Date(bucket.CreationDate)
-        result.push({ name, creationDate })
-      })
-    }
-  }
-  return result
-}
 
 // parse XML response for bucket notification
 export function parseBucketNotification(xml) {

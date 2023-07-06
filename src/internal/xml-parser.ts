@@ -3,9 +3,9 @@ import type * as http from 'node:http'
 import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
-import type { BucketItemWithMetadata } from '../minio'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
+import type { BucketItemFromList, BucketItemWithMetadata } from './type.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -192,6 +192,26 @@ export function parseListParts(xml: string): {
         .replace(/^&#34;/g, '')
         .replace(/&#34;$/g, '')
       result.parts.push({ part, lastModified, etag, size: parseInt(p.Size, 10) })
+    })
+  }
+  return result
+}
+
+export function parseListBucket(xml: string) {
+  let result: BucketItemFromList[] = []
+  const parsedXmlRes = parseXml(xml)
+
+  if (!parsedXmlRes.ListAllMyBucketsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
+  }
+  const { ListAllMyBucketsResult: { Buckets = {} } = {} } = parsedXmlRes
+
+  if (Buckets.Bucket) {
+    result = toArray(Buckets.Bucket).map((bucket = {}) => {
+      const { Name: bucketName, CreationDate } = bucket
+      const creationDate = new Date(CreationDate)
+
+      return { name: bucketName, creationDate: creationDate }
     })
   }
   return result
