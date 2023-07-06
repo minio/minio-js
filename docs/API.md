@@ -145,7 +145,7 @@ var s3Client = new Minio.Client({
 })
 ```
 
-### _Note_: The below examples rely on top level await.
+### _Note_: The below examples may rely on top level await.
 
 ## 2. Bucket operations
 
