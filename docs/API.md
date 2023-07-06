@@ -145,7 +145,7 @@ var s3Client = new Minio.Client({
 })
 ```
 
-### _Note_: The below examples rely on top level await .
+### _Note_: The below examples may rely on [top level await](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#top_level_await).
 
 ## 2. Bucket operations
 
@@ -255,10 +255,13 @@ Removes a bucket.
 **Example**
 
 ```js
-minioClient.removeBucket('mybucket', function (err) {
-  if (err) return console.log('unable to remove bucket.')
+try {
+  
+await minioClient.removeBucket('mybucket')
   console.log('Bucket removed successfully.')
-})
+}catch (err){
+   console.log('unable to remove bucket.')
+}
 ```
 
 <a name="listObjects"></a>
