@@ -145,6 +145,8 @@ var s3Client = new Minio.Client({
 })
 ```
 
+### _Note_: The below examples rely on top level await .
+
 ## 2. Bucket operations
 
 <a name="makeBucket"></a>
@@ -183,17 +185,15 @@ minioClient.makeBucket('mybucket', 'us-east-1', { ObjectLocking: true }, functio
 
 <a name="listBuckets"></a>
 
-### listBuckets([callback])
+### listBuckets()
 
 Lists all buckets.
 
 **Parameters**
 
-| Param                          | Type       | Description                                                                                                                                                      |
-| ------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `callback(err, bucketStream) ` | _function_ | Callback function with error as the first argument. `bucketStream` is the stream emitting bucket information. If no callback is passed, a `Promise` is returned. |
+NIL
 
-bucketStream emits Object with the format:-
+Returns Array of Objects with the format:-
 
 | Param                 | Type     | Description                   |
 | --------------------- | -------- | ----------------------------- |
@@ -202,11 +202,15 @@ bucketStream emits Object with the format:-
 
 **Example**
 
+Please refer to: [list-buckets.mjs](..%2Fexamples%2Flist-buckets.mjs)
+
 ```js
-minioClient.listBuckets(function (err, buckets) {
-  if (err) return console.log(err)
-  console.log('buckets :', buckets)
-})
+try {
+  const buckets = await s3Client.listBuckets()
+  console.log('Success', buckets)
+} catch (err) {
+  console.log(err.message)
+}
 ```
 
 <a name="bucketExists"></a>

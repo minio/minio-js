@@ -34,7 +34,7 @@ import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, IRequest, RequestHeaders, Transport } from './type.ts'
+import type { Binary, BucketItemFromList, IRequest, RequestHeaders, Transport } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -879,5 +879,12 @@ export class TypedClient {
     const method = 'GET'
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
     return xmlParsers.parseListParts(await readAsString(res))
+  }
+
+  async listBuckets(): Promise<BucketItemFromList[]> {
+    const method = 'GET'
+    const httpRes = await this.makeRequestAsync({ method }, '', [200], DEFAULT_REGION)
+    const xmlResult = await readAsString(httpRes)
+    return xmlParsers.parseListBucket(xmlResult)
   }
 }

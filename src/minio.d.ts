@@ -231,9 +231,6 @@ export class Client extends TypedClient {
   makeBucket(bucketName: string, callback: NoResultCallback): void
   makeBucket(bucketName: string, region?: Region, makeOpts?: MakeBucketOpt): Promise<void>
 
-  listBuckets(callback: ResultCallback<BucketItemFromList[]>): void
-  listBuckets(): Promise<BucketItemFromList[]>
-
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
 
