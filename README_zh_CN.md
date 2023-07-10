@@ -156,7 +156,7 @@ mc ls play/europetrip/
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 * [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
-* [remove-bucket.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.js)
+* [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 
 #### 完整示例 : 操作文件对象

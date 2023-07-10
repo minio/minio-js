@@ -308,28 +308,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Remove a bucket.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ : name of the bucket
-  // * `callback(err)` _function_ : `err` is `null` if the bucket is removed successfully.
-  removeBucket(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'DELETE'
-    this.makeRequest({ method, bucketName }, '', [204], '', false, (e) => {
-      // If the bucket was successfully removed, remove the region map entry.
-      if (!e) {
-        delete this.regionMap[bucketName]
-      }
-      cb(e)
-    })
-  }
-
   // Remove the partially uploaded object.
   //
   // __Arguments__
@@ -2835,7 +2813,6 @@ export class Client extends TypedClient {
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
-Client.prototype.removeBucket = promisify(Client.prototype.removeBucket)
 
 Client.prototype.getObject = promisify(Client.prototype.getObject)
 Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
@@ -2884,4 +2861,5 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 
 // refactored API use promise internally
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
+Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)

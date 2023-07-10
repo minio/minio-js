@@ -234,9 +234,6 @@ export class Client extends TypedClient {
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
 
-  removeBucket(bucketName: string, callback: NoResultCallback): void
-  removeBucket(bucketName: string): Promise<void>
-
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>

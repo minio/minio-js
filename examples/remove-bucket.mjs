@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -27,9 +27,9 @@ var s3Client = new Minio.Client({
 
 // Remove a bucket name my-bucketname.
 // This operation will only work if your bucket is empty.
-s3Client.removeBucket('my-bucketname', function (e) {
-  if (e) {
-    return console.log(e)
-  }
+try {
+  await s3Client.removeBucket('my-bucketname')
   console.log('Success')
-})
+} catch (e) {
+  return console.log(e)
+}
