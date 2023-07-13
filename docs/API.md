@@ -206,7 +206,7 @@ Please refer to: [list-buckets.mjs](..%2Fexamples%2Flist-buckets.mjs)
 
 ```js
 try {
-  const buckets = await s3Client.listBuckets()
+  const buckets = await minioClient.listBuckets()
   console.log('Success', buckets)
 } catch (err) {
   console.log(err.message)
@@ -581,26 +581,26 @@ minioClient.getBucketReplication('bucketname', function (err, replicationConfig)
 
 <a name="removeBucketReplication"></a>
 
-### removeBucketReplication(bucketName, callback)
+### removeBucketReplication(bucketName)
 
 Remove replication config of a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                     |
-| --------------- | ---------- | ----------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                             |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
+Please refer to : [remove-bucket-replication.mjs](..%2Fexamples%2Fremove-bucket-replication.mjs)
 
 ```js
-minioClient.removeBucketReplication('bucketname', function (err, replicationConfig) {
-  if (err) {
-    return console.log(err)
-  }
+try {
+  minioClient.removeBucketReplication('source-bucket')
   console.log('Success')
-})
+} catch (err) {
+  console.log(err.message)
+}
 ```
 
 <a name="setBucketTagging"></a>
