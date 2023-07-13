@@ -26,7 +26,7 @@ const s3Client = new Minio.Client({
 })
 
 try {
-  s3Client.removeBucketReplication('source-bucket')
+  await s3Client.removeBucketReplication('source-bucket')
   console.log('Success')
 } catch (err) {
   console.log(err.message)

@@ -888,6 +888,7 @@ export class TypedClient {
     return xmlParsers.parseListBucket(xmlResult)
   }
 
+  async removeBucketReplication(bucketName: string): Promise<void>
   removeBucketReplication(bucketName: string, callback: NoResultCallback): void
   async removeBucketReplication(bucketName: string): Promise<void> {
     if (!isValidBucketName(bucketName)) {
