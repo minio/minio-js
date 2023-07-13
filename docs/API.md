@@ -596,7 +596,7 @@ Please refer to : [remove-bucket-replication.mjs](..%2Fexamples%2Fremove-bucket-
 
 ```js
 try {
-  minioClient.removeBucketReplication('source-bucket')
+  await minioClient.removeBucketReplication('source-bucket')
   console.log('Success')
 } catch (err) {
   console.log(err.message)
