@@ -105,6 +105,18 @@ export type BucketItemWithMetadata = BucketItem & {
   metadata?: ItemBucketMetadata | ItemBucketMetadataList
 }
 
+export type S3ListObject =
+  | { prefix: string; size: number }
+  | { name: string; size: number } // sometime api return this, not sure if it's valid
+  | {
+      name: string
+      lastModified: Date
+      etag: string
+      size: number
+      isDeleteMarker?: boolean
+      isLatest?: boolean
+    }
+
 export type StatObjectOpts = {
   versionId?: string
 }

@@ -48,6 +48,7 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
   RetentionOptions,
+  S3ListObject,
   SelectOptions,
   SourceObjectStats,
   StatObjectOpts,
@@ -100,6 +101,7 @@ export type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
   RetentionOptions,
+  S3ListObject,
   SelectOptions,
   SourceObjectStats,
   StatObjectOpts,
@@ -162,9 +164,14 @@ export class Client extends TypedClient {
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
 
-  listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
+  listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<S3ListObject>
 
-  listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
+  listObjectsV2(
+    bucketName: string,
+    prefix?: string,
+    recursive?: boolean,
+    startAfter?: string,
+  ): BucketStream<S3ListObject>
 
   listIncompleteUploads(
     bucketName: string,
