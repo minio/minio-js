@@ -4,14 +4,8 @@
 import { EventEmitter } from 'node:events'
 import type { Readable as ReadableStream } from 'node:stream'
 
-import type {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  LEGAL_HOLD_STATUS,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
-} from './helpers.ts'
-import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
+import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import type { ClientOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
@@ -20,12 +14,46 @@ import type {
   BucketItem,
   BucketItemCopy,
   BucketItemFromList,
+  BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
+  EmptyObject,
+  Encryption,
+  ENCRYPTION_TYPES,
+  EncryptionConfig,
+  EncryptionRule,
   IncompleteUploadedBucketItem,
+  InputSerialization,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LEGAL_HOLD_STATUS,
+  LegalHoldOptions,
+  LegalHoldStatus,
+  Lifecycle,
+  LifecycleConfig,
+  LifecycleRule,
+  Lock,
+  LockConfig,
+  MakeBucketOpt,
+  MetadataItem,
+  NoResultCallback,
+  OutputSerialization,
+  PostPolicyResult,
+  RemoveOptions,
+  ReplicationConfig,
+  ResultCallback,
+  Retention,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+  RetentionOptions,
+  SelectOptions,
+  SourceObjectStats,
+  Tag,
+  TagList,
   UploadedObjectInfo,
+  VersionIdentification,
+  VersioningConfig,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -35,15 +63,47 @@ export type {
   BucketItem,
   BucketItemCopy,
   BucketItemFromList,
+  BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
+  EmptyObject,
+  Encryption,
+  ENCRYPTION_TYPES,
+  EncryptionConfig,
+  EncryptionRule,
   IncompleteUploadedBucketItem,
+  InputSerialization,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LEGAL_HOLD_STATUS,
+  LegalHoldOptions,
+  LegalHoldStatus,
+  Lifecycle,
+  LifecycleConfig,
+  LifecycleRule,
+  Lock,
+  LockConfig,
+  MakeBucketOpt,
+  MetadataItem,
   NoResultCallback,
+  OutputSerialization,
+  PostPolicyResult,
   RemoveOptions,
+  ReplicationConfig,
+  ResultCallback,
+  Retention,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+  RetentionOptions,
+  SelectOptions,
+  SourceObjectStats,
+  Tag,
+  TagList,
   UploadedObjectInfo,
+  VersionIdentification,
+  VersioningConfig,
 }
 
 // Exports only from typings
@@ -76,135 +136,6 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
-/**
- * @deprecated keep for backward compatible
- */
-export type LegalHoldStatus = LEGAL_HOLD_STATUS
-export type ResultCallback<T> = (error: Error | null, result: T) => void
-export type VersioningConfig = Record<string | number | symbol, unknown>
-export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
-export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
-export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
-export type Encryption = EncryptionConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-
-export interface BucketItemStat {
-  size: number
-  etag: string
-  lastModified: Date
-  metaData: ItemBucketMetadata
-}
-
-export interface PostPolicyResult {
-  postURL: string
-  formData: {
-    [key: string]: any
-  }
-}
-
-export interface MetadataItem {
-  Key: string
-  Value: string
-}
-
-export interface Tag {
-  Key: string
-  Value: string
-}
-
-export interface LifecycleConfig {
-  Rule: LifecycleRule[]
-}
-
-export interface LifecycleRule {
-  [key: string]: any
-}
-
-export interface LockConfig {
-  mode: RETENTION_MODES
-  unit: RETENTION_VALIDITY_UNITS
-  validity: number
-}
-
-export interface EncryptionConfig {
-  Rule: EncryptionRule[]
-}
-
-export interface EncryptionRule {
-  [key: string]: any
-}
-
-export interface ReplicationConfig {
-  role: string
-  rules: []
-}
-
-export interface ReplicationConfig {
-  [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
-}
-
-export interface LegalHoldOptions {
-  versionId: string
-  status: LEGAL_HOLD_STATUS
-}
-
-export interface InputSerialization {
-  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
-  CSV?: {
-    AllowQuotedRecordDelimiter?: boolean
-    Comments?: string
-    FieldDelimiter?: string
-    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    Type: 'DOCUMENT' | 'LINES'
-  }
-  Parquet?: EmptyObject
-}
-
-export interface OutputSerialization {
-  CSV?: {
-    FieldDelimiter?: string
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    QuoteFields?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    RecordDelimiter?: string
-  }
-}
-
-export interface SelectOptions {
-  expression: string
-  expressionType?: string
-  inputSerialization: InputSerialization
-  outputSerialization: OutputSerialization
-  requestProgress?: { Enabled: boolean }
-  scanRange?: { Start: number; End: number }
-}
-
-export interface SourceObjectStats {
-  size: number
-  metaData: string
-  lastModicied: Date
-  versionId: string
-  etag: string
-}
-
 // No need to export this. But without it - linter error.
 export class TargetConfig {
   setId(id: unknown): void
@@ -214,10 +145,6 @@ export class TargetConfig {
   addFilterSuffix(suffix: string): void
 
   addFilterPrefix(prefix: string): void
-}
-
-export interface MakeBucketOpt {
-  ObjectLocking: boolean
 }
 
 // Exports from library
@@ -393,55 +320,55 @@ export class Client extends TypedClient {
   getObjectRetention(
     bucketName: string,
     objectName: string,
-    options: VersionIdentificator,
+    options: VersionIdentification,
     callback: ResultCallback<Retention>,
   ): void
-  getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
+  getObjectRetention(bucketName: string, objectName: string, options: VersionIdentification): Promise<Retention>
 
   setObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
   setObjectTagging(
     bucketName: string,
     objectName: string,
     tags: TagList,
-    putOptions: VersionIdentificator,
+    putOptions: VersionIdentification,
     callback: NoResultCallback,
   ): void
   setObjectTagging(
     bucketName: string,
     objectName: string,
     tags: TagList,
-    putOptions?: VersionIdentificator,
+    putOptions?: VersionIdentification,
   ): Promise<void>
 
   removeObjectTagging(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeObjectTagging(
     bucketName: string,
     objectName: string,
-    removeOptions: VersionIdentificator,
+    removeOptions: VersionIdentification,
     callback: NoResultCallback,
   ): void
-  removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentificator): Promise<void>
+  removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentification): Promise<void>
 
   getObjectTagging(bucketName: string, objectName: string, callback: ResultCallback<Tag[]>): void
   getObjectTagging(
     bucketName: string,
     objectName: string,
-    getOptions: VersionIdentificator,
+    getOptions: VersionIdentification,
     callback: ResultCallback<Tag[]>,
   ): void
-  getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentificator): Promise<Tag[]>
+  getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentification): Promise<Tag[]>
 
   getObjectLegalHold(bucketName: string, objectName: string, callback: ResultCallback<LegalHoldOptions>): void
   getObjectLegalHold(
     bucketName: string,
     objectName: string,
-    getOptions: VersionIdentificator,
+    getOptions: VersionIdentification,
     callback: ResultCallback<LegalHoldOptions>,
   ): void
   getObjectLegalHold(
     bucketName: string,
     objectName: string,
-    getOptions?: VersionIdentificator,
+    getOptions?: VersionIdentification,
   ): Promise<LegalHoldOptions>
 
   setObjectLegalHold(bucketName: string, objectName: string, callback: NoResultCallback): void
