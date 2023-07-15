@@ -25,6 +25,7 @@ import type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  UploadedObjectInfo,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -42,6 +43,7 @@ export type {
   ItemBucketMetadataList,
   NoResultCallback,
   RemoveOptions,
+  UploadedObjectInfo,
 }
 
 // Exports only from typings
@@ -106,11 +108,6 @@ export interface PostPolicyResult {
 export interface MetadataItem {
   Key: string
   Value: string
-}
-
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
 }
 
 export interface Tag {

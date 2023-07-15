@@ -1,9 +1,11 @@
+import type { ICredentials } from './internal/type'
+
 export class Credentials {
   public accessKey: string
   public secretKey: string
   public sessionToken?: string
 
-  constructor({ accessKey, secretKey, sessionToken }: { accessKey: string; secretKey: string; sessionToken?: string }) {
+  constructor({ accessKey, secretKey, sessionToken }: ICredentials) {
     this.accessKey = accessKey
     this.secretKey = secretKey
     this.sessionToken = sessionToken
