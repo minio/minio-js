@@ -34,6 +34,7 @@ import type {
   Lifecycle,
   LifecycleConfig,
   LifecycleRule,
+  ListObjectsOpts,
   Lock,
   LockConfig,
   MakeBucketOpt,
@@ -87,6 +88,7 @@ export type {
   Lifecycle,
   LifecycleConfig,
   LifecycleRule,
+  ListObjectsOpts,
   Lock,
   LockConfig,
   MakeBucketOpt,
@@ -164,7 +166,12 @@ export class Client extends TypedClient {
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
 
-  listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<S3ListObject>
+  listObjects(
+    bucketName: string,
+    prefix?: string,
+    recursive?: boolean,
+    listOpts?: ListObjectsOpts,
+  ): BucketStream<S3ListObject>
 
   listObjectsV2(
     bucketName: string,

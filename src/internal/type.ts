@@ -117,6 +117,11 @@ export type S3ListObject =
       isLatest?: boolean
     }
 
+export type ListObjectsOpts = {
+  MaxKeys?: number
+  IncludeVersion?: boolean
+}
+
 export type StatObjectOpts = {
   versionId?: string
 }
