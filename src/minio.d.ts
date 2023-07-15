@@ -22,6 +22,7 @@ import type {
   ENCRYPTION_TYPES,
   EncryptionConfig,
   EncryptionRule,
+  GetObjectOpts,
   IncompleteUploadedBucketItem,
   InputSerialization,
   IsoDate,
@@ -49,6 +50,7 @@ import type {
   RetentionOptions,
   SelectOptions,
   SourceObjectStats,
+  StatObjectOpts,
   Tag,
   TagList,
   UploadedObjectInfo,
@@ -72,6 +74,7 @@ export type {
   ENCRYPTION_TYPES,
   EncryptionConfig,
   EncryptionRule,
+  GetObjectOpts,
   IncompleteUploadedBucketItem,
   InputSerialization,
   IsoDate,
@@ -99,6 +102,7 @@ export type {
   RetentionOptions,
   SelectOptions,
   SourceObjectStats,
+  StatObjectOpts,
   Tag,
   TagList,
   UploadedObjectInfo,
@@ -216,7 +220,13 @@ export class Client extends TypedClient {
 
   // Object operations
   getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
-  getObject(bucketName: string, objectName: string): Promise<ReadableStream>
+  getObject(
+    bucketName: string,
+    objectName: string,
+    getOpts: GetObjectOpts,
+    Getcallback: ResultCallback<ReadableStream>,
+  ): void
+  getObject(bucketName: string, objectName: string, getOpts?: GetObjectOpts): Promise<ReadableStream>
 
   getPartialObject(
     bucketName: string,
@@ -231,10 +241,38 @@ export class Client extends TypedClient {
     length: number,
     callback: ResultCallback<ReadableStream>,
   ): void
-  getPartialObject(bucketName: string, objectName: string, offset: number, length?: number): Promise<ReadableStream>
+  getPartialObject(
+    bucketName: string,
+    objectName: string,
+    offset: number,
+    getOpts: GetObjectOpts,
+    callback: ResultCallback<ReadableStream>,
+  ): void
+  getPartialObject(
+    bucketName: string,
+    objectName: string,
+    offset: number,
+    length: number,
+    getOpts: GetObjectOpts,
+    callback: ResultCallback<ReadableStream>,
+  ): void
+  getPartialObject(
+    bucketName: string,
+    objectName: string,
+    offset: number,
+    length?: number,
+    getOpts?: GetObjectOpts,
+  ): Promise<ReadableStream>
 
   fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
-  fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
+  fGetObject(
+    bucketName: string,
+    objectName: string,
+    filePath: string,
+    getOpts: GetObjectOpts,
+    callback: NoResultCallback,
+  ): void
+  fGetObject(bucketName: string, objectName: string, filePath: string, getOpts?: GetObjectOpts): Promise<void>
 
   putObject(
     bucketName: string,
@@ -353,7 +391,7 @@ export class Client extends TypedClient {
   getObjectTagging(
     bucketName: string,
     objectName: string,
-    getOptions: VersionIdentification,
+    getOptions: GetObjectOpts,
     callback: ResultCallback<Tag[]>,
   ): void
   getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentification): Promise<Tag[]>

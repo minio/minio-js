@@ -80,7 +80,7 @@ export type Lifecycle = LifecycleConfig | null | ''
 export type Lock = LockConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
-export type GetObjectOpt = {
+export type GetObjectOpts = {
   versionId?: string
 }
 
