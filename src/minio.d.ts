@@ -352,7 +352,13 @@ export class Client extends TypedClient {
   ): Promise<BucketItemCopy>
 
   statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
-  statObject(bucketName: string, objectName: string): Promise<BucketItemStat>
+  statObject(
+    bucketName: string,
+    objectName: string,
+    statOpts: StatObjectOpts,
+    callback: ResultCallback<BucketItemStat>,
+  ): void
+  statObject(bucketName: string, objectName: string, statOpts?: StatObjectOpts): Promise<BucketItemStat>
 
   removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: string[]): Promise<void>
