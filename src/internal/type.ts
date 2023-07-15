@@ -126,6 +126,14 @@ export type StatObjectOpts = {
   versionId?: string
 }
 
+export type RemoveObjectList = Array<
+  | string
+  | {
+      name: string
+      versionId?: string
+    }
+>
+
 export interface BucketItemStat {
   size: number
   etag: string

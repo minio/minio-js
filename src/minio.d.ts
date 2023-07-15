@@ -42,6 +42,7 @@ import type {
   NoResultCallback,
   OutputSerialization,
   PostPolicyResult,
+  RemoveObjectList,
   RemoveOptions,
   ReplicationConfig,
   ResultCallback,
@@ -96,6 +97,7 @@ export type {
   NoResultCallback,
   OutputSerialization,
   PostPolicyResult,
+  RemoveObjectList,
   RemoveOptions,
   ReplicationConfig,
   ResultCallback,
@@ -360,8 +362,8 @@ export class Client extends TypedClient {
   ): void
   statObject(bucketName: string, objectName: string, statOpts?: StatObjectOpts): Promise<BucketItemStat>
 
-  removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
-  removeObjects(bucketName: string, objectsList: string[]): Promise<void>
+  removeObjects(bucketName: string, objectsList: RemoveObjectList, callback: NoResultCallback): void
+  removeObjects(bucketName: string, objectsList: RemoveObjectList): Promise<void>
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
