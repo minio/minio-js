@@ -89,16 +89,20 @@ export interface BucketItemCopy {
   lastModified?: Date
 }
 
-export interface BucketItem {
-  name: string
-  prefix: string
-  size: number
-  etag: string
-  lastModified: Date
-}
+export type BucketItem =
+  | {
+      name: string
+      size: number
+      etag: string
+      lastModified: Date
+    }
+  | {
+      prefix: string
+      size: 0
+    }
 
-export interface BucketItemWithMetadata extends BucketItem {
-  metadata: ItemBucketMetadata | ItemBucketMetadataList
+export type BucketItemWithMetadata = BucketItem & {
+  metadata?: ItemBucketMetadata | ItemBucketMetadataList
 }
 
 export type StatObjectOpts = {
