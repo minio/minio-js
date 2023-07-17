@@ -681,61 +681,53 @@ describe('Client', function () {
 
     describe('#statObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.statObject(null, 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject(null, 'hello').then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.statObject('', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('', 'hello').then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.statObject('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('  \n  \t  ', 'hello').then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on null object', (done) => {
-        try {
-          client.statObject('hello', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', null).then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.statObject('hello', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', '').then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
 
       it('should fail on incompatible argument type (number) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', 1, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', 1).then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on incompatible argument type (null) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', null).then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
       it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', '  ', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', '  ').then(
+          () => done(new Error('should throe')),
+          () => done(),
+        )
       })
     })
 
