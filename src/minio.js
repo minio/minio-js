@@ -2492,21 +2492,6 @@ export class Client extends TypedClient {
   }
 
   /**
-   * Internal Method to abort a multipart upload request in case of any errors.
-   * @param bucketName __string__ Bucket Name
-   * @param objectName __string__ Object Name
-   * @param uploadId __string__ id of a multipart upload to cancel during compose object sequence.
-   * @param cb __function__ callback function
-   */
-  abortMultipartUpload(bucketName, objectName, uploadId, cb) {
-    const method = 'DELETE'
-    let query = `uploadId=${uploadId}`
-
-    const requestOptions = { method, bucketName, objectName: objectName, query }
-    this.makeRequest(requestOptions, '', [204], '', false, cb)
-  }
-
-  /**
    * Internal method to upload a part during compose object.
    * @param partConfig __object__ contains the following.
    *    bucketName __string__
@@ -2695,7 +2680,10 @@ export class Client extends TypedClient {
 
           async.map(uploadList, me.uploadPartCopy.bind(me), (err, res) => {
             if (err) {
-              return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, cb)
+              return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId).then(
+                () => cb(),
+                (err) => cb(err),
+              )
             }
             const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
             return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
