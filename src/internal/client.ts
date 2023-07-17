@@ -911,4 +911,15 @@ export class TypedClient {
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseListBucket(xmlResult)
   }
+
+  async removeBucketReplication(bucketName: string): Promise<void>
+  removeBucketReplication(bucketName: string, callback: NoResultCallback): void
+  async removeBucketReplication(bucketName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query = 'replication'
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [200, 204], '')
+  }
 }
