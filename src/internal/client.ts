@@ -5,6 +5,7 @@ import type * as stream from 'node:stream'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
+import * as querystring from 'query-string'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
@@ -12,6 +13,8 @@ import { DEFAULT_REGION } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
+  extractMetadata,
+  getVersionId,
   isAmazonEndpoint,
   isBoolean,
   isDefined,
@@ -26,6 +29,7 @@ import {
   isValidPort,
   isVirtualHostStyle,
   makeDateLong,
+  sanitizeETag,
   toSha256,
   uriEscape,
   uriResourceEscape,
@@ -34,7 +38,16 @@ import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, BucketItemFromList, IRequest, RequestHeaders, Transport } from './type.ts'
+import type {
+  Binary,
+  BucketItemFromList,
+  BucketItemStat,
+  IRequest,
+  RequestHeaders,
+  ResponseHeader,
+  Transport,
+} from './type.ts'
+import type { StatObjectOpts } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -777,6 +790,43 @@ export class TypedClient {
     const method = 'DELETE'
     await this.makeRequestAsyncOmit({ method, bucketName }, '', [204])
     delete this.regionMap[bucketName]
+  }
+
+  // Stat information of the object.
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
+  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
+  //   * `stat.size` _number_: size of the object
+  //   * `stat.etag` _string_: etag of the object
+  //   * `stat.metaData` _string_: MetaData of the object
+  //   * `stat.lastModified` _Date_: modified time stamp
+  //   * `stat.versionId` _string_: version id of the object if available
+  async statObject(bucketName: string, objectName: string, statOpts: StatObjectOpts = {}): Promise<BucketItemStat> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isObject(statOpts)) {
+      throw new errors.InvalidArgumentError('statOpts should be of type "object"')
+    }
+
+    const query = querystring.stringify(statOpts)
+    const method = 'HEAD'
+    const res = await this.makeRequestAsyncOmit({ method, bucketName, objectName, query })
+
+    return {
+      size: parseInt(res.headers['content-length'] as string),
+      metaData: extractMetadata(res.headers as ResponseHeader),
+      lastModified: new Date(res.headers['last-modified'] as string),
+      versionId: getVersionId(res.headers as ResponseHeader),
+      etag: sanitizeETag(res.headers.etag),
+    }
   }
 
   /**

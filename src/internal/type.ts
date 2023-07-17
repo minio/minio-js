@@ -111,3 +111,15 @@ export interface BucketStream<T> extends ReadableStream {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string | symbol, listener: (...args: any[]) => void): this
 }
+
+export interface BucketItemStat {
+  size: number
+  etag: string
+  lastModified: Date
+  metaData: ItemBucketMetadata
+  versionId?: string | null
+}
+
+export type StatObjectOpts = {
+  versionId?: string
+}
