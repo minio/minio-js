@@ -5,7 +5,6 @@ import type * as stream from 'node:stream'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
-import * as querystring from 'query-string'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
@@ -807,7 +806,7 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('statOpts should be of type "object"')
     }
 
-    const query = querystring.stringify(statOpts)
+    const query = qs.stringify(statOpts)
     const method = 'HEAD'
     const res = await this.makeRequestAsyncOmit({ method, bucketName, objectName, query })
 
