@@ -1,8 +1,6 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
 
-import type { MetadataItem } from '../minio'
-
 export type Binary = string | Buffer
 
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
@@ -64,6 +62,11 @@ export interface IncompleteUploadedBucketItem {
   key: string
   uploadId: string
   size: number
+}
+
+export interface MetadataItem {
+  Key: string
+  Value: string
 }
 
 export interface ItemBucketMetadataList {

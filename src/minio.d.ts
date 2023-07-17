@@ -26,6 +26,7 @@ import type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  MetadataItem,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -42,6 +43,7 @@ export type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  MetadataItem,
   NoResultCallback,
   RemoveOptions,
 }
@@ -96,11 +98,6 @@ export interface PostPolicyResult {
   formData: {
     [key: string]: any
   }
-}
-
-export interface MetadataItem {
-  Key: string
-  Value: string
 }
 
 export interface UploadedObjectInfo {
