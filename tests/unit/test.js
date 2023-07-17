@@ -682,50 +682,50 @@ describe('Client', function () {
     describe('#statObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
         client.statObject(null, 'hello').then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on empty bucket', (done) => {
         client.statObject('', 'hello').then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on empty bucket', (done) => {
         client.statObject('  \n  \t  ', 'hello').then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on null object', (done) => {
         client.statObject('hello', null).then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on empty object', (done) => {
         client.statObject('hello', '').then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
 
       it('should fail on incompatible argument type (number) for statOpts object', (done) => {
         client.statObject('hello', 'testStatOpts', 1).then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on incompatible argument type (null) for statOpts object', (done) => {
         client.statObject('hello', 'testStatOpts', null).then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
         client.statObject('hello', 'testStatOpts', '  ').then(
-          () => done(new Error('should throe')),
+          () => done(new Error('expecting error')),
           () => done(),
         )
       })
