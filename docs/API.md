@@ -1274,14 +1274,14 @@ Gets metadata of an object.
 **Example**
 
 ```js
-const stat=await minioClient.statObject('mybucket', 'photo.jpg')
+const stat = await minioClient.statObject('mybucket', 'photo.jpg')
 console.log(stat)
 ```
 
 **Example stat on a version of an object**
 
 ```js
-const stat=minioClient.statObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
+const stat = minioClient.statObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
 console.log(stat)
 ```
 
