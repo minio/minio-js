@@ -792,18 +792,9 @@ export class TypedClient {
     delete this.regionMap[bucketName]
   }
 
-  // Stat information of the object.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
-  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
-  //   * `stat.size` _number_: size of the object
-  //   * `stat.etag` _string_: etag of the object
-  //   * `stat.metaData` _string_: MetaData of the object
-  //   * `stat.lastModified` _Date_: modified time stamp
-  //   * `stat.versionId` _string_: version id of the object if available
+  /**
+   * Stat information of the object.
+   */
   async statObject(bucketName: string, objectName: string, statOpts: StatObjectOpts = {}): Promise<BucketItemStat> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
