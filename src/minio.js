@@ -2680,10 +2680,11 @@ export class Client extends TypedClient {
 
           async.map(uploadList, me.uploadPartCopy.bind(me), (err, res) => {
             if (err) {
-              return this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId).then(
+              this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId).then(
                 () => cb(),
                 (err) => cb(err),
               )
+              return
             }
             const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
             return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
