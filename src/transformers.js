@@ -106,11 +106,6 @@ export function getListMultipartTransformer() {
   return getConcater(xmlParsers.parseListMultipart)
 }
 
-// Parses initMultipartUpload response.
-export function getInitiateMultipartTransformer() {
-  return getConcater(xmlParsers.parseInitiateMultipart)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)

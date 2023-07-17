@@ -1436,33 +1436,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Calls implemented below are related to multipart.
-
-  // Initiate a new multipart upload.
-  initiateNewMultipartUpload(bucketName, objectName, metaData, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(metaData)) {
-      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
-    }
-    var method = 'POST'
-    let headers = Object.assign({}, metaData)
-    var query = 'uploads'
-    this.makeRequest({ method, bucketName, objectName, query, headers }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getInitiateMultipartTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (uploadId) => cb(null, uploadId))
-    })
-  }
-
   // Complete the multipart upload. After all the parts are uploaded issuing
   // this call will aggregate the parts on the server into a single object.
   completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
@@ -2713,12 +2686,14 @@ export class Client extends TypedClient {
 
         const newUploadHeaders = destObjConfig.getHeaders()
 
-        me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders, (err, uploadId) => {
-          if (err) {
-            return cb(err, null)
-          }
-          performUploadParts(uploadId)
-        })
+        me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders).then(
+          (uploadId) => {
+            performUploadParts(uploadId)
+          },
+          (err) => {
+            cb(err, null)
+          },
+        )
       })
       .catch((error) => {
         cb(error, null)
