@@ -1393,14 +1393,24 @@ describe('Client', function () {
     describe('removeBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.removeBucketReplication(null, {}, function () {})
+          client.removeBucketReplication(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketReplication('', {}, function () {})
+          client.removeBucketReplication('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }

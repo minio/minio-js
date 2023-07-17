@@ -17,17 +17,17 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeBucketReplication('bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
+try {
+  await s3Client.removeBucketReplication('source-bucket')
   console.log('Success')
-})
+} catch (err) {
+  console.log(err.message)
+}
