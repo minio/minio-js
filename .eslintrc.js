@@ -101,6 +101,7 @@ module.exports = {
         fixStyle: 'separate-type-imports',
       },
     ],
+    'import/no-duplicates': 'error',
     'unused-imports/no-unused-imports': 'error',
     'import/no-amd': 'error',
   },
