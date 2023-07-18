@@ -17,6 +17,8 @@ import {
 import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
 
+export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
+
 export const DEFAULT_REGION = 'us-east-1'
 
 export interface ICopySourceOptions {
