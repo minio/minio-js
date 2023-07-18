@@ -1281,7 +1281,7 @@ console.log(stat)
 **Example stat on a version of an object**
 
 ```js
-const stat = minioClient.statObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
+const stat = await minioClient.statObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
 console.log(stat)
 ```
 
