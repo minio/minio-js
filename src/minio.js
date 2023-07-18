@@ -2333,15 +2333,6 @@ export class Client extends TypedClient {
     })
   }
 
-  removeBucketReplication(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    const method = 'DELETE'
-    const query = 'replication'
-    this.makeRequest({ method, bucketName, query }, '', [200, 204], '', false, cb)
-  }
-
   getObjectLegalHold(bucketName, objectName, getOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2797,7 +2788,6 @@ Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncry
 Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
 Client.prototype.setBucketReplication = promisify(Client.prototype.setBucketReplication)
 Client.prototype.getBucketReplication = promisify(Client.prototype.getBucketReplication)
-Client.prototype.removeBucketReplication = promisify(Client.prototype.removeBucketReplication)
 Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalHold)
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
@@ -2808,3 +2798,4 @@ Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
+Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)

@@ -282,9 +282,6 @@ export class Client extends TypedClient {
   getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
   getBucketReplication(bucketName: string): Promise<ReplicationConfig>
 
-  removeBucketReplication(bucketName: string, callback: NoResultCallback): void
-  removeBucketReplication(bucketName: string): Promise<void>
-
   // Object operations
   getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
   getObject(bucketName: string, objectName: string): Promise<ReadableStream>

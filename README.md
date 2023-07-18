@@ -166,7 +166,7 @@ The full API Reference is available here.
 
 #### Full Examples : Bucket Operations
 
-- [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
+- [list-buckets.mjs](https://github.com/minio/minio-js/blob/master/examples/list-buckets.mjs)
 - [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 - [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 - [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
@@ -186,7 +186,7 @@ The full API Reference is available here.
 - [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
 - [set-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-replication.js)
 - [get-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-replication.js)
-- [remove-bucket-replication.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.js)
+- [remove-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.mjs)
 
 #### Full Examples : File Object Operations
 
