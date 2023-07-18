@@ -5,8 +5,7 @@ import { XMLParser } from 'fast-xml-parser'
 import * as errors from '../errors.ts'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
-import type { BucketItemWithMetadata } from './type'
-import type { BucketItemFromList } from './type.ts'
+import type { BucketItemWithMetadata, BucketItemFromList } from './type.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {

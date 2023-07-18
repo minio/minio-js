@@ -1,4 +1,4 @@
-import type { ICredentials } from './internal/type'
+import type { ICredentials } from './internal/type.ts'
 
 export class Credentials {
   public accessKey: string
