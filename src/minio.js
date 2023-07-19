@@ -1048,61 +1048,6 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // Stat information of the object.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `statOpts`  _object_ : Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional).
-  // * `callback(err, stat)` _function_: `err` is not `null` in case of error, `stat` contains the object information:
-  //   * `stat.size` _number_: size of the object
-  //   * `stat.etag` _string_: etag of the object
-  //   * `stat.metaData` _string_: MetaData of the object
-  //   * `stat.lastModified` _Date_: modified time stamp
-  //   * `stat.versionId` _string_: version id of the object if available
-  statObject(bucketName, objectName, statOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    // backward compatibility
-    if (isFunction(statOpts)) {
-      cb = statOpts
-      statOpts = {}
-    }
-
-    if (!isObject(statOpts)) {
-      throw new errors.InvalidArgumentError('statOpts should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    var query = querystring.stringify(statOpts)
-    var method = 'HEAD'
-    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      // We drain the socket so that the connection gets closed. Note that this
-      // is not expensive as the socket will not have any data.
-      response.on('data', () => {})
-
-      const result = {
-        size: +response.headers['content-length'],
-        metaData: extractMetadata(response.headers),
-        lastModified: new Date(response.headers['last-modified']),
-        versionId: getVersionId(response.headers),
-        etag: sanitizeETag(response.headers.etag),
-      }
-
-      cb(null, result)
-    })
-  }
-
   // Remove all the objects residing in the objectsList.
   //
   // __Arguments__
@@ -2800,7 +2745,6 @@ Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
 Client.prototype.putObject = promisify(Client.prototype.putObject)
 Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
-Client.prototype.statObject = promisify(Client.prototype.statObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
 Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
@@ -2840,6 +2784,7 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 
 // refactored API use promise internally
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
+Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)
