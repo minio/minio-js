@@ -20,11 +20,13 @@ import type {
   BucketItem,
   BucketItemCopy,
   BucketItemFromList,
+  BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  MetadataItem,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -34,12 +36,14 @@ export type {
   BucketItem,
   BucketItemCopy,
   BucketItemFromList,
+  BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  MetadataItem,
   NoResultCallback,
   RemoveOptions,
 }
@@ -89,23 +93,11 @@ export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
 
-export interface BucketItemStat {
-  size: number
-  etag: string
-  lastModified: Date
-  metaData: ItemBucketMetadata
-}
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
     [key: string]: any
   }
-}
-
-export interface MetadataItem {
-  Key: string
-  Value: string
 }
 
 export interface UploadedObjectInfo {
@@ -374,9 +366,6 @@ export class Client extends TypedClient {
     sourceObject: string,
     conditions: CopyConditions,
   ): Promise<BucketItemCopy>
-
-  statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
-  statObject(bucketName: string, objectName: string): Promise<BucketItemStat>
 
   removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: string[]): Promise<void>
