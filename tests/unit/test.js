@@ -29,6 +29,7 @@ import {
   partsRequired,
 } from '../../src/internal/helper.ts'
 import * as Minio from '../../src/minio.js'
+import { parseListObjects } from '../../src/xml-parsers.js'
 
 const Package = { version: 'development' }
 
@@ -2075,6 +2076,59 @@ describe('IP Address Validations', () => {
     validIpv6.map((ip) => {
       const valid = isValidIP(ip)
       assert.equal(valid, true)
+    })
+  })
+})
+
+describe('xml-parser', () => {
+  describe('#listObjects()', () => {
+    describe('value type casting', () => {
+      const xml = `
+          <?xml version="1.0" encoding="UTF-8"?>
+          <ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+            <Name>some-bucket</Name>
+            <Prefix>42</Prefix>
+            <Delimiter>/</Delimiter>
+            <IsTruncated>false</IsTruncated>
+            <EncodingType>url</EncodingType>
+            <KeyMarker/>
+            <VersionIdMarker/>
+            <Version>
+              <IsLatest>true</IsLatest>
+              <VersionId>1234</VersionId>
+              <ETag>"767dedcb515a0e2d995ed95191b75484-29"</ETag>
+              <Key>1337</Key>
+              <LastModified>2023-07-12T14:41:46.000Z</LastModified>
+              <Size>151306240</Size>
+            </Version>
+            <DeleteMarker>
+              <IsLatest>false</IsLatest>
+              <Key>1337</Key>
+              <LastModified>2023-07-12T14:39:22.000Z</LastModified>
+              <VersionId>5678</VersionId>
+            </DeleteMarker>
+            <CommonPrefixes>
+              <Prefix>42</Prefix>
+            </CommonPrefixes>
+          </ListVersionsResult>
+        `
+
+      it('should parse VersionId as string even if number is provided', () => {
+        const { objects } = parseListObjects(xml)
+
+        assert.equal(objects[0].versionId, '1234')
+        assert.equal(objects[1].versionId, '5678')
+        assert.equal(objects[0].name, '1337')
+        assert.equal(objects[1].name, '1337')
+        assert.deepEqual(objects[2], { prefix: '42', size: 0 })
+      })
+
+      it('should parse Size as number', () => {
+        const { objects } = parseListObjects(xml)
+
+        assert.equal(objects[0].size, 151306240)
+        assert.equal(objects[1].size, undefined)
+      })
     })
   })
 })
