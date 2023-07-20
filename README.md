@@ -201,7 +201,7 @@ The full API Reference is available here.
 - [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 - [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 - [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
-- [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
+- [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 - [get-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.js)
 - [put-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.js)
 - [put-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/put-object-tagging.js)
