@@ -170,7 +170,7 @@ mc ls play/europetrip/
 * [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
-* [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
+* [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 
 #### 完整示例 : Presigned操作
 * [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
