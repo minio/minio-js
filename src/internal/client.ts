@@ -44,9 +44,9 @@ import type {
   IRequest,
   RequestHeaders,
   ResponseHeader,
+  StatObjectOpts,
   Transport,
 } from './type.ts'
-import type { StatObjectOpts } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
