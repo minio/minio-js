@@ -510,73 +510,85 @@ minioClient.setBucketVersioning('bucketname', versioningConfig, function (err) {
 
 <a name="setBucketReplication"></a>
 
-### setBucketReplication(bucketName, replicationConfig, callback)
+### setBucketReplication(bucketName, replicationConfig)
 
 Set replication config on a Bucket
 
 **Parameters**
 
-| Param               | Type       | Description                                      |
-| ------------------- | ---------- | ------------------------------------------------ |
-| `bucketName`        | _string_   | Name of the bucket.                              |
-| `replicationConfig` | _object_   | replicationConfig Configuration as a JSON Object |
-| `callback(err)`     | _function_ | Callback is called with `err` in case of error.  |
+| Param               | Type     | Description                                      |
+| ------------------- | -------- | ------------------------------------------------ |
+| `bucketName`        | _string_ | Name of the bucket.                              |
+| `replicationConfig` | _object_ | replicationConfig Configuration as a JSON Object |
 
 **Example**
 
-```js
-const arnFromMcCli =
-  'arn:minio:replication::1277fcbe7df0bab76ab0c64cf7c45a0d27e01917ee5f11e913f3478417833660:destination'
+Please refer to : [set-bucket-replication.mjs](..%2Fexamples%2Fset-bucket-replication.mjs)
 
-var replicationConfig = {
+```js
+const arnFromMcCli = 'arn:minio:replication::b22d653b-e4fb-4c5d-8140-7694c8e72ed4:dest-bucket'
+const replicationConfig = {
   role: arnFromMcCli,
   rules: [
     {
-      DeleteMarkerReplication: {
-        Status: 'Disabled',
-      },
-      DeleteReplication: {
-        Status: [],
-      },
-      Destination: {
-        Bucket: 'arn:aws:s3:::destination',
-      },
-      Priority: '1',
+      ID: 'cisea130mbms6splbmg0',
       Status: 'Enabled',
+      Priority: 1,
+      DeleteMarkerReplication: { Status: 'Enabled' },
+      DeleteReplication: { Status: 'Enabled' },
+      Destination: {
+        Bucket: 'arn:aws:s3:::dest-bucket',
+        StorageClass: 'REDUCED_REDUNDANCY',
+      },
+      SourceSelectionCriteria: { ReplicaModifications: { Status: 'Enabled' } },
+      Filter: {
+        //Possible values.
+        // Prefix: '/',
+        // Tag: [{ 'Key': 'key1', 'Value': 'value1' }, { 'Key': 'key2', 'Value': 'value2' }],//if only this,  =>    'DeleteMarkerReplication': { 'Status': 'Disabled' },
+        And: {
+          Prefix: '/',
+          Tag: [
+            { Key: 'key1', Value: 'value1' },
+            { Key: 'key2', Value: 'value2' },
+          ],
+        },
+      },
+      ExistingObjectReplication: { Status: 'Enabled' },
     },
   ],
 }
 
-minioClient.setBucketReplication('bucketname', replicationConfig, function (err) {
-  if (err) {
-    return console.log(err)
-  }
+try {
+  await s3Client.setBucketReplication('source-bucket', replicationConfig)
   console.log('Success')
-})
+} catch (err) {
+  console.log(err.message)
+}
 ```
 
 <a name="getBucketReplication"></a>
 
-### getBucketReplication(bucketName, callback)
+### getBucketReplication(bucketName)
 
 Get replication config of a Bucket
 
 **Parameters**
 
-| Param                              | Type       | Description                                                                                                                                        |
-| ---------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                       | _string_   | Name of the bucket.                                                                                                                                |
-| `callback(err, replicationConfig)` | _function_ | Callback is called with `err` in case of error. else returns the info in`replicationConfig` ,which contains`{role: __string__, rules:__Array__ }`. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
+Please refer to : [get-bucket-replication.mjs](..%2Fexamples%2Fget-bucket-replication.mjs)
+
 ```js
-minioClient.getBucketReplication('bucketname', function (err, replicationConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(replicationConfig)
-})
+try {
+  const response = await minioClient.getBucketReplication('source-bucket')
+  console.log('Success')
+} catch (err) {
+  console.log(err)
+}
 ```
 
 <a name="removeBucketReplication"></a>

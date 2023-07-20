@@ -132,15 +132,6 @@ export interface EncryptionRule {
   [key: string]: any
 }
 
-export interface ReplicationConfig {
-  role: string
-  rules: []
-}
-
-export interface ReplicationConfig {
-  [key: string]: any
-}
-
 export interface RetentionOptions {
   versionId: string
   mode?: RETENTION_MODES
@@ -275,12 +266,6 @@ export class Client extends TypedClient {
 
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
-
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig, callback: NoResultCallback): void
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig): Promise<void>
-
-  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
-  getBucketReplication(bucketName: string): Promise<ReplicationConfig>
 
   // Object operations
   getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void

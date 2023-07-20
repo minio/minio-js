@@ -126,3 +126,62 @@ export interface BucketItemStat {
 export type StatObjectOpts = {
   versionId?: string
 }
+
+/* Replication Config types */
+export type ReplicationRuleStatus = {
+  Status: 'Enabled' | 'Disabled'
+}
+
+export type Tag = {
+  Key: string
+  Value: string
+}
+
+export type ReplicationRuleDestination = {
+  Bucket: string
+  StorageClass: string
+}
+export type ReplicationRuleAnd = {
+  Prefix: string
+  Tags: Tag[]
+}
+
+export type ReplicationRuleFilter = {
+  Prefix: string
+  And: ReplicationRuleAnd
+  Tag: Tag
+}
+
+export type ReplicaModifications = {
+  Status: ReplicationRuleStatus
+}
+
+export type SourceSelectionCriteria = {
+  ReplicaModifications: ReplicaModifications
+}
+
+export type ExistingObjectReplication = {
+  Status: ReplicationRuleStatus
+}
+
+export type ReplicationRule = {
+  ID: string
+  Status: ReplicationRuleStatus
+  Priority: number
+  DeleteMarkerReplication: ReplicationRuleStatus // should be set to "Disabled" by default
+  DeleteReplication: ReplicationRuleStatus
+  Destination: ReplicationRuleDestination
+  Filter: ReplicationRuleFilter
+  SourceSelectionCriteria: SourceSelectionCriteria
+  ExistingObjectReplication: ExistingObjectReplication
+}
+
+export type ReplicationConfigOpts = {
+  role: string
+  rules: ReplicationRule[]
+}
+
+export type ReplicationConfig = {
+  ReplicationConfiguration: ReplicationConfigOpts
+}
+/* Replication Config types */
