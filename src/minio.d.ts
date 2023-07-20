@@ -23,10 +23,21 @@ import type {
   BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
+  ExistingObjectReplication,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  SourceSelectionCriteria,
+  Tag,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -40,12 +51,23 @@ export type {
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
+  ExistingObjectReplication,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
   NoResultCallback,
   RemoveOptions,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  SourceSelectionCriteria,
+  Tag,
 }
 
 // Exports only from typings
@@ -103,11 +125,6 @@ export interface PostPolicyResult {
 export interface UploadedObjectInfo {
   etag: string
   versionId: string | null
-}
-
-export interface Tag {
-  Key: string
-  Value: string
 }
 
 export interface LifecycleConfig {
