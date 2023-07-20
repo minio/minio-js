@@ -523,8 +523,6 @@ Set replication config on a Bucket
 
 **Example**
 
-Please refer to : [set-bucket-replication.mjs](..%2Fexamples%2Fset-bucket-replication.mjs)
-
 ```js
 const arnFromMcCli = 'arn:minio:replication::b22d653b-e4fb-4c5d-8140-7694c8e72ed4:dest-bucket'
 const replicationConfig = {
@@ -558,12 +556,7 @@ const replicationConfig = {
   ],
 }
 
-try {
-  await s3Client.setBucketReplication('source-bucket', replicationConfig)
-  console.log('Success')
-} catch (err) {
-  console.log(err.message)
-}
+await s3Client.setBucketReplication('source-bucket', replicationConfig)
 ```
 
 <a name="getBucketReplication"></a>
@@ -580,15 +573,9 @@ Get replication config of a Bucket
 
 **Example**
 
-Please refer to : [get-bucket-replication.mjs](..%2Fexamples%2Fget-bucket-replication.mjs)
-
 ```js
-try {
-  const response = await minioClient.getBucketReplication('source-bucket')
-  console.log('Success')
-} catch (err) {
-  console.log(err)
-}
+const replicatinConfig = await minioClient.getBucketReplication('source-bucket')
+console.log(replicatinConfig)
 ```
 
 <a name="removeBucketReplication"></a>
@@ -604,15 +591,9 @@ Remove replication config of a Bucket
 | `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
-Please refer to : [remove-bucket-replication.mjs](..%2Fexamples%2Fremove-bucket-replication.mjs)
 
 ```js
-try {
-  await minioClient.removeBucketReplication('source-bucket')
-  console.log('Success')
-} catch (err) {
-  console.log(err.message)
-}
+await minioClient.removeBucketReplication('source-bucket')
 ```
 
 <a name="setBucketTagging"></a>

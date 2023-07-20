@@ -44,6 +44,7 @@ import type {
   BucketItemFromList,
   BucketItemStat,
   IRequest,
+  ReplicationConfig,
   ReplicationConfigOpts,
   RequestHeaders,
   ResponseHeader,
@@ -1011,17 +1012,13 @@ export class TypedClient {
     }
 
     const builder = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
-
     const payload = builder.buildObject(replicationParamsConfig)
-
     headers['Content-MD5'] = toMd5(payload)
-
-    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload, [200], '')
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
   getBucketReplication(bucketName: string, callback: NoResultCallback): void
-  // @ts-ignore
-  async getBucketReplication(bucketName: string): Promise<void>
+  async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1029,7 +1026,7 @@ export class TypedClient {
     const method = 'GET'
     const query = 'replication'
 
-    const httpRes = await this.makeRequestAsync({ method, bucketName, query }, '', [200, 204], '')
+    const httpRes = await this.makeRequestAsync({ method, bucketName, query }, '', [200, 204])
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseReplicationConfig(xmlResult)
   }
