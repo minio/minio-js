@@ -383,13 +383,6 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     offset: number,
-    getOpts: GetObjectOpts,
-    callback: ResultCallback<ReadableStream>,
-  ): void
-  getPartialObject(
-    bucketName: string,
-    objectName: string,
-    offset: number,
     length: number,
     getOpts: GetObjectOpts,
     callback: ResultCallback<ReadableStream>,

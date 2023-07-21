@@ -104,7 +104,7 @@ export interface BucketItemFromList {
 
 export interface BucketItemCopy {
   etag: string
-  lastModified?: Date
+  lastModified: Date
 }
 
 export type BucketItem =
