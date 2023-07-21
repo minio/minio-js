@@ -1,15 +1,15 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { EventEmitter } from 'node:events'
-import type { Readable as ReadableStream } from 'node:stream'
+import {EventEmitter} from 'node:events'
+import type {Readable as ReadableStream} from 'node:stream'
 
-import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
-import type { ClientOptions } from './internal/client.ts'
-import { TypedClient } from './internal/client.ts'
-import { CopyConditions } from './internal/copy-conditions.ts'
-import { PostPolicy } from './internal/post-policy.ts'
-import type { Region } from './internal/s3-endpoints.ts'
+import type {CopyDestinationOptions, CopySourceOptions} from './helpers.ts'
+import type {ClientOptions} from './internal/client.ts'
+import {TypedClient} from './internal/client.ts'
+import {CopyConditions} from './internal/copy-conditions.ts'
+import {PostPolicy} from './internal/post-policy.ts'
+import type {Region} from './internal/s3-endpoints.ts'
 import type {
   BucketItem,
   BucketItemCopy,
@@ -62,8 +62,8 @@ import type {
 } from './internal/type.ts'
 
 export * from './helpers.ts'
-export type { Region } from './internal/s3-endpoints.ts'
-export { CopyConditions, PostPolicy }
+export type {Region} from './internal/s3-endpoints.ts'
+export {CopyConditions, PostPolicy}
 export type {
   BucketItem,
   BucketItemCopy,
@@ -145,6 +145,128 @@ export type Mode = RETENTION_MODES
  * @deprecated keep for backward compatible
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+export type ResultCallback<T> = (error: Error | null, result: T) => void
+export type VersioningConfig = Record<string | number | symbol, unknown>
+export type TagList = Record<string, string>
+export type EmptyObject = Record<string, never>
+export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
+export type Lifecycle = LifecycleConfig | null | ''
+export type Lock = LockConfig | EmptyObject
+export type Encryption = EncryptionConfig | EmptyObject
+export type Retention = RetentionOptions | EmptyObject
+export type IsoDate = string
+
+export interface PostPolicyResult {
+  postURL: string
+  formData: {
+    [key: string]: any
+  }
+}
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
+}
+
+export interface Tag {
+  Key: string
+  Value: string
+}
+
+export interface LifecycleConfig {
+  Rule: LifecycleRule[]
+}
+
+export interface LifecycleRule {
+  [key: string]: any
+}
+
+export interface LockConfig {
+  mode: RETENTION_MODES
+  unit: RETENTION_VALIDITY_UNITS
+  validity: number
+}
+
+export interface EncryptionConfig {
+  Rule: EncryptionRule[]
+}
+
+export interface EncryptionRule {
+  [key: string]: any
+}
+
+export interface ReplicationConfig {
+  role: string
+  rules: []
+}
+
+export interface ReplicationConfig {
+  [key: string]: any
+}
+
+export interface RetentionOptions {
+  versionId: string
+  mode?: RETENTION_MODES
+  retainUntilDate?: IsoDate
+  governanceBypass?: boolean
+}
+
+export interface LegalHoldOptions {
+  versionId: string
+  status: LEGAL_HOLD_STATUS
+}
+
+export interface InputSerialization {
+  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
+  CSV?: {
+    AllowQuotedRecordDelimiter?: boolean
+    Comments?: string
+    FieldDelimiter?: string
+    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    Type: 'DOCUMENT' | 'LINES'
+  }
+  Parquet?: EmptyObject
+}
+
+export interface OutputSerialization {
+  CSV?: {
+    FieldDelimiter?: string
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    QuoteFields?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    RecordDelimiter?: string
+  }
+}
+
+export interface SelectOptions {
+  expression: string
+  expressionType?: string
+  inputSerialization: InputSerialization
+  outputSerialization: OutputSerialization
+  requestProgress?: {Enabled: boolean}
+  scanRange?: {Start: number; End: number}
+}
+
+export interface SourceObjectStats {
+  size: number
+  metaData: string
+  lastModicied: Date
+  versionId: string
+  etag: string
+}
 
 // No need to export this. But without it - linter error.
 export class TargetConfig {
@@ -353,15 +475,6 @@ export class Client extends TypedClient {
     conditions: CopyConditions,
   ): Promise<BucketItemCopy>
 
-  statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
-  statObject(
-    bucketName: string,
-    objectName: string,
-    statOpts: StatObjectOpts,
-    callback: ResultCallback<BucketItemStat>,
-  ): void
-  statObject(bucketName: string, objectName: string, statOpts?: StatObjectOpts): Promise<BucketItemStat>
-
   removeObjects(bucketName: string, objectsList: RemoveObjectList, callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: RemoveObjectList): Promise<void>
 
@@ -469,7 +582,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    reqParams: { [key: string]: any },
+    reqParams: {[key: string]: any},
     callback: ResultCallback<string>,
   ): void
   presignedUrl(
@@ -477,7 +590,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    reqParams: { [key: string]: any },
+    reqParams: {[key: string]: any},
     requestDate: Date,
     callback: ResultCallback<string>,
   ): void
@@ -486,7 +599,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry?: number,
-    reqParams?: { [key: string]: any },
+    reqParams?: {[key: string]: any},
     requestDate?: Date,
   ): Promise<string>
 
@@ -496,14 +609,14 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    respHeaders: { [key: string]: any },
+    respHeaders: {[key: string]: any},
     callback: ResultCallback<string>,
   ): void
   presignedGetObject(
     bucketName: string,
     objectName: string,
     expiry: number,
-    respHeaders: { [key: string]: any },
+    respHeaders: {[key: string]: any},
     requestDate: Date,
     callback: ResultCallback<string>,
   ): void
@@ -511,7 +624,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry?: number,
-    respHeaders?: { [key: string]: any },
+    respHeaders?: {[key: string]: any},
     requestDate?: Date,
   ): Promise<string>
 

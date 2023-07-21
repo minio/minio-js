@@ -83,6 +83,24 @@ export type IsoDate = string
 export type GetObjectOpts = {
   versionId?: string
 }
+export interface MetadataItem {
+  Key: string
+  Value: string
+}
+
+export interface ItemBucketMetadataList {
+  Items: MetadataItem[]
+}
+
+export interface ItemBucketMetadata {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any
+}
+
+export interface BucketItemFromList {
+  name: string
+  creationDate: Date
+}
 
 export interface BucketItemCopy {
   etag: string
@@ -164,19 +182,6 @@ export interface PostPolicyResult {
   formData: {
     [key: string]: any
   }
-}
-
-export interface MetadataItem {
-  Key: string
-  Value: string
-}
-
-export interface ItemBucketMetadataList {
-  Items: MetadataItem[]
-}
-
-export interface ItemBucketMetadata {
-  [key: string]: any
 }
 
 export interface Tag {
@@ -283,12 +288,6 @@ export interface RemoveOptions {
   versionId?: string
   forceDelete?: boolean
   governanceBypass?: boolean
-}
-
-export interface BucketItemFromList {
-  name: string
-  // date when bucket was created
-  creationDate: Date
 }
 
 export type VersioningConfig = Record<string | number | symbol, unknown>
