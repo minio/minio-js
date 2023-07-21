@@ -36,6 +36,7 @@ import type {
   ReplicationRuleDestination,
   ReplicationRuleFilter,
   ReplicationRuleStatus,
+  ResultCallback,
   SourceSelectionCriteria,
   Tag,
 } from './internal/type.ts'
@@ -104,7 +105,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  * @deprecated keep for backward compatible
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
-export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>

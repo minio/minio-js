@@ -48,6 +48,7 @@ import type {
   ReplicationConfigOpts,
   RequestHeaders,
   ResponseHeader,
+  ResultCallback,
   StatObjectOpts,
   Transport,
 } from './type.ts'
@@ -1017,7 +1018,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  getBucketReplication(bucketName: string, callback: NoResultCallback): void
+  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
   async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {

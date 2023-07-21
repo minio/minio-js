@@ -185,3 +185,5 @@ export type ReplicationConfig = {
   ReplicationConfiguration: ReplicationConfigOpts
 }
 /* Replication Config types */
+
+export type ResultCallback<T> = (error: Error | null, result: T) => void
