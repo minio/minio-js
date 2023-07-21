@@ -1,15 +1,15 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {EventEmitter} from 'node:events'
-import type {Readable as ReadableStream} from 'node:stream'
+import { EventEmitter } from 'node:events'
+import type { Readable as ReadableStream } from 'node:stream'
 
-import type {CopyDestinationOptions, CopySourceOptions} from './helpers.ts'
-import type {ClientOptions} from './internal/client.ts'
-import {TypedClient} from './internal/client.ts'
-import {CopyConditions} from './internal/copy-conditions.ts'
-import {PostPolicy} from './internal/post-policy.ts'
-import type {Region} from './internal/s3-endpoints.ts'
+import type { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import type { ClientOptions } from './internal/client.ts'
+import { TypedClient } from './internal/client.ts'
+import { CopyConditions } from './internal/copy-conditions.ts'
+import { PostPolicy } from './internal/post-policy.ts'
+import type { Region } from './internal/s3-endpoints.ts'
 import type {
   BucketItem,
   BucketItemCopy,
@@ -62,8 +62,8 @@ import type {
 } from './internal/type.ts'
 
 export * from './helpers.ts'
-export type {Region} from './internal/s3-endpoints.ts'
-export {CopyConditions, PostPolicy}
+export type { Region } from './internal/s3-endpoints.ts'
+export { CopyConditions, PostPolicy }
 export type {
   BucketItem,
   BucketItemCopy,
@@ -256,8 +256,8 @@ export interface SelectOptions {
   expressionType?: string
   inputSerialization: InputSerialization
   outputSerialization: OutputSerialization
-  requestProgress?: {Enabled: boolean}
-  scanRange?: {Start: number; End: number}
+  requestProgress?: { Enabled: boolean }
+  scanRange?: { Start: number; End: number }
 }
 
 export interface SourceObjectStats {
@@ -582,7 +582,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    reqParams: {[key: string]: any},
+    reqParams: { [key: string]: any },
     callback: ResultCallback<string>,
   ): void
   presignedUrl(
@@ -590,7 +590,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    reqParams: {[key: string]: any},
+    reqParams: { [key: string]: any },
     requestDate: Date,
     callback: ResultCallback<string>,
   ): void
@@ -599,7 +599,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry?: number,
-    reqParams?: {[key: string]: any},
+    reqParams?: { [key: string]: any },
     requestDate?: Date,
   ): Promise<string>
 
@@ -609,14 +609,14 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry: number,
-    respHeaders: {[key: string]: any},
+    respHeaders: { [key: string]: any },
     callback: ResultCallback<string>,
   ): void
   presignedGetObject(
     bucketName: string,
     objectName: string,
     expiry: number,
-    respHeaders: {[key: string]: any},
+    respHeaders: { [key: string]: any },
     requestDate: Date,
     callback: ResultCallback<string>,
   ): void
@@ -624,7 +624,7 @@ export class Client extends TypedClient {
     bucketName: string,
     objectName: string,
     expiry?: number,
-    respHeaders?: {[key: string]: any},
+    respHeaders?: { [key: string]: any },
     requestDate?: Date,
   ): Promise<string>
 
