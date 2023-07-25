@@ -887,6 +887,21 @@ export class TypedClient {
   }
 
   /**
+   * Internal Method to abort a multipart upload request in case of any errors.
+   *
+   * @param bucketName - Bucket Name
+   * @param objectName - Object Name
+   * @param uploadId - id of a multipart upload to cancel during compose object sequence.
+   */
+  async abortMultipartUpload(bucketName: string, objectName: string, uploadId: string): Promise<void> {
+    const method = 'DELETE'
+    const query = `uploadId=${uploadId}`
+
+    const requestOptions = { method, bucketName, objectName: objectName, query }
+    await this.makeRequestAsyncOmit(requestOptions, '', [204])
+  }
+
+  /**
    * Get part-info of all parts of an incomplete upload specified by uploadId.
    */
   protected async listParts(bucketName: string, objectName: string, uploadId: string): Promise<UploadedPart[]> {
