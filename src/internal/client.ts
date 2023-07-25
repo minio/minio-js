@@ -34,7 +34,7 @@ import {
   uriResourceEscape,
 } from './helper.ts'
 import { request } from './request.ts'
-import { drainResponse, readAsString } from './response.ts'
+import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type {
@@ -49,6 +49,7 @@ import type {
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
+import { parseInitiateMultipart } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -860,6 +861,29 @@ export class TypedClient {
     const query = qs.stringify(queryParams)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
+  }
+
+  // Calls implemented below are related to multipart.
+
+  /**
+   * Initiate a new multipart upload.
+   * @internal
+   */
+  async initiateNewMultipartUpload(bucketName: string, objectName: string, headers: RequestHeaders): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(headers)) {
+      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
+    }
+    const method = 'POST'
+    const query = 'uploads'
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query, headers })
+    const body = await readAsBuffer(res)
+    return parseInitiateMultipart(body.toString())
   }
 
   /**

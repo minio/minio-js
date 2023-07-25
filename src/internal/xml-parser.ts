@@ -216,3 +216,17 @@ export function parseListBucket(xml: string) {
   }
   return result
 }
+
+export function parseInitiateMultipart(xml: string): string {
+  let xmlobj = parseXml(xml)
+
+  if (!xmlobj.InitiateMultipartUploadResult) {
+    throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
+  }
+  xmlobj = xmlobj.InitiateMultipartUploadResult
+
+  if (xmlobj.UploadId) {
+    return xmlobj.UploadId
+  }
+  throw new errors.InvalidXMLError('Missing tag: "UploadId"')
+}

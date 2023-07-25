@@ -167,21 +167,6 @@ export function parseBucketNotification(xml) {
   return result
 }
 
-// parse XML response when a new multipart upload is initiated
-export function parseInitiateMultipart(xml) {
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.InitiateMultipartUploadResult) {
-    throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
-  }
-  xmlobj = xmlobj.InitiateMultipartUploadResult
-
-  if (xmlobj.UploadId) {
-    return xmlobj.UploadId
-  }
-  throw new errors.InvalidXMLError('Missing tag: "UploadId"')
-}
-
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
   var xmlobj = parseXml(xml).CompleteMultipartUploadResult

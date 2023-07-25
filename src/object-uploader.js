@@ -125,16 +125,15 @@ export class ObjectUploader extends Transform {
 
         // If no upload ID exists, initiate a new one.
         if (!id) {
-          this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData, (err, id) => {
-            if (err) {
-              return callback(err)
-            }
+          this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData).then(
+            (id) => {
+              this.id = id
 
-            this.id = id
-
-            // We are now ready to accept new chunks — this will flush the buffered chunk.
-            this.emit('ready')
-          })
+              // We are now ready to accept new chunks — this will flush the buffered chunk.
+              this.emit('ready')
+            },
+            (err) => callback(err),
+          )
 
           return
         }
