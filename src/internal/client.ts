@@ -42,6 +42,7 @@ import type {
   BucketItemFromList,
   BucketItemStat,
   IRequest,
+  RemoveOptions,
   RequestHeaders,
   ResponseHeader,
   StatObjectOpts,
@@ -50,6 +51,8 @@ import type {
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseInitiateMultipart } from './xml-parser.ts'
+
+export type { RemoveOptions }
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -100,12 +103,6 @@ export type RequestOption = Partial<IRequest> & {
 }
 
 export type NoResultCallback = (error: unknown) => void
-
-export interface RemoveOptions {
-  versionId?: string
-  governanceBypass?: boolean
-  forceDelete?: boolean
-}
 
 export class TypedClient {
   protected transport: Transport
