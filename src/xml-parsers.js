@@ -432,17 +432,6 @@ export function parseBucketEncryptionConfig(xml) {
   return encConfig
 }
 
-export function parseReplicationConfig(xml) {
-  const xmlObj = parseXml(xml)
-  const replicationConfig = {
-    ReplicationConfiguration: {
-      role: xmlObj.ReplicationConfiguration.Role,
-      rules: toArray(xmlObj.ReplicationConfiguration.Rule),
-    },
-  }
-  return replicationConfig
-}
-
 export function parseObjectLegalHoldConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold

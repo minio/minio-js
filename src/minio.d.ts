@@ -23,10 +23,22 @@ import type {
   BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
+  ExistingObjectReplication,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  ResultCallback,
+  SourceSelectionCriteria,
+  Tag,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -40,12 +52,23 @@ export type {
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
+  ExistingObjectReplication,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
   NoResultCallback,
   RemoveOptions,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  SourceSelectionCriteria,
+  Tag,
 }
 
 // Exports only from typings
@@ -82,7 +105,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  * @deprecated keep for backward compatible
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
-export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
@@ -105,11 +127,6 @@ export interface UploadedObjectInfo {
   versionId: string | null
 }
 
-export interface Tag {
-  Key: string
-  Value: string
-}
-
 export interface LifecycleConfig {
   Rule: LifecycleRule[]
 }
@@ -129,15 +146,6 @@ export interface EncryptionConfig {
 }
 
 export interface EncryptionRule {
-  [key: string]: any
-}
-
-export interface ReplicationConfig {
-  role: string
-  rules: []
-}
-
-export interface ReplicationConfig {
   [key: string]: any
 }
 
@@ -275,12 +283,6 @@ export class Client extends TypedClient {
 
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
-
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig, callback: NoResultCallback): void
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig): Promise<void>
-
-  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
-  getBucketReplication(bucketName: string): Promise<ReplicationConfig>
 
   // Object operations
   getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
