@@ -1457,17 +1457,28 @@ describe('Client', function () {
   })
 
   describe('Object Legal Hold APIs', () => {
-    describe('getObjectLegalHold(bucketName, objectName, getOpts={}, cb)', () => {
+    describe('getObjectLegalHold(bucketName, objectName, getOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getObjectLegalHold(null, function () {})
+          client.getObjectLegalHold(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
+
       it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectLegalHold('', function () {})
+          client.getObjectLegalHold('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1475,53 +1486,89 @@ describe('Client', function () {
 
       it('should fail on null objectName', (done) => {
         try {
-          client.getObjectLegalHold('my-bucket', null, function () {})
+          client.getObjectLegalHold('my-bucket', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
-      it('should fail on null getOpts', (done) => {
+      it('should fail on invalid version id in getOpts', (done) => {
         try {
-          client.getObjectLegalHold('my-bucker', 'my-object', null, function () {})
+          client.getObjectLegalHold('my-bucket', 'my-object', { versionId: 123 }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
     })
 
-    describe('setObjectLegalHold(bucketName, objectName, setOpts={}, cb)', () => {
+    describe('setObjectLegalHold(bucketName, objectName, setOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setObjectLegalHold(null, function () {})
+          client.setObjectLegalHold(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setObjectLegalHold('', function () {})
+          client.setObjectLegalHold('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
 
-      it('should fail on null objectName', (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.setObjectLegalHold('my-bucket', null, function () {})
+          client.setObjectLegalHold('my-bucket', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on null setOpts', (done) => {
         try {
-          client.setObjectLegalHold('my-bucker', 'my-object', null, function () {})
+          client.setObjectLegalHold('my-bucket', 'my-object', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
-      it('should fail on empty versionId', (done) => {
+
+      it('should fail on empty version', (done) => {
         try {
-          client.setObjectLegalHold('my-bucker', 'my-object', {}, function () {})
+          client.setObjectLegalHold('my-bucket', 'my-object', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }

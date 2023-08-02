@@ -191,3 +191,14 @@ export type ReplicationConfig = {
 /* Replication Config types */
 
 export type ResultCallback<T> = (error: Error | null, result: T) => void
+
+export type GetObjectLegalHoldOptions = {
+  versionId: string
+}
+
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+
+export type PutObjectLegalHoldOptions = {
+  versionId?: string
+  status: LEGAL_HOLD_STATUS
+}
