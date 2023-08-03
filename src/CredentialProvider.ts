@@ -1,4 +1,4 @@
-import { Credentials } from './Credentials.ts'
+import { Credentials } from './Credentials'
 
 export class CredentialProvider {
   private credentials: Credentials

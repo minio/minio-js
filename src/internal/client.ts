@@ -7,11 +7,11 @@ import _ from 'lodash'
 import * as qs from 'query-string'
 import xml2js from 'xml2js'
 
-import { CredentialProvider } from '../CredentialProvider.ts'
-import * as errors from '../errors.ts'
-import { DEFAULT_REGION } from '../helpers.ts'
-import { signV4 } from '../signing.ts'
-import { Extensions } from './extensions.ts'
+import { CredentialProvider } from '../CredentialProvider'
+import * as errors from '../errors'
+import { DEFAULT_REGION } from '../helpers'
+import { signV4 } from '../signing'
+import { Extensions } from './extensions'
 import {
   extractMetadata,
   getVersionId,
@@ -34,11 +34,11 @@ import {
   toSha256,
   uriEscape,
   uriResourceEscape,
-} from './helper.ts'
-import { request } from './request.ts'
-import { drainResponse, readAsBuffer, readAsString } from './response.ts'
-import type { Region } from './s3-endpoints.ts'
-import { getS3Endpoint } from './s3-endpoints.ts'
+} from './helper'
+import { request } from './request'
+import { drainResponse, readAsBuffer, readAsString } from './response'
+import type { Region } from './s3-endpoints'
+import { getS3Endpoint } from './s3-endpoints'
 import type {
   Binary,
   BucketItemFromList,
@@ -51,10 +51,10 @@ import type {
   ResultCallback,
   StatObjectOpts,
   Transport,
-} from './type.ts'
-import type { UploadedPart } from './xml-parser.ts'
-import * as xmlParsers from './xml-parser.ts'
-import { parseInitiateMultipart } from './xml-parser.ts'
+} from './type'
+import type { UploadedPart } from './xml-parser'
+import * as xmlParsers from './xml-parser'
+import { parseInitiateMultipart } from './xml-parser'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }

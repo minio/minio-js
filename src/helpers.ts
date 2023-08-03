@@ -3,7 +3,7 @@ import * as path from 'node:path'
 
 import * as querystring from 'query-string'
 
-import * as errors from './errors.ts'
+import * as errors from './errors'
 import {
   getEncryptionHeaders,
   isEmpty,
@@ -13,11 +13,11 @@ import {
   isString,
   isValidBucketName,
   isValidObjectName,
-} from './internal/helper.ts'
-import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
-import { RETENTION_MODES } from './internal/type.ts'
+} from './internal/helper'
+import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type'
+import { RETENTION_MODES } from './internal/type'
 
-export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
+export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type'
 
 export const DEFAULT_REGION = 'us-east-1'
 

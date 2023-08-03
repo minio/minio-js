@@ -2,13 +2,13 @@ import * as http from 'node:http'
 import * as https from 'node:https'
 import { URL, URLSearchParams } from 'node:url'
 
-import { CredentialProvider } from './CredentialProvider.ts'
-import { Credentials } from './Credentials.ts'
-import { makeDateLong, parseXml, toSha256 } from './internal/helper.ts'
-import { request } from './internal/request.ts'
-import { readAsString } from './internal/response.ts'
-import type { Transport } from './internal/type.ts'
-import { signV4ByServiceName } from './signing.ts'
+import { CredentialProvider } from './CredentialProvider'
+import { Credentials } from './Credentials'
+import { makeDateLong, parseXml, toSha256 } from './internal/helper'
+import { request } from './internal/request'
+import { readAsString } from './internal/response'
+import type { Transport } from './internal/type'
+import { signV4ByServiceName } from './signing'
 
 /**
  * @see https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html

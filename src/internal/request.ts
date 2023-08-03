@@ -3,7 +3,7 @@ import type * as https from 'node:https'
 import type * as stream from 'node:stream'
 import { pipeline } from 'node:stream'
 
-import type { Transport } from './type.ts'
+import type { Transport } from './type'
 
 export async function request(
   transport: Transport,

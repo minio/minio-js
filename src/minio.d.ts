@@ -10,12 +10,12 @@ import type {
   LEGAL_HOLD_STATUS,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
-} from './helpers.ts'
-import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
-import { TypedClient } from './internal/client.ts'
-import { CopyConditions } from './internal/copy-conditions.ts'
-import { PostPolicy } from './internal/post-policy.ts'
-import type { Region } from './internal/s3-endpoints.ts'
+} from './helpers'
+import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client'
+import { TypedClient } from './internal/client'
+import { CopyConditions } from './internal/copy-conditions'
+import { PostPolicy } from './internal/post-policy'
+import type { Region } from './internal/s3-endpoints'
 import type {
   BucketItem,
   BucketItemCopy,
@@ -39,10 +39,10 @@ import type {
   ResultCallback,
   SourceSelectionCriteria,
   Tag,
-} from './internal/type.ts'
+} from './internal/type'
 
-export * from './helpers.ts'
-export type { Region } from './internal/s3-endpoints.ts'
+export * from './helpers'
+export type { Region } from './internal/s3-endpoints'
 export { CopyConditions, PostPolicy }
 export type {
   BucketItem,

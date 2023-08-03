@@ -22,8 +22,8 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
-import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
-import { ENCRYPTION_TYPES } from './type.ts'
+import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type'
+import { ENCRYPTION_TYPES } from './type'
 
 const MetaDataHeaderPrefix = 'x-amz-meta-'
 

@@ -2,10 +2,10 @@ import type * as http from 'node:http'
 
 import { XMLParser } from 'fast-xml-parser'
 
-import * as errors from '../errors.ts'
-import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
-import { readAsString } from './response.ts'
-import type { BucketItemFromList, BucketItemWithMetadata, ReplicationConfig } from './type.ts'
+import * as errors from '../errors'
+import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper'
+import { readAsString } from './response'
+import type { BucketItemFromList, BucketItemWithMetadata, ReplicationConfig } from './type'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
