@@ -1612,11 +1612,11 @@ Get legal hold on an object.
 
 **Parameters**
 
-| Param        | Type     | Description                                                                              |
-| ------------ | -------- | ---------------------------------------------------------------------------------------- |
-| `bucketName` | _string_ | Name of the bucket.                                                                      |
-| `objectName` | _string_ | Name of the object.                                                                      |
-| `getOpts`    | _object_ | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}` defaults to `{}` . |
+| Param        | Type     | Description                                                                               |
+| ------------ | -------- | ----------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                       |
+| `objectName` | _string_ | Name of the object.                                                                       |
+| `getOpts`    | _object_ | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}`. Defaults to `{}` . |
 
 **Example 1**
 
@@ -1644,11 +1644,11 @@ Set legal hold on an object.
 
 **Parameters**
 
-| Param        | Type     | Description                                                                                                                                 |
-| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName` | _string_ | Name of the bucket.                                                                                                                         |
-| `objectName` | _string_ | Name of the object.                                                                                                                         |
-| `setOpts`    | _object_ | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{status:'ON'}` if not passed. |
+| Param        | Type     | Description                                                                                                                                  |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                          |
+| `objectName` | _string_ | Name of the object.                                                                                                                          |
+| `setOpts`    | _object_ | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}`. Defaults to `{status:'ON'}` if not passed. |
 
 **Example 1**
 

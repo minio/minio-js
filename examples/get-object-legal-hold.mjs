@@ -24,34 +24,19 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getObjectLegalHold('test-l-bucket', 'inspect-data.enc', (e, res) => {
-  if (e) {
-    console.log('CB Error 1', e.message)
-    return
-  }
-  console.log('CB Success Res', res)
-})
-
-s3Client.getObjectLegalHold('test-l-bucket', null, (e, res) => {
-  if (e) {
-    console.log('CB Error 2', e.message)
-    return
-  }
-  console.log('CB Success Res 2', res)
-})
-
 try {
-  const buckets = await s3Client.getObjectLegalHold('test-l-bucket', 'inspect-data.enc', { versionId: 1234 })
-  console.log('Default Success', buckets)
+  const legalHoldStatus = await s3Client.getObjectLegalHold('test-l-bucket', 'inspect-data.enc')
+  console.log('Success', legalHoldStatus)
 } catch (err) {
-  console.log('Error::', err.message)
+  console.log('Error', err.message)
 }
-/*
+
 // with version Id
 try {
-  const buckets = await s3Client.getObjectLegalHold(null, 'inspect-data.enc', {versionId:'d24cbb1b-81c2-449d-b6d0-8a5f19b66b05'})
-  console.log('Version Success', buckets)
+  const legalHoldStatusOnVersion = await s3Client.getObjectLegalHold('test-l-bucket', 'inspect-data.enc', {
+    versionId: 'd24cbb1b-81c2-449d-b6d0-8a5f19b66b05',
+  })
+  console.log('Version Success', legalHoldStatusOnVersion)
 } catch (err) {
   console.log(err.message)
 }
-*/
