@@ -5,6 +5,7 @@ import type * as stream from 'node:stream'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
+import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
@@ -29,12 +30,13 @@ import {
   isVirtualHostStyle,
   makeDateLong,
   sanitizeETag,
+  toMd5,
   toSha256,
   uriEscape,
   uriResourceEscape,
 } from './helper.ts'
 import { request } from './request.ts'
-import { drainResponse, readAsString } from './response.ts'
+import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type {
@@ -42,13 +44,17 @@ import type {
   BucketItemFromList,
   BucketItemStat,
   IRequest,
+  ReplicationConfig,
+  ReplicationConfigOpts,
   RequestHeaders,
   ResponseHeader,
+  ResultCallback,
   StatObjectOpts,
   Transport,
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
+import { parseInitiateMultipart } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -862,6 +868,29 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
 
+  // Calls implemented below are related to multipart.
+
+  /**
+   * Initiate a new multipart upload.
+   * @internal
+   */
+  async initiateNewMultipartUpload(bucketName: string, objectName: string, headers: RequestHeaders): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(headers)) {
+      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
+    }
+    const method = 'POST'
+    const query = 'uploads'
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query, headers })
+    const body = await readAsBuffer(res)
+    return parseInitiateMultipart(body.toString())
+  }
+
   /**
    * Internal Method to abort a multipart upload request in case of any errors.
    *
@@ -952,5 +981,54 @@ export class TypedClient {
     const method = 'DELETE'
     const query = 'replication'
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [200, 204], '')
+  }
+
+  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts, callback: NoResultCallback): void
+  async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): Promise<void>
+  async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(replicationConfig)) {
+      throw new errors.InvalidArgumentError('replicationConfig should be of type "object"')
+    } else {
+      if (_.isEmpty(replicationConfig.role)) {
+        throw new errors.InvalidArgumentError('Role cannot be empty')
+      } else if (replicationConfig.role && !isString(replicationConfig.role)) {
+        throw new errors.InvalidArgumentError('Invalid value for role', replicationConfig.role)
+      }
+      if (_.isEmpty(replicationConfig.rules)) {
+        throw new errors.InvalidArgumentError('Minimum one replication rule must be specified')
+      }
+    }
+    const method = 'PUT'
+    const query = 'replication'
+    const headers: Record<string, string> = {}
+
+    const replicationParamsConfig = {
+      ReplicationConfiguration: {
+        Role: replicationConfig.role,
+        Rule: replicationConfig.rules,
+      },
+    }
+
+    const builder = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
+    const payload = builder.buildObject(replicationParamsConfig)
+    headers['Content-MD5'] = toMd5(payload)
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
+  async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
+  async getBucketReplication(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'replication'
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, query }, '', [200, 204])
+    const xmlResult = await readAsString(httpRes)
+    return xmlParsers.parseReplicationConfig(xmlResult)
   }
 }

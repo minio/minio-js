@@ -1381,33 +1381,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Calls implemented below are related to multipart.
-
-  // Initiate a new multipart upload.
-  initiateNewMultipartUpload(bucketName, objectName, metaData, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(metaData)) {
-      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
-    }
-    var method = 'POST'
-    let headers = Object.assign({}, metaData)
-    var query = 'uploads'
-    this.makeRequest({ method, bucketName, objectName, query, headers }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getInitiateMultipartTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (uploadId) => cb(null, uploadId))
-    })
-  }
-
   // Complete the multipart upload. After all the parts are uploaded issuing
   // this call will aggregate the parts on the server into a single object.
   completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
@@ -2266,73 +2239,6 @@ export class Client extends TypedClient {
     this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
 
-  setBucketReplication(bucketName, replicationConfig = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isObject(replicationConfig)) {
-      throw new errors.InvalidArgumentError('replicationConfig should be of type "object"')
-    } else {
-      if (_.isEmpty(replicationConfig.role)) {
-        throw new errors.InvalidArgumentError('Role cannot be empty')
-      } else if (replicationConfig.role && !isString(replicationConfig.role)) {
-        throw new errors.InvalidArgumentError('Invalid value for role', replicationConfig.role)
-      }
-      if (_.isEmpty(replicationConfig.rules)) {
-        throw new errors.InvalidArgumentError('Minimum one replication rule must be specified')
-      }
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const method = 'PUT'
-    let query = 'replication'
-    const headers = {}
-
-    const replicationParamsConfig = {
-      ReplicationConfiguration: {
-        Role: replicationConfig.role,
-        Rule: replicationConfig.rules,
-      },
-    }
-
-    const builder = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
-
-    let payload = builder.buildObject(replicationParamsConfig)
-
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
-  }
-
-  getBucketReplication(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    const query = 'replication'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let replicationConfig = Buffer.from('')
-      pipesetup(response, transformers.replicationConfigTransformer())
-        .on('data', (data) => {
-          replicationConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, replicationConfig)
-        })
-    })
-  }
-
   getObjectLegalHold(bucketName, objectName, getOpts = {}, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2638,12 +2544,14 @@ export class Client extends TypedClient {
 
         const newUploadHeaders = destObjConfig.getHeaders()
 
-        me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders, (err, uploadId) => {
-          if (err) {
-            return cb(err, null)
-          }
-          performUploadParts(uploadId)
-        })
+        me.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders).then(
+          (uploadId) => {
+            performUploadParts(uploadId)
+          },
+          (err) => {
+            cb(err, null)
+          },
+        )
       })
       .catch((error) => {
         cb(error, null)
@@ -2775,8 +2683,6 @@ Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetent
 Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
 Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
-Client.prototype.setBucketReplication = promisify(Client.prototype.setBucketReplication)
-Client.prototype.getBucketReplication = promisify(Client.prototype.getBucketReplication)
 Client.prototype.setObjectLegalHold = promisify(Client.prototype.setObjectLegalHold)
 Client.prototype.getObjectLegalHold = promisify(Client.prototype.getObjectLegalHold)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
@@ -2788,3 +2694,5 @@ Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)
+Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketReplication)
+Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)

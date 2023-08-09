@@ -1313,14 +1313,24 @@ describe('Client', function () {
     describe('setBucketReplication(bucketName, replicationConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setBucketReplication(null, {}, function () {})
+          client.setBucketReplication(null, {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketReplication('', {}, function () {})
+          client.setBucketReplication('', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1328,7 +1338,12 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig', (done) => {
         try {
-          client.setBucketReplication('my-bucket', {}, function () {})
+          client.setBucketReplication('my-bucket', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1336,7 +1351,12 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: '' }, function () {})
+          client.setBucketReplication('my-bucket', { role: '' }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1344,7 +1364,12 @@ describe('Client', function () {
 
       it('should fail on  invalid value for replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 12 }, function () {})
+          client.setBucketReplication('my-bucket', { role: 12 }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1352,14 +1377,24 @@ describe('Client', function () {
 
       it('should fail on  empty value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on  null value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1369,14 +1404,24 @@ describe('Client', function () {
     describe('getBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getBucketReplication(null, {}, function () {})
+          client.getBucketReplication(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketReplication('', {}, function () {})
+          client.getBucketReplication('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }

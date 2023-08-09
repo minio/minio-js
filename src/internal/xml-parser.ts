@@ -5,7 +5,7 @@ import { XMLParser } from 'fast-xml-parser'
 import * as errors from '../errors.ts'
 import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
-import type { BucketItemFromList, BucketItemWithMetadata } from './type.ts'
+import type { BucketItemFromList, BucketItemWithMetadata, ReplicationConfig } from './type.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -215,4 +215,29 @@ export function parseListBucket(xml: string) {
     })
   }
   return result
+}
+
+export function parseInitiateMultipart(xml: string): string {
+  let xmlobj = parseXml(xml)
+
+  if (!xmlobj.InitiateMultipartUploadResult) {
+    throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
+  }
+  xmlobj = xmlobj.InitiateMultipartUploadResult
+
+  if (xmlobj.UploadId) {
+    return xmlobj.UploadId
+  }
+  throw new errors.InvalidXMLError('Missing tag: "UploadId"')
+}
+
+export function parseReplicationConfig(xml: string): ReplicationConfig {
+  const xmlObj = parseXml(xml)
+  const { Role, Rule } = xmlObj.ReplicationConfiguration
+  return {
+    ReplicationConfiguration: {
+      role: Role,
+      rules: toArray(Rule),
+    },
+  }
 }

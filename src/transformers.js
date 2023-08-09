@@ -106,11 +106,6 @@ export function getListMultipartTransformer() {
   return getConcater(xmlParsers.parseListMultipart)
 }
 
-// Parses initMultipartUpload response.
-export function getInitiateMultipartTransformer() {
-  return getConcater(xmlParsers.parseInitiateMultipart)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
@@ -163,10 +158,6 @@ export function objectRetentionTransformer() {
 }
 export function bucketEncryptionTransformer() {
   return getConcater(xmlParsers.parseBucketEncryptionConfig)
-}
-
-export function replicationConfigTransformer() {
-  return getConcater(xmlParsers.parseReplicationConfig)
 }
 
 export function objectLegalHoldTransformer() {

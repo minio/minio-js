@@ -829,9 +829,7 @@ describe('functional tests', function () {
   describe('listIncompleteUploads removeIncompleteUpload', () => {
     step(
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, metaData:${metaData}`,
-      (done) => {
-        client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData, done)
-      },
+      () => client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData),
     )
     step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`,
@@ -4282,9 +4280,7 @@ describe('functional tests', function () {
 
     step(
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`,
-      (done) => {
-        client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData, done)
-      },
+      () => client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData),
     )
 
     step(
