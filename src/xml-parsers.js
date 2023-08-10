@@ -15,11 +15,26 @@
  */
 
 import crc32 from 'buffer-crc32'
+import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from './errors.ts'
 import { SelectResults } from './helpers.ts'
-import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
+import {
+  isObject,
+  parseXml,
+  readableStream,
+  sanitizeETag,
+  sanitizeObjectKey,
+  sanitizeSize,
+  toArray,
+} from './internal/helper.ts'
 import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
+
+const fxpWithoutNumParser = new XMLParser({
+  numberParseOptions: {
+    skipLike: /./,
+  },
+})
 
 // parse XML response for copy object
 export function parseCopyObject(xml) {
@@ -201,12 +216,13 @@ const formatObjInfo = (content, opts = {}) => {
   const name = sanitizeObjectKey(toArray(Key)[0])
   const lastModified = new Date(toArray(LastModified)[0])
   const etag = sanitizeETag(toArray(ETag)[0])
+  const size = sanitizeSize(Size)
 
   return {
     name,
     lastModified,
     etag,
-    size: Size,
+    size,
     versionId: VersionId,
     isLatest: IsLatest,
     isDeleteMarker: opts.IsDeleteMarker ? opts.IsDeleteMarker : false,
@@ -221,7 +237,7 @@ export function parseListObjects(xml) {
   }
   let isTruncated = false
   let nextMarker, nextVersionKeyMarker
-  const xmlobj = parseXml(xml)
+  const xmlobj = fxpWithoutNumParser.parse(xml)
 
   const parseCommonPrefixesEntity = (responseEntity) => {
     if (responseEntity) {
@@ -243,7 +259,7 @@ export function parseListObjects(xml) {
         const name = sanitizeObjectKey(toArray(content.Key)[0])
         const lastModified = new Date(toArray(content.LastModified)[0])
         const etag = sanitizeETag(toArray(content.ETag)[0])
-        const size = content.Size
+        const size = sanitizeSize(content.Size)
         result.objects.push({ name, lastModified, etag, size })
       })
     }

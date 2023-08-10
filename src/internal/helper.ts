@@ -462,6 +462,10 @@ export function sanitizeObjectKey(objectName: string): string {
   return decodeURIComponent(asStrName)
 }
 
+export function sanitizeSize(size?: string): number | undefined {
+  return size ? Number.parseInt(size) : undefined
+}
+
 export const PART_CONSTRAINTS = {
   // absMinPartSize - absolute minimum part size (5 MiB)
   ABS_MIN_PART_SIZE: 1024 * 1024 * 5,
