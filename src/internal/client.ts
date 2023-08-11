@@ -1046,38 +1046,6 @@ export class TypedClient {
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
   ): Promise<LegalHoldStatus> {
-    {
-      if (!isValidBucketName(bucketName)) {
-        throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-      }
-      if (!isValidObjectName(objectName)) {
-        throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-      }
-
-      if (getOpts) {
-        if (!isObject(getOpts)) {
-          throw new TypeError('getOpts should be of type "Object"')
-        } else if (Object.keys(getOpts).length > 0 && getOpts.versionId && !isString(getOpts.versionId)) {
-          throw new TypeError('versionId should be of type string.:', getOpts.versionId)
-        }
-      }
-
-      const method = 'GET'
-      let query = 'legal-hold'
-
-      if (getOpts?.versionId) {
-        query += `&versionId=${getOpts.versionId}`
-      }
-
-      const httpRes = await this.makeRequestAsync({ method, bucketName, objectName, query }, '', [200])
-      const strRes = await readAsString(httpRes)
-      return parseObjectLegalHoldConfig(strRes)
-    }
-  }
-
-  setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): void
-  async setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): Promise<void>
-  async setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1085,11 +1053,45 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    const defaultOpts = {
-      status: LEGAL_HOLD_STATUS.ENABLED,
+    if (getOpts) {
+      if (!isObject(getOpts)) {
+        throw new TypeError('getOpts should be of type "Object"')
+      } else if (Object.keys(getOpts).length > 0 && getOpts.versionId && !isString(getOpts.versionId)) {
+        throw new TypeError('versionId should be of type string.:', getOpts.versionId)
+      }
     }
-    if (!setOpts) {
-      setOpts = defaultOpts
+
+    const method = 'GET'
+    let query = 'legal-hold'
+
+    if (getOpts?.versionId) {
+      query += `&versionId=${getOpts.versionId}`
+    }
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, objectName, query }, '', [200])
+    const strRes = await readAsString(httpRes)
+    return parseObjectLegalHoldConfig(strRes)
+  }
+
+  setObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    setOpts?: PutObjectLegalHoldOptions,
+    callback?: NoResultCallback,
+  ): void
+  async setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): Promise<void>
+  async setObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    setOpts = {
+      status: LEGAL_HOLD_STATUS.ENABLED,
+    } as PutObjectLegalHoldOptions,
+  ): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
     if (!isObject(setOpts)) {
