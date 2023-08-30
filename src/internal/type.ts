@@ -93,9 +93,13 @@ export type BucketItem =
       name: string
       size: number
       etag: string
+      prefix?: never
       lastModified: Date
     }
   | {
+      name?: never
+      etag?: never
+      lastModified?: never
       prefix: string
       size: 0
     }
