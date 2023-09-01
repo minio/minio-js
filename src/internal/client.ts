@@ -987,7 +987,6 @@ export class TypedClient {
   }
 
   setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts, callback: NoResultCallback): void
-  async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): Promise<void>
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1022,7 +1021,6 @@ export class TypedClient {
   }
 
   getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
-  async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1079,7 +1077,6 @@ export class TypedClient {
     setOpts?: PutObjectLegalHoldOptions,
     callback?: NoResultCallback,
   ): void
-  async setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): Promise<void>
   async setObjectLegalHold(
     bucketName: string,
     objectName: string,
