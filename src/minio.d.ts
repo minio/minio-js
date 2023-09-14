@@ -24,10 +24,13 @@ import type {
   BucketItemWithMetadata,
   BucketStream,
   ExistingObjectReplication,
+  GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
+  PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -53,11 +56,14 @@ export type {
   BucketStream,
   ClientOptions,
   ExistingObjectReplication,
+  GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
+  PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -101,10 +107,6 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
-/**
- * @deprecated keep for backward compatible
- */
-export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
@@ -424,28 +426,6 @@ export class Client extends TypedClient {
     callback: ResultCallback<Tag[]>,
   ): void
   getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentificator): Promise<Tag[]>
-
-  getObjectLegalHold(bucketName: string, objectName: string, callback: ResultCallback<LegalHoldOptions>): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions: VersionIdentificator,
-    callback: ResultCallback<LegalHoldOptions>,
-  ): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions?: VersionIdentificator,
-  ): Promise<LegalHoldOptions>
-
-  setObjectLegalHold(bucketName: string, objectName: string, callback: NoResultCallback): void
-  setObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    setOptions: LegalHoldOptions,
-    callback: NoResultCallback,
-  ): void
-  setObjectLegalHold(bucketName: string, objectName: string, setOptions?: LegalHoldOptions): Promise<void>
 
   composeObject(
     destObjConfig: CopyDestinationOptions,

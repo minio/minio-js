@@ -1606,30 +1606,24 @@ minioClient.getObjectTagging(
 
 <a name="getObjectLegalHold"></a>
 
-### getObjectLegalHold(bucketName, objectName, getOpts [, callback])
+### getObjectLegalHold(bucketName, objectName, getOpts)
 
 Get legal hold on an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                            |
-| --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                    |
-| `objectName`    | _string_   | Name of the object.                                                                                                    |
-| `getOpts`       | _object_   | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}` defaults to `{}` .                               |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                               |
+| ------------ | -------- | ----------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                       |
+| `objectName` | _string_ | Name of the object.                                                                       |
+| `getOpts`    | _object_ | Legal hold configuration options. e.g `{versionId:'my-version-uuid'}`. Defaults to `{}` . |
 
 **Example 1**
 
 Get Legal hold of an object.
 
 ```js
-minioClient.getObjectLegalHold('bucketName', 'objectName', {}, function (err, res) {
-  if (err) {
-    return console.log('Unable to get legal hold config for the object', err.message)
-  }
-  console.log('Success', res)
-})
+const legalholdStatus = await minioClient.getObjectLegalHold('bucketName', 'objectName')
 ```
 
 **Example 2**
@@ -1637,40 +1631,31 @@ minioClient.getObjectLegalHold('bucketName', 'objectName', {}, function (err, re
 Get Legal hold of an object with versionId.
 
 ```js
-minioClient.getObjectLegalHold('bucketName', 'objectName', { versionId: 'my-obj-version-uuid' }, function (err, res) {
-  if (err) {
-    return console.log('Unable to get legal hold config for the object', err.message)
-  }
-  console.log('Success', res)
+const legalholdStatus = await minioClient.getObjectLegalHold('bucketName', 'objectName', {
+  versionId: 'my-obj-version-uuid',
 })
 ```
 
 <a name="setObjectLegalHold"></a>
 
-### setObjectLegalHold(bucketName, objectName, [,setOpts, callback])
+### setObjectLegalHold(bucketName, objectName, [,setOpts])
 
 Set legal hold on an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                 |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                         |
-| `objectName`    | _string_   | Name of the object.                                                                                                                         |
-| `setOpts`       | _object_   | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}` defaults to `{status:'ON'}` if not passed. |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                      |
+| Param        | Type     | Description                                                                                                                                  |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                          |
+| `objectName` | _string_ | Name of the object.                                                                                                                          |
+| `setOpts`    | _object_ | Legal hold configuration options to set. e.g `{versionId:'my-version-uuid', status:'ON or OFF'}`. Defaults to `{status:'ON'}` if not passed. |
 
 **Example 1**
 
 Set Legal hold of an object.
 
 ```js
-minioClient.setObjectLegalHold('bucketName', 'objectName', { Status: 'ON' }, function (err, res) {
-  if (err) {
-    return console.log('Unable to set legal hold config for the object', err.message)
-  }
-  console.log('Success')
-})
+const legalholdStatus = await minioClient.setObjectLegalHold('bucketName', 'objectName', { Status: 'ON' })
 ```
 
 **Example 2**
@@ -1678,17 +1663,10 @@ minioClient.setObjectLegalHold('bucketName', 'objectName', { Status: 'ON' }, fun
 Set Legal hold of an object with versionId.
 
 ```js
-minioClient.setObjectLegalHold(
-  'bucketName',
-  'objectName',
-  { Status: 'ON', versionId: 'my-obj-version-uuid' },
-  function (err, res) {
-    if (err) {
-      return console.log('Unable to set legal hold config for the object version', err.message)
-    }
-    console.log('Success')
-  },
-)
+const legalholdStatus = await minioClient.setObjectLegalHold('bucketName', 'objectName', {
+  Status: 'ON',
+  versionId: 'my-obj-version-uuid',
+})
 ```
 
 <a name="composeObject"></a>

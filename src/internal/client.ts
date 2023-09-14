@@ -9,7 +9,7 @@ import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
-import { DEFAULT_REGION } from '../helpers.ts'
+import { DEFAULT_REGION, LEGAL_HOLD_STATUS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
@@ -43,7 +43,10 @@ import type {
   Binary,
   BucketItemFromList,
   BucketItemStat,
+  GetObjectLegalHoldOptions,
   IRequest,
+  LegalHoldStatus,
+  PutObjectLegalHoldOptions,
   ReplicationConfig,
   ReplicationConfigOpts,
   RequestHeaders,
@@ -54,7 +57,7 @@ import type {
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
-import { parseInitiateMultipart } from './xml-parser.ts'
+import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -983,7 +986,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [200, 204], '')
   }
 
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts, callback: NoResultCallback): void
+  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): void
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): Promise<void>
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts) {
     if (!isValidBucketName(bucketName)) {
@@ -1018,7 +1021,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
+  getBucketReplication(bucketName: string): void
   async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {
@@ -1030,5 +1033,88 @@ export class TypedClient {
     const httpRes = await this.makeRequestAsync({ method, bucketName, query }, '', [200, 204])
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseReplicationConfig(xmlResult)
+  }
+
+  getObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    getOpts?: GetObjectLegalHoldOptions,
+    callback?: ResultCallback<LegalHoldStatus>,
+  ): Promise<LegalHoldStatus>
+  async getObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    getOpts?: GetObjectLegalHoldOptions,
+  ): Promise<LegalHoldStatus> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (getOpts) {
+      if (!isObject(getOpts)) {
+        throw new TypeError('getOpts should be of type "Object"')
+      } else if (Object.keys(getOpts).length > 0 && getOpts.versionId && !isString(getOpts.versionId)) {
+        throw new TypeError('versionId should be of type string.:', getOpts.versionId)
+      }
+    }
+
+    const method = 'GET'
+    let query = 'legal-hold'
+
+    if (getOpts?.versionId) {
+      query += `&versionId=${getOpts.versionId}`
+    }
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, objectName, query }, '', [200])
+    const strRes = await readAsString(httpRes)
+    return parseObjectLegalHoldConfig(strRes)
+  }
+
+  setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): void
+  async setObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    setOpts = {
+      status: LEGAL_HOLD_STATUS.ENABLED,
+    } as PutObjectLegalHoldOptions,
+  ): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isObject(setOpts)) {
+      throw new TypeError('setOpts should be of type "Object"')
+    } else {
+      if (![LEGAL_HOLD_STATUS.ENABLED, LEGAL_HOLD_STATUS.DISABLED].includes(setOpts?.status)) {
+        throw new TypeError('Invalid status: ' + setOpts.status)
+      }
+      if (setOpts.versionId && !setOpts.versionId.length) {
+        throw new TypeError('versionId should be of type string.:' + setOpts.versionId)
+      }
+    }
+
+    const method = 'PUT'
+    let query = 'legal-hold'
+
+    if (setOpts.versionId) {
+      query += `&versionId=${setOpts.versionId}`
+    }
+
+    const config = {
+      Status: setOpts.status,
+    }
+
+    const builder = new xml2js.Builder({ rootName: 'LegalHold', renderOpts: { pretty: false }, headless: true })
+    const payload = builder.buildObject(config)
+    const headers: Record<string, string> = {}
+    headers['Content-MD5'] = toMd5(payload)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload)
   }
 }
