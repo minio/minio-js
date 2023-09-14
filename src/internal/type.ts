@@ -195,7 +195,9 @@ export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type GetObjectLegalHoldOptions = {
   versionId: string
 }
-
+/**
+ * @deprecated keep for backward compatible, use `LEGAL_HOLD_STATUS` instead
+ */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
 
 export type PutObjectLegalHoldOptions = {

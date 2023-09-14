@@ -986,7 +986,8 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [200, 204], '')
   }
 
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts, callback: NoResultCallback): void
+  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): void
+  async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): Promise<void>
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1020,7 +1021,8 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
+  getBucketReplication(bucketName: string): void
+  async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1071,12 +1073,7 @@ export class TypedClient {
     return parseObjectLegalHoldConfig(strRes)
   }
 
-  setObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    setOpts?: PutObjectLegalHoldOptions,
-    callback?: NoResultCallback,
-  ): void
+  setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): void
   async setObjectLegalHold(
     bucketName: string,
     objectName: string,
