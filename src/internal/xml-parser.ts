@@ -241,3 +241,8 @@ export function parseReplicationConfig(xml: string): ReplicationConfig {
     },
   }
 }
+
+export function parseObjectLegalHoldConfig(xml: string) {
+  const xmlObj = parseXml(xml)
+  return xmlObj.LegalHold
+}
