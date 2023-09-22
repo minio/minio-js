@@ -297,7 +297,7 @@ describe('Client', function () {
         done()
       }
     })
-    it('should fail with alphanumeric', (done) => {
+    it('should fail with non-alphanumeric', (done) => {
       try {
         new Minio.Client({
           endPoint: 'localhost##$@3',
