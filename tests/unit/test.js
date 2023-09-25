@@ -966,11 +966,12 @@ describe('Client', function () {
     })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
-        try {
-          client.getObjectTagging('nv', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObjectTagging('nv', null, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on null object', (done) => {
         try {
