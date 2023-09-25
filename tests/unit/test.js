@@ -924,29 +924,29 @@ describe('Client', function () {
       })
     })
     describe('Get Bucket Tags', () => {
-      it('should fail on invalid bucket', (done) => {
-        client.getBucketTagging('nv', null, function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on invalid bucket', async () => {
+        try {
+          await client.getBucketTagging('nv', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on null bucket', (done) => {
-        client.getBucketTagging(null, function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on null bucket', async () => {
+        try {
+          await client.getBucketTagging(null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
-        client.getBucketTagging('', function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on empty bucket', async () => {
+        try {
+          await client.getBucketTagging('')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Bucket Tags', () => {
