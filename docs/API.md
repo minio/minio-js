@@ -647,7 +647,7 @@ minioClient.removeBucketTagging('bucketname', function (err) {
 
 <a name="getBucketTagging"></a>
 
-### getBucketTagging(bucketName, callback)
+### getBucketTagging(bucketName)
 
 Remove Tags on a Bucket
 
@@ -656,17 +656,12 @@ Remove Tags on a Bucket
 | Param                     | Type       | Description                                     |
 | ------------------------- | ---------- | ----------------------------------------------- |
 | `bucketName`              | _string_   | Name of the bucket.                             |
-| `callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error. |
 
 **Example**
 
 ```js
-minioClient.getBucketTagging('bucketname', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+const tagsList = await minioClient.getBucketTagging('bucketname')
+console.log('Success', tagsList)
 ```
 
 <a name="setBucketLifecycle"></a>

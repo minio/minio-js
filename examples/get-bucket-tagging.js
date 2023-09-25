@@ -17,17 +17,13 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketTagging('bucketname', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+const tagsList = await s3Client.getBucketTagging('bucketname')
+console.log('Success', tagsList)

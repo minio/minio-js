@@ -252,9 +252,6 @@ export class Client extends TypedClient {
   setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
   setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
 
-  getBucketTagging(bucketName: string, callback: ResultCallback<Tag[]>): void
-  getBucketTagging(bucketName: string): Promise<Tag[]>
-
   setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
   setBucketTagging(bucketName: string, tags: TagList): Promise<void>
 

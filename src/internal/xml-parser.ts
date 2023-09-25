@@ -3,7 +3,7 @@ import type * as http from 'node:http'
 import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
-import { parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
+import { isObject, parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
 import type { BucketItemFromList, BucketItemWithMetadata, ReplicationConfig } from './type.ts'
 
@@ -245,4 +245,19 @@ export function parseReplicationConfig(xml: string): ReplicationConfig {
 export function parseObjectLegalHoldConfig(xml: string) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold
+}
+
+export function parseTagging(xml: string) {
+  const xmlObj = parseXml(xml)
+  let result = []
+  if (xmlObj.Tagging && xmlObj.Tagging.TagSet && xmlObj.Tagging.TagSet.Tag) {
+    const tagResult = xmlObj.Tagging.TagSet.Tag
+    // if it is a single tag convert into an array so that the return value is always an array.
+    if (isObject(tagResult)) {
+      result.push(tagResult)
+    } else {
+      result = tagResult
+    }
+  }
+  return result
 }

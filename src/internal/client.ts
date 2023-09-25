@@ -53,6 +53,7 @@ import type {
   ResponseHeader,
   ResultCallback,
   StatObjectOpts,
+  Tag,
   Transport,
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
@@ -1116,5 +1117,22 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload)
+  }
+
+  /**
+   * Get Tags associated with a Bucket
+   */
+  async getBucketTagging(bucketName: string): Promise<Tag[]> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+
+    const method = 'GET'
+    const query = 'tagging'
+    const requestOptions = { method, bucketName, query }
+
+    const response = await this.makeRequestAsync(requestOptions)
+    const body = await readAsString(response)
+    return xmlParsers.parseTagging(body)
   }
 }

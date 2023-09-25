@@ -1819,33 +1819,6 @@ export class Client extends TypedClient {
     return this.removeTagging({ bucketName, objectName, removeOpts, cb })
   }
 
-  /** Get Tags associated with a Bucket
-   *  __Arguments__
-   * bucketName _string_
-   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  getBucketTagging(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-
-    const method = 'GET'
-    const query = 'tagging'
-    const requestOptions = { method, bucketName, query }
-
-    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
-      var transformer = transformers.getTagsTransformer()
-      if (e) {
-        return cb(e)
-      }
-      let tagsList
-      pipesetup(response, transformer)
-        .on('data', (result) => (tagsList = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, tagsList))
-    })
-  }
-
   /** Get the tags associated with a bucket OR an object
    * bucketName _string_
    * objectName _string_ (Optional)
@@ -2566,7 +2539,6 @@ Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersi
 Client.prototype.setBucketVersioning = promisify(Client.prototype.setBucketVersioning)
 Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
 Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
-Client.prototype.getBucketTagging = promisify(Client.prototype.getBucketTagging)
 Client.prototype.setObjectTagging = promisify(Client.prototype.setObjectTagging)
 Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTagging)
 Client.prototype.getObjectTagging = promisify(Client.prototype.getObjectTagging)
@@ -2593,3 +2565,4 @@ Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketRe
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
 Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLegalHold)
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
+Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
