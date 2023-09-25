@@ -59,6 +59,9 @@
     "*.{js,cjs,mjs,ts}": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write"
     ]
   },
   "repository": {
