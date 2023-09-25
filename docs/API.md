@@ -653,9 +653,9 @@ Remove Tags on a Bucket
 
 **Parameters**
 
-| Param                     | Type       | Description                                     |
-| ------------------------- | ---------- | ----------------------------------------------- |
-| `bucketName`              | _string_   | Name of the bucket.                             |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
