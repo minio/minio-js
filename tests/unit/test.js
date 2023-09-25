@@ -974,11 +974,12 @@ describe('Client', function () {
         }
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.getObjectTagging('my-bucket-name', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObjectTagging('my-bucket-name', null, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
     describe('Remove Object Tags', () => {
