@@ -168,11 +168,6 @@ export function bucketEncryptionTransformer() {
 export function replicationConfigTransformer() {
   return getConcater(xmlParsers.parseReplicationConfig)
 }
-
-export function objectLegalHoldTransformer() {
-  return getConcater(xmlParsers.parseObjectLegalHoldConfig)
-}
-
 export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }

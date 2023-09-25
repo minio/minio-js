@@ -25,7 +25,9 @@ import type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  VersionIdentificator,
 } from './internal/type.ts'
+import type { LegalHoldOptions } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
@@ -40,8 +42,10 @@ export type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldOptions,
   NoResultCallback,
   RemoveOptions,
+  VersionIdentificator,
 }
 
 // Exports only from typings
@@ -82,7 +86,6 @@ export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
-export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
@@ -154,11 +157,6 @@ export interface RetentionOptions {
   mode?: RETENTION_MODES
   retainUntilDate?: IsoDate
   governanceBypass?: boolean
-}
-
-export interface LegalHoldOptions {
-  versionId: string
-  status: LEGAL_HOLD_STATUS
 }
 
 export interface InputSerialization {
@@ -436,19 +434,6 @@ export class Client extends TypedClient {
     callback: ResultCallback<Tag[]>,
   ): void
   getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentificator): Promise<Tag[]>
-
-  getObjectLegalHold(bucketName: string, objectName: string, callback: ResultCallback<LegalHoldOptions>): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions: VersionIdentificator,
-    callback: ResultCallback<LegalHoldOptions>,
-  ): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions?: VersionIdentificator,
-  ): Promise<LegalHoldOptions>
 
   setObjectLegalHold(bucketName: string, objectName: string, callback: NoResultCallback): void
   setObjectLegalHold(

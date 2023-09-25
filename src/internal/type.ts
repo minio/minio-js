@@ -5,6 +5,8 @@ import type { MetadataItem } from '../minio'
 
 export type Binary = string | Buffer
 
+export type VersionIdentificator = { versionId?: string }
+
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
 export type ResponseHeader = Record<string, string>
 
@@ -110,4 +112,8 @@ export interface BucketStream<T> extends ReadableStream {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string | symbol, listener: (...args: any[]) => void): this
+}
+export interface LegalHoldOptions {
+  versionId: string
+  status: LEGAL_HOLD_STATUS
 }

@@ -34,7 +34,15 @@ import { request } from './request.ts'
 import { drainResponse, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import type { Binary, BucketItemFromList, IRequest, RequestHeaders, Transport } from './type.ts'
+import type {
+  Binary,
+  BucketItemFromList,
+  IRequest,
+  LegalHoldOptions,
+  RequestHeaders,
+  Transport,
+  VersionIdentificator,
+} from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -886,5 +894,37 @@ export class TypedClient {
     const httpRes = await this.makeRequestAsync({ method }, '', [200], DEFAULT_REGION)
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseListBucket(xmlResult)
+  }
+
+  async getObjectLegalHold(
+    bucketName: string,
+    objectName: string,
+    getOpts: VersionIdentificator = {},
+  ): Promise<LegalHoldOptions> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isObject(getOpts)) {
+      throw new TypeError('getOpts should be of type "Object"')
+    } else if (Object.keys(getOpts).length > 0 && getOpts.versionId && !isString(getOpts.versionId)) {
+      throw new TypeError('versionId should be of type string.:', getOpts.versionId)
+    }
+
+    const method = 'GET'
+    let query = 'legal-hold'
+
+    if (getOpts.versionId) {
+      query += `&versionId=${getOpts.versionId}`
+    }
+
+    const response = await this.makeRequestAsync({ method, bucketName, objectName, query })
+
+    const body = await readAsString(response)
+
+    return xmlParsers.parseObjectLegalHoldConfig(body)
   }
 }

@@ -216,3 +216,8 @@ export function parseListBucket(xml: string) {
   }
   return result
 }
+
+export function parseObjectLegalHoldConfig(xml: string) {
+  const xmlObj = parseXml(xml)
+  return xmlObj.LegalHold
+}

@@ -208,7 +208,7 @@ The full API Reference is available here.
 - [get-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/get-object-tagging.js)
 - [remove-object-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
 - [set-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.js)
-- [get-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.js)
+- [get-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
 - [compose-object.js](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
 - [select-object-content.js](https://github.com/minio/minio-js/blob/master/examples/select-object-content.js)
 
