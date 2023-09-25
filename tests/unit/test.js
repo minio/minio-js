@@ -76,12 +76,21 @@ describe('Helpers', () => {
     const expectedPartsRequiredTestCases = [
       { value: 0, expected: 0 },
       { value: 1, expected: 1 },
-      { value: fiveGB, expected: 10 },
+      {
+        value: fiveGB,
+        expected: 10,
+      },
       { value: OBJ_SIZES.gb5p1, expected: 10 },
       { value: 2 * fiveGB, expected: 20 },
-      { value: OBJ_SIZES.gb10p1, expected: 20 },
+      {
+        value: OBJ_SIZES.gb10p1,
+        expected: 20,
+      },
       { value: OBJ_SIZES.gb10p2, expected: 20 },
-      { value: OBJ_SIZES.gb10p1 + OBJ_SIZES.gb10p2, expected: 40 },
+      {
+        value: OBJ_SIZES.gb10p1 + OBJ_SIZES.gb10p2,
+        expected: 40,
+      },
       { value: maxMultipartPutObjectSize, expected: 10000 },
     ]
 
@@ -93,8 +102,18 @@ describe('Helpers', () => {
   it('Even split of Sizes Test cases ', () => {
     // Adopted from minio-go sdk
     const expectedSplitsTestCases = [
-      { size: 0, sourceConfig: new CopySourceOptions({ Start: -1 }), expectedStart: null, expectedEnd: null },
-      { size: 1, sourceConfig: new CopySourceOptions({ Start: -1 }), expectedStart: [undefined], expectedEnd: [NaN] },
+      {
+        size: 0,
+        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        expectedStart: null,
+        expectedEnd: null,
+      },
+      {
+        size: 1,
+        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        expectedStart: [undefined],
+        expectedEnd: [NaN],
+      },
       { size: 1, sourceConfig: new CopySourceOptions({ Start: 0 }), expectedStart: [0], expectedEnd: [0] },
       {
         size: OBJ_SIZES.gb1,
@@ -963,28 +982,26 @@ describe('Client', function () {
     })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
-        client.getObjectTagging('nv', null, function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+        client.getObjectTagging('nv', null).then(
+          () => done(new Error('callback should receive error')),
+          (err) => done(),
+        )
       })
-      it('should fail on null object', (done) => {
-        client.getObjectTagging('my-bucket-name', null, function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on null object', async () => {
+        try {
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
-        client.getObjectTagging('my-bucket-name', null, function (_, err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on empty object', async () => {
+        try {
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Object Tags', () => {
@@ -1124,7 +1141,11 @@ describe('Client', function () {
         try {
           client.setObjectLockConfig(
             'my-bucket',
-            { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
+            {
+              mode: 'COMPLIANCE',
+              unit: 'invalid_unit',
+              validity: '',
+            },
             function () {},
           )
         } catch (e) {
@@ -1135,7 +1156,11 @@ describe('Client', function () {
         try {
           client.setObjectLockConfig(
             'my-bucket',
-            { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
+            {
+              mode: 'COMPLIANCE',
+              randomProp: true,
+              nonExisting: false,
+            },
             function () {},
           )
         } catch (e) {
