@@ -991,33 +991,37 @@ describe('Client', function () {
     })
     describe('Remove Object Tags', () => {
       it('should fail on null object', (done) => {
-        try {
-          client.removeObjectTagging('my-bucket', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('my-bucket', null, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObjectTagging('my-bucket', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('my-bucket', '', function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeObjectTagging('198.51.100.24', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('198.51.100.24', function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
 
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeObjectTagging('xy', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('xy', function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
   })
