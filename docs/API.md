@@ -647,21 +647,26 @@ minioClient.removeBucketTagging('bucketname', function (err) {
 
 <a name="getBucketTagging"></a>
 
-### getBucketTagging(bucketName)
+### getBucketTagging(bucketName, callback)
 
 Remove Tags on a Bucket
 
 **Parameters**
 
-| Param        | Type     | Description         |
-| ------------ | -------- | ------------------- |
-| `bucketName` | _string_ | Name of the bucket. |
+| Param                     | Type       | Description                                     |
+| ------------------------- | ---------- | ----------------------------------------------- |
+| `bucketName`              | _string_   | Name of the bucket.                             |
+| `callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error. |
 
 **Example**
 
 ```js
-const tagsList = await minioClient.getBucketTagging('bucketname')
-console.log('Success', tagsList)
+minioClient.getBucketTagging('bucketname', function (err, tagsList) {
+  if (err) {
+    return console.log(err)
+  }
+  console.log('Success', tagsList)
+})
 ```
 
 <a name="setBucketLifecycle"></a>
@@ -1558,7 +1563,7 @@ minioClient.removeObjectTagging('bucketname', 'object-name', { versionId: 'my-ob
 
 <a name="getObjectTagging"></a>
 
-### getObjectTagging(bucketName, objectName[, getOpts, callback])
+### getObjectTagging(bucketName, objectName[, getOpts])
 
 Get Tags of an Object
 
@@ -1569,33 +1574,22 @@ Get Tags of an Object
 | `bucketName`    | _string_   | Name of the bucket.                                           |
 | `objectName`    | _string_   | Name of the object.                                           |
 | `getOpts`       | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
 
 **Example**
 
 ```js
-minioClient.getObjectTagging('bucketname', 'object-name', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+const tagsList=await minioClient.getObjectTagging('bucketname', 'object-name')
+console.log('Success', tagsList)
 ```
 
 **Example1**
 Get tags on a version of an object.
 
 ```js
-minioClient.getObjectTagging(
+const tagsList=await minioClient.getObjectTagging(
   'bucketname',
   'object-name',
   { versionId: 'my-object-version-id' },
-  function (err, tagsList) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success', tagsList)
-  },
 )
 ```
 

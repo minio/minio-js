@@ -141,10 +141,6 @@ export function bucketVersioningTransformer() {
   return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
 
-export function getTagsTransformer() {
-  return getConcater(xmlParsers.parseTagging)
-}
-
 export function lifecycleTransformer() {
   return getConcater(xmlParsers.parseLifecycleConfig)
 }

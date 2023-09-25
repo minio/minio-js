@@ -1819,54 +1819,6 @@ export class Client extends TypedClient {
     return this.removeTagging({ bucketName, objectName, removeOpts, cb })
   }
 
-  /** Get the tags associated with a bucket OR an object
-   * bucketName _string_
-   * objectName _string_ (Optional)
-   * getOpts _object_ (Optional) e.g {versionId:"my-object-version-id"}
-   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  getObjectTagging(bucketName, objectName, getOpts = {}, cb = () => false) {
-    const method = 'GET'
-    let query = 'tagging'
-
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
-    }
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-    if (!isObject(getOpts)) {
-      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    if (getOpts && getOpts.versionId) {
-      query = `${query}&versionId=${getOpts.versionId}`
-    }
-    const requestOptions = { method, bucketName, query }
-    if (objectName) {
-      requestOptions['objectName'] = objectName
-    }
-
-    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
-      const transformer = transformers.getTagsTransformer()
-      if (e) {
-        return cb(e)
-      }
-      let tagsList
-      pipesetup(response, transformer)
-        .on('data', (result) => (tagsList = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, tagsList))
-    })
-  }
-
   /**
    * Apply lifecycle configuration on a bucket.
    * bucketName _string_
