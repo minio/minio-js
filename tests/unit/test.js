@@ -879,29 +879,32 @@ describe('Client', function () {
   describe('Bucket and Object Tags APIs', () => {
     describe('Set Bucket Tags ', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.setBucketTagging(null, {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging(null, {}, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.setBucketTagging('', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging('', {}, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail if tags are more than 50', (done) => {
         const _50_plus_key_tags = {}
         for (let i = 0; i < 51; i += 1) {
           _50_plus_key_tags[i] = i
         }
-        try {
-          client.setBucketTagging('', _50_plus_key_tags, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging('', _50_plus_key_tags, function (_, err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
     describe('Get Bucket Tags', () => {
