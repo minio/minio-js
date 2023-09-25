@@ -1569,16 +1569,16 @@ Get Tags of an Object
 
 **Parameters**
 
-| Param           | Type       | Description                                                   |
-| --------------- | ---------- | ------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                           |
-| `objectName`    | _string_   | Name of the object.                                           |
-| `getOpts`       | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
+| Param        | Type     | Description                                                   |
+| ------------ | -------- | ------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                           |
+| `objectName` | _string_ | Name of the object.                                           |
+| `getOpts`    | _object_ | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 
 **Example**
 
 ```js
-const tagsList=await minioClient.getObjectTagging('bucketname', 'object-name')
+const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name')
 console.log('Success', tagsList)
 ```
 
@@ -1586,11 +1586,7 @@ console.log('Success', tagsList)
 Get tags on a version of an object.
 
 ```js
-const tagsList=await minioClient.getObjectTagging(
-  'bucketname',
-  'object-name',
-  { versionId: 'my-object-version-id' },
-)
+const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' })
 ```
 
 <a name="getObjectLegalHold"></a>
