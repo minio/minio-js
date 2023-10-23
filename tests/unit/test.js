@@ -905,26 +905,29 @@ describe('Client', function () {
       })
     })
     describe('Get Bucket Tags', () => {
-      it('should fail on invalid bucket', (done) => {
+      it('should fail on invalid bucket', async () => {
         try {
-          client.getBucketTagging('nv', null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging('nv', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getBucketTagging(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.getBucketTagging('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Bucket Tags', () => {
@@ -960,25 +963,26 @@ describe('Client', function () {
     })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
-        try {
-          client.getObjectTagging('nv', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObjectTagging('nv', null).then(
+          () => done(new Error('callback should receive error')),
+          (err) => done(),
+        )
       })
-      it('should fail on null object', (done) => {
+      it('should fail on null object', async () => {
         try {
-          client.getObjectTagging('my-bucket-name', null, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
+      it('should fail on empty object', async () => {
         try {
-          client.getObjectTagging('my-bucket-name', null, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Object Tags', () => {

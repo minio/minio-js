@@ -1819,81 +1819,6 @@ export class Client extends TypedClient {
     return this.removeTagging({ bucketName, objectName, removeOpts, cb })
   }
 
-  /** Get Tags associated with a Bucket
-   *  __Arguments__
-   * bucketName _string_
-   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  getBucketTagging(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-
-    const method = 'GET'
-    const query = 'tagging'
-    const requestOptions = { method, bucketName, query }
-
-    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
-      var transformer = transformers.getTagsTransformer()
-      if (e) {
-        return cb(e)
-      }
-      let tagsList
-      pipesetup(response, transformer)
-        .on('data', (result) => (tagsList = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, tagsList))
-    })
-  }
-
-  /** Get the tags associated with a bucket OR an object
-   * bucketName _string_
-   * objectName _string_ (Optional)
-   * getOpts _object_ (Optional) e.g {versionId:"my-object-version-id"}
-   * `cb(error, tags)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  getObjectTagging(bucketName, objectName, getOpts = {}, cb = () => false) {
-    const method = 'GET'
-    let query = 'tagging'
-
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
-    }
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-    if (!isObject(getOpts)) {
-      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    if (getOpts && getOpts.versionId) {
-      query = `${query}&versionId=${getOpts.versionId}`
-    }
-    const requestOptions = { method, bucketName, query }
-    if (objectName) {
-      requestOptions['objectName'] = objectName
-    }
-
-    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
-      const transformer = transformers.getTagsTransformer()
-      if (e) {
-        return cb(e)
-      }
-      let tagsList
-      pipesetup(response, transformer)
-        .on('data', (result) => (tagsList = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, tagsList))
-    })
-  }
-
   /**
    * Apply lifecycle configuration on a bucket.
    * bucketName _string_
@@ -2566,10 +2491,8 @@ Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersi
 Client.prototype.setBucketVersioning = promisify(Client.prototype.setBucketVersioning)
 Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
 Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
-Client.prototype.getBucketTagging = promisify(Client.prototype.getBucketTagging)
 Client.prototype.setObjectTagging = promisify(Client.prototype.setObjectTagging)
 Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTagging)
-Client.prototype.getObjectTagging = promisify(Client.prototype.getObjectTagging)
 Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
 Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
 Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
@@ -2593,3 +2516,5 @@ Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketRe
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
 Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLegalHold)
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
+Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
+Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)

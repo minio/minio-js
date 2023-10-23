@@ -53,7 +53,9 @@ import type {
   ResponseHeader,
   ResultCallback,
   StatObjectOpts,
+  Tag,
   Transport,
+  VersionIdentificator,
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
@@ -1116,5 +1118,52 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload)
+  }
+
+  /**
+   * Get Tags associated with a Bucket
+   */
+  async getBucketTagging(bucketName: string): Promise<Tag[]> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+
+    const method = 'GET'
+    const query = 'tagging'
+    const requestOptions = { method, bucketName, query }
+
+    const response = await this.makeRequestAsync(requestOptions)
+    const body = await readAsString(response)
+    return xmlParsers.parseTagging(body)
+  }
+
+  /**
+   *  Get the tags associated with a bucket OR an object
+   */
+  async getObjectTagging(bucketName: string, objectName: string, getOpts: VersionIdentificator = {}): Promise<Tag[]> {
+    const method = 'GET'
+    let query = 'tagging'
+
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+    if (!isObject(getOpts)) {
+      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
+    }
+
+    if (getOpts && getOpts.versionId) {
+      query = `${query}&versionId=${getOpts.versionId}`
+    }
+    const requestOptions: RequestOption = { method, bucketName, query }
+    if (objectName) {
+      requestOptions['objectName'] = objectName
+    }
+
+    const response = await this.makeRequestAsync(requestOptions)
+    const body = await readAsString(response)
+    return xmlParsers.parseTagging(body)
   }
 }

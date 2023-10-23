@@ -1563,45 +1563,30 @@ minioClient.removeObjectTagging('bucketname', 'object-name', { versionId: 'my-ob
 
 <a name="getObjectTagging"></a>
 
-### getObjectTagging(bucketName, objectName[, getOpts, callback])
+### getObjectTagging(bucketName, objectName[, getOpts])
 
 Get Tags of an Object
 
 **Parameters**
 
-| Param           | Type       | Description                                                   |
-| --------------- | ---------- | ------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                           |
-| `objectName`    | _string_   | Name of the object.                                           |
-| `getOpts`       | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
+| Param        | Type     | Description                                                   |
+| ------------ | -------- | ------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                           |
+| `objectName` | _string_ | Name of the object.                                           |
+| `getOpts`    | _object_ | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 
 **Example**
 
 ```js
-minioClient.getObjectTagging('bucketname', 'object-name', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name')
+console.log('Success', tagsList)
 ```
 
 **Example1**
 Get tags on a version of an object.
 
 ```js
-minioClient.getObjectTagging(
-  'bucketname',
-  'object-name',
-  { versionId: 'my-object-version-id' },
-  function (err, tagsList) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success', tagsList)
-  },
-)
+const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' })
 ```
 
 <a name="getObjectLegalHold"></a>

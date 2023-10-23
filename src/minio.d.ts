@@ -42,6 +42,7 @@ import type {
   ResultCallback,
   SourceSelectionCriteria,
   Tag,
+  VersionIdentificator,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -75,6 +76,7 @@ export type {
   ReplicationRuleStatus,
   SourceSelectionCriteria,
   Tag,
+  VersionIdentificator,
 }
 
 // Exports only from typings
@@ -110,7 +112,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
-export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
@@ -251,9 +252,6 @@ export class Client extends TypedClient {
 
   setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
   setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
-
-  getBucketTagging(bucketName: string, callback: ResultCallback<Tag[]>): void
-  getBucketTagging(bucketName: string): Promise<Tag[]>
 
   setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
   setBucketTagging(bucketName: string, tags: TagList): Promise<void>
@@ -417,15 +415,6 @@ export class Client extends TypedClient {
     callback: NoResultCallback,
   ): void
   removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentificator): Promise<void>
-
-  getObjectTagging(bucketName: string, objectName: string, callback: ResultCallback<Tag[]>): void
-  getObjectTagging(
-    bucketName: string,
-    objectName: string,
-    getOptions: VersionIdentificator,
-    callback: ResultCallback<Tag[]>,
-  ): void
-  getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentificator): Promise<Tag[]>
 
   composeObject(
     destObjConfig: CopyDestinationOptions,

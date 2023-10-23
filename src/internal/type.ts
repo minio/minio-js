@@ -1,6 +1,10 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
 
+export type VersionIdentificator = {
+  versionId?: string
+}
+
 export type Binary = string | Buffer
 
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
