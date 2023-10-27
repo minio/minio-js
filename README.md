@@ -238,7 +238,6 @@ The full API Reference is available here.
 
 - [Complete Documentation](https://min.io/docs/minio/kubernetes/upstream/index.html)
 - [MinIO JavaScript Client SDK API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html)
-- [Build your own Shopping App Example- Full Application Example ](https://github.com/minio/minio-js-store-app)
 
 ## Contribute
 
