@@ -1444,7 +1444,7 @@ expirationDate.setDate(expirationDate.getDate() + 1)
 expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
 const versionId = 'e67b4b08-144d-4fc4-ba15-43c3f7f9ba74'
 
-const objRetPromise = await minioClient.putObjectRetention(bucketName, objectName, {
+await minioClient.putObjectRetention(bucketName, objectName, {
   Mode: 'GOVERNANCE',
   retainUntilDate: retainUntilDate.toISOString(),
   versionId: versionId,
