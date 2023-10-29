@@ -1177,11 +1177,13 @@ describe('Client', function () {
 
     describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.putObjectRetention(null, '', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention(null, '', {}, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on empty bucket', (done) => {
         client.putObjectRetention('', '', {}, function (err) {
