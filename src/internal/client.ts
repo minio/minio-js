@@ -1170,7 +1170,7 @@ export class TypedClient {
 
   async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
@@ -1179,7 +1179,7 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
     } else {
       if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
-        throw new errors.InvalidArgumentError('Invalid value for governanceBypass', retentionOpts.governanceBypass)
+        throw new errors.InvalidArgumentError(`Invalid value for governanceBypass: ${retentionOpts.governanceBypass}`)
       }
       if (
         retentionOpts.mode &&
@@ -1188,10 +1188,10 @@ export class TypedClient {
         throw new errors.InvalidArgumentError(`Invalid object retention mode: ${retentionOpts.mode}`)
       }
       if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
-        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
+        throw new errors.InvalidArgumentError(`Invalid value for retainUntilDate: ${retentionOpts.retainUntilDate}`)
       }
       if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
-        throw new errors.InvalidArgumentError('Invalid value for versionId', retentionOpts.versionId)
+        throw new errors.InvalidArgumentError(`Invalid value for versionId: ${retentionOpts.versionId}`)
       }
     }
 
