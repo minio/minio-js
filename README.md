@@ -20,6 +20,7 @@ npm install --save minio
 git clone https://github.com/minio/minio-js
 cd minio-js
 npm install
+npm run build
 npm install -g
 ```
 
