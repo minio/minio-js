@@ -110,7 +110,7 @@ export class Client extends TypedClient {
       return this.partSize
     }
     var partSize = this.partSize
-    for (;;) {
+    for (; ;) {
       // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
       if (partSize * 10000 > size) {
@@ -1984,63 +1984,6 @@ export class Client extends TypedClient {
     })
   }
 
-  putObjectRetention(bucketName, objectName, retentionOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(retentionOpts)) {
-      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
-    } else {
-      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
-        throw new errors.InvalidArgumentError('Invalid value for governanceBypass', retentionOpts.governanceBypass)
-      }
-      if (
-        retentionOpts.mode &&
-        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
-      ) {
-        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
-      }
-      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
-        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
-      }
-      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
-        throw new errors.InvalidArgumentError('Invalid value for versionId', retentionOpts.versionId)
-      }
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const method = 'PUT'
-    let query = 'retention'
-
-    const headers = {}
-    if (retentionOpts.governanceBypass) {
-      headers['X-Amz-Bypass-Governance-Retention'] = true
-    }
-
-    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
-    const params = {}
-
-    if (retentionOpts.mode) {
-      params.Mode = retentionOpts.mode
-    }
-    if (retentionOpts.retainUntilDate) {
-      params.RetainUntilDate = retentionOpts.retainUntilDate
-    }
-    if (retentionOpts.versionId) {
-      query += `&versionId=${retentionOpts.versionId}`
-    }
-
-    let payload = builder.buildObject(params)
-
-    headers['Content-MD5'] = toMd5(payload)
-    this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200, 204], '', false, cb)
-  }
-
   getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2498,7 +2441,6 @@ Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecy
 Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
 Client.prototype.setObjectLockConfig = promisify(Client.prototype.setObjectLockConfig)
 Client.prototype.getObjectLockConfig = promisify(Client.prototype.getObjectLockConfig)
-Client.prototype.putObjectRetention = promisify(Client.prototype.putObjectRetention)
 Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
 Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
@@ -2518,3 +2460,4 @@ Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLega
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
 Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
 Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
+Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)

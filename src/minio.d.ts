@@ -43,7 +43,9 @@ import type {
   SourceSelectionCriteria,
   Tag,
   VersionIdentificator,
+  RetentionOptions, Retention, EmptyObject, IsoDate
 } from './internal/type.ts'
+import { EmptyObject } from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
@@ -52,7 +54,7 @@ export type {
   BucketItem,
   BucketItemCopy,
   BucketItemFromList,
-  BucketItemStat,
+  BucketItemStat, EmptyObject, IsoDate,
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
@@ -66,6 +68,7 @@ export type {
   NoResultCallback,
   PutObjectLegalHoldOptions,
   RemoveOptions,
+  RetentionOptions, Retention,
   ReplicaModifications,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -111,13 +114,9 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -150,13 +149,6 @@ export interface EncryptionConfig {
 
 export interface EncryptionRule {
   [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
@@ -374,15 +366,6 @@ export class Client extends TypedClient {
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-
-  putObjectRetention(bucketName: string, objectName: string, callback: NoResultCallback): void
-  putObjectRetention(
-    bucketName: string,
-    objectName: string,
-    retentionOptions: Retention,
-    callback: NoResultCallback,
-  ): void
-  putObjectRetention(bucketName: string, objectName: string, retentionOptions?: Retention): Promise<void>
 
   getObjectRetention(
     bucketName: string,

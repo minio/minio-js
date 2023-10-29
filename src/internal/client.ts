@@ -9,7 +9,7 @@ import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
-import { DEFAULT_REGION, LEGAL_HOLD_STATUS } from '../helpers.ts'
+import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
@@ -52,6 +52,7 @@ import type {
   RequestHeaders,
   ResponseHeader,
   ResultCallback,
+  Retention,
   StatObjectOpts,
   Tag,
   Transport,
@@ -1165,5 +1166,63 @@ export class TypedClient {
     const response = await this.makeRequestAsync(requestOptions)
     const body = await readAsString(response)
     return xmlParsers.parseTagging(body)
+  }
+
+  async putObjectRetention(
+    bucketName: string,
+    objectName: string,
+    retentionOpts: Retention = {},
+  ): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(retentionOpts)) {
+      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
+    } else {
+      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
+        throw new errors.InvalidArgumentError('Invalid value for governanceBypass', retentionOpts.governanceBypass)
+      }
+      if (
+        retentionOpts.mode &&
+        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
+      ) {
+        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
+      }
+      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
+        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
+      }
+      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
+        throw new errors.InvalidArgumentError('Invalid value for versionId', retentionOpts.versionId)
+      }
+    }
+
+    const method = 'PUT'
+    let query = 'retention'
+
+    const headers: RequestHeaders = {}
+    if (retentionOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
+    }
+
+    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
+    const params: Record<string, any> = {}
+
+    if (retentionOpts.mode) {
+      params.Mode = retentionOpts.mode
+    }
+    if (retentionOpts.retainUntilDate) {
+      params.RetainUntilDate = retentionOpts.retainUntilDate
+    }
+    if (retentionOpts.versionId) {
+      query += `&versionId=${retentionOpts.versionId}`
+    }
+
+    let payload = builder.buildObject(params)
+
+    headers['Content-MD5'] = toMd5(payload)
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
   }
 }
