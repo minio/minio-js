@@ -1168,11 +1168,7 @@ export class TypedClient {
     return xmlParsers.parseTagging(body)
   }
 
-  async putObjectRetention(
-    bucketName: string,
-    objectName: string,
-    retentionOpts: Retention = {},
-  ): Promise<void> {
+  async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1189,7 +1185,7 @@ export class TypedClient {
         retentionOpts.mode &&
         ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
       ) {
-        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
+        throw new errors.InvalidArgumentError(`Invalid object retention mode: ${retentionOpts.mode}`)
       }
       if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
         throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
@@ -1220,7 +1216,7 @@ export class TypedClient {
       query += `&versionId=${retentionOpts.versionId}`
     }
 
-    let payload = builder.buildObject(params)
+    const payload = builder.buildObject(params)
 
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])

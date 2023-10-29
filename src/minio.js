@@ -110,7 +110,7 @@ export class Client extends TypedClient {
       return this.partSize
     }
     var partSize = this.partSize
-    for (; ;) {
+    for (;;) {
       // while(true) {...} throws linting error.
       // If partSize is big enough to accomodate the object size, then use it.
       if (partSize * 10000 > size) {

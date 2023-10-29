@@ -16,13 +16,13 @@ export type RequestHeaders = Record<string, string | boolean | number | undefine
 
 export type Encryption =
   | {
-    type: ENCRYPTION_TYPES.SSEC
-  }
+      type: ENCRYPTION_TYPES.SSEC
+    }
   | {
-    type: ENCRYPTION_TYPES.KMS
-    SSEAlgorithm?: string
-    KMSMasterKeyID?: string
-  }
+      type: ENCRYPTION_TYPES.KMS
+      SSEAlgorithm?: string
+      KMSMasterKeyID?: string
+    }
 
 export enum ENCRYPTION_TYPES {
   /**
@@ -94,19 +94,19 @@ export interface BucketItemCopy {
 
 export type BucketItem =
   | {
-    name: string
-    size: number
-    etag: string
-    prefix?: never
-    lastModified: Date
-  }
+      name: string
+      size: number
+      etag: string
+      prefix?: never
+      lastModified: Date
+    }
   | {
-    name?: never
-    etag?: never
-    lastModified?: never
-    prefix: string
-    size: 0
-  }
+      name?: never
+      etag?: never
+      lastModified?: never
+      prefix: string
+      size: 0
+    }
 
 export type BucketItemWithMetadata = BucketItem & {
   metadata?: ItemBucketMetadata | ItemBucketMetadataList
@@ -217,4 +217,3 @@ export interface RetentionOptions {
 export type Retention = RetentionOptions | EmptyObject
 export type EmptyObject = Record<string, never>
 export type IsoDate = string
-
