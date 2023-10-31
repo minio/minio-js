@@ -1164,34 +1164,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Set the policy on a bucket or an object prefix.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `bucketPolicy` _string_: bucket policy (JSON stringify'ed)
-  // * `callback(err)` _function_: callback function
-  setBucketPolicy(bucketName, policy, cb) {
-    // Validate arguments.
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-    if (!isString(policy)) {
-      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy} - must be "string"`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    let method = 'DELETE'
-    let query = 'policy'
-
-    if (policy) {
-      method = 'PUT'
-    }
-
-    this.makeRequest({ method, bucketName, query }, policy, [204], '', false, cb)
-  }
-
   // Generate a generic presigned URL which can be
   // used for HTTP methods GET, PUT, HEAD and DELETE
   //
@@ -2485,7 +2457,6 @@ Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNot
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
-Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersioning)
 Client.prototype.setBucketVersioning = promisify(Client.prototype.setBucketVersioning)
@@ -2518,3 +2489,4 @@ Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLega
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
 Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
 Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
+Client.prototype.setBucketPolicy = callbackify(Client.prototype.setBucketPolicy)
