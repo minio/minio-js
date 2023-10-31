@@ -153,7 +153,7 @@ describe('functional tests', function () {
     return s
   }
 
-  before((done) => client.makeBucket(bucketName, server_region, done))
+  before(() => client.makeBucket(bucketName, server_region))
   after(() => client.removeBucket(bucketName))
 
   if (traceStream) {
