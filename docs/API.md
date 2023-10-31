@@ -1017,27 +1017,16 @@ To get a specific version of an object
 ```js
 var versionedObjSize = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject(
-  'mybucket',
-  'photo.jpg',
-  10,
-  30,
-  { versionId: 'my-versionId' },
-  function (err, dataStream) {
-    if (err) {
-      return console.log(err)
-    }
-    dataStream.on('data', function (chunk) {
-      versionedObjSize += chunk.length
-    })
-    dataStream.on('end', function () {
-      console.log('End. Total size = ' + versionedObjSize)
-    })
-    dataStream.on('error', function (err) {
-      console.log(err)
-    })
-  },
-)
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
+})
 ```
 
 <a name="fGetObject"></a>
