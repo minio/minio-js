@@ -519,39 +519,34 @@ describe('Client', function () {
   describe('object level', () => {
     describe('#getObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.getObject(null, 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObject(null, 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.getObject('', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObject('', 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.getObject('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObject('  \n  \t  ', 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on null object', (done) => {
-        try {
-          client.getObject('hello', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObject('hello', null).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.getObject('hello', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObject('hello', '').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
     })
 
