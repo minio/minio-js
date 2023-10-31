@@ -915,18 +915,17 @@ s3Client.removeBucketEncryption('my-bucketname', function (err) {
 
 <a name="getObject"></a>
 
-### getObject(bucketName, objectName, getOpts[, callback])
+### getObject(bucketName, objectName, getOpts)
 
 Downloads an object as a stream.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                               |
-| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket.                                                                                                                       |
-| `objectName`            | _string_   | Name of the object.                                                                                                                       |
-| `getOpts`               | _object_   | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)                                               |
-| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `objectName` | _string_ | Name of the object.                                                                         |
+| `getOpts`    | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 
 **Return Value**
 
