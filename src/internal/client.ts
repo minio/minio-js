@@ -45,7 +45,6 @@ import type {
   BucketItemStat,
   GetObjectLegalHoldOptions,
   IRequest,
-  LegalHoldStatus,
   PutObjectLegalHoldOptions,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -803,6 +802,79 @@ export class TypedClient {
   }
 
   /**
+   * Callback is called with readable stream of the object content.
+   */
+  async getObject(
+    bucketName: string,
+    objectName: string,
+    getOpts: VersionIdentificator = {},
+  ): Promise<stream.Readable> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    return this.getPartialObject(bucketName, objectName, 0, 0, getOpts)
+  }
+
+  /**
+   * Callback is called with readable stream of the partial object content.
+   * @param bucketName
+   * @param objectName
+   * @param offset
+   * @param length - length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
+   * @param getOpts
+   */
+  async getPartialObject(
+    bucketName: string,
+    objectName: string,
+    offset: number,
+    length = 0,
+    getOpts: VersionIdentificator = {},
+  ): Promise<stream.Readable> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isNumber(offset)) {
+      throw new TypeError('offset should be of type "number"')
+    }
+    if (!isNumber(length)) {
+      throw new TypeError('length should be of type "number"')
+    }
+
+    let range = ''
+    if (offset || length) {
+      if (offset) {
+        range = `bytes=${+offset}-`
+      } else {
+        range = 'bytes=0-'
+        offset = 0
+      }
+      if (length) {
+        range += `${+length + offset - 1}`
+      }
+    }
+
+    const headers: RequestHeaders = {}
+    if (range !== '') {
+      headers.range = range
+    }
+
+    const expectedStatusCodes = [200]
+    if (range) {
+      expectedStatusCodes.push(206)
+    }
+    const method = 'GET'
+
+    const query = qs.stringify(getOpts)
+    return await this.makeRequestAsync({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes)
+  }
+
+  /**
    * Stat information of the object.
    */
   async statObject(bucketName: string, objectName: string, statOpts: StatObjectOpts = {}): Promise<BucketItemStat> {
@@ -1041,13 +1113,13 @@ export class TypedClient {
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-    callback?: ResultCallback<LegalHoldStatus>,
-  ): Promise<LegalHoldStatus>
+    callback?: ResultCallback<LEGAL_HOLD_STATUS>,
+  ): Promise<LEGAL_HOLD_STATUS>
   async getObjectLegalHold(
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-  ): Promise<LegalHoldStatus> {
+  ): Promise<LEGAL_HOLD_STATUS> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
