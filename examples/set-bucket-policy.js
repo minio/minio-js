@@ -17,16 +17,16 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, and my-bucketname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Bucket policy - GET requests on "testbucket" bucket will not need authentication.
-var policy = `
+const policy = `
 {
   "Version": "2012-10-17",
   "Statement": [
