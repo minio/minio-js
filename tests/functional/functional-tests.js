@@ -167,8 +167,8 @@ describe('functional tests', function () {
 
   describe('makeBucket with period and region', () => {
     if (clientConfigParams.endPoint === 's3.amazonaws.com') {
-      step('makeBucket(bucketName, region, cb)_region:eu-central-1_', (done) =>
-        client.makeBucket(`${bucketName}.sec.period`, 'eu-central-1', done),
+      step('makeBucket(bucketName, region, cb)_region:eu-central-1_', () =>
+        client.makeBucket(`${bucketName}.sec.period`, 'eu-central-1'),
       )
       step('removeBucket(bucketName, cb)__', (done) => client.removeBucket(`${bucketName}.sec.period`, done))
     }
@@ -1919,7 +1919,7 @@ describe('functional tests', function () {
   describe('Bucket Versioning API', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const versionedBucketName = 'minio-js-test-version-' + uuid.v4()
-    before((done) => client.makeBucket(versionedBucketName, '', done))
+    before(() => client.makeBucket(versionedBucketName, ''))
     after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Steps test', function () {
@@ -1980,7 +1980,7 @@ describe('functional tests', function () {
       ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName)
       : Buffer.alloc(100 * 1024, 0)
 
-    before((done) => client.makeBucket(versionedBucketName, '', done))
+    before(() => client.makeBucket(versionedBucketName, ''))
     after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Steps test', function () {
@@ -2055,7 +2055,7 @@ describe('functional tests', function () {
       ? fs.readFileSync(dataDir + '/' + versioned_100kbObjectName)
       : Buffer.alloc(100 * 1024, 0)
 
-    before((done) => client.makeBucket(versionedBucketName, '', done))
+    before(() => client.makeBucket(versionedBucketName, ''))
     after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Test for  getObject, getPartialObject, putObject, removeObject with versionId support', function () {
@@ -2203,7 +2203,7 @@ describe('functional tests', function () {
 
     const objNameWithPrefix = `${prefixName}/${versionedObjectName}`
 
-    before((done) =>
+    before((done) => {
       client.makeBucket(versionedBucketName, '', () => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Enabled' }, (err) => {
           if (err && err.code === 'NotImplemented') {
@@ -2215,8 +2215,8 @@ describe('functional tests', function () {
           isVersioningSupported = true
           done()
         })
-      }),
-    )
+      })
+    })
     after(() => client.removeBucket(versionedBucketName))
 
     step(
@@ -3190,7 +3190,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     // this is not supported in gateway mode.
     const encBucketName = 'minio-js-test-bucket-enc-' + uuid.v4()
-    before((done) => client.makeBucket(encBucketName, '', done))
+    before(() => client.makeBucket(encBucketName, ''))
     after(() => client.removeBucket(encBucketName))
 
     const encObjName = 'datafile-100-kB'
