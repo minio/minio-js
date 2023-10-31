@@ -999,19 +999,15 @@ Downloads the specified range bytes of an object as a stream.
 ```js
 var size = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
