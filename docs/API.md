@@ -955,19 +955,15 @@ Get a specific object version.
 
 ```js
 var size = 0
-minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' }, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
