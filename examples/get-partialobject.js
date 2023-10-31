@@ -27,7 +27,7 @@ const s3Client = new Minio.Client({
 
 // Download the object my-objectname at an offset 1024, for a total of 4096 bytes.
 let size = 0
-const dataStrdam = await s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096)
+const dataStream = await s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096)
 dataStream.on('data', function (chunk) {
   size += chunk.length
 })
