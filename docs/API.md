@@ -215,28 +215,23 @@ try {
 
 <a name="bucketExists"></a>
 
-#### bucketExists(bucketName[, callback])
+#### async bucketExists(bucketName): Promise<boolean>
 
 Checks if a bucket exists.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                                                                          |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bucketName`            | _string_   | Name of the bucket.                                                                                                                                                                  |
-| `callback(err, exists)` | _function_ | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.bucketExists('mybucket', function (err, exists) {
-  if (err) {
-    return console.log(err)
-  }
-  if (exists) {
-    return console.log('Bucket exists.')
-  }
-})
+const exists = await minioClient.bucketExists('mybucket')
+if (exists) {
+  return console.log('Bucket exists.')
+}
 ```
 
 <a name="removeBucket"></a>

@@ -284,30 +284,6 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // To check if a bucket already exists.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ : name of the bucket
-  // * `callback(err)` _function_ : `err` is `null` if the bucket exists
-  bucketExists(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'HEAD'
-    this.makeRequest({ method, bucketName }, '', [200], '', false, (err) => {
-      if (err) {
-        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
-          return cb(null, false)
-        }
-        return cb(err)
-      }
-      cb(null, true)
-    })
-  }
-
   // Remove the partially uploaded object.
   //
   // __Arguments__
@@ -2467,7 +2443,6 @@ export class Client extends TypedClient {
 
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
-Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 
 Client.prototype.getObject = promisify(Client.prototype.getObject)
 Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
@@ -2507,6 +2482,8 @@ Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 // refactored API use promise internally
+Client.prototype.bucketExists = callbackify(Client.prototype.bucketExists)
+
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
