@@ -60,11 +60,11 @@ We will use the MinIO server running at [https://play.min.io](https://play.min.i
 #### file-uploader.js
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -76,22 +76,17 @@ var minioClient = new Minio.Client({
 var file = '/tmp/photos-europe.tar'
 
 // Make a bucket called europetrip.
-minioClient.makeBucket('europetrip', 'us-east-1', function (err) {
-  if (err) return console.log(err)
+await minioClient.makeBucket('europetrip', 'us-east-1')
+console.log('Bucket created successfully in "us-east-1".')
 
-  console.log('Bucket created successfully in "us-east-1".')
-
-  var metaData = {
-    'Content-Type': 'application/octet-stream',
-    'X-Amz-Meta-Testing': 1234,
-    example: 5678,
-  }
-  // Using fPutObject API upload your file to the bucket europetrip.
-  minioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData, function (err, etag) {
-    if (err) return console.log(err)
-    console.log('File uploaded successfully.')
-  })
-})
+var metaData = {
+  'Content-Type': 'application/octet-stream',
+  'X-Amz-Meta-Testing': 1234,
+  example: 5678,
+}
+// Using fPutObject API upload your file to the bucket europetrip.
+awaitminioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData)
+console.log('File uploaded successfully.')
 ```
 
 #### Run file-uploader
