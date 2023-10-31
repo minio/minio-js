@@ -1166,4 +1166,19 @@ export class TypedClient {
     const body = await readAsString(response)
     return xmlParsers.parseTagging(body)
   }
+
+  /**
+   * Get the policy on a bucket or an object prefix.
+   */
+  async getBucketPolicy(bucketName: string): Promise<string> {
+    // Validate arguments.
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+
+    const method = 'GET'
+    const query = 'policy'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    return await readAsString(res)
+  }
 }
