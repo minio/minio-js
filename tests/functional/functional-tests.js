@@ -202,12 +202,14 @@ describe('functional tests', function () {
   describe('makeBucket with region', () => {
     let isDifferentServerRegion = false
     step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-2_`, (done) => {
-      try {
-        clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-2', assert.fail)
-      } catch (e) {
-        isDifferentServerRegion = true
-        done()
-      }
+      clientUsEastRegion.makeBucket(`${bucketName}-region`, 'us-east-2', (err) => {
+        if (err) {
+          isDifferentServerRegion = true
+          done()
+        } else {
+          done(new Error('expecting error'))
+        }
+      })
     })
     step(`makeBucket(bucketName, region, cb)_bucketName:${bucketName}-region, region:us-east-1_`, (done) => {
       if (!isDifferentServerRegion) {
