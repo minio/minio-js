@@ -1001,7 +1001,7 @@ minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
 <a name="setBucketPolicy"></a>
 ### async setBucketPolicy(bucketName, bucketPolicy): Promise<void>
 
-设置指定存储桶的策略。如果`objectPrefix`不为空，则会给符合该前缀的对象（们）设置策略。
+设置指定存储桶的策略。
 
 __参数__
 
