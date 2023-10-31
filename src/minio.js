@@ -2378,7 +2378,6 @@ export class Client extends TypedClient {
 }
 
 // Promisify various public-facing APIs on the Client module.
-Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 
 Client.prototype.getObject = promisify(Client.prototype.getObject)
@@ -2419,6 +2418,8 @@ Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 // refactored API use promise internally
+Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
+
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
