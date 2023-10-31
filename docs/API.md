@@ -929,9 +929,9 @@ Downloads an object as a stream.
 
 **Return Value**
 
-| Param    | Type     | Description                         |
-| -------- | -------- | ----------------------------------- |
-| `stream` | _Stream_ | Stream emitting the object content. |
+| Param    | Type              | Description                         |
+| -------- | ----------------- | ----------------------------------- |
+| `stream` | `stream.Readable` | Stream emitting the object content. |
 
 **Example**
 

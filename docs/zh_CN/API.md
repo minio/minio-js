@@ -360,7 +360,7 @@ Stream.on('error', function(err) {
 ## 3.  操作对象
 
 <a name="getObject"></a>
-### async getObject(bucketName, objectName,[ getOpts]): Promise<ReadableStream>
+### async getObject(bucketName, objectName,[ getOpts]): Promise<stream.Readable>
 
 下载对象。
 
@@ -393,7 +393,7 @@ dataStream.on('error', function(err) {
 })
 ```
 <a name="getPartialObject"></a>
-### async getPartialObject(bucketName, objectName, offset,[ length, getOpts]): Promise<ReadableStream>
+### async getPartialObject(bucketName, objectName, offset,[ length, getOpts]): Promise<stream.Readable>
 
 下载对象中指定区间的字节数组，并返回流。
 
