@@ -999,7 +999,7 @@ minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
 ```
 
 <a name="setBucketPolicy"></a>
-### async setBucketPolicy(bucketName, objectPrefix, bucketPolicy): Promise<void>
+### async setBucketPolicy(bucketName, bucketPolicy): Promise<void>
 
 设置指定存储桶的策略。如果`objectPrefix`不为空，则会给符合该前缀的对象（们）设置策略。
 
@@ -1009,14 +1009,13 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 要设置访问策略的对象前缀。`''`代表整个存储桶。 |
-| `bucketPolicy` | _string_ | 存储桶策略。可选值有：`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`或者`minio.Policy.READWRITE`。 |
+| `bucketPolicy` | _string_ | 存储桶策略。 |
 
 
 ```js
 // Set the bucket policy of `my-bucketname` to `readonly` (only allow retrieval),
 // but only for objects that start with 'img-'.
-await minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY)
+await minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy))
 ```
 
 
