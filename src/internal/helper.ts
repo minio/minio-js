@@ -15,7 +15,7 @@
  */
 
 import * as crypto from 'node:crypto'
-import stream from 'node:stream'
+import * as stream from 'node:stream'
 
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
