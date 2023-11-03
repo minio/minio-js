@@ -82,7 +82,6 @@
   },
   "homepage": "https://github.com/minio/minio-js#readme",
   "dependencies": {
-    "@types/stream-json": "^1.7.5",
     "async": "^3.2.4",
     "block-stream2": "^2.1.0",
     "browser-or-node": "^2.1.1",
@@ -111,6 +110,7 @@
     "@types/lodash": "^4.14.194",
     "@types/mime-types": "^2.1.1",
     "@types/node": "^20.1.0",
+    "@types/stream-json": "^1.7.5",
     "@types/through2": "^2.0.38",
     "@types/xml": "^1.0.8",
     "@types/xml2js": "^0.4.11",
