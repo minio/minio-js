@@ -146,7 +146,9 @@ export type Multipart = {
     storageClass: unknown
     initiated: unknown
   }>
-  prefixes: { prefix: string }[]
+  prefixes: {
+    prefix: string
+  }[]
   isTruncated: boolean
   nextKeyMarker: undefined
   nextUploadIdMarker: undefined
@@ -166,7 +168,11 @@ export function parseListParts(xml: string): {
   parts: UploadedPart[]
 } {
   let xmlobj = parseXml(xml)
-  const result: { isTruncated: boolean; marker: number; parts: UploadedPart[] } = {
+  const result: {
+    isTruncated: boolean
+    marker: number
+    parts: UploadedPart[]
+  } = {
     isTruncated: false,
     parts: [],
     marker: 0,
@@ -258,6 +264,64 @@ export function parseTagging(xml: string) {
     } else {
       result = tagResult
     }
+  }
+  return result
+}
+
+type UploadID = unknown
+
+// parse XML response for listing in-progress multipart uploads
+export function parseListMultipart(xml: string) {
+  const result = {
+    uploads: [] as {
+      key: string
+      uploadId: UploadID
+      initiator: unknown
+      owner: unknown
+      storageClass: unknown
+      initiated: unknown
+    }[],
+    prefixes: [] as {
+      prefix: string
+    }[],
+    isTruncated: false,
+    nextKeyMarker: undefined,
+    nextUploadIdMarker: undefined,
+  }
+
+  let xmlobj = parseXml(xml)
+
+  if (!xmlobj.ListMultipartUploadsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
+  }
+  xmlobj = xmlobj.ListMultipartUploadsResult
+  if (xmlobj.IsTruncated) {
+    result.isTruncated = xmlobj.IsTruncated
+  }
+  if (xmlobj.NextKeyMarker) {
+    result.nextKeyMarker = xmlobj.NextKeyMarker
+  }
+  if (xmlobj.NextUploadIdMarker) {
+    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+  }
+
+  if (xmlobj.CommonPrefixes) {
+    toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
+      // @ts-expect-error index check
+      result.prefixes.push({ prefix: sanitizeObjectKey(toArray<string>(prefix.Prefix)[0]) })
+    })
+  }
+
+  if (xmlobj.Upload) {
+    toArray(xmlobj.Upload).forEach((upload) => {
+      const key = upload.Key
+      const uploadId = upload.UploadId
+      const initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      const owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
+      const storageClass = upload.StorageClass
+      const initiated = new Date(upload.Initiated)
+      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
+    })
   }
   return result
 }
