@@ -44,9 +44,12 @@ import type {
   Tag,
   VersionIdentificator,
 } from './internal/type.ts'
+import type { NotificationEvent } from './notification.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export type * from './notification.ts'
+export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 export type {
   BucketItem,
@@ -78,26 +81,6 @@ export type {
   Tag,
   VersionIdentificator,
 }
-
-// Exports only from typings
-export type NotificationEvent =
-  | 's3:ObjectCreated:*'
-  | 's3:ObjectCreated:Put'
-  | 's3:ObjectCreated:Post'
-  | 's3:ObjectCreated:Copy'
-  | 's3:ObjectCreated:CompleteMultipartUpload'
-  | 's3:ObjectRemoved:*'
-  | 's3:ObjectRemoved:Delete'
-  | 's3:ObjectRemoved:DeleteMarkerCreated'
-  | 's3:ReducedRedundancyLostObject'
-  | 's3:TestEvent'
-  | 's3:ObjectRestore:Post'
-  | 's3:ObjectRestore:Completed'
-  | 's3:Replication:OperationFailedReplication'
-  | 's3:Replication:OperationMissedThreshold'
-  | 's3:Replication:OperationReplicatedAfterThreshold'
-  | 's3:Replication:OperationNotTracked'
-  | string
 
 /**
  * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
@@ -561,13 +544,3 @@ export declare function buildARN(
   accountId: string,
   resource: string,
 ): string
-
-export declare const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
-export declare const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
-export declare const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
-export declare const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
-export declare const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
-export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
-export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
-export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
-export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject
