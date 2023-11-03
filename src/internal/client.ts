@@ -2,8 +2,9 @@ import * as crypto from 'node:crypto'
 import fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
-import type * as stream from 'node:stream'
+import * as stream from 'node:stream'
 
+import async from 'async'
 import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
@@ -33,6 +34,7 @@ import {
   isValidEndpoint,
   isValidObjectName,
   isValidPort,
+  isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
   pipesetup,
@@ -1145,10 +1147,8 @@ export class TypedClient {
 
     const [_, o] = await Promise.all([
       new Promise((resolve, reject) => {
-        body.pipe(chunkier)
-        chunkier.on('end', resolve)
-        body.on('error', reject)
-        chunkier.on('error', reject)
+        body.pipe(chunkier).on('error', reject)
+        chunkier.on('end', resolve).on('error', reject)
       }),
       (async () => {
         let partNumber = 1
@@ -1359,6 +1359,81 @@ export class TypedClient {
       }
       listNext('', '')
     })
+  }
+
+  listIncompleteUploads(bucket: string, prefix: string, recursive: boolean): stream.Readable {
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (!isValidBucketName(bucket)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
+    }
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
+    }
+    if (!isBoolean(recursive)) {
+      throw new TypeError('recursive should be of type "boolean"')
+    }
+    const delimiter = recursive ? '' : '/'
+    let keyMarker = ''
+    let uploadIdMarker = ''
+    const uploads: unknown[] = []
+    let ended = false
+    const readStream = new stream.Readable({ objectMode: true })
+    readStream._read = () => {
+      // push one upload info per _read()
+      if (uploads.length) {
+        return readStream.push(uploads.shift())
+      }
+      if (ended) {
+        return readStream.push(null)
+      }
+      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
+        .on('error', (e) => readStream.emit('error', e))
+        .on('data', (result) => {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          result.prefixes.forEach((prefix) => uploads.push(prefix))
+          async.eachSeries(
+            result.uploads,
+            (upload, cb) => {
+              // for each incomplete upload add the sizes of its uploaded parts
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              this.listParts(bucket, upload.key, upload.uploadId).then(
+                (parts: any) => {
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
+                  upload.size = parts.reduce((acc, item) => acc + item.size, 0)
+                  uploads.push(upload)
+                  cb()
+                },
+                (err: any) => cb(err),
+              )
+            },
+            (err) => {
+              if (err) {
+                readStream.emit('error', err)
+                return
+              }
+              if (result.isTruncated) {
+                keyMarker = result.nextKeyMarker
+                uploadIdMarker = result.nextUploadIdMarker
+              } else {
+                ended = true
+              }
+
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              readStream._read()
+            },
+          )
+        })
+    }
+    return readStream
   }
 
   // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
