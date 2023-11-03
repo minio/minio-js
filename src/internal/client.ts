@@ -1018,14 +1018,9 @@ export class TypedClient {
     }
   }
 
-  // Uploads the object using contents from a file
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `filePath` _string_: file path of the file to be uploaded
-  // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
+  /**
+   * Uploads the object using contents from a file
+   */
   async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1048,7 +1043,8 @@ export class TypedClient {
   }
 
   /**
-   *  Uploading a stream, "Buffer" or "string", it's recommended to pass size argument with stream.
+   *  Uploading a stream, "Buffer" or "string".
+   *  It's recommended to pass `size` argument with stream.
    */
   async putObject(
     bucketName: string,
@@ -1056,7 +1052,7 @@ export class TypedClient {
     stream: stream.Readable | Buffer | string,
     size?: number,
     metaData?: ItemBucketMetadata,
-  ): Promise<void> {
+  ): Promise<UploadedObjectInfo> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1092,55 +1088,39 @@ export class TypedClient {
 
     size = this.calculatePartSize(size)
 
-    const executor = async () => {
-      // Get the part size and forward that to the BlockStream. Default to the
-      // largest block size possible if necessary.
-      if (size === undefined) {
-        const statSize = await getContentLength(stream)
-        if (statSize !== null) {
-          size = statSize
-        }
+    // Get the part size and forward that to the BlockStream. Default to the
+    // largest block size possible if necessary.
+    if (size === undefined) {
+      const statSize = await getContentLength(stream)
+      if (statSize !== null) {
+        size = statSize
       }
-
-      if (!isNumber(size)) {
-        // Backward compatibility
-        size = this.maxObjectSize
-      }
-
-      const partSize = this.calculatePartSize(size)
-
-      if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= this.partSize) {
-        const uploader = this.getUploader(bucketName, objectName, headers, false)
-        const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
-        const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
-        return uploader(buf, buf.length, sha256sum, md5sum)
-      }
-
-      return this.uploadStream({
-        stream: isReadableStream(stream) ? stream : readableStream(stream),
-        partSize,
-        bucketName,
-        objectName,
-        headers,
-      })
     }
 
-    await executor()
+    if (!isNumber(size)) {
+      // Backward compatibility
+      size = this.maxObjectSize
+    }
+
+    const partSize = this.calculatePartSize(size)
+
+    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= this.partSize) {
+      const uploader = this.getUploader(bucketName, objectName, headers, false)
+      const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
+      const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
+      return uploader(buf, buf.length, sha256sum, md5sum)
+    }
+
+    return this.uploadStream(bucketName, objectName, headers, stream, partSize)
   }
 
-  async uploadStream({
-    bucketName,
-    objectName,
-    headers,
-    stream: source,
-    partSize,
-  }: {
-    bucketName: string
-    objectName: string
-    headers: RequestHeaders
-    stream: stream.Readable
-    partSize: number
-  }): Promise<UploadedObjectInfo> {
+  async uploadStream(
+    bucketName: string,
+    objectName: string,
+    headers: RequestHeaders,
+    body: stream.Readable,
+    partSize: number,
+  ): Promise<UploadedObjectInfo> {
     // A map of the previously uploaded chunks, for resuming a file upload. This
     // will be null if we aren't resuming an upload.
     const oldParts: Record<number, Part> = {}
@@ -1165,9 +1145,9 @@ export class TypedClient {
 
     const [_, o] = await Promise.all([
       new Promise((resolve, reject) => {
-        source.pipe(chunkier)
+        body.pipe(chunkier)
         chunkier.on('end', resolve)
-        source.on('error', reject)
+        body.on('error', reject)
         chunkier.on('error', reject)
       }),
       (async () => {
