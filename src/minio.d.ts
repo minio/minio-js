@@ -1,7 +1,6 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { EventEmitter } from 'node:events'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
@@ -14,6 +13,7 @@ import type {
 import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
+import type { NotificationConfig, NotificationEvent, NotificationPoller } from './internal/notification.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type { Region } from './internal/s3-endpoints.ts'
 import type {
@@ -44,12 +44,11 @@ import type {
   Tag,
   VersionIdentificator,
 } from './internal/type.ts'
-import type { NotificationEvent } from './notification.ts'
 
 export * from './helpers.ts'
+export type * from './internal/notification.ts'
+export * from './internal/notification.ts'
 export type { Region } from './internal/s3-endpoints.ts'
-export type * from './notification.ts'
-export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 export type {
   BucketItem,
@@ -511,36 +510,3 @@ export class Client extends TypedClient {
   // Other
   newPostPolicy(): PostPolicy
 }
-
-export declare class NotificationPoller extends EventEmitter {
-  stop(): void
-
-  start(): void
-
-  // must to be public?
-  checkForChanges(): void
-}
-
-export declare class NotificationConfig {
-  add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
-}
-
-export declare class TopicConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class QueueConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class CloudFunctionConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare function buildARN(
-  partition: string,
-  service: string,
-  region: string,
-  accountId: string,
-  resource: string,
-): string
