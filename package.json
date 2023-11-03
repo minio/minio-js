@@ -105,6 +105,7 @@
     "@babel/register": "^7.21.0",
     "@nodelib/fs.walk": "^1.2.8",
     "@types/async": "^3.2.20",
+    "@types/block-stream2": "^2.1.2",
     "@types/lodash": "^4.14.194",
     "@types/mime-types": "^2.1.1",
     "@types/node": "^20.1.0",

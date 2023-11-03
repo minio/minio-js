@@ -261,3 +261,83 @@ export function parseTagging(xml: string) {
   }
   return result
 }
+
+type UploadID = unknown
+
+// parse XML response for listing in-progress multipart uploads
+export function parseListMultipart(xml: string) {
+  const result = {
+    uploads: [] as {
+      key: string
+      uploadId: UploadID
+      initiator: unknown
+      owner: unknown
+      storageClass: unknown
+      initiated: unknown
+    }[],
+    prefixes: [] as { prefix: string }[],
+    isTruncated: false,
+    nextKeyMarker: undefined,
+    nextUploadIdMarker: undefined,
+  }
+
+  let xmlobj = parseXml(xml)
+
+  if (!xmlobj.ListMultipartUploadsResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
+  }
+  xmlobj = xmlobj.ListMultipartUploadsResult
+  if (xmlobj.IsTruncated) {
+    result.isTruncated = xmlobj.IsTruncated
+  }
+  if (xmlobj.NextKeyMarker) {
+    result.nextKeyMarker = xmlobj.NextKeyMarker
+  }
+  if (xmlobj.NextUploadIdMarker) {
+    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+  }
+
+  if (xmlobj.CommonPrefixes) {
+    toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
+      // @ts-expect-error index check
+      result.prefixes.push({ prefix: sanitizeObjectKey(toArray<string>(prefix.Prefix)[0]) })
+    })
+  }
+
+  if (xmlobj.Upload) {
+    toArray(xmlobj.Upload).forEach((upload) => {
+      const key = upload.Key
+      const uploadId = upload.UploadId
+      const initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      const owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
+      const storageClass = upload.StorageClass
+      const initiated = new Date(upload.Initiated)
+      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
+    })
+  }
+  return result
+}
+
+// parse XML response when a multipart upload is completed
+export function parseCompleteMultipart(xml: string) {
+  const xmlobj = parseXml(xml).CompleteMultipartUploadResult
+  if (xmlobj.Location) {
+    const location = toArray(xmlobj.Location)[0]
+    const bucket = toArray(xmlobj.Bucket)[0]
+    const key = xmlobj.Key
+    const etag = xmlobj.ETag.replace(/^"/g, '')
+      .replace(/"$/g, '')
+      .replace(/^&quot;/g, '')
+      .replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '')
+      .replace(/&#34;$/g, '')
+
+    return { location, bucket, key, etag }
+  }
+  // Complete Multipart can return XML Error after a 200 OK response
+  if (xmlobj.Code && xmlobj.Message) {
+    const errCode = toArray(xmlobj.Code)[0]
+    const errMessage = toArray(xmlobj.Message)[0]
+    return { errCode, errMessage }
+  }
+}

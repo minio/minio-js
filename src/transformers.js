@@ -101,11 +101,6 @@ export function getCopyObjectTransformer() {
   return getConcater(xmlParsers.parseCopyObject)
 }
 
-// Parses listMultipartUploads response.
-export function getListMultipartTransformer() {
-  return getConcater(xmlParsers.parseListMultipart)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
@@ -119,11 +114,6 @@ export function getListObjectsV2Transformer() {
 // Parses listObjects with metadata response.
 export function getListObjectsV2WithMetadataTransformer() {
   return getConcater(xmlParsers.parseListObjectsV2WithMetadata)
-}
-
-// Parses completeMultipartUpload response.
-export function getCompleteMultipartTransformer() {
-  return getConcater(xmlParsers.parseCompleteMultipart)
 }
 
 // Parses GET/SET BucketNotification response

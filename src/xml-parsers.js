@@ -63,50 +63,6 @@ export function parseCopyObject(xml) {
   return result
 }
 
-// parse XML response for listing in-progress multipart uploads
-export function parseListMultipart(xml) {
-  var result = {
-    uploads: [],
-    prefixes: [],
-    isTruncated: false,
-  }
-
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.ListMultipartUploadsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
-  }
-  xmlobj = xmlobj.ListMultipartUploadsResult
-  if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncated
-  }
-  if (xmlobj.NextKeyMarker) {
-    result.nextKeyMarker = xmlobj.NextKeyMarker
-  }
-  if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker || ''
-  }
-
-  if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
-      result.prefixes.push({ prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0]) })
-    })
-  }
-
-  if (xmlobj.Upload) {
-    toArray(xmlobj.Upload).forEach((upload) => {
-      var key = upload.Key
-      var uploadId = upload.UploadId
-      var initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
-      var owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
-      var storageClass = upload.StorageClass
-      var initiated = new Date(upload.Initiated)
-      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
-    })
-  }
-  return result
-}
-
 // parse XML response to list all the owned buckets
 
 // parse XML response for bucket notification
@@ -180,30 +136,6 @@ export function parseBucketNotification(xml) {
   }
 
   return result
-}
-
-// parse XML response when a multipart upload is completed
-export function parseCompleteMultipart(xml) {
-  var xmlobj = parseXml(xml).CompleteMultipartUploadResult
-  if (xmlobj.Location) {
-    var location = toArray(xmlobj.Location)[0]
-    var bucket = toArray(xmlobj.Bucket)[0]
-    var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, '')
-      .replace(/"$/g, '')
-      .replace(/^&quot;/g, '')
-      .replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '')
-      .replace(/&#34;$/g, '')
-
-    return { location, bucket, key, etag }
-  }
-  // Complete Multipart can return XML Error after a 200 OK response
-  if (xmlobj.Code && xmlobj.Message) {
-    var errCode = toArray(xmlobj.Code)[0]
-    var errMessage = toArray(xmlobj.Message)[0]
-    return { errCode, errMessage }
-  }
 }
 
 const formatObjInfo = (content, opts = {}) => {

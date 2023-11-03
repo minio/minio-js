@@ -19,7 +19,6 @@ import * as path from 'node:path'
 import * as Stream from 'node:stream'
 
 import async from 'async'
-import BlockStream2 from 'block-stream2'
 import _ from 'lodash'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
@@ -37,12 +36,10 @@ import {
   getScope,
   getSourceVersionId,
   getVersionId,
-  insertContentType,
   isBoolean,
   isFunction,
   isNumber,
   isObject,
-  isReadableStream,
   isString,
   isValidBucketName,
   isValidDate,
@@ -52,8 +49,6 @@ import {
   PART_CONSTRAINTS,
   partsRequired,
   pipesetup,
-  prependXAMZMeta,
-  readableStream,
   sanitizeETag,
   toMd5,
   uriEscape,
@@ -62,7 +57,6 @@ import {
 import { PostPolicy } from './internal/post-policy.ts'
 import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
-import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
@@ -96,29 +90,6 @@ export class Client extends TypedClient {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
-  }
-
-  // Calculate part size given the object size. Part size will be atleast this.partSize
-  calculatePartSize(size) {
-    if (!isNumber(size)) {
-      throw new TypeError('size should be of type "number"')
-    }
-    if (size > this.maxObjectSize) {
-      throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
-    }
-    if (this.overRidePartSize) {
-      return this.partSize
-    }
-    var partSize = this.partSize
-    for (;;) {
-      // while(true) {...} throws linting error.
-      // If partSize is big enough to accomodate the object size, then use it.
-      if (partSize * 10000 > size) {
-        return partSize
-      }
-      // Try part sizes as 64MB, 80MB, 96MB etc.
-      partSize += 16 * 1024 * 1024
-    }
   }
 
   // Creates the bucket `bucketName`.
@@ -515,123 +486,6 @@ export class Client extends TypedClient {
 
     var query = querystring.stringify(getOpts)
     this.makeRequest({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes, '', true, cb)
-  }
-
-  // Uploads the object using contents from a file
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `filePath` _string_: file path of the file to be uploaded
-  // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
-  fPutObject(bucketName, objectName, filePath, metaData, callback) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-
-    if (!isString(filePath)) {
-      throw new TypeError('filePath should be of type "string"')
-    }
-    if (isFunction(metaData)) {
-      callback = metaData
-      metaData = {} // Set metaData empty if no metaData provided.
-    }
-    if (!isObject(metaData)) {
-      throw new TypeError('metaData should be of type "object"')
-    }
-
-    // Inserts correct `content-type` attribute based on metaData and filePath
-    metaData = insertContentType(metaData, filePath)
-
-    fs.lstat(filePath, (err, stat) => {
-      if (err) {
-        return callback(err)
-      }
-      return this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData, callback)
-    })
-  }
-
-  // Uploads the object.
-  //
-  // Uploading a stream
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `stream` _Stream_: Readable stream
-  // * `size` _number_: size of the object (optional)
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  //
-  // Uploading "Buffer" or "string"
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `string or Buffer` _string_ or _Buffer_: string or buffer
-  // * `callback(err, objInfo)` _function_: `err` is `null` in case of success and `info` will have the following object details:
-  //   * `etag` _string_: etag of the object
-  //   * `versionId` _string_: versionId of the object
-  putObject(bucketName, objectName, stream, size, metaData, callback) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-
-    // We'll need to shift arguments to the left because of size and metaData.
-    if (isFunction(size)) {
-      callback = size
-      metaData = {}
-    } else if (isFunction(metaData)) {
-      callback = metaData
-      metaData = {}
-    }
-
-    // We'll need to shift arguments to the left because of metaData
-    // and size being optional.
-    if (isObject(size)) {
-      metaData = size
-    }
-
-    // Ensures Metadata has appropriate prefix for A3 API
-    metaData = prependXAMZMeta(metaData)
-    if (typeof stream === 'string' || stream instanceof Buffer) {
-      // Adapts the non-stream interface into a stream.
-      size = stream.length
-      stream = readableStream(stream)
-    } else if (!isReadableStream(stream)) {
-      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
-    }
-
-    if (!isFunction(callback)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    if (isNumber(size) && size < 0) {
-      throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
-    }
-
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
-    if (!isNumber(size)) {
-      size = this.maxObjectSize
-    }
-
-    size = this.calculatePartSize(size)
-
-    // s3 requires that all non-end chunks be at least `this.partSize`,
-    // so we chunk the stream until we hit either that size or the end before
-    // we flush it to s3.
-    let chunker = new BlockStream2({ size, zeroPadding: false })
-
-    // This is a Writable stream that can be written to in order to upload
-    // to the specified bucket and object automatically.
-    let uploader = new ObjectUploader(this, bucketName, objectName, size, metaData, callback)
-    // stream => chunker => uploader
-    pipesetup(stream, chunker, uploader)
   }
 
   // Copy the object.
@@ -1379,157 +1233,6 @@ export class Client extends TypedClient {
       var urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
       cb(null, { postURL: urlStr, formData: postPolicy.formData })
     })
-  }
-
-  // Complete the multipart upload. After all the parts are uploaded issuing
-  // this call will aggregate the parts on the server into a single object.
-  completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!isObject(etags)) {
-      throw new TypeError('etags should be of type "Array"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-
-    var method = 'POST'
-    var query = `uploadId=${uriEscape(uploadId)}`
-
-    var parts = []
-
-    etags.forEach((element) => {
-      parts.push({
-        Part: [
-          {
-            PartNumber: element.part,
-          },
-          {
-            ETag: element.etag,
-          },
-        ],
-      })
-    })
-
-    var payloadObject = { CompleteMultipartUpload: parts }
-    var payload = Xml(payloadObject)
-
-    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getCompleteMultipartTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (result) => {
-          if (result.errCode) {
-            // Multipart Complete API returns an error XML after a 200 http status
-            cb(new errors.S3Error(result.errMessage))
-          } else {
-            const completeMultipartResult = {
-              etag: result.etag,
-              versionId: getVersionId(response.headers),
-            }
-            cb(null, completeMultipartResult)
-          }
-        })
-    })
-  }
-
-  // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
-  listIncompleteUploadsQuery(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isString(prefix)) {
-      throw new TypeError('prefix should be of type "string"')
-    }
-    if (!isString(keyMarker)) {
-      throw new TypeError('keyMarker should be of type "string"')
-    }
-    if (!isString(uploadIdMarker)) {
-      throw new TypeError('uploadIdMarker should be of type "string"')
-    }
-    if (!isString(delimiter)) {
-      throw new TypeError('delimiter should be of type "string"')
-    }
-    var queries = []
-    queries.push(`prefix=${uriEscape(prefix)}`)
-    queries.push(`delimiter=${uriEscape(delimiter)}`)
-
-    if (keyMarker) {
-      keyMarker = uriEscape(keyMarker)
-      queries.push(`key-marker=${keyMarker}`)
-    }
-    if (uploadIdMarker) {
-      queries.push(`upload-id-marker=${uploadIdMarker}`)
-    }
-
-    var maxUploads = 1000
-    queries.push(`max-uploads=${maxUploads}`)
-    queries.sort()
-    queries.unshift('uploads')
-    var query = ''
-    if (queries.length > 0) {
-      query = `${queries.join('&')}`
-    }
-    var method = 'GET'
-    var transformer = transformers.getListMultipartTransformer()
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return transformer.emit('error', e)
-      }
-      pipesetup(response, transformer)
-    })
-    return transformer
-  }
-
-  // Find uploadId of an incomplete upload.
-  findUploadId(bucketName, objectName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-    var latestUpload
-    var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
-        .on('error', (e) => cb(e))
-        .on('data', (result) => {
-          result.uploads.forEach((upload) => {
-            if (upload.key === objectName) {
-              if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
-                latestUpload = upload
-                return
-              }
-            }
-          })
-          if (result.isTruncated) {
-            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
-            return
-          }
-          if (latestUpload) {
-            return cb(null, latestUpload.uploadId)
-          }
-          cb(null, undefined)
-        })
-    }
-    listNext('', '')
   }
 
   // Remove all the notification configurations in the S3 provider
@@ -2360,7 +2063,10 @@ export class Client extends TypedClient {
               return
             }
             const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
-            return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
+            return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone).then(
+              (value) => cb(null, value),
+              (err) => cb(err),
+            )
           })
         }
 
@@ -2472,8 +2178,6 @@ Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 Client.prototype.getObject = promisify(Client.prototype.getObject)
 Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
 Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
-Client.prototype.putObject = promisify(Client.prototype.putObject)
-Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
@@ -2507,6 +2211,10 @@ Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 // refactored API use promise internally
+
+Client.prototype.putObject = callbackify(Client.prototype.putObject)
+Client.prototype.fPutObject = callbackify(Client.prototype.fPutObject)
+
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)

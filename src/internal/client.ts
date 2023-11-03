@@ -1,7 +1,10 @@
+import * as crypto from 'node:crypto'
+import fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import type * as stream from 'node:stream'
 
+import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
@@ -11,10 +14,13 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION, LEGAL_HOLD_STATUS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
+import { fsp, fstat } from './async.ts'
 import { Extensions } from './extensions.ts'
 import {
   extractMetadata,
   getVersionId,
+  hashBinary,
+  insertContentType,
   isAmazonEndpoint,
   isBoolean,
   isDefined,
@@ -29,6 +35,9 @@ import {
   isValidPort,
   isVirtualHostStyle,
   makeDateLong,
+  pipesetup,
+  prependXAMZMeta,
+  readableStream,
   sanitizeETag,
   toMd5,
   toSha256,
@@ -39,13 +48,16 @@ import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
+import * as transformers from './transformers.ts'
 import type {
   Binary,
   BucketItemFromList,
   BucketItemStat,
   GetObjectLegalHoldOptions,
   IRequest,
+  ItemBucketMetadata,
   LegalHoldStatus,
+  ObjectMetaData,
   PutObjectLegalHoldOptions,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -55,11 +67,12 @@ import type {
   StatObjectOpts,
   Tag,
   Transport,
+  UploadedObjectInfo,
   VersionIdentificator,
 } from './type.ts'
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
-import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
+import { parseCompleteMultipart, parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -115,6 +128,11 @@ export interface RemoveOptions {
   versionId?: string
   governanceBypass?: boolean
   forceDelete?: boolean
+}
+
+type Part = {
+  part: number
+  etag: string
 }
 
 export class TypedClient {
@@ -977,6 +995,517 @@ export class TypedClient {
     return xmlParsers.parseListBucket(xmlResult)
   }
 
+  // Calculate part size given the object size. Part size will be atleast this.partSize
+  calculatePartSize(size: number) {
+    if (!isNumber(size)) {
+      throw new TypeError('size should be of type "number"')
+    }
+    if (size > this.maxObjectSize) {
+      throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
+    }
+    if (this.overRidePartSize) {
+      return this.partSize
+    }
+    let partSize = this.partSize
+    for (;;) {
+      // while(true) {...} throws linting error.
+      // If partSize is big enough to accomodate the object size, then use it.
+      if (partSize * 10000 > size) {
+        return partSize
+      }
+      // Try part sizes as 64MB, 80MB, 96MB etc.
+      partSize += 16 * 1024 * 1024
+    }
+  }
+
+  // Uploads the object using contents from a file
+  //
+  // __Arguments__
+  // * `bucketName` _string_: name of the bucket
+  // * `objectName` _string_: name of the object
+  // * `filePath` _string_: file path of the file to be uploaded
+  // * `metaData` _Javascript Object_: metaData assosciated with the object
+  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
+  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isString(filePath)) {
+      throw new TypeError('filePath should be of type "string"')
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
+    }
+
+    // Inserts correct `content-type` attribute based on metaData and filePath
+    metaData = insertContentType(metaData, filePath)
+    const stat = await fsp.lstat(filePath)
+    await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
+  }
+
+  /**
+   *  Uploading a stream, "Buffer" or "string", it's recommended to pass size argument with stream.
+   */
+  async putObject(
+    bucketName: string,
+    objectName: string,
+    stream: stream.Readable | Buffer | string,
+    size?: number,
+    metaData?: ItemBucketMetadata,
+  ): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    // We'll need to shift arguments to the left because of metaData
+    // and size being optional.
+    if (isObject(size)) {
+      metaData = size
+    }
+
+    // Ensures Metadata has appropriate prefix for A3 API
+    const headers = prependXAMZMeta(metaData)
+    if (typeof stream === 'string' || stream instanceof Buffer) {
+      // Adapts the non-stream interface into a stream.
+      size = stream.length
+      stream = readableStream(stream)
+    } else if (!isReadableStream(stream)) {
+      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
+    }
+
+    if (isNumber(size) && size < 0) {
+      throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
+    }
+
+    // Get the part size and forward that to the BlockStream. Default to the
+    // largest block size possible if necessary.
+    if (!isNumber(size)) {
+      size = this.maxObjectSize
+    }
+
+    size = this.calculatePartSize(size)
+
+    const executor = async () => {
+      // Get the part size and forward that to the BlockStream. Default to the
+      // largest block size possible if necessary.
+      if (size === undefined) {
+        const statSize = await getContentLength(stream)
+        if (statSize !== null) {
+          size = statSize
+        }
+      }
+
+      if (!isNumber(size)) {
+        // Backward compatibility
+        size = this.maxObjectSize
+      }
+
+      const partSize = this.calculatePartSize(size)
+
+      if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= this.partSize) {
+        const uploader = this.getUploader(bucketName, objectName, headers, false)
+        const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
+        const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
+        return uploader(buf, buf.length, sha256sum, md5sum)
+      }
+
+      return this.uploadStream({
+        stream: isReadableStream(stream) ? stream : readableStream(stream),
+        partSize,
+        bucketName,
+        objectName,
+        headers,
+      })
+    }
+
+    await executor()
+  }
+
+  async uploadStream({
+    bucketName,
+    objectName,
+    headers,
+    stream: source,
+    partSize,
+  }: {
+    bucketName: string
+    objectName: string
+    headers: RequestHeaders
+    stream: stream.Readable
+    partSize: number
+  }): Promise<UploadedObjectInfo> {
+    // A map of the previously uploaded chunks, for resuming a file upload. This
+    // will be null if we aren't resuming an upload.
+    const oldParts: Record<number, Part> = {}
+
+    // Keep track of the etags for aggregating the chunks together later. Each
+    // etag represents a single chunk of the file.
+    const eTags: Part[] = []
+
+    const previousUploadId = await this.findUploadId(bucketName, objectName)
+    let uploadId: string
+    if (!previousUploadId) {
+      uploadId = await this.initiateNewMultipartUpload(bucketName, objectName, headers)
+    } else {
+      uploadId = previousUploadId
+      const oldTags = await this.listParts(bucketName, objectName, previousUploadId)
+      oldTags.forEach((e) => {
+        oldTags[e.part] = e
+      })
+    }
+
+    const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
+
+    const [_, o] = await Promise.all([
+      new Promise((resolve, reject) => {
+        source.pipe(chunkier)
+        chunkier.on('end', resolve)
+        source.on('error', reject)
+        chunkier.on('error', reject)
+      }),
+      (async () => {
+        let partNumber = 1
+
+        for await (const chunk of chunkier) {
+          const md5 = crypto.createHash('md5').update(chunk).digest()
+
+          const oldPart = oldParts[partNumber]
+          if (oldPart) {
+            if (oldPart.etag === md5.toString('hex')) {
+              eTags.push({ part: partNumber, etag: oldPart.etag })
+              partNumber++
+              continue
+            }
+          }
+
+          partNumber++
+
+          // now start to upload missing part
+          const options: RequestOption = {
+            method: 'PUT',
+            query: qs.stringify({ partNumber, uploadId }),
+            headers: {
+              'Content-Length': chunk.length,
+              'Content-MD5': md5.toString('base64'),
+            },
+            bucketName,
+            objectName,
+          }
+
+          const response = await this.makeRequestAsyncOmit(options, chunk)
+
+          let etag = response.headers.etag
+          if (etag) {
+            etag = etag.replace(/^"/, '').replace(/"$/, '')
+          } else {
+            etag = ''
+          }
+
+          eTags.push({ part: partNumber, etag })
+        }
+
+        return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
+      })(),
+    ])
+
+    return o
+  }
+
+  getUploader(
+    bucketName: string,
+    objectName: string,
+    extraHeaders: RequestHeaders,
+    multipart: false,
+  ): (buf: Buffer, length: number, sha256sum: string, md5sum: string) => Promise<UploadedObjectInfo>
+  getUploader(
+    bucketName: string,
+    objectName: string,
+    extraHeaders: RequestHeaders,
+    multipart: true,
+  ): (
+    uploadId: string,
+    partNumber: number,
+    buf: Buffer,
+    length: number,
+    sha256sum: string,
+    md5sum: string,
+  ) => Promise<UploadedObjectInfo>
+
+  // a part of the multipart.
+  getUploader(bucketName: string, objectName: string, extraHeaders: RequestHeaders, multipart: boolean) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isBoolean(multipart)) {
+      throw new TypeError('multipart should be of type "boolean"')
+    }
+    if (!isObject(extraHeaders)) {
+      throw new TypeError('metadata should be of type "object"')
+    }
+
+    const validate = (stream: stream.Readable | Buffer, length: number, sha256sum: string, md5sum: string) => {
+      if (!(Buffer.isBuffer(stream) || isReadableStream(stream))) {
+        throw new TypeError('stream should be of type "Stream" or Buffer')
+      }
+      if (!isNumber(length)) {
+        throw new TypeError('length should be of type "number"')
+      }
+      if (!isString(sha256sum)) {
+        throw new TypeError('sha256sum should be of type "string"')
+      }
+      if (!isString(md5sum)) {
+        throw new TypeError('md5sum should be of type "string"')
+      }
+    }
+
+    const simpleUploader = (buf: Buffer, length: number, sha256sum: string, md5sum: string) => {
+      validate(buf, length, sha256sum, md5sum)
+      return upload('', buf, length, sha256sum, md5sum)
+    }
+
+    const multipartUploader = (
+      uploadId: string,
+      partNumber: number,
+      buf: Buffer,
+      length: number,
+      sha256sum: string,
+      md5sum: string,
+    ) => {
+      if (!isString(uploadId)) {
+        throw new TypeError('uploadId should be of type "string"')
+      }
+      if (!isNumber(partNumber)) {
+        throw new TypeError('partNumber should be of type "number"')
+      }
+      if (!uploadId) {
+        throw new errors.InvalidArgumentError('Empty uploadId')
+      }
+      if (!partNumber) {
+        throw new errors.InvalidArgumentError('partNumber cannot be 0')
+      }
+      validate(buf, length, sha256sum, md5sum)
+      const query = `partNumber=${partNumber}&uploadId=${uriEscape(uploadId)}`
+      return upload(query, buf, length, sha256sum, md5sum)
+    }
+
+    const upload = async (query: string, stream: Buffer, length: number, sha256sum: string, md5sum: string) => {
+      const method = 'PUT'
+      let headers: RequestHeaders = { 'Content-Length': length }
+
+      if (!multipart) {
+        headers = Object.assign({}, extraHeaders, headers)
+      }
+
+      if (!this.enableSHA256) {
+        headers['Content-MD5'] = md5sum
+      }
+
+      const response = await this.makeRequestStreamAsync(
+        {
+          method,
+          bucketName,
+          objectName,
+          query,
+          headers,
+        },
+        stream,
+        sha256sum,
+        [200],
+        '',
+      )
+      return {
+        etag: sanitizeETag(response.headers.etag),
+        versionId: getVersionId(response.headers as ResponseHeader),
+      }
+    }
+    if (multipart) {
+      return multipartUploader
+    }
+    return simpleUploader
+  }
+
+  findUploadId(
+    bucketName: string,
+    objectName: string,
+    cb?: ResultCallback<string | undefined>,
+  ): void | Promise<string | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    return new Promise((resolve, reject) => {
+      let latestUpload: string | undefined
+      const listNext = (keyMarker: string, uploadIdMarker: string) => {
+        this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          .on('error', (e) => reject(e))
+          .on('data', (result) => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            result.uploads.forEach((upload) => {
+              if (upload.key === objectName) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
+                  latestUpload = upload
+                  return
+                }
+              }
+            })
+            if (result.isTruncated) {
+              listNext(result.nextKeyMarker as string, result.nextUploadIdMarker as string)
+              return
+            }
+            if (latestUpload) {
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              return resolve(latestUpload.uploadId as string)
+            }
+            resolve(undefined)
+          })
+      }
+      listNext('', '')
+    })
+  }
+
+  // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
+  listIncompleteUploadsQuery(
+    bucketName: string,
+    prefix: string,
+    keyMarker: string,
+    uploadIdMarker: string,
+    delimiter: string,
+  ): stream.Transform {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(keyMarker)) {
+      throw new TypeError('keyMarker should be of type "string"')
+    }
+    if (!isString(uploadIdMarker)) {
+      throw new TypeError('uploadIdMarker should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    const queries = []
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
+    if (keyMarker) {
+      keyMarker = uriEscape(keyMarker)
+      queries.push(`key-marker=${keyMarker}`)
+    }
+    if (uploadIdMarker) {
+      queries.push(`upload-id-marker=${uploadIdMarker}`)
+    }
+
+    const maxUploads = 1000
+    queries.push(`max-uploads=${maxUploads}`)
+    queries.sort()
+    queries.unshift('uploads')
+    let query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+    const method = 'GET'
+    const transformer = transformers.getListMultipartTransformer()
+    this.makeRequestAsync({ method, bucketName, query }).then(
+      (response) => {
+        if (!response) {
+          throw new Error('BUG: no response')
+        }
+
+        pipesetup(response, transformer)
+      },
+      (e) => {
+        return transformer.emit('error', e)
+      },
+    )
+    return transformer
+  }
+
+  // this call will aggregate the parts on the server into a single object.
+  async completeMultipartUpload(
+    bucketName: string,
+    objectName: string,
+    uploadId: string,
+    etags: {
+      part: number
+      etag?: string
+    }[],
+  ): Promise<{ etag: string; versionId: string | null }> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(etags)) {
+      throw new TypeError('etags should be of type "Array"')
+    }
+
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    const method = 'POST'
+    const query = `uploadId=${uriEscape(uploadId)}`
+
+    const builder = new xml2js.Builder()
+    const payload = builder.buildObject({
+      CompleteMultipartUpload: {
+        $: {
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+        },
+        Part: etags.map((etag) => {
+          return {
+            PartNumber: etag.part,
+            ETag: etag.etag,
+          }
+        }),
+      },
+    })
+
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
+    const body = await readAsBuffer(res)
+    const result = parseCompleteMultipart(body.toString())
+    if (!result) {
+      throw new Error('BUG: failed to parse server response')
+    }
+
+    if (result.errCode) {
+      // Multipart Complete API returns an error XML after a 200 http status
+      throw new errors.S3Error(result.errMessage)
+    }
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      etag: result.etag as string,
+      versionId: getVersionId(res.headers as ResponseHeader),
+    }
+  }
+
   async removeBucketReplication(bucketName: string): Promise<void>
   removeBucketReplication(bucketName: string, callback: NoResultCallback): void
   async removeBucketReplication(bucketName: string): Promise<void> {
@@ -1166,4 +1695,28 @@ export class TypedClient {
     const body = await readAsString(response)
     return xmlParsers.parseTagging(body)
   }
+}
+
+async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
+  const length = (s as unknown as Record<string, unknown>).length as number | undefined
+  if (isNumber(length)) {
+    return length
+  }
+
+  // property of fs.ReadStream
+  const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
+  if (filePath) {
+    const stat = await fsp.lstat(filePath)
+    return stat.size
+  }
+
+  // property of fs.ReadStream
+  const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
+
+  if (fd) {
+    const stat = await fstat(fd)
+    return stat.size
+  }
+
+  return null
 }
