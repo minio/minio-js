@@ -31,7 +31,6 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
-  pipesetup,
   sanitizeETag,
   toMd5,
   toSha256,
@@ -42,7 +41,6 @@ import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import * as transformers from './transformers.ts'
 import type {
   Binary,
   BucketItemFromList,
@@ -61,7 +59,7 @@ import type {
   Transport,
   VersionIdentificator,
 } from './type.ts'
-import type { UploadedPart } from './xml-parser.ts'
+import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
@@ -119,6 +117,11 @@ export interface RemoveOptions {
   versionId?: string
   governanceBypass?: boolean
   forceDelete?: boolean
+}
+
+type Part = {
+  part: number
+  etag: string
 }
 
 export class TypedClient {
@@ -905,6 +908,8 @@ export class TypedClient {
     let uploadIdMarker = ''
     const uploads: unknown[] = []
     let ended = false
+
+    // TODO: refactor this with async/await and `stream.Readable.from`
     const readStream = new stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one upload info per _read()
@@ -914,9 +919,8 @@ export class TypedClient {
       if (ended) {
         return readStream.push(null)
       }
-      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
-        .on('error', (e) => readStream.emit('error', e))
-        .on('data', (result) => {
+      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter).then(
+        (result) => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           result.prefixes.forEach((prefix) => uploads.push(prefix))
@@ -927,14 +931,14 @@ export class TypedClient {
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               this.listParts(bucket, upload.key, upload.uploadId).then(
-                (parts: any) => {
+                (parts: Part[]) => {
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-ignore
                   upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                   uploads.push(upload)
                   cb()
                 },
-                (err: any) => cb(err),
+                (err: Error) => cb(err),
               )
             },
             (err) => {
@@ -954,7 +958,11 @@ export class TypedClient {
               readStream._read()
             },
           )
-        })
+        },
+        (e) => {
+          readStream.emit('error', e)
+        },
+      )
     }
     return readStream
   }
@@ -962,13 +970,13 @@ export class TypedClient {
   /**
    * Called by listIncompleteUploads to fetch a batch of incomplete uploads.
    */
-  listIncompleteUploadsQuery(
+  async listIncompleteUploadsQuery(
     bucketName: string,
     prefix: string,
     keyMarker: string,
     uploadIdMarker: string,
     delimiter: string,
-  ): stream.Transform {
+  ): Promise<ListMultipartResult> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1005,20 +1013,9 @@ export class TypedClient {
       query = `${queries.join('&')}`
     }
     const method = 'GET'
-    const transformer = transformers.getListMultipartTransformer()
-    this.makeRequestAsync({ method, bucketName, query }).then(
-      (response) => {
-        if (!response) {
-          throw new Error('BUG: no response')
-        }
-
-        pipesetup(response, transformer)
-      },
-      (e) => {
-        return transformer.emit('error', e)
-      },
-    )
-    return transformer
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseListMultipart(body)
   }
 
   /**

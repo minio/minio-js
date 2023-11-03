@@ -1385,9 +1385,8 @@ export class Client extends TypedClient {
     }
     var latestUpload
     var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
-        .on('error', (e) => cb(e))
-        .on('data', (result) => {
+      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
+        (result) => {
           result.uploads.forEach((upload) => {
             if (upload.key === objectName) {
               if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
@@ -1404,7 +1403,9 @@ export class Client extends TypedClient {
             return cb(null, latestUpload.uploadId)
           }
           cb(null, undefined)
-        })
+        },
+        (err) => cb(err),
+      )
     }
     listNext('', '')
   }

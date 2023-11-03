@@ -270,23 +270,31 @@ export function parseTagging(xml: string) {
 
 type UploadID = unknown
 
+export type ListMultipartResult = {
+  uploads: {
+    key: string
+    uploadId: UploadID
+    initiator: unknown
+    owner: unknown
+    storageClass: unknown
+    initiated: unknown
+  }[]
+  prefixes: {
+    prefix: string
+  }[]
+  isTruncated: boolean
+  nextKeyMarker: string
+  nextUploadIdMarker: string
+}
+
 // parse XML response for listing in-progress multipart uploads
-export function parseListMultipart(xml: string) {
-  const result = {
-    uploads: [] as {
-      key: string
-      uploadId: UploadID
-      initiator: unknown
-      owner: unknown
-      storageClass: unknown
-      initiated: unknown
-    }[],
-    prefixes: [] as {
-      prefix: string
-    }[],
+export function parseListMultipart(xml: string): ListMultipartResult {
+  const result: ListMultipartResult = {
+    prefixes: [],
+    uploads: [],
     isTruncated: false,
-    nextKeyMarker: undefined,
-    nextUploadIdMarker: undefined,
+    nextKeyMarker: '',
+    nextUploadIdMarker: '',
   }
 
   let xmlobj = parseXml(xml)
