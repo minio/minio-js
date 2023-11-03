@@ -1,5 +1,5 @@
 import * as crypto from 'node:crypto'
-import fs from 'node:fs'
+import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import * as stream from 'node:stream'
@@ -15,10 +15,11 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION, LEGAL_HOLD_STATUS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
-import { fsp, fstat } from './async.ts'
+import { fsp } from './async.ts'
 import { Extensions } from './extensions.ts'
 import {
   extractMetadata,
+  getContentLength,
   getVersionId,
   hashBinary,
   insertContentType,
@@ -997,7 +998,9 @@ export class TypedClient {
     return xmlParsers.parseListBucket(xmlResult)
   }
 
-  // Calculate part size given the object size. Part size will be atleast this.partSize
+  /**
+   * Calculate part size given the object size. Part size will be atleast this.partSize
+   */
   calculatePartSize(size: number) {
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
@@ -1436,7 +1439,9 @@ export class TypedClient {
     return readStream
   }
 
-  // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
+  /**
+   * Called by listIncompleteUploads to fetch a batch of incomplete uploads.
+   */
   listIncompleteUploadsQuery(
     bucketName: string,
     prefix: string,
@@ -1496,7 +1501,9 @@ export class TypedClient {
     return transformer
   }
 
-  // this call will aggregate the parts on the server into a single object.
+  /**
+   * this call will aggregate the parts on the server into a single object.
+   */
   async completeMultipartUpload(
     bucketName: string,
     objectName: string,
@@ -1750,28 +1757,4 @@ export class TypedClient {
     const body = await readAsString(response)
     return xmlParsers.parseTagging(body)
   }
-}
-
-async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
-  const length = (s as unknown as Record<string, unknown>).length as number | undefined
-  if (isNumber(length)) {
-    return length
-  }
-
-  // property of fs.ReadStream
-  const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
-  if (filePath) {
-    const stat = await fsp.lstat(filePath)
-    return stat.size
-  }
-
-  // property of fs.ReadStream
-  const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
-
-  if (fd) {
-    const stat = await fstat(fd)
-    return stat.size
-  }
-
-  return null
 }

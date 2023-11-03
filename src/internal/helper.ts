@@ -15,13 +15,14 @@
  */
 
 import * as crypto from 'node:crypto'
-import * as stream from 'node:stream'
+import stream from 'node:stream'
 
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
+import { fsp, fstat } from './async.ts'
 import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
@@ -595,4 +596,31 @@ export function parseXml(xml: string): any {
   }
 
   return result
+}
+
+/**
+ * get content size of object content to upload
+ */
+export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
+  const length = (s as unknown as Record<string, unknown>).length as number | undefined
+  if (isNumber(length)) {
+    return length
+  }
+
+  // property of fs.ReadStream
+  const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
+  if (filePath) {
+    const stat = await fsp.lstat(filePath)
+    return stat.size
+  }
+
+  // property of fs.ReadStream
+  const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
+
+  if (fd) {
+    const stat = await fstat(fd)
+    return stat.size
+  }
+
+  return null
 }

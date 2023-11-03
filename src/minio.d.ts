@@ -236,12 +236,6 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  listIncompleteUploads(
-    bucketName: string,
-    prefix?: string,
-    recursive?: boolean,
-  ): BucketStream<IncompleteUploadedBucketItem>
-
   getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
   getBucketVersioning(bucketName: string): Promise<VersioningConfig>
 
