@@ -45,7 +45,9 @@ import type {
   Binary,
   BucketItemFromList,
   BucketItemStat,
+  BucketStream,
   GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
   IRequest,
   LegalHoldStatus,
   PutObjectLegalHoldOptions,
@@ -887,7 +889,11 @@ export class TypedClient {
 
   // Calls implemented below are related to multipart.
 
-  listIncompleteUploads(bucket: string, prefix: string, recursive: boolean): stream.Readable {
+  listIncompleteUploads(
+    bucket: string,
+    prefix: string,
+    recursive: boolean,
+  ): BucketStream<IncompleteUploadedBucketItem> {
     if (prefix === undefined) {
       prefix = ''
     }
