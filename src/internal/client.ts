@@ -1204,7 +1204,7 @@ export class TypedClient {
     }
 
     const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
-    const params: Record<string, any> = {}
+    const params: Record<string, string> = {}
 
     if (retentionOpts.mode) {
       params.Mode = retentionOpts.mode
