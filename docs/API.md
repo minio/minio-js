@@ -765,33 +765,22 @@ Set Object lock config on a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                                                            |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                                                    |
-| `lockConfig`    | _object_   | Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.                                                                                                                                                        |
+| Param        | Type     | Description                                                                                                                                                                                            |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                                                                                                    |
+| `lockConfig` | _object_ | Lock Configuration can be either `{}` to reset or object with all of the following key/value pairs: `{mode: ["COMPLIANCE"/'GOVERNANCE'], unit: ["Days"/"Years"], validity: <a-valid-number-for-unit>}` |
 
 **Example 1**
 
 ```js
-s3Client.setObjectLockConfig('my-bucketname', { mode: 'COMPLIANCE', unit: 'Days', validity: 10 }, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setObjectLockConfig('my-bucketname', { mode: 'COMPLIANCE', unit: 'Days', validity: 10 })
 ```
 
 **Example 2**
 To reset/remove object lock config on a bucket.
 
 ```js
-s3Client.setObjectLockConfig('my-bucketname', {}, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await s3Client.setObjectLockConfig('my-bucketname', {})
 ```
 
 <a name="getObjectLockConfig"></a>
@@ -802,21 +791,15 @@ Get Lock config on a Bucket
 
 **Parameters**
 
-| Param                       | Type       | Description                                                                               |
-| --------------------------- | ---------- | ----------------------------------------------------------------------------------------- |
-| `bucketName`                | _string_   | Name of the bucket.                                                                       |
-| `callback(err, lockConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example **
 Get object lock configuration on a Bucket
 
 ```js
-s3Client.getObjectLockConfig('my-bucketname', function (err, lockConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(lockConfig)
-})
+await minioClient.getObjectLockConfig('my-bucketname')
 ```
 
 <a name="setBucketEncryption"></a>
