@@ -20,6 +20,7 @@ npm install --save minio
 git clone https://github.com/minio/minio-js
 cd minio-js
 npm install
+npm run build
 npm install -g
 ```
 
@@ -182,8 +183,8 @@ The full API Reference is available here.
 - [set-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.js)
 - [get-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.js)
 - [remove-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.js)
-- [get-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.js)
-- [set-object-lock-config.js](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.js)
+- [get-object-lock-config.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.mjs)
+- [set-object-lock-config.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.mjs)
 - [set-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-replication.mjs)
 - [get-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-replication.mjs)
 - [remove-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.mjs)
