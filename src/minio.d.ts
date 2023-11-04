@@ -28,8 +28,8 @@ import type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MetadataItem,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -42,7 +42,6 @@ import type {
   ResultCallback,
   SourceSelectionCriteria,
   Tag,
-  VersionIdentificator,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -61,9 +60,9 @@ export type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
@@ -76,7 +75,6 @@ export type {
   ReplicationRuleStatus,
   SourceSelectionCriteria,
   Tag,
-  VersionIdentificator,
 }
 
 // Exports only from typings
@@ -109,11 +107,15 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
+export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
 export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
 export type Retention = RetentionOptions | EmptyObject
 export type IsoDate = string
@@ -267,13 +269,6 @@ export class Client extends TypedClient {
 
   removeBucketLifecycle(bucketName: string, callback: NoResultCallback): void
   removeBucketLifecycle(bucketName: string): Promise<void>
-
-  setObjectLockConfig(bucketName: string, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig: Lock, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig?: Lock): Promise<void>
-
-  getObjectLockConfig(bucketName: string, callback: ResultCallback<Lock>): void
-  getObjectLockConfig(bucketName: string): Promise<Lock>
 
   getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
   getBucketEncryption(bucketName: string): Promise<Encryption>
