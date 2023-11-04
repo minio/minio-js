@@ -28,7 +28,6 @@ import {
   sanitizeSize,
   toArray,
 } from './internal/helper.ts'
-import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 
 const fxpWithoutNumParser = new XMLParser({
   numberParseOptions: {
@@ -386,37 +385,6 @@ export function parseLifecycleConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LifecycleConfiguration
 }
-
-export function parseObjectLockConfig(xml) {
-  const xmlObj = parseXml(xml)
-  let lockConfigResult = {}
-  if (xmlObj.ObjectLockConfiguration) {
-    lockConfigResult = {
-      objectLockEnabled: xmlObj.ObjectLockConfiguration.ObjectLockEnabled,
-    }
-    let retentionResp
-    if (
-      xmlObj.ObjectLockConfiguration &&
-      xmlObj.ObjectLockConfiguration.Rule &&
-      xmlObj.ObjectLockConfiguration.Rule.DefaultRetention
-    ) {
-      retentionResp = xmlObj.ObjectLockConfiguration.Rule.DefaultRetention || {}
-      lockConfigResult.mode = retentionResp.Mode
-    }
-    if (retentionResp) {
-      const isUnitYears = retentionResp.Years
-      if (isUnitYears) {
-        lockConfigResult.validity = isUnitYears
-        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.YEARS
-      } else {
-        lockConfigResult.validity = retentionResp.Days
-        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.DAYS
-      }
-    }
-    return lockConfigResult
-  }
-}
-
 export function parseObjectRetentionConfig(xml) {
   const xmlObj = parseXml(xml)
   const retentionConfig = xmlObj.Retention
