@@ -285,7 +285,7 @@ export function parseCompleteMultipart(xml: string) {
     const errMessage = toArray(xmlobj.Message)[0]
     return { errCode, errMessage }
   }
-}  
+}
 
 export function parseObjectLockConfig(xml: string): ObjectLockInfo {
   const xmlObj = parseXml(xml)
