@@ -24,6 +24,7 @@ export type Encryption =
       KMSMasterKeyID?: string
     }
 
+export type EnabledOrDisabledStatus = 'Enabled' | 'Disabled'
 export enum ENCRYPTION_TYPES {
   /**
    * SSEC represents server-side-encryption with customer provided keys
@@ -137,7 +138,7 @@ export type StatObjectOpts = {
 
 /* Replication Config types */
 export type ReplicationRuleStatus = {
-  Status: 'Enabled' | 'Disabled'
+  Status: EnabledOrDisabledStatus
 }
 
 export type Tag = {
@@ -215,5 +216,29 @@ export interface RetentionOptions {
   governanceBypass?: boolean
 }
 export type Retention = RetentionOptions | EmptyObject
-export type EmptyObject = Record<string, never>
 export type IsoDate = string
+export type EmptyObject = Record<string, never>
+
+export type ObjectLockInfo =
+  | {
+      objectLockEnabled: EnabledOrDisabledStatus
+      mode: RETENTION_MODES
+      unit: RETENTION_VALIDITY_UNITS
+      validity: number
+    }
+  | EmptyObject
+
+export type ObjectLockConfigParam = {
+  ObjectLockEnabled?: 'Enabled' | undefined
+  Rule?:
+    | {
+        DefaultRetention:
+          | {
+              Mode: RETENTION_MODES
+              Days: number
+              Years: number
+            }
+          | EmptyObject
+      }
+    | EmptyObject
+}

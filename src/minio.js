@@ -60,7 +60,6 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
@@ -1898,92 +1897,6 @@ export class Client extends TypedClient {
     })
   }
 
-  setObjectLockConfig(bucketName, lockConfigOpts = {}, cb) {
-    const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
-    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
-
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-
-    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
-      throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
-    }
-    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
-      throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
-    }
-    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)) {
-      throw new TypeError(`lockConfigOpts.validity should be a number`)
-    }
-
-    const method = 'PUT'
-    const query = 'object-lock'
-
-    let config = {
-      ObjectLockEnabled: 'Enabled',
-    }
-    const configKeys = Object.keys(lockConfigOpts)
-    // Check if keys are present and all keys are present.
-    if (configKeys.length > 0) {
-      if (_.difference(configKeys, ['unit', 'mode', 'validity']).length !== 0) {
-        throw new TypeError(
-          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`,
-        )
-      } else {
-        config.Rule = {
-          DefaultRetention: {},
-        }
-        if (lockConfigOpts.mode) {
-          config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
-        }
-        if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
-          config.Rule.DefaultRetention.Days = lockConfigOpts.validity
-        } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
-          config.Rule.DefaultRetention.Years = lockConfigOpts.validity
-        }
-      }
-    }
-
-    const builder = new xml2js.Builder({
-      rootName: 'ObjectLockConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(config)
-
-    const headers = {}
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
-  }
-
-  getObjectLockConfig(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    const query = 'object-lock'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let objectLockConfig = Buffer.from('')
-      pipesetup(response, transformers.objectLockTransformer())
-        .on('data', (data) => {
-          objectLockConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, objectLockConfig)
-        })
-    })
-  }
-
   getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2439,8 +2352,6 @@ Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTa
 Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
 Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
 Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
-Client.prototype.setObjectLockConfig = promisify(Client.prototype.setObjectLockConfig)
-Client.prototype.getObjectLockConfig = promisify(Client.prototype.getObjectLockConfig)
 Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
 Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
@@ -2461,3 +2372,5 @@ Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLega
 Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
 Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
 Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
+Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
+Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)

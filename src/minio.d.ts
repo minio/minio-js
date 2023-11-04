@@ -30,8 +30,8 @@ import type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MetadataItem,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -67,9 +67,9 @@ export type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
@@ -84,7 +84,6 @@ export type {
   RetentionOptions,
   SourceSelectionCriteria,
   Tag,
-  VersionIdentificator,
 }
 
 // Exports only from typings
@@ -117,10 +116,13 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
 export interface PostPolicyResult {
   postURL: string
@@ -264,13 +266,6 @@ export class Client extends TypedClient {
 
   removeBucketLifecycle(bucketName: string, callback: NoResultCallback): void
   removeBucketLifecycle(bucketName: string): Promise<void>
-
-  setObjectLockConfig(bucketName: string, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig: Lock, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig?: Lock): Promise<void>
-
-  getObjectLockConfig(bucketName: string, callback: ResultCallback<Lock>): void
-  getObjectLockConfig(bucketName: string): Promise<Lock>
 
   getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
   getBucketEncryption(bucketName: string): Promise<Encryption>
