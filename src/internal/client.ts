@@ -5,7 +5,6 @@ import type * as stream from 'node:stream'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
-import Xml from 'xml'
 import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
@@ -64,6 +63,8 @@ import type {
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
+
+const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -830,12 +831,12 @@ export class TypedClient {
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
       const payloadObject = {
-        CreateBucketConfiguration: [
-          { _attr: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' } },
-          { LocationConstraint: region },
-        ],
+        CreateBucketConfiguration: {
+          $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
+          LocationConstraint: region,
+        },
       }
-      payload = Xml(payloadObject)
+      payload = xml.buildObject(payloadObject)
     }
     const method = 'PUT'
     const headers: RequestHeaders = {}
