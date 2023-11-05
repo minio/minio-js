@@ -14,6 +14,41 @@ export type ObjectMetaData = Record<string, string | number>
 
 export type RequestHeaders = Record<string, string | boolean | number | undefined>
 
+export interface LifecycleConfig {
+  Rule: LifecycleRule[]
+}
+
+export interface LifecycleRule {
+  [key: string]: any
+}
+
+export type UploadID = string
+export type NoResultCallback = (error: unknown | null) => void
+export type TagList = Record<string, string>
+export type VersionIdentification = { versionId?: string }
+export type Lifecycle = LifecycleConfig | null | ''
+export type Lock = LockConfig | EmptyObject
+export type Retention = RetentionOptions | EmptyObject
+export type IsoDate = string
+
+export type GetObjectOpt = {
+  versionId?: string
+}
+
+export interface RetentionOptions {
+  versionId: string
+  mode?: RETENTION_MODES
+  retainUntilDate?: IsoDate
+  governanceBypass?: boolean
+}
+
+export interface LockConfig {
+  objectLockEnabled?: 'Enabled'
+  mode: LEGAL_HOLD_STATUS
+  unit: RETENTION_VALIDITY_UNITS
+  validity: number
+}
+
 export type Encryption =
   | {
       type: ENCRYPTION_TYPES.SSEC
@@ -25,6 +60,7 @@ export type Encryption =
     }
 
 export type EnabledOrDisabledStatus = 'Enabled' | 'Disabled'
+
 export enum ENCRYPTION_TYPES {
   /**
    * SSEC represents server-side-encryption with customer provided keys
@@ -52,6 +88,11 @@ export enum LEGAL_HOLD_STATUS {
 }
 
 export type Transport = Pick<typeof http, 'request'>
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
+}
 
 export interface IRequest {
   protocol: string
@@ -124,6 +165,13 @@ export interface BucketStream<T> extends ReadableStream {
   on(event: string | symbol, listener: (...args: any[]) => void): this
 }
 
+export interface PostPolicyResult {
+  postURL: string
+  formData: {
+    [key: string]: any
+  }
+}
+
 export interface BucketItemStat {
   size: number
   etag: string
@@ -144,6 +192,19 @@ export type ReplicationRuleStatus = {
 export type Tag = {
   Key: string
   Value: string
+}
+
+export interface EncryptionConfig {
+  Rule?: EncryptionRule[]
+}
+
+export interface EncryptionRule {
+  [key: string]: any
+}
+
+export interface LegalHoldOptions {
+  versionId?: string
+  status: LEGAL_HOLD_STATUS
 }
 
 export type ReplicationRuleDestination = {
@@ -173,6 +234,45 @@ export type ExistingObjectReplication = {
   Status: ReplicationRuleStatus
 }
 
+export interface InputSerialization {
+  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
+  CSV?: {
+    AllowQuotedRecordDelimiter?: boolean
+    Comments?: string
+    FieldDelimiter?: string
+    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    Type: 'DOCUMENT' | 'LINES'
+  }
+  Parquet?: EmptyObject
+}
+
+export interface OutputSerialization {
+  CSV?: {
+    FieldDelimiter?: string
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    QuoteFields?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    RecordDelimiter?: string
+  }
+}
+
+export interface SelectOptions {
+  expression: string
+  expressionType?: string
+  inputSerialization: InputSerialization
+  outputSerialization: OutputSerialization
+  requestProgress?: { Enabled: boolean }
+  scanRange?: { Start: number; End: number }
+}
+
 export type ReplicationRule = {
   ID: string
   Status: ReplicationRuleStatus
@@ -195,7 +295,7 @@ export type ReplicationConfig = {
 }
 /* Replication Config types */
 
-export type ResultCallback<T> = (error: Error | null, result: T) => void
+export type ResultCallback<T> = (error: unknown | null, result: T) => void
 
 export type GetObjectLegalHoldOptions = {
   versionId: string
@@ -234,4 +334,43 @@ export type ObjectLockConfigParam = {
           | EmptyObject
       }
     | EmptyObject
+}
+
+export interface SourceObjectStats {
+  size: number
+  metaData: string
+  lastModicied: Date
+  versionId: string
+  etag: string
+}
+
+export interface MakeBucketOpt {
+  ObjectLocking?: boolean
+}
+
+export interface RemoveOptions {
+  versionId?: string
+  forceDelete?: boolean
+  governanceBypass?: boolean
+}
+
+export interface BucketItemFromList {
+  name: string
+  // date when bucket was created
+  creationDate: Date
+}
+
+export type VersioningConfig = Record<string | number | symbol, unknown>
+
+export interface VersionConfigInput {
+  Status?: string
+  MfaDelete?: string
+
+  [key: string]: any
+}
+
+export type ListObjectV1Opt = {
+  Delimiter?: string
+  MaxKeys?: number
+  IncludeVersion?: boolean
 }

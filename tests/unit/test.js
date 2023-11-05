@@ -28,8 +28,8 @@ import {
   makeDateShort,
   partsRequired,
 } from '../../src/internal/helper.ts'
-import * as Minio from '../../src/minio.js'
-import { parseListObjects } from '../../src/xml-parsers.js'
+import { parseListObjects } from '../../src/internal/xml-parsers.ts'
+import * as Minio from '../../src/minio.ts'
 
 const Package = { version: 'development' }
 

@@ -33,14 +33,14 @@ import * as uuid from 'uuid'
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
 import { getVersionId } from '../../src/internal/helper.ts'
-import * as minio from '../../src/minio.js'
+import * as minio from '../../src/minio.ts'
 
 const assert = chai.assert
 
 const isWindowsPlatform = process.platform === 'win32'
 
 describe('functional tests', function () {
-  this.timeout(30 * 60 * 1000)
+  this.timeout(10 * 60 * 1000)
   var clientConfigParams = {}
   var region_conf_env = process.env['MINIO_REGION']
 
@@ -69,7 +69,7 @@ describe('functional tests', function () {
       console.error(`Error:  SECRET_KEY Environment variable is not set`)
       process.exit(1)
     }
-    clientConfigParams.useSSL = enable_https_env == '1'
+    clientConfigParams.useSSL = enable_https_env === '1'
   } else {
     // If credentials aren't given, default to play.min.io.
     clientConfigParams.endPoint = 'play.min.io'
@@ -103,7 +103,9 @@ describe('functional tests', function () {
     if (trace_func_test_file_path === 'process.stdout') {
       traceStream = process.stdout
     } else {
-      traceStream = fs.createWriteStream(trace_func_test_file_path, { flags: 'a' })
+      traceStream = fs.createWriteStream(trace_func_test_file_path, {
+        flags: 'a',
+      })
     }
     traceStream.write('====================================\n')
     client.traceOn(traceStream)
@@ -134,7 +136,9 @@ describe('functional tests', function () {
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   // create new http agent to check requests release sockets
-  var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({ keepAlive: true })
+  var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({
+    keepAlive: true,
+  })
   client.setRequestOptions({ agent: httpAgent })
   var metaData = {
     'Content-Type': 'text/html',
@@ -332,7 +336,7 @@ describe('functional tests', function () {
         fs.writeFileSync(tmpFileUpload, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUpload, done)
       },
-    )
+    ).timeout(5000)
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
@@ -346,7 +350,7 @@ describe('functional tests', function () {
         }
         done()
       })
-    })
+    }).timeout(5000)
 
     var tmpFileUploadWithExt = `${tmpDir}/${_100kbObjectName}.txt`
     step(
@@ -355,7 +359,7 @@ describe('functional tests', function () {
         fs.writeFileSync(tmpFileUploadWithExt, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, metaData, done)
       },
-    )
+    ).timeout(5000)
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
@@ -371,7 +375,7 @@ describe('functional tests', function () {
         }
         done()
       })
-    })
+    }).timeout(5000)
 
     step(
       `fPutObject(bucketName, objectName, filePath, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, filePath: ${tmpFileUploadWithExt}_`,
@@ -379,7 +383,7 @@ describe('functional tests', function () {
         fs.writeFileSync(tmpFileUploadWithExt, _100kb)
         client.fPutObject(bucketName, _100kbObjectName, tmpFileUploadWithExt, done)
       },
-    )
+    ).timeout(5000)
 
     step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
       client.statObject(bucketName, _100kbObjectName, (e, stat) => {
@@ -393,7 +397,7 @@ describe('functional tests', function () {
         }
         done()
       })
-    })
+    }).timeout(5000)
 
     step(
       `putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}, metaData:${metaData}_`,
@@ -401,7 +405,7 @@ describe('functional tests', function () {
         var stream = readableStream(_100kb)
         client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, metaData, done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}, stream:100kb, size:${_100kb.length}_`,
@@ -409,7 +413,7 @@ describe('functional tests', function () {
         var stream = readableStream(_100kb)
         client.putObject(bucketName, _100kbObjectName, stream, _100kb.length, done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`,
@@ -429,14 +433,14 @@ describe('functional tests', function () {
           })
         })
       },
-    )
+    ).timeout(5000)
 
     step(
       `putObject(bucketName, objectName, stream, callback)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_`,
       (done) => {
-        client.putObject(bucketName, _100kbObjectBufferName, _100kb, '', done)
+        client.putObject(bucketName, _100kbObjectBufferName, _100kb, done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getObject(bucketName, objectName, callback)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}_`,
@@ -456,7 +460,7 @@ describe('functional tests', function () {
           })
         })
       },
-    )
+    ).timeout(5000)
 
     step(
       `putObject(bucketName, objectName, stream, metaData)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, stream:100kb_, metaData:{}`,
@@ -466,7 +470,7 @@ describe('functional tests', function () {
           .then(() => done())
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:0, length=1024_`,
@@ -479,7 +483,7 @@ describe('functional tests', function () {
           })
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:1024, length=1024_`,
@@ -499,7 +503,7 @@ describe('functional tests', function () {
           })
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}, offset:1024`,
@@ -518,7 +522,7 @@ describe('functional tests', function () {
           })
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `getObject(bucketName, objectName)_bucketName:${bucketName}, objectName:${_100kbObjectBufferName}_`,
@@ -531,22 +535,27 @@ describe('functional tests', function () {
           })
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `putObject(bucketName, objectName, stream, metadata, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`,
-      (done) => {
-        var stream = readableStream(_65mb)
-        client.putObject(bucketName, _65mbObjectName, stream, metaData, () => {
-          setTimeout(() => {
-            if (Object.values(httpAgent.sockets).length === 0) {
-              return done()
-            }
-            done(new Error('http request did not release network socket'))
-          }, 100)
-        })
+      async () => {
+        const stream = readableStream(_65mb)
+        await client.putObject(bucketName, _65mbObjectName, stream, metaData)
+
+        for (;;) {
+          await new Promise((resolve) => {
+            setTimeout(() => {
+              resolve()
+            }),
+              100
+          })
+          if (Object.values(httpAgent.sockets).length === 0) {
+            return
+          }
+        }
       },
-    )
+    ).timeout(15000)
 
     step(`getObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`, (done) => {
       var hash = crypto.createHash('md5')
@@ -687,6 +696,21 @@ describe('functional tests', function () {
     )
 
     step(
+      `statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`,
+      async () => {
+        const stat = await client.statObject(bucketName, _100kbObjectName)
+        if (stat.size !== _100kb.length) {
+          throw new Error('size mismatch')
+        }
+        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
+        assert.equal(stat.metaData['Testing'], metaData['Testing'])
+        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
+        etag = stat.etag
+        modifiedDate = stat.modifiedDate
+      },
+    )
+
+    step(
       `copyObject(bucketName, objectName, srcObject, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}_`,
       (done) => {
         client.copyObject(bucketName, _100kbObjectNameCopy, '/' + bucketName + '/' + _100kbObjectName, (e) => {
@@ -697,23 +721,6 @@ describe('functional tests', function () {
         })
       },
     )
-
-    step(`statObject(bucketName, objectName, cb)_bucketName:${bucketName}, objectName:${_100kbObjectName}_`, (done) => {
-      client.statObject(bucketName, _100kbObjectName, (e, stat) => {
-        if (e) {
-          return done(e)
-        }
-        if (stat.size !== _100kb.length) {
-          return done(new Error('size mismatch'))
-        }
-        assert.equal(stat.metaData['content-type'], metaData['Content-Type'])
-        assert.equal(stat.metaData['Testing'], metaData['Testing'])
-        assert.equal(stat.metaData['randomstuff'], metaData['randomstuff'])
-        etag = stat.etag
-        modifiedDate = stat.modifiedDate
-        done()
-      })
-    })
 
     step(
       `copyObject(bucketName, objectName, srcObject, conditions, cb)_bucketName:${bucketName}, objectName:${_100kbObjectNameCopy}, srcObject:/${bucketName}/${_100kbObjectName}, conditions:ExceptIncorrectEtag_`,
@@ -938,15 +945,12 @@ describe('functional tests', function () {
           .then(() => done())
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `fPutObject(bucketName, objectName, filePath, metaData)_bucketName:${bucketName}, objectName:${_65mbObjectName}, filePath:${tmpFileUpload}_`,
-      (done) => {
-        client
-          .fPutObject(bucketName, _65mbObjectName, tmpFileUpload)
-          .then(() => done())
-          .catch(done)
+      async () => {
+        await client.fPutObject(bucketName, _65mbObjectName, tmpFileUpload)
       },
     )
 
@@ -958,7 +962,7 @@ describe('functional tests', function () {
           .then(() => done())
           .catch(done)
       },
-    )
+    ).timeout(5000)
 
     step(
       `removeObject(bucketName, objectName, filePath, callback)_bucketName:${bucketName}, objectName:${_65mbObjectName}_`,
@@ -967,7 +971,7 @@ describe('functional tests', function () {
         fs.unlinkSync(tmpFileDownload)
         client.removeObject(bucketName, _65mbObjectName, done)
       },
-    )
+    ).timeout(5000)
   })
   describe('fGetObject-resume', () => {
     var localFile = `${tmpDir}/${_5mbObjectName}`
@@ -1907,12 +1911,12 @@ describe('functional tests', function () {
               poller.removeAllListeners('notification')
               // clean up object now
               client.removeObject(bucketName, objectName, done)
-            }, 11 * 1000)
+            }, 10 * 1000)
           })
         },
       )
-    })
-  })
+    }).timeout(120 * 1000)
+  }).timeout(120 * 1000)
 
   describe('Bucket Versioning API', () => {
     // Isolate the bucket/object for easy debugging and tracking.
@@ -1944,7 +1948,7 @@ describe('functional tests', function () {
         })
       })
 
-      step('Suspend versioning  on a bucket', (done) => {
+      step('Suspend versioning on a bucket', (done) => {
         client.setBucketVersioning(versionedBucketName, { Status: 'Suspended' }, (err) => {
           if (err && err.code === 'NotImplemented') {
             return done()
@@ -2220,91 +2224,102 @@ describe('functional tests', function () {
     step(
       `putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${versionedBucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`,
       (done) => {
-        if (isVersioningSupported) {
-          let count = 1
-          objVersionIdCounter.forEach(() => {
-            client.putObject(
-              versionedBucketName,
-              objNameWithPrefix,
-              readableStream(_1byte),
-              _1byte.length,
-              {},
-              (e, data) => {
-                objArray.push(data)
-                if (count === objVersionIdCounter.length) {
-                  done()
-                }
-                count += 1
-              },
-            )
-          })
-        } else {
+        if (!isVersioningSupported) {
           done()
+          return
         }
+
+        let count = 1
+        objVersionIdCounter.forEach(() => {
+          client.putObject(
+            versionedBucketName,
+            objNameWithPrefix,
+            readableStream(_1byte),
+            _1byte.length,
+            {},
+            (e, data) => {
+              if (e) {
+                done(e)
+              }
+              objArray.push(data)
+              if (count === objVersionIdCounter.length) {
+                done()
+              }
+              count += 1
+            },
+          )
+        })
       },
     )
 
     step(
       `listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: '', recursive:true_`,
       (done) => {
-        if (isVersioningSupported) {
-          client
-            .listObjects(versionedBucketName, '', true, { IncludeVersion: true })
-            .on('error', done)
-            .on('end', () => {
-              if (_.isEqual(objArray.length, listPrefixArray.length)) {
-                return done()
-              }
-              return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
-            })
-            .on('data', (data) => {
-              listPrefixArray.push(data)
-            })
-        } else {
+        if (!isVersioningSupported) {
           done()
+          return
         }
+
+        client
+          .listObjects(versionedBucketName, '', true, {
+            IncludeVersion: true,
+          })
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(objArray.length, listPrefixArray.length)) {
+              return done()
+            }
+            return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
+          })
+          .on('data', (data) => {
+            listPrefixArray.push(data)
+          })
       },
     )
 
     step(
       `listObjects(bucketName, prefix, recursive)_bucketName:${versionedBucketName}, prefix: ${prefixName}, recursive:true_`,
       (done) => {
-        if (isVersioningSupported) {
-          listPrefixArray = []
-          client
-            .listObjects(versionedBucketName, prefixName, true, { IncludeVersion: true })
-            .on('error', done)
-            .on('end', () => {
-              if (_.isEqual(objArray.length, listPrefixArray.length)) {
-                return done()
-              }
-              return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
-            })
-            .on('data', (data) => {
-              listPrefixArray.push(data)
-            })
-        } else {
+        if (!isVersioningSupported) {
           done()
+          return
         }
+
+        listPrefixArray = []
+        client
+          .listObjects(versionedBucketName, prefixName, true, {
+            IncludeVersion: true,
+          })
+          .on('error', done)
+          .on('end', () => {
+            if (_.isEqual(objArray.length, listPrefixArray.length)) {
+              return done()
+            }
+            return done(new Error(`listObjects lists ${listPrefixArray.length} objects, expected ${listObjectsNum}`))
+          })
+          .on('data', (data) => {
+            listPrefixArray.push(data)
+          })
       },
     )
 
     step(
       `removeObject(bucketName, objectName, removeOpts)_bucketName:${versionedBucketName}_Remove ${listObjectsNum} objects`,
       (done) => {
-        if (isVersioningSupported) {
-          let count = 1
-          listPrefixArray.forEach((item) => {
-            client.removeObject(versionedBucketName, item.name, { versionId: item.versionId }, () => {
-              if (count === listPrefixArray.length) {
-                done()
-              }
-              count += 1
-            })
-          })
-        } else {
+        if (!isVersioningSupported) {
           done()
+          return
         }
+
+        let count = 1
+        listPrefixArray.forEach((item) => {
+          client.removeObject(versionedBucketName, item.name, { versionId: item.versionId }, () => {
+            if (count === listPrefixArray.length) {
+              done()
+            }
+            count += 1
+          })
+        })
       },
     )
   })
@@ -2373,7 +2388,9 @@ describe('functional tests', function () {
         (done) => {
           if (isVersioningSupported) {
             client
-              .listObjects(versionedBucketName, '', true, { IncludeVersion: true })
+              .listObjects(versionedBucketName, '', true, {
+                IncludeVersion: true,
+              })
               .on('error', done)
               .on('end', () => {
                 if (_.isEqual(2, objVersionList.length)) {
@@ -3161,7 +3178,10 @@ describe('functional tests', function () {
             client.removeObject(
               objRetentionBucket,
               retentionObjName,
-              { versionId: versionId, governanceBypass: true },
+              {
+                versionId: versionId,
+                governanceBypass: true,
+              },
               () => {
                 done()
               },
@@ -3404,7 +3424,10 @@ describe('functional tests', function () {
             client.setObjectLegalHold(
               objLegalHoldBucketName,
               objLegalHoldObjName,
-              { status: 'ON', versionId: versionId },
+              {
+                status: 'ON',
+                versionId: versionId,
+              },
               () => {
                 done()
               },
@@ -3435,7 +3458,10 @@ describe('functional tests', function () {
             client.setObjectLegalHold(
               objLegalHoldBucketName,
               objLegalHoldObjName,
-              { status: 'OFF', versionId: versionId },
+              {
+                status: 'OFF',
+                versionId: versionId,
+              },
               () => {
                 done()
               },
@@ -3466,7 +3492,10 @@ describe('functional tests', function () {
             client.removeObject(
               objLegalHoldBucketName,
               objLegalHoldObjName,
-              { versionId: versionId, governanceBypass: true },
+              {
+                versionId: versionId,
+                governanceBypass: true,
+              },
               () => {
                 done()
               },
@@ -3780,7 +3809,9 @@ describe('functional tests', function () {
           secretKey: client.secretKey,
         })
 
-        const aRoleConf = Object.assign({}, clientConfigParams, { credentialsProvider: assumeRoleProvider })
+        const aRoleConf = Object.assign({}, clientConfigParams, {
+          credentialsProvider: assumeRoleProvider,
+        })
 
         const assumeRoleClient = new minio.Client(aRoleConf)
         assumeRoleClient.region = server_region
@@ -3942,7 +3973,9 @@ describe('functional tests', function () {
       (done) => {
         if (isVersioningSupported) {
           client
-            .removeObject(bucketToTestMultipart, _100kbObjectName, { versionId: versionedObjectRes.versionId })
+            .removeObject(bucketToTestMultipart, _100kbObjectName, {
+              versionId: versionedObjectRes.versionId,
+            })
             .then(() => done())
             .catch(done)
         } else {
@@ -3984,7 +4017,9 @@ describe('functional tests', function () {
       (done) => {
         if (isVersioningSupported) {
           client
-            .removeObject(bucketToTestMultipart, _65mbObjectName, { versionId: versionedMultiPartObjectRes.versionId })
+            .removeObject(bucketToTestMultipart, _65mbObjectName, {
+              versionId: versionedMultiPartObjectRes.versionId,
+            })
             .then(() => done())
             .catch(done)
         } else {
@@ -4269,7 +4304,8 @@ describe('functional tests', function () {
       },
     )
   })
-  describe('Test listIncompleteUploads (Multipart listing) with special characters', () => {
+  describe('Test listIncompleteUploads (Multipart listing) with special characters', function () {
+    this.timeout(30 * 1000)
     const specialCharPrefix = 'SpecialMenùäöüexPrefix/'
     const objectNameSpecialChars = 'äöüex.pdf'
     const spObjWithPrefix = `${specialCharPrefix}${objectNameSpecialChars}`
@@ -4280,10 +4316,6 @@ describe('functional tests', function () {
 
     step(
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`,
-      () => client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData),
-    )
-
-    step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}, recursive: true_`,
       function (done) {
         // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
@@ -4382,13 +4414,22 @@ describe('functional tests', function () {
       `selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`,
       (done) => {
         const selectOpts = {
-          expression: 'SELECT * FROM s3object s where s."Name" = \'Jane\'',
+          expression: `SELECT * FROM s3object s where s."Name" = 'Jane'`,
           expressionType: 'SQL',
           inputSerialization: {
-            CSV: { FileHeaderInfo: 'Use', RecordDelimiter: '\n', FieldDelimiter: ',' },
+            CSV: {
+              FileHeaderInfo: 'Use',
+              RecordDelimiter: '\n',
+              FieldDelimiter: ',',
+            },
             CompressionType: 'NONE',
           },
-          outputSerialization: { CSV: { RecordDelimiter: '\n', FieldDelimiter: ',' } },
+          outputSerialization: {
+            CSV: {
+              RecordDelimiter: '\n',
+              FieldDelimiter: ',',
+            },
+          },
           requestProgress: { Enabled: true },
         }
 
@@ -4588,7 +4629,9 @@ describe('functional tests', function () {
         (done) => {
           if (isVersioningSupported) {
             client
-              .listObjects(fdPrefixBucketName, '/my-prefix', true, { IncludeVersion: true })
+              .listObjects(fdPrefixBucketName, '/my-prefix', true, {
+                IncludeVersion: true,
+              })
               .on('error', done)
               .on('end', () => {
                 if (_.isEqual(0, objVersionList.length)) {

@@ -114,6 +114,7 @@ export class InvalidXMLError extends ExtendableError {}
  */
 export class S3Error extends ExtendableError {
   code?: string
+  region?: string
 }
 
 export class IsValidBucketNameError extends ExtendableError {}
