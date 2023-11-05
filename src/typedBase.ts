@@ -23,6 +23,10 @@ import { fsp, streamPromise } from './internal/async.ts'
 import { Extensions } from './internal/extensions.ts'
 import type { AnyFunction } from './internal/helper.ts'
 import {
+  extractMetadata,
+  getVersionId,
+  insertContentType,
+  isAmazonEndpoint,
   isBoolean,
   isDefined,
   isEmpty,
@@ -32,12 +36,6 @@ import {
   isOptionalFunction,
   isReadableStream,
   isString,
-} from './internal/helper.ts'
-import {
-  extractMetadata,
-  getVersionId,
-  insertContentType,
-  isAmazonEndpoint,
   isValidBucketName,
   isValidEndpoint,
   isValidObjectName,

@@ -1,10 +1,9 @@
 {
   "name": "minio",
-  "version": "7.1.1",
+  "version": "7.1.4",
   "description": "S3 Compatible Cloud Storage client",
   "main": "./dist/main/minio.js",
   "module": "./dist/esm/minio.mjs",
-  "types": "./dist/main/minio.d.ts",
   "scripts": {
     "prepare": "husky install",
     "tsc": "tsc",
@@ -21,19 +20,16 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/main/minio.d.ts",
       "require": "./dist/main/minio.js",
       "default": "./dist/esm/minio.mjs"
     },
     "./dist/main/internal/*": null,
     "./dist/main/*": {
-      "types": "./dist/main/*",
       "require": "./dist/main/*",
       "default": null
     },
     "./dist/esm/internal/*": null,
     "./dist/esm/*": {
-      "types": "./dist/esm/*",
       "import": "./dist/esm/*",
       "default": null
     },
@@ -62,6 +58,9 @@
     ],
     "*.{js,cjs,mjs,ts}": [
       "eslint --fix",
+      "prettier --write"
+    ],
+    "*.md": [
       "prettier --write"
     ]
   },

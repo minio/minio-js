@@ -17,26 +17,26 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 // Get stat information for my-objectname.
-s3Client.statObject('my-bucketname', 'my-objectname', function (e, stat) {
-  if (e) {
-    return console.log(e)
-  }
+try {
+  const stat = await s3Client.statObject('my-bucketname', 'my-objectname')
   console.log(stat)
-})
+} catch (e) {
+  console.log(e)
+}
 
 // Get stat information for a specific version of 'my-objectname'
 //Bucket must be versioning enabled.
-s3Client.statObject('my-bucketname', 'my-objectname', { versionId: 'my-uuid' }, function (e, stat) {
-  if (e) {
-    return console.log(e)
-  }
+try {
+  const stat = await s3Client.statObject('my-bucketname', 'my-objectname', { versionId: 'my-uuid' })
   console.log(stat)
-})
+} catch (e) {
+  console.log(e)
+}

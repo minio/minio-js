@@ -158,7 +158,7 @@ describe('functional tests', function () {
   }
 
   before((done) => client.makeBucket(bucketName, server_region, done))
-  after((done) => client.removeBucket(bucketName, done))
+  after(() => client.removeBucket(bucketName))
 
   if (traceStream) {
     after(() => {
@@ -836,9 +836,7 @@ describe('functional tests', function () {
   describe('listIncompleteUploads removeIncompleteUpload', () => {
     step(
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, metaData:${metaData}`,
-      (done) => {
-        client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData).finally(done)
-      },
+      () => client.initiateNewMultipartUpload(bucketName, _65mbObjectName, metaData),
     )
     step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:${_65mbObjectName}, recursive: true_`,
@@ -1924,7 +1922,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const versionedBucketName = 'minio-js-test-version-' + uuid.v4()
     before((done) => client.makeBucket(versionedBucketName, '', done))
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Steps test', function () {
       step('Check if versioning is enabled on a bucket', (done) => {
@@ -1985,7 +1983,7 @@ describe('functional tests', function () {
       : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(versionedBucketName, '', done))
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Steps test', function () {
       let versionId
@@ -2060,7 +2058,7 @@ describe('functional tests', function () {
       : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(versionedBucketName, '', done))
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     describe('Versioning Test for  getObject, getPartialObject, putObject, removeObject with versionId support', function () {
       let versionId = null
@@ -2221,7 +2219,7 @@ describe('functional tests', function () {
         })
       }),
     )
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     step(
       `putObject(bucketName, objectName, stream, size, metaData, callback)_bucketName:${versionedBucketName}, stream:1b, size:1_Create ${listObjectsNum} objects`,
@@ -2335,7 +2333,7 @@ describe('functional tests', function () {
       : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(versionedBucketName, '', done))
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     describe('Test for removal of multiple versions', function () {
       let isVersioningSupported = false
@@ -2436,7 +2434,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsBucketName = 'minio-js-test-tags-' + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
-    after((done) => client.removeBucket(tagsBucketName, done))
+    after(() => client.removeBucket(tagsBucketName))
 
     describe('set, get and remove Tags on a bucket', function () {
       step(`Set tags on a bucket_bucketName:${tagsBucketName}`, (done) => {
@@ -2482,7 +2480,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsBucketName = 'minio-js-test-tags-' + uuid.v4()
     before((done) => client.makeBucket(tagsBucketName, '', done))
-    after((done) => client.removeBucket(tagsBucketName, done))
+    after(() => client.removeBucket(tagsBucketName))
 
     const tagObjName = 'datafile-100-kB'
     const tagObject = Buffer.alloc(100 * 1024, 0)
@@ -2547,7 +2545,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const tagsVersionedBucketName = 'minio-js-test-tags-version-' + uuid.v4()
     before((done) => client.makeBucket(tagsVersionedBucketName, '', done))
-    after((done) => client.removeBucket(tagsVersionedBucketName, done))
+    after(() => client.removeBucket(tagsVersionedBucketName))
 
     const tagObjName = 'datafile-100-kB'
     const tagObject = Buffer.alloc(100 * 1024, 0)
@@ -2654,7 +2652,7 @@ describe('functional tests', function () {
   describe('Bucket Lifecycle API', () => {
     const bucketName = 'minio-js-test-lifecycle-' + uuid.v4()
     before((done) => client.makeBucket(bucketName, '', done))
-    after((done) => client.removeBucket(bucketName, done))
+    after(() => client.removeBucket(bucketName))
 
     describe('Set, Get Lifecycle config Tests', function () {
       step(`Set lifecycle config on a bucket:_bucketName:${bucketName}`, (done) => {
@@ -2742,7 +2740,7 @@ describe('functional tests', function () {
         })
       }),
     )
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     step(
       `presignedPutObject(bucketName, objectName, expires=1000, cb)_bucketName:${versionedBucketName} ${versionedPresignObjName} _version:1`,
@@ -3211,7 +3209,7 @@ describe('functional tests', function () {
     // this is not supported in gateway mode.
     const encBucketName = 'minio-js-test-bucket-enc-' + uuid.v4()
     before((done) => client.makeBucket(encBucketName, '', done))
-    after((done) => client.removeBucket(encBucketName, done))
+    after(() => client.removeBucket(encBucketName))
 
     const encObjName = 'datafile-100-kB'
     const encObjFileContent = Buffer.alloc(100 * 1024, 0)
@@ -3524,7 +3522,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = 'minio-js-test-obj-spwpre-' + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
-    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+    after(() => client.removeBucket(bucketNameForSpCharObjects))
 
     // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
     // Host OS compatible File name characters/ file names.
@@ -3653,7 +3651,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = 'minio-js-test-obj-spnpre-' + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
-    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+    after(() => client.removeBucket(bucketNameForSpCharObjects))
 
     // Reference:: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
     let objectNameSpecialChars = "äöüex ®©µÄÆÐÕæŒƕƩǅ 01000000 0x40 \u0040 amȡȹɆple&0a!-_.*'()&$@=;:+,?<>.pdf"
@@ -3794,7 +3792,7 @@ describe('functional tests', function () {
     // Run only in local environment.
     const bucketName = 'minio-js-test-assume-role' + uuid.v4()
     before((done) => client.makeBucket(bucketName, '', done))
-    after((done) => client.removeBucket(bucketName, done))
+    after(() => client.removeBucket(bucketName))
 
     const objName = 'datafile-100-kB'
     const objContent = Buffer.alloc(100 * 1024, 0)
@@ -3851,7 +3849,7 @@ describe('functional tests', function () {
     const bucketToTestMultipart = 'minio-js-test-put-multiuv-' + uuid.v4()
 
     before((done) => client.makeBucket(bucketToTestMultipart, '', done))
-    after((done) => client.removeBucket(bucketToTestMultipart, done))
+    after(() => client.removeBucket(bucketToTestMultipart))
 
     // Non multipart Test
     step(
@@ -3940,7 +3938,7 @@ describe('functional tests', function () {
         })
       }),
     )
-    after((done) => client.removeBucket(bucketToTestMultipart, done))
+    after(() => client.removeBucket(bucketToTestMultipart))
 
     // Non multipart Test
     step(
@@ -4045,7 +4043,7 @@ describe('functional tests', function () {
     var _100mbFileToBeSplitAndComposed = Buffer.alloc(100 * 1024 * 1024, 0)
     let composeObjectTestBucket = 'minio-js-test-compose-obj-' + uuid.v4()
     before((done) => client.makeBucket(composeObjectTestBucket, '', done))
-    after((done) => client.removeBucket(composeObjectTestBucket, done))
+    after(() => client.removeBucket(composeObjectTestBucket))
 
     const composedObjName = '_100-mb-file-to-test-compose'
     const tmpSubDir = `${tmpDir}/compose`
@@ -4181,7 +4179,7 @@ describe('functional tests', function () {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = 'minio-js-test-obj-sppre' + uuid.v4()
     before((done) => client.makeBucket(bucketNameForSpCharObjects, '', done))
-    after((done) => client.removeBucket(bucketNameForSpCharObjects, done))
+    after(() => client.removeBucket(bucketNameForSpCharObjects))
 
     const specialCharPrefix = 'SpecialMenùäöüexPrefix/'
 
@@ -4314,16 +4312,10 @@ describe('functional tests', function () {
     const spBucketName = 'minio-js-test-lin-sppre' + uuid.v4()
 
     before((done) => client.makeBucket(spBucketName, '', done))
-    after((done) => client.removeBucket(spBucketName, done))
+    after(() => client.removeBucket(spBucketName))
 
     step(
       `initiateNewMultipartUpload(bucketName, objectName, metaData, cb)_bucketName:${spBucketName}, objectName:${spObjWithPrefix}, metaData:${metaData}`,
-      (done) => {
-        client.initiateNewMultipartUpload(spBucketName, spObjWithPrefix, metaData).finally(done)
-      },
-    )
-
-    step(
       `listIncompleteUploads(bucketName, prefix, recursive)_bucketName:${spBucketName}, prefix:${spObjWithPrefix}, recursive: true_`,
       function (done) {
         // MinIO's ListIncompleteUploads returns an empty list, so skip this on non-AWS.
@@ -4391,7 +4383,7 @@ describe('functional tests', function () {
     const selObject = 'SelectObjectContent'
     // Isolate the bucket/object for easy debugging and tracking.
     before((done) => client.makeBucket(selObjContentBucket, '', done))
-    after((done) => client.removeBucket(selObjContentBucket, done))
+    after(() => client.removeBucket(selObjContentBucket))
 
     step(
       `putObject(bucketName, objectName, stream)_bucketName:${selObjContentBucket}, objectName:${selObject}, stream:csv`,
@@ -4477,7 +4469,7 @@ describe('functional tests', function () {
     const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdWithVerBucket, '', done))
-    after((done) => client.removeBucket(fdWithVerBucket, done))
+    after(() => client.removeBucket(fdWithVerBucket))
 
     describe('Test for force removal of multiple versions', function () {
       let isVersioningSupported = false
@@ -4570,7 +4562,7 @@ describe('functional tests', function () {
     const fdPrefixObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucketName, '', done))
-    after((done) => client.removeBucket(fdPrefixBucketName, done))
+    after(() => client.removeBucket(fdPrefixBucketName))
 
     describe('Test for removal of multiple versions', function () {
       let isVersioningSupported = false
@@ -4667,7 +4659,7 @@ describe('functional tests', function () {
       : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(versionedBucketName, '', done))
-    after((done) => client.removeBucket(versionedBucketName, done))
+    after(() => client.removeBucket(versionedBucketName))
 
     describe('Test force removal of an object', function () {
       step(
@@ -4717,7 +4709,7 @@ describe('functional tests', function () {
     const fdObject = dataDir ? fs.readFileSync(dataDir + '/datafile-100-kB') : Buffer.alloc(100 * 1024, 0)
 
     before((done) => client.makeBucket(fdPrefixBucket, '', done))
-    after((done) => client.removeBucket(fdPrefixBucket, done))
+    after(() => client.removeBucket(fdPrefixBucket))
 
     describe('Test force removal of a prefix', function () {
       step(

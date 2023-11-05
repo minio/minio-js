@@ -10,6 +10,8 @@ import { LEGAL_HOLD_STATUS, RETENTION_MODES } from './helpers.ts'
 import { asCallback, asCallbackFn } from './internal/as-callback.ts'
 import { fsp } from './internal/async.ts'
 import {
+  getScope,
+  insertContentType,
   isBoolean,
   isEmpty,
   isFunction,
@@ -17,12 +19,8 @@ import {
   isObject,
   isOptionalFunction,
   isString,
-  isValidDate,
-} from './internal/helper.ts'
-import {
-  getScope,
-  insertContentType,
   isValidBucketName,
+  isValidDate,
   isValidObjectName,
   isValidPrefix,
   makeDateLong,

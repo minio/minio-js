@@ -17,17 +17,29 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketTagging('bucketname', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+try {
+  //Set legal hold config of an object.
+  await s3Client.setObjectLegalHold('bucketname', 'objectName')
+  console.log('Success')
+} catch (err) {
+  console.log(err.message)
+}
+
+try {
+  //Set legal hold config of an object version.
+  await s3Client.setObjectLegalHold('bucketname', 'objectName', {
+    status: 'ON',
+    versionId: '67d3a60d-e837-4218-96d3-44733cdc7c6f',
+  })
+  console.log('Success')
+} catch (err) {
+  console.log(err.message)
+}

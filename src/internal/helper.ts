@@ -125,9 +125,9 @@ export function isValidDomain(host: string) {
     return false
   }
 
-  const alphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'
+  const nonAlphaNumerics = '`~!@#$%^&*()+={}[]|\\"\';:><?/'
   // All non alphanumeric characters are invalid.
-  for (const char of alphaNumerics) {
+  for (const char of nonAlphaNumerics) {
     if (host.includes(char)) {
       return false
     }
@@ -470,6 +470,10 @@ export function sanitizeObjectKey(objectName: string): string {
   // + symbol characters are not decoded as spaces in JS. so replace them first and decode to get the correct result.
   const asStrName = (objectName ? objectName.toString() : '').replace(/\+/g, ' ')
   return decodeURIComponent(asStrName)
+}
+
+export function sanitizeSize(size?: string): number | undefined {
+  return size ? Number.parseInt(size) : undefined
 }
 
 export const PART_CONSTRAINTS = {

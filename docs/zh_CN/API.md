@@ -631,12 +631,12 @@ __示例__
 
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
-  if (err) {
-    return console.log('Unable to remove object', err)
-  }
+try {
+  await minioClient.removeObject('mybucket', 'photo.jpg')
   console.log('Removed the object')
-})
+} catch (err) {
+  console.log('Unable to remove object', err)
+}
 ```
 
 <a name="removeIncompleteUpload"></a>

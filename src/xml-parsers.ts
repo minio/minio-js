@@ -20,7 +20,7 @@ import { XMLParser } from 'fast-xml-parser'
 import * as errors from './errors.ts'
 import type { RETENTION_MODES } from './helpers.ts'
 import { SelectResults } from './helpers.ts'
-import { isObject, parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
+import { isObject, parseXml, sanitizeETag, sanitizeObjectKey, sanitizeSize, toArray } from './internal/helper.ts'
 import type { BucketItemCopy, BucketItemFromList, ObjectMetaData, Retention, UploadID } from './internal/type.ts'
 import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 
@@ -70,6 +70,7 @@ export function parseCopyObject(xml: string): BucketItemCopy {
     result.lastModified = new Date(xmlobj.LastModified)
   }
 
+  // @ts-ignore
   return result
 }
 
@@ -103,7 +104,7 @@ export function parseListMultipart(xml: string) {
     result.nextKeyMarker = xmlobj.NextKeyMarker
   }
   if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker || ''
   }
 
   if (xmlobj.CommonPrefixes) {
@@ -336,12 +337,14 @@ const formatObjInfo = (content: ListedObject, opts: { IsDeleteMarker?: boolean }
   // @ts-expect-error index check
   const lastModified = new Date(toArray(LastModified)[0])
   const etag = sanitizeETag(toArray(ETag)[0])
+  // @ts-ignore
+  const size = sanitizeSize(Size)
 
   return {
     name,
     lastModified,
     etag,
-    size: Size,
+    size,
     versionId: VersionId,
     isLatest: IsLatest,
     isDeleteMarker: opts.IsDeleteMarker ? opts.IsDeleteMarker : false,
@@ -433,11 +436,13 @@ export function parseListObjects(xml: string) {
 
     if (listVersionsResult.Version) {
       toArray(listVersionsResult.Version).forEach((content) => {
+        // @ts-ignore
         result.objects.push(formatObjInfo(content))
       })
     }
     if (listVersionsResult.DeleteMarker) {
       toArray(listVersionsResult.DeleteMarker).forEach((content) => {
+        // @ts-ignore
         result.objects.push(formatObjInfo(content, { IsDeleteMarker: true }))
       })
     }

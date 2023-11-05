@@ -17,34 +17,30 @@
 import * as stream from 'node:stream'
 
 import * as errors from '../errors.ts'
-import * as transformers from '../transformers.ts'
-import type { Client } from '../typed-client2.ts'
-import { isBoolean, isNumber, isString, isValidBucketName, isValidPrefix, pipesetup, uriEscape } from './helper.ts'
-
-// TODO
-type S3Object = unknown
+import type { TypedClient } from './client.ts'
+import { isBoolean, isString, isValidBucketName, isValidPrefix, uriEscape } from './helper.ts'
+import { readAsString } from './response.ts'
+import type { BucketItemWithMetadata, BucketStream } from './type.ts'
+import { parseListObjectsV2WithMetadata } from './xml-parser.ts'
 
 export class Extensions {
-  constructor(readonly client: Client) {}
+  constructor(private readonly client: TypedClient) {}
 
-  // List the objects in the bucket using S3 ListObjects V2 With Metadata
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: the prefix of the objects that should be listed (optional, default `''`)
-  // * `recursive` _bool_: `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
-  // * `startAfter` _string_: Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
-  //
-  // __Return Value__
-  // * `stream` _Stream_: stream emitting the objects in the bucket, the object is of the format:
-  //   * `obj.name` _string_: name of the object
-  //   * `obj.prefix` _string_: name of the object prefix
-  //   * `obj.size` _number_: size of the object
-  //   * `obj.etag` _string_: etag of the object
-  //   * `obj.lastModified` _Date_: modified time stamp
-  //   * `obj.metadata` _object_: metadata of the object
-
-  listObjectsV2WithMetadata(bucketName: string, prefix: string, recursive: boolean, startAfter: string) {
+  /**
+   * List the objects in the bucket using S3 ListObjects V2 With Metadata
+   *
+   * @param bucketName - name of the bucket
+   * @param prefix - the prefix of the objects that should be listed (optional, default `''`)
+   * @param recursive - `true` indicates recursive style listing and `false` indicates directory style listing delimited by '/'. (optional, default `false`)
+   * @param startAfter - Specifies the key to start after when listing objects in a bucket. (optional, default `''`)
+   * @returns stream emitting the objects in the bucket, the object is of the format:
+   */
+  public listObjectsV2WithMetadata(
+    bucketName: string,
+    prefix?: string,
+    recursive?: boolean,
+    startAfter?: string,
+  ): BucketStream<BucketItemWithMetadata> {
     if (prefix === undefined) {
       prefix = ''
     }
@@ -69,75 +65,45 @@ export class Extensions {
     if (!isString(startAfter)) {
       throw new TypeError('startAfter should be of type "string"')
     }
+
     // if recursive is false set delimiter to '/'
     const delimiter = recursive ? '' : '/'
-    let continuationToken = ''
-    let objects: S3Object[] = []
-    let ended = false
-    const readStream = new stream.Readable({ objectMode: true })
-    readStream._read = () => {
-      // push one object per _read()
-      if (objects.length) {
-        readStream.push(objects.shift())
-        return
-      }
-      if (ended) {
-        return readStream.push(null)
-      }
-      // if there are no objects to push do query for the next batch of objects
-      this.listObjectsV2WithMetadataQuery(bucketName, prefix, continuationToken, delimiter, 1000, startAfter)
-        .on('error', (e) => readStream.emit('error', e))
-        .on('data', (result) => {
-          if (result.isTruncated) {
-            continuationToken = result.nextContinuationToken
-          } else {
-            ended = true
-          }
-          objects = result.objects
-          // @ts-expect-error read more
-          readStream._read()
-        })
-    }
-    return readStream
+    return stream.Readable.from(this.listObjectsV2WithMetadataGen(bucketName, prefix, delimiter, startAfter), {
+      objectMode: true,
+    })
   }
 
-  // listObjectsV2WithMetadataQuery - (List Objects V2 with metadata) - List some or all (up to 1000) of the objects in a bucket.
-  //
-  // You can use the request parameters as selection criteria to return a subset of the objects in a bucket.
-  // request parameters :-
-  // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: Limits the response to keys that begin with the specified prefix.
-  // * `continuation-token` _string_: Used to continue iterating over a set of objects.
-  // * `delimiter` _string_: A delimiter is a character you use to group keys.
-  // * `max-keys` _number_: Sets the maximum number of keys returned in the response body.
-  // * `start-after` _string_: Specifies the key to start after when listing objects in a bucket.
+  private async *listObjectsV2WithMetadataGen(
+    bucketName: string,
+    prefix: string,
+    delimiter: string,
+    startAfter: string,
+  ): AsyncIterable<BucketItemWithMetadata> {
+    let ended = false
+    let continuationToken = ''
+    do {
+      const result = await this.listObjectsV2WithMetadataQuery(
+        bucketName,
+        prefix,
+        continuationToken,
+        delimiter,
+        startAfter,
+      )
+      ended = !result.isTruncated
+      continuationToken = result.nextContinuationToken
+      for (const obj of result.objects) {
+        yield obj
+      }
+    } while (!ended)
+  }
 
-  private listObjectsV2WithMetadataQuery(
+  private async listObjectsV2WithMetadataQuery(
     bucketName: string,
     prefix: string,
     continuationToken: string,
     delimiter: string,
-    maxKeys: number,
     startAfter: string,
   ) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isString(prefix)) {
-      throw new TypeError('prefix should be of type "string"')
-    }
-    if (!isString(continuationToken)) {
-      throw new TypeError('continuationToken should be of type "string"')
-    }
-    if (!isString(delimiter)) {
-      throw new TypeError('delimiter should be of type "string"')
-    }
-    if (!isNumber(maxKeys)) {
-      throw new TypeError('maxKeys should be of type "number"')
-    }
-    if (!isString(startAfter)) {
-      throw new TypeError('startAfter should be of type "string"')
-    }
     const queries = []
 
     // Call for listing objects v2 API
@@ -157,37 +123,14 @@ export class Extensions {
       startAfter = uriEscape(startAfter)
       queries.push(`start-after=${startAfter}`)
     }
-    // no need to escape maxKeys
-    if (maxKeys) {
-      if (maxKeys >= 1000) {
-        maxKeys = 1000
-      }
-      queries.push(`max-keys=${maxKeys}`)
-    }
+    queries.push(`max-keys=1000`)
     queries.sort()
     let query = ''
     if (queries.length > 0) {
       query = `${queries.join('&')}`
     }
     const method = 'GET'
-    const transformer = transformers.getListObjectsV2WithMetadataTransformer()
-    this.client
-      .makeRequestAsync({
-        method,
-        bucketName,
-        query,
-      })
-      .then(
-        (response) => {
-          if (!response) {
-            throw new Error('BUG: callback missing response argument')
-          }
-          pipesetup(response, transformer)
-        },
-        (e) => {
-          return transformer.emit('error', e)
-        },
-      )
-    return transformer
+    const res = await this.client.makeRequestAsync({ method, bucketName, query })
+    return parseListObjectsV2WithMetadata(await readAsString(res))
   }
 }

@@ -1,6 +1,10 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
 
+export type VersionIdentificator = {
+  versionId?: string
+}
+
 export type Binary = string | Buffer
 
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
@@ -9,6 +13,41 @@ export type ResponseHeader = Record<string, string>
 export type ObjectMetaData = Record<string, string | number>
 
 export type RequestHeaders = Record<string, string | boolean | number | undefined>
+
+export interface LifecycleConfig {
+  Rule: LifecycleRule[]
+}
+
+export interface LifecycleRule {
+  [key: string]: any
+}
+
+export type UploadID = string
+export type NoResultCallback = (error: unknown | null) => void
+export type TagList = Record<string, string>
+export type VersionIdentification = { versionId?: string }
+export type Lifecycle = LifecycleConfig | null | ''
+export type Lock = LockConfig | EmptyObject
+export type Retention = RetentionOptions | EmptyObject
+export type IsoDate = string
+
+export type GetObjectOpt = {
+  versionId?: string
+}
+
+export interface RetentionOptions {
+  versionId: string
+  mode?: RETENTION_MODES
+  retainUntilDate?: IsoDate
+  governanceBypass?: boolean
+}
+
+export interface LockConfig {
+  objectLockEnabled?: 'Enabled'
+  mode: LEGAL_HOLD_STATUS
+  unit: RETENTION_VALIDITY_UNITS
+  validity: number
+}
 
 export type Encryption =
   | {
@@ -19,6 +58,8 @@ export type Encryption =
       SSEAlgorithm?: string
       KMSMasterKeyID?: string
     }
+
+export type EnabledOrDisabledStatus = 'Enabled' | 'Disabled'
 
 export enum ENCRYPTION_TYPES {
   /**
@@ -63,78 +104,10 @@ export interface IRequest {
 
 export type ICanonicalRequest = string
 
-export interface ICredentials {
-  accessKey: string
-  secretKey: string
-  sessionToken?: string
-}
-
-export type UploadID = string
-export type LegalHoldStatus = 'ON' | 'OFF'
-export type NoResultCallback = (error: unknown | null) => void
-export type ResultCallback<T> = (error: unknown | null, result: T) => void
-export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
-export type VersionIdentification = { versionId?: string }
-export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-export type GetObjectOpt = {
-  versionId?: string
-}
-
-export interface BucketItemCopy {
-  etag: string
-  lastModified?: Date
-}
-
-export interface BucketItem {
-  name: string
-  prefix: string
-  size: number
-  etag: string
-  lastModified: Date
-}
-
-export interface BucketItemWithMetadata extends BucketItem {
-  metadata: ItemBucketMetadata | ItemBucketMetadataList
-}
-
-export type StatObjectOpts = {
-  versionId?: string
-}
-
-export interface BucketItemStat {
-  size: number
-  etag: string
-  lastModified: Date
-  metaData: ItemBucketMetadata
-  // version id of the object if available
-  versionId: string | null
-}
-
 export interface IncompleteUploadedBucketItem {
   key: string
   uploadId: string
   size: number
-}
-
-export interface BucketStream<T> extends ReadableStream {
-  on(event: 'data', listener: (item: T) => void): this
-
-  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
-
-  on(event: 'error', listener: (err: Error) => void): this
-
-  on(event: string | symbol, listener: (...args: any[]) => void): this
-}
-
-export interface PostPolicyResult {
-  postURL: string
-  formData: {
-    [key: string]: any
-  }
 }
 
 export interface MetadataItem {
@@ -147,27 +120,78 @@ export interface ItemBucketMetadataList {
 }
 
 export interface ItemBucketMetadata {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
-export interface Tag {
+export interface BucketItemFromList {
+  name: string
+  creationDate: Date
+}
+
+export interface BucketItemCopy {
+  etag: string
+  lastModified: Date
+}
+
+export type BucketItem =
+  | {
+      name: string
+      size: number
+      etag: string
+      prefix?: never
+      lastModified: Date
+    }
+  | {
+      name?: never
+      etag?: never
+      lastModified?: never
+      prefix: string
+      size: 0
+    }
+
+export type BucketItemWithMetadata = BucketItem & {
+  metadata?: ItemBucketMetadata | ItemBucketMetadataList
+}
+
+export interface BucketStream<T> extends ReadableStream {
+  on(event: 'data', listener: (item: T) => void): this
+
+  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
+
+  on(event: 'error', listener: (err: Error) => void): this
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string | symbol, listener: (...args: any[]) => void): this
+}
+
+export interface PostPolicyResult {
+  postURL: string
+  formData: {
+    [key: string]: any
+  }
+}
+
+export interface BucketItemStat {
+  size: number
+  etag: string
+  lastModified: Date
+  metaData: ItemBucketMetadata
+  versionId?: string | null
+}
+
+export type StatObjectOpts = {
+  versionId?: string
+}
+
+/* Replication Config types */
+export type ReplicationRuleStatus = {
+  Status: EnabledOrDisabledStatus
+}
+
+export type Tag = {
   Key: string
   Value: string
-}
-
-export interface LifecycleConfig {
-  Rule: LifecycleRule[]
-}
-
-export interface LifecycleRule {
-  [key: string]: any
-}
-
-export interface LockConfig {
-  objectLockEnabled?: 'Enabled'
-  mode: LEGAL_HOLD_STATUS
-  unit: RETENTION_VALIDITY_UNITS
-  validity: number
 }
 
 export interface EncryptionConfig {
@@ -178,25 +202,36 @@ export interface EncryptionRule {
   [key: string]: any
 }
 
-export interface ReplicationConfig {
-  role: string
-  rules: []
-}
-
-export interface ReplicationConfig {
-  [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
-}
-
 export interface LegalHoldOptions {
   versionId?: string
   status: LEGAL_HOLD_STATUS
+}
+
+export type ReplicationRuleDestination = {
+  Bucket: string
+  StorageClass: string
+}
+export type ReplicationRuleAnd = {
+  Prefix: string
+  Tags: Tag[]
+}
+
+export type ReplicationRuleFilter = {
+  Prefix: string
+  And: ReplicationRuleAnd
+  Tag: Tag
+}
+
+export type ReplicaModifications = {
+  Status: ReplicationRuleStatus
+}
+
+export type SourceSelectionCriteria = {
+  ReplicaModifications: ReplicaModifications
+}
+
+export type ExistingObjectReplication = {
+  Status: ReplicationRuleStatus
 }
 
 export interface InputSerialization {
@@ -236,6 +271,69 @@ export interface SelectOptions {
   outputSerialization: OutputSerialization
   requestProgress?: { Enabled: boolean }
   scanRange?: { Start: number; End: number }
+}
+
+export type ReplicationRule = {
+  ID: string
+  Status: ReplicationRuleStatus
+  Priority: number
+  DeleteMarkerReplication: ReplicationRuleStatus // should be set to "Disabled" by default
+  DeleteReplication: ReplicationRuleStatus
+  Destination: ReplicationRuleDestination
+  Filter: ReplicationRuleFilter
+  SourceSelectionCriteria: SourceSelectionCriteria
+  ExistingObjectReplication: ExistingObjectReplication
+}
+
+export type ReplicationConfigOpts = {
+  role: string
+  rules: ReplicationRule[]
+}
+
+export type ReplicationConfig = {
+  ReplicationConfiguration: ReplicationConfigOpts
+}
+/* Replication Config types */
+
+export type ResultCallback<T> = (error: unknown | null, result: T) => void
+
+export type GetObjectLegalHoldOptions = {
+  versionId: string
+}
+/**
+ * @deprecated keep for backward compatible, use `LEGAL_HOLD_STATUS` instead
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
+
+export type PutObjectLegalHoldOptions = {
+  versionId?: string
+  status: LEGAL_HOLD_STATUS
+}
+
+export type EmptyObject = Record<string, never>
+
+export type ObjectLockInfo =
+  | {
+      objectLockEnabled: EnabledOrDisabledStatus
+      mode: RETENTION_MODES
+      unit: RETENTION_VALIDITY_UNITS
+      validity: number
+    }
+  | EmptyObject
+
+export type ObjectLockConfigParam = {
+  ObjectLockEnabled?: 'Enabled' | undefined
+  Rule?:
+    | {
+        DefaultRetention:
+          | {
+              Mode: RETENTION_MODES
+              Days: number
+              Years: number
+            }
+          | EmptyObject
+      }
+    | EmptyObject
 }
 
 export interface SourceObjectStats {

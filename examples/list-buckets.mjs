@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
-// dummy values, please replace them with original values.
+// Using the top-level await as we use .mjs extension
+// run it like: node list-buckets.mjs
 
-var Minio = require('minio')
+// Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
+// replace them with original values.
+
+import * as Minio from 'minio'
 
 var s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -25,18 +28,9 @@ var s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getObjectTagging('bucketname', 'objectName', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
-
-//Get tags on a version of an object.
-
-s3Client.getObjectTagging('bucketname', 'objectName', { versionId: '' }, function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+try {
+  const buckets = await s3Client.listBuckets()
+  console.log('Success', buckets)
+} catch (err) {
+  console.log(err.message)
+}

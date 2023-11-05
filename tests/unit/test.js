@@ -28,6 +28,7 @@ import {
   makeDateShort,
   partsRequired,
 } from '../../src/internal/helper.ts'
+import { parseListObjects } from '../../src/internal/xml-parsers.ts'
 import * as Minio from '../../src/minio.ts'
 
 const Package = { version: 'development' }
@@ -296,7 +297,7 @@ describe('Client', function () {
         done()
       }
     })
-    it('should fail with alphanumeric', (done) => {
+    it('should fail with non-alphanumeric', (done) => {
       try {
         new Minio.Client({
           endPoint: 'localhost##$@3',
@@ -681,115 +682,114 @@ describe('Client', function () {
 
     describe('#statObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.statObject(null, 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject(null, 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.statObject('', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('', 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.statObject('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('  \n  \t  ', 'hello').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on null object', (done) => {
-        try {
-          client.statObject('hello', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', null).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.statObject('hello', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', '').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
 
       it('should fail on incompatible argument type (number) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', 1, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', 1).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on incompatible argument type (null) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', null).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
-        try {
-          client.statObject('hello', 'testStatOpts', '  ', function () {})
-        } catch (e) {
-          done()
-        }
+        client.statObject('hello', 'testStatOpts', '  ').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
     })
 
     describe('#removeObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.removeObject(null, 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject(null, 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObject('', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('', 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObject('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('  \n  \t  ', 'hello', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on null object', (done) => {
-        try {
-          client.removeObject('hello', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.removeObject('hello', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', '', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       // Versioning related options as removeOpts
       it('should fail on empty (null) removeOpts object', (done) => {
-        try {
-          client.removeObject('hello', 'testRemoveOpts', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', 'testRemoveOpts', null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
 
       it('should fail on empty (string) removeOpts', (done) => {
-        try {
-          client.removeObject('hello', 'testRemoveOpts', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObject('hello', 'testRemoveOpts', '', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
 
@@ -905,26 +905,29 @@ describe('Client', function () {
       })
     })
     describe('Get Bucket Tags', () => {
-      it('should fail on invalid bucket', (done) => {
+      it('should fail on invalid bucket', async () => {
         try {
-          client.getBucketTagging('nv', null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging('nv', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getBucketTagging(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.getBucketTagging('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketTagging('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Bucket Tags', () => {
@@ -960,25 +963,26 @@ describe('Client', function () {
     })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
-        try {
-          client.getObjectTagging('nv', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObjectTagging('nv', null).then(
+          () => done(new Error('callback should receive error')),
+          (err) => done(),
+        )
       })
-      it('should fail on null object', (done) => {
+      it('should fail on null object', async () => {
         try {
-          client.getObjectTagging('my-bucket-name', null, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
+      it('should fail on empty object', async () => {
         try {
-          client.getObjectTagging('my-bucket-name', null, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectTagging('my-bucket-name', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('Remove Object Tags', () => {
@@ -1070,71 +1074,81 @@ describe('Client', function () {
   describe('Object Locking APIs', () => {
     describe('getObjectLockConfig(bucket, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.getObjectLockConfig(null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getObjectLockConfig(null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.getObjectLockConfig('', function () {})
-        } catch (e) {
-          done()
-        }
+      it('should fail on null bucket', (done) => {
+        client.getObjectLockConfig('', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
 
     describe('setObjectLockConfig(bucket, lockConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.setObjectLockConfig(null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setObjectLockConfig(null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.setObjectLockConfig('', function () {})
-        } catch (e) {
-          done()
-        }
+      it('should fail on null bucket', (done) => {
+        client.setObjectLockConfig('', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on passing invalid mode ', (done) => {
-        try {
-          client.setObjectLockConfig('my-bucket', { mode: 'invalid_mode' }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setObjectLockConfig('my-bucket', { mode: 'invalid_mode' }, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
       it('should fail on passing invalid unit ', (done) => {
-        try {
-          client.setObjectLockConfig('my-bucket', { mode: 'COMPLIANCE', unit: 'invalid_unit' }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setObjectLockConfig('my-bucket', { mode: 'COMPLIANCE', unit: 'invalid_unit' }, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
+
       it('should fail on passing invalid validity ', (done) => {
-        try {
-          client.setObjectLockConfig(
-            'my-bucket',
-            { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
-            function () {},
-          )
-        } catch (e) {
-          done()
-        }
+        client.setObjectLockConfig(
+          'my-bucket',
+          { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
+          function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          },
+        )
       })
+
       it('should fail on passing  invalid config ', (done) => {
-        try {
-          client.setObjectLockConfig(
-            'my-bucket',
-            { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
-            function () {},
-          )
-        } catch (e) {
-          done()
-        }
+        client.setObjectLockConfig(
+          'my-bucket',
+          { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
+          function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          },
+        )
       })
     })
   })
@@ -1313,14 +1327,24 @@ describe('Client', function () {
     describe('setBucketReplication(bucketName, replicationConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setBucketReplication(null, {}, function () {})
+          client.setBucketReplication(null, {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketReplication('', {}, function () {})
+          client.setBucketReplication('', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1328,7 +1352,12 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig', (done) => {
         try {
-          client.setBucketReplication('my-bucket', {}, function () {})
+          client.setBucketReplication('my-bucket', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1336,7 +1365,12 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: '' }, function () {})
+          client.setBucketReplication('my-bucket', { role: '' }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1344,7 +1378,12 @@ describe('Client', function () {
 
       it('should fail on  invalid value for replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 12 }, function () {})
+          client.setBucketReplication('my-bucket', { role: 12 }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1352,14 +1391,24 @@ describe('Client', function () {
 
       it('should fail on  empty value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on  null value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function () {})
+          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1369,14 +1418,24 @@ describe('Client', function () {
     describe('getBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getBucketReplication(null, {}, function () {})
+          client.getBucketReplication(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketReplication('', {}, function () {})
+          client.getBucketReplication('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1386,14 +1445,24 @@ describe('Client', function () {
     describe('removeBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.removeBucketReplication(null, {}, function () {})
+          client.removeBucketReplication(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketReplication('', {}, function () {})
+          client.removeBucketReplication('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1402,17 +1471,28 @@ describe('Client', function () {
   })
 
   describe('Object Legal Hold APIs', () => {
-    describe('getObjectLegalHold(bucketName, objectName, getOpts={}, cb)', () => {
+    describe('getObjectLegalHold(bucketName, objectName, getOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getObjectLegalHold(null, function () {})
+          client.getObjectLegalHold(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
+
       it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectLegalHold('', function () {})
+          client.getObjectLegalHold('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -1420,53 +1500,89 @@ describe('Client', function () {
 
       it('should fail on null objectName', (done) => {
         try {
-          client.getObjectLegalHold('my-bucket', null, function () {})
+          client.getObjectLegalHold('my-bucket', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
-      it('should fail on null getOpts', (done) => {
+      it('should fail on invalid version id in getOpts', (done) => {
         try {
-          client.getObjectLegalHold('my-bucker', 'my-object', null, function () {})
+          client.getObjectLegalHold('my-bucket', 'my-object', { versionId: 123 }, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
     })
 
-    describe('setObjectLegalHold(bucketName, objectName, setOpts={}, cb)', () => {
+    describe('setObjectLegalHold(bucketName, objectName, setOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setObjectLegalHold(null, function () {})
+          client.setObjectLegalHold(null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setObjectLegalHold('', function () {})
+          client.setObjectLegalHold('', function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
 
-      it('should fail on null objectName', (done) => {
+      it('should fail on null object', (done) => {
         try {
-          client.setObjectLegalHold('my-bucket', null, function () {})
+          client.setObjectLegalHold('my-bucket', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
       it('should fail on null setOpts', (done) => {
         try {
-          client.setObjectLegalHold('my-bucker', 'my-object', null, function () {})
+          client.setObjectLegalHold('my-bucket', 'my-object', null, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
       })
-      it('should fail on empty versionId', (done) => {
+
+      it('should fail on empty version', (done) => {
         try {
-          client.setObjectLegalHold('my-bucker', 'my-object', {}, function () {})
+          client.setObjectLegalHold('my-bucket', 'my-object', {}, function (err) {
+            if (err) {
+              return done()
+            }
+            done(new Error('callback should receive error'))
+          })
         } catch (e) {
           done()
         }
@@ -2066,6 +2182,59 @@ describe('IP Address Validations', () => {
     validIpv6.map((ip) => {
       const valid = isValidIP(ip)
       assert.equal(valid, true)
+    })
+  })
+})
+
+describe('xml-parser', () => {
+  describe('#listObjects()', () => {
+    describe('value type casting', () => {
+      const xml = `
+          <?xml version="1.0" encoding="UTF-8"?>
+          <ListVersionsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+            <Name>some-bucket</Name>
+            <Prefix>42</Prefix>
+            <Delimiter>/</Delimiter>
+            <IsTruncated>false</IsTruncated>
+            <EncodingType>url</EncodingType>
+            <KeyMarker/>
+            <VersionIdMarker/>
+            <Version>
+              <IsLatest>true</IsLatest>
+              <VersionId>1234</VersionId>
+              <ETag>"767dedcb515a0e2d995ed95191b75484-29"</ETag>
+              <Key>1337</Key>
+              <LastModified>2023-07-12T14:41:46.000Z</LastModified>
+              <Size>151306240</Size>
+            </Version>
+            <DeleteMarker>
+              <IsLatest>false</IsLatest>
+              <Key>1337</Key>
+              <LastModified>2023-07-12T14:39:22.000Z</LastModified>
+              <VersionId>5678</VersionId>
+            </DeleteMarker>
+            <CommonPrefixes>
+              <Prefix>42</Prefix>
+            </CommonPrefixes>
+          </ListVersionsResult>
+        `
+
+      it('should parse VersionId as string even if number is provided', () => {
+        const { objects } = parseListObjects(xml)
+
+        assert.equal(objects[0].versionId, '1234')
+        assert.equal(objects[1].versionId, '5678')
+        assert.equal(objects[0].name, '1337')
+        assert.equal(objects[1].name, '1337')
+        assert.deepEqual(objects[2], { prefix: '42', size: 0 })
+      })
+
+      it('should parse Size as number', () => {
+        const { objects } = parseListObjects(xml)
+
+        assert.equal(objects[0].size, 151306240)
+        assert.equal(objects[1].size, undefined)
+      })
     })
   })
 })
