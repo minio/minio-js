@@ -11,7 +11,7 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
-import type { ClientOptions, MakeBucketOpt, NoResultCallback, RemoveOptions } from './internal/client.ts'
+import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
@@ -51,6 +51,7 @@ import type {
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
+export type { MakeBucketOpt } from './internal/client.ts'
 export type {
   BucketItem,
   BucketItemCopy,
@@ -66,7 +67,6 @@ export type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  MakeBucketOpt,
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
@@ -116,10 +116,15 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Encryption = EncryptionConfig | EmptyObject
+
 export interface PostPolicyResult {
   postURL: string
   formData: {
