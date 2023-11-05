@@ -10,7 +10,7 @@ import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
-import { DEFAULT_REGION, LEGAL_HOLD_STATUS } from '../helpers.ts'
+import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { Extensions } from './extensions.ts'
 import {
@@ -47,12 +47,15 @@ import type {
   GetObjectLegalHoldOptions,
   IRequest,
   LegalHoldStatus,
+  ObjectLockConfigParam,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   ReplicationConfig,
   ReplicationConfigOpts,
   RequestHeaders,
   ResponseHeader,
   ResultCallback,
+  Retention,
   StatObjectOpts,
   Tag,
   Transport,
@@ -1252,5 +1255,139 @@ export class TypedClient {
     const response = await this.makeRequestAsync(requestOptions)
     const body = await readAsString(response)
     return xmlParsers.parseTagging(body)
+  }
+
+  async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(retentionOpts)) {
+      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
+    } else {
+      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
+        throw new errors.InvalidArgumentError(`Invalid value for governanceBypass: ${retentionOpts.governanceBypass}`)
+      }
+      if (
+        retentionOpts.mode &&
+        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
+      ) {
+        throw new errors.InvalidArgumentError(`Invalid object retention mode: ${retentionOpts.mode}`)
+      }
+      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
+        throw new errors.InvalidArgumentError(`Invalid value for retainUntilDate: ${retentionOpts.retainUntilDate}`)
+      }
+      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
+        throw new errors.InvalidArgumentError(`Invalid value for versionId: ${retentionOpts.versionId}`)
+      }
+    }
+
+    const method = 'PUT'
+    let query = 'retention'
+
+    const headers: RequestHeaders = {}
+    if (retentionOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
+    }
+
+    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
+    const params: Record<string, string> = {}
+
+    if (retentionOpts.mode) {
+      params.Mode = retentionOpts.mode
+    }
+    if (retentionOpts.retainUntilDate) {
+      params.RetainUntilDate = retentionOpts.retainUntilDate
+    }
+    if (retentionOpts.versionId) {
+      query += `&versionId=${retentionOpts.versionId}`
+    }
+
+    const payload = builder.buildObject(params)
+
+    headers['Content-MD5'] = toMd5(payload)
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
+  }
+  getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
+  getObjectLockConfig(bucketName: string): void
+  async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>
+  async getObjectLockConfig(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'object-lock'
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, query })
+    const xmlResult = await readAsString(httpRes)
+    return xmlParsers.parseObjectLockConfig(xmlResult)
+  }
+
+  setObjectLockConfig(bucketName: string, lockConfigOpts: Omit<ObjectLockInfo, 'objectLockEnabled'>): void
+  async setObjectLockConfig(
+    bucketName: string,
+    lockConfigOpts: Omit<ObjectLockInfo, 'objectLockEnabled'>,
+  ): Promise<void>
+  async setObjectLockConfig(bucketName: string, lockConfigOpts: Omit<ObjectLockInfo, 'objectLockEnabled'>) {
+    const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
+    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
+
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+
+    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
+      throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
+    }
+    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
+      throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
+    }
+    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)) {
+      throw new TypeError(`lockConfigOpts.validity should be a number`)
+    }
+
+    const method = 'PUT'
+    const query = 'object-lock'
+
+    const config: ObjectLockConfigParam = {
+      ObjectLockEnabled: 'Enabled',
+    }
+    const configKeys = Object.keys(lockConfigOpts)
+
+    const isAllKeysSet = ['unit', 'mode', 'validity'].every((lck) => configKeys.includes(lck))
+    // Check if keys are present and all keys are present.
+    if (configKeys.length > 0) {
+      if (!isAllKeysSet) {
+        throw new TypeError(
+          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`,
+        )
+      } else {
+        config.Rule = {
+          DefaultRetention: {},
+        }
+        if (lockConfigOpts.mode) {
+          config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
+        }
+        if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
+          config.Rule.DefaultRetention.Days = lockConfigOpts.validity
+        } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
+          config.Rule.DefaultRetention.Years = lockConfigOpts.validity
+        }
+      }
+    }
+
+    const builder = new xml2js.Builder({
+      rootName: 'ObjectLockConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(config)
+
+    const headers: RequestHeaders = {}
+    headers['Content-MD5'] = toMd5(payload)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 }

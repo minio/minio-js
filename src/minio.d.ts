@@ -22,13 +22,15 @@ import type {
   BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
+  EmptyObject,
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MetadataItem,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -39,6 +41,8 @@ import type {
   ReplicationRuleFilter,
   ReplicationRuleStatus,
   ResultCallback,
+  Retention,
+  RetentionOptions,
   SourceSelectionCriteria,
   Tag,
   VersionIdentificator,
@@ -55,15 +59,17 @@ export type {
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
+  EmptyObject,
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
-  LegalHoldStatus,
   MakeBucketOpt,
   MetadataItem,
   NoResultCallback,
+  ObjectLockInfo,
   PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
@@ -74,9 +80,10 @@ export type {
   ReplicationRuleDestination,
   ReplicationRuleFilter,
   ReplicationRuleStatus,
+  Retention,
+  RetentionOptions,
   SourceSelectionCriteria,
   Tag,
-  VersionIdentificator,
 }
 
 // Exports only from typings
@@ -111,13 +118,8 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
 export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -150,13 +152,6 @@ export interface EncryptionConfig {
 
 export interface EncryptionRule {
   [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
@@ -258,13 +253,6 @@ export class Client extends TypedClient {
   removeBucketLifecycle(bucketName: string, callback: NoResultCallback): void
   removeBucketLifecycle(bucketName: string): Promise<void>
 
-  setObjectLockConfig(bucketName: string, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig: Lock, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig?: Lock): Promise<void>
-
-  getObjectLockConfig(bucketName: string, callback: ResultCallback<Lock>): void
-  getObjectLockConfig(bucketName: string): Promise<Lock>
-
   getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
   getBucketEncryption(bucketName: string): Promise<Encryption>
 
@@ -364,15 +352,6 @@ export class Client extends TypedClient {
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-
-  putObjectRetention(bucketName: string, objectName: string, callback: NoResultCallback): void
-  putObjectRetention(
-    bucketName: string,
-    objectName: string,
-    retentionOptions: Retention,
-    callback: NoResultCallback,
-  ): void
-  putObjectRetention(bucketName: string, objectName: string, retentionOptions?: Retention): Promise<void>
 
   getObjectRetention(
     bucketName: string,

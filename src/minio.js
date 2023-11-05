@@ -60,7 +60,6 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import { RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './internal/type.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
@@ -1810,149 +1809,6 @@ export class Client extends TypedClient {
     })
   }
 
-  setObjectLockConfig(bucketName, lockConfigOpts = {}, cb) {
-    const retentionModes = [RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE]
-    const validUnits = [RETENTION_VALIDITY_UNITS.DAYS, RETENTION_VALIDITY_UNITS.YEARS]
-
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-
-    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
-      throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
-    }
-    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
-      throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
-    }
-    if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)) {
-      throw new TypeError(`lockConfigOpts.validity should be a number`)
-    }
-
-    const method = 'PUT'
-    const query = 'object-lock'
-
-    let config = {
-      ObjectLockEnabled: 'Enabled',
-    }
-    const configKeys = Object.keys(lockConfigOpts)
-    // Check if keys are present and all keys are present.
-    if (configKeys.length > 0) {
-      if (_.difference(configKeys, ['unit', 'mode', 'validity']).length !== 0) {
-        throw new TypeError(
-          `lockConfigOpts.mode,lockConfigOpts.unit,lockConfigOpts.validity all the properties should be specified.`,
-        )
-      } else {
-        config.Rule = {
-          DefaultRetention: {},
-        }
-        if (lockConfigOpts.mode) {
-          config.Rule.DefaultRetention.Mode = lockConfigOpts.mode
-        }
-        if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.DAYS) {
-          config.Rule.DefaultRetention.Days = lockConfigOpts.validity
-        } else if (lockConfigOpts.unit === RETENTION_VALIDITY_UNITS.YEARS) {
-          config.Rule.DefaultRetention.Years = lockConfigOpts.validity
-        }
-      }
-    }
-
-    const builder = new xml2js.Builder({
-      rootName: 'ObjectLockConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(config)
-
-    const headers = {}
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
-  }
-
-  getObjectLockConfig(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    const query = 'object-lock'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let objectLockConfig = Buffer.from('')
-      pipesetup(response, transformers.objectLockTransformer())
-        .on('data', (data) => {
-          objectLockConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, objectLockConfig)
-        })
-    })
-  }
-
-  putObjectRetention(bucketName, objectName, retentionOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(retentionOpts)) {
-      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
-    } else {
-      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
-        throw new errors.InvalidArgumentError('Invalid value for governanceBypass', retentionOpts.governanceBypass)
-      }
-      if (
-        retentionOpts.mode &&
-        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
-      ) {
-        throw new errors.InvalidArgumentError('Invalid object retention mode ', retentionOpts.mode)
-      }
-      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
-        throw new errors.InvalidArgumentError('Invalid value for retainUntilDate', retentionOpts.retainUntilDate)
-      }
-      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
-        throw new errors.InvalidArgumentError('Invalid value for versionId', retentionOpts.versionId)
-      }
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const method = 'PUT'
-    let query = 'retention'
-
-    const headers = {}
-    if (retentionOpts.governanceBypass) {
-      headers['X-Amz-Bypass-Governance-Retention'] = true
-    }
-
-    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
-    const params = {}
-
-    if (retentionOpts.mode) {
-      params.Mode = retentionOpts.mode
-    }
-    if (retentionOpts.retainUntilDate) {
-      params.RetainUntilDate = retentionOpts.retainUntilDate
-    }
-    if (retentionOpts.versionId) {
-      query += `&versionId=${retentionOpts.versionId}`
-    }
-
-    let payload = builder.buildObject(params)
-
-    headers['Content-MD5'] = toMd5(payload)
-    this.makeRequest({ method, bucketName, objectName, query, headers }, payload, [200, 204], '', false, cb)
-  }
-
   getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2407,9 +2263,6 @@ Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTa
 Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
 Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
 Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
-Client.prototype.setObjectLockConfig = promisify(Client.prototype.setObjectLockConfig)
-Client.prototype.getObjectLockConfig = promisify(Client.prototype.getObjectLockConfig)
-Client.prototype.putObjectRetention = promisify(Client.prototype.putObjectRetention)
 Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
 Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
@@ -2431,3 +2284,6 @@ Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLega
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
 Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
 Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
+Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
+Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
+Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)
