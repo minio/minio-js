@@ -798,8 +798,9 @@ export class TypedClient {
 
   /**
    * Creates the bucket `bucketName`.
-   *  */
-  async makeBucket(bucketName: string, region?: Region, makeOpts: MakeBucketOpt = {}): Promise<void> {
+   *
+   */
+  async makeBucket(bucketName: string, region: Region = '', makeOpts: MakeBucketOpt = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -828,17 +829,11 @@ export class TypedClient {
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
-      const createBucketConfiguration: Array<any> = []
-      createBucketConfiguration.push({
-        _attr: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
-        },
-      })
-      createBucketConfiguration.push({
-        LocationConstraint: region,
-      })
       const payloadObject = {
-        CreateBucketConfiguration: createBucketConfiguration,
+        CreateBucketConfiguration: [
+          { _attr: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' } },
+          { LocationConstraint: region },
+        ],
       }
       payload = Xml(payloadObject)
     }
@@ -1310,6 +1305,7 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
   }
+
   getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
   getObjectLockConfig(bucketName: string): void
   async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>
