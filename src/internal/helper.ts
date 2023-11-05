@@ -281,7 +281,7 @@ export function isEmptyObject(o: Record<string, unknown>): boolean {
   return Object.values(o).filter((x) => x !== undefined).length !== 0
 }
 
-export function isDefined<T>(o: T): o is NonNullable<T> {
+export function isDefined<T>(o: T): o is Exclude<T, null | undefined> {
   return o !== null && o !== undefined
 }
 
