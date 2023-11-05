@@ -28,6 +28,7 @@ import type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   ObjectLockInfo,
   PutObjectLegalHoldOptions,
@@ -62,6 +63,7 @@ export type {
   IncompleteUploadedBucketItem,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
@@ -89,10 +91,6 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
-/**
- * @deprecated keep for backward compatible
- */
-export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type EmptyObject = Record<string, never>
