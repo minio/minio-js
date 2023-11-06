@@ -23,9 +23,11 @@ import type {
   BucketItemStat,
   BucketItemWithMetadata,
   BucketStream,
+  EmptyObject,
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
@@ -40,8 +42,11 @@ import type {
   ReplicationRuleFilter,
   ReplicationRuleStatus,
   ResultCallback,
+  Retention,
+  RetentionOptions,
   SourceSelectionCriteria,
   Tag,
+  VersionIdentificator,
 } from './internal/type.ts'
 
 export * from './helpers.ts'
@@ -55,9 +60,11 @@ export type {
   BucketItemWithMetadata,
   BucketStream,
   ClientOptions,
+  EmptyObject,
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   MetadataItem,
@@ -73,6 +80,8 @@ export type {
   ReplicationRuleDestination,
   ReplicationRuleFilter,
   ReplicationRuleStatus,
+  Retention,
+  RetentionOptions,
   SourceSelectionCriteria,
   Tag,
 }
@@ -113,13 +122,8 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
-export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Encryption = EncryptionConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -152,13 +156,6 @@ export interface EncryptionConfig {
 
 export interface EncryptionRule {
   [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
@@ -369,15 +366,6 @@ export class Client extends TypedClient {
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-
-  putObjectRetention(bucketName: string, objectName: string, callback: NoResultCallback): void
-  putObjectRetention(
-    bucketName: string,
-    objectName: string,
-    retentionOptions: Retention,
-    callback: NoResultCallback,
-  ): void
-  putObjectRetention(bucketName: string, objectName: string, retentionOptions?: Retention): Promise<void>
 
   getObjectRetention(
     bucketName: string,
