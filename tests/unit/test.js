@@ -1187,61 +1187,77 @@ describe('Client', function () {
 
     describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.putObjectRetention(null, '', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention(null, '', {}, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.putObjectRetention('', '', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('', '', {}, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
 
       it('should fail on null object', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', null, {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', null, {}, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on empty object', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', '', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', '', {}, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on passing invalid mode ', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' }, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on passing invalid governanceBypass ', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' }, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on passing invalid (null) retainUntilDate ', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 }, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
       it('should fail on passing invalid versionId ', (done) => {
-        try {
-          client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' }, function () {})
-        } catch (e) {
-          done()
-        }
+        client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' }, function (err) {
+          if (err) {
+            done()
+          } else {
+            done(new Error('expecting error'))
+          }
+        })
       })
     })
   })
