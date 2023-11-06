@@ -1403,18 +1403,17 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function (err) {
 
 <a name="putObjectRetention"></a>
 
-### putObjectRetention(bucketName, objectName [, retentionOpts] [, callback])
+### async putObjectRetention(bucketName, objectName [, retentionOpts])
 
 Apply retention on an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                               |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                       |
-| `objectName`    | _string_   | Name of the object.                                                                                                                                                       |
-| `retentionOpts` | _object_   | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }` Default is `{}` (Optional) |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                    |
+| Param           | Type     | Description                                                                                                                                                               |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`    | _string_ | Name of the bucket.                                                                                                                                                       |
+| `objectName`    | _string_ | Name of the object.                                                                                                                                                       |
+| `retentionOpts` | _object_ | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }` Default is `{}` (Optional) |
 
 **Example**
 Apply object retention on an object
@@ -1428,17 +1427,11 @@ expirationDate.setDate(expirationDate.getDate() + 1)
 expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
 const versionId = 'e67b4b08-144d-4fc4-ba15-43c3f7f9ba74'
 
-const objRetPromise = minioClient.putObjectRetention(
-  bucketName,
-  objectName,
-  { Mode: 'GOVERNANCE', retainUntilDate: retainUntilDate.toISOString(), versionId: versionId },
-  function (err) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success')
-  },
-)
+await minioClient.putObjectRetention(bucketName, objectName, {
+  Mode: 'GOVERNANCE',
+  retainUntilDate: retainUntilDate.toISOString(),
+  versionId: versionId,
+})
 ```
 
 <a name="getObjectRetention"></a>
