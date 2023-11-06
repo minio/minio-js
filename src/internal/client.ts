@@ -1306,7 +1306,6 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
   }
-
   getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
   getObjectLockConfig(bucketName: string): void
   async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>
