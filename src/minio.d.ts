@@ -124,7 +124,6 @@ export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type Lifecycle = LifecycleConfig | null | ''
 export type Encryption = EncryptionConfig | EmptyObject
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
