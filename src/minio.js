@@ -23,7 +23,6 @@ import BlockStream2 from 'block-stream2'
 import _ from 'lodash'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
-import Xml from 'xml'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
@@ -1318,23 +1317,20 @@ export class Client extends TypedClient {
     var method = 'POST'
     var query = `uploadId=${uriEscape(uploadId)}`
 
-    var parts = []
-
-    etags.forEach((element) => {
-      parts.push({
-        Part: [
-          {
-            PartNumber: element.part,
-          },
-          {
-            ETag: element.etag,
-          },
-        ],
-      })
+    const builder = new xml2js.Builder()
+    const payload = builder.buildObject({
+      CompleteMultipartUpload: {
+        $: {
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+        },
+        Part: etags.map((etag) => {
+          return {
+            PartNumber: etag.part,
+            ETag: etag.etag,
+          }
+        }),
+      },
     })
-
-    var payloadObject = { CompleteMultipartUpload: parts }
-    var payload = Xml(payloadObject)
 
     this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
       if (e) {
