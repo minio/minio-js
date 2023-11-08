@@ -830,13 +830,12 @@ export class TypedClient {
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
-      const payloadObject = {
+      payload = xml.buildObject({
         CreateBucketConfiguration: {
           $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
           LocationConstraint: region,
         },
-      }
-      payload = xml.buildObject(payloadObject)
+      })
     }
     const method = 'PUT'
     const headers: RequestHeaders = {}
