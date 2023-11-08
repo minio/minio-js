@@ -23,7 +23,6 @@ import BlockStream2 from 'block-stream2'
 import _ from 'lodash'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
-import Xml from 'xml'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
@@ -169,19 +168,13 @@ export class Client extends TypedClient {
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
-      var createBucketConfiguration = []
-      createBucketConfiguration.push({
-        _attr: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+      const builder = new xml2js.Builder()
+      payload = builder.buildObject({
+        CreateBucketConfiguration: {
+          $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
+          LocationConstraint: region,
         },
       })
-      createBucketConfiguration.push({
-        LocationConstraint: region,
-      })
-      var payloadObject = {
-        CreateBucketConfiguration: createBucketConfiguration,
-      }
-      payload = Xml(payloadObject)
     }
     var method = 'PUT'
     var headers = {}
