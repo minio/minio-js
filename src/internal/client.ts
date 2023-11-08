@@ -1006,8 +1006,7 @@ export class TypedClient {
     queries.push(`delimiter=${uriEscape(delimiter)}`)
 
     if (keyMarker) {
-      keyMarker = uriEscape(keyMarker)
-      queries.push(`key-marker=${keyMarker}`)
+      queries.push(`key-marker=${uriEscape(keyMarker)}`)
     }
     if (uploadIdMarker) {
       queries.push(`upload-id-marker=${uploadIdMarker}`)
