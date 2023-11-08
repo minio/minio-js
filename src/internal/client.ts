@@ -848,10 +848,6 @@ export class TypedClient {
     if (!region) {
       region = DEFAULT_REGION
     }
-
-    if (!region) {
-      region = DEFAULT_REGION
-    }
     const finalRegion = region // type narrow
     const requestOpt: RequestOption = { method, bucketName, headers }
 
