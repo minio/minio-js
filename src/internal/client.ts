@@ -45,7 +45,6 @@ import type {
   BucketItemStat,
   GetObjectLegalHoldOptions,
   IRequest,
-  LegalHoldStatus,
   ObjectLockConfigParam,
   ObjectLockInfo,
   PutObjectLegalHoldOptions,
@@ -1122,13 +1121,13 @@ export class TypedClient {
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-    callback?: ResultCallback<LegalHoldStatus>,
-  ): Promise<LegalHoldStatus>
+    callback?: ResultCallback<LEGAL_HOLD_STATUS>,
+  ): Promise<LEGAL_HOLD_STATUS>
   async getObjectLegalHold(
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-  ): Promise<LegalHoldStatus> {
+  ): Promise<LEGAL_HOLD_STATUS> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
