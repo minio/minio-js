@@ -17,10 +17,10 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
-var Fs = require('fs')
+import * as Minio from 'minio'
+import * as Fs from 'fs'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',

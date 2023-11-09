@@ -16,14 +16,14 @@
 
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
-const os = require('os')
-const splitFile = require('split-file')
-const fs = require('fs')
+import os from 'os'
+import fs from 'fs'
 
-var Minio = require('minio')
-var Helpers = require('minio/dist/main/helpers')
+import splitFile from 'split-file'
 
-var s3Client = new Minio.Client({
+import * as Minio from 'minio'
+
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -71,13 +71,13 @@ function sampleRunComposeObject() {
           .then(() => {
             console.log('Uploaded part Files: ', names)
             const sourcePartObjList = partObjNameList.map((partObjName) => {
-              return new Helpers.CopySourceOptions({
+              return new Minio.CopySourceOptions({
                 Bucket: bucketName,
                 Object: partObjName,
               })
             })
 
-            const destObjConfig = new Helpers.CopyDestinationOptions({
+            const destObjConfig = new Minio.CopyDestinationOptions({
               Bucket: bucketName,
               Object: composedObjName,
             })

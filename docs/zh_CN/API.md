@@ -5,7 +5,7 @@
 ## MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
     endPoint: 'play.min.io',
@@ -19,9 +19,9 @@ var minioClient = new Minio.Client({
 ## AWS S3 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
@@ -72,7 +72,7 @@ __示例__
 ## 创建连接Minio Server的客户端
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
     endPoint: 'play.min.io',
@@ -87,9 +87,9 @@ var minioClient = new Minio.Client({
 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
@@ -99,9 +99,9 @@ var s3Client = new Minio.Client({
 ## Ali OSS 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  'oss-cn-hangzhou.aliyuncs.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY',
@@ -483,7 +483,7 @@ __示例__
 单个对象的最大大小限制在5TB。putObject在对象大于5MiB时，自动使用multiple parts方式上传。这样的话，当上传失败的时候，客户端只需要上传未成功的部分即可（类似断点上传）。上传的对象使用MD5SUM签名进行完整性验证。
 
 ```js
-var Fs = require('fs')
+import * as Fs from 'fs'
 var file = '/tmp/40mbfile'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function(err, stats) {

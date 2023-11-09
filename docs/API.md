@@ -5,7 +5,7 @@
 ## MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
   endPoint: 'play.min.io',
@@ -19,9 +19,9 @@ var minioClient = new Minio.Client({
 ## AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -86,7 +86,7 @@ var s3Client = new Minio.Client({
 ## Create client for MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
   endPoint: 'play.min.io',
@@ -100,9 +100,9 @@ var minioClient = new Minio.Client({
 ## Create client for AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -112,9 +112,9 @@ var s3Client = new Minio.Client({
 ## Create client with temporary credentials
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-TEMP-ACCESSKEYID',
   secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
@@ -125,11 +125,11 @@ var s3Client = new Minio.Client({
 ## Create client with custom HTTPS Agent
 
 ```js
-var Minio = require('minio')
-var fs = require('fs')
-var https = require('https')
+import * as Minio from 'minio'
+import * as fs from 'fs'
+import * as https from 'https'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -1111,7 +1111,7 @@ Uploads an object from a stream/Buffer.
 The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-var Fs = require('fs')
+import * as Fs from 'fs'
 var file = '/tmp/40mbfile'
 var fileStream = Fs.createReadStream(file)
 var fileStat = Fs.stat(file, function (err, stats) {
@@ -1649,26 +1649,28 @@ Compose an object from parts
 Compose an Object from its parts .
 
 ```js
+import * as minio from 'minio'
+
 const sourceList = [
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'parta',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partb',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partc',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partd',
   }),
 ]
 
-const destOption = new Helpers.CopyDestinationOptions({
+const destOption = new minio.CopyDestinationOptions({
   Bucket: 'dest-bucket',
   Object: '100MB.zip',
 })

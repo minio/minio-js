@@ -41,7 +41,7 @@ You need five items in order to connect to MinIO object storage server.
 | useSSL    | Set this value to 'true' to enable secure (HTTPS) access                                            |
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
   endPoint: 'play.min.io',
@@ -61,7 +61,7 @@ We will use the MinIO server running at [https://play.min.io](https://play.min.i
 #### file-uploader.js
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.

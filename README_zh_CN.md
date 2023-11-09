@@ -35,7 +35,7 @@ npm install -g
 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 var minioClient = new Minio.Client({
     endPoint: 'play.min.io',
@@ -55,7 +55,7 @@ var minioClient = new Minio.Client({
 #### file-uploader.js
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.

@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
 // replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   port: 9000,
   useSSL: false,
