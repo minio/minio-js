@@ -26,7 +26,7 @@ const s3Client = new Minio.Client({
 })
 
 // Bucket policy - GET requests on "testbucket" bucket will not need authentication.
-var policy = `
+const policy = `
 {
   "Version": "2012-10-17",
   "Statement": [

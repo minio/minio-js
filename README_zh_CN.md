@@ -37,7 +37,7 @@ npm install -g
 ```js
 import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -59,7 +59,7 @@ import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -76,7 +76,7 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
 
     console.log('Bucket created successfully in "us-east-1".')
 
-    var metaData = {
+    const metaData = {
         'Content-Type': 'application/octet-stream',
         'X-Amz-Meta-Testing': 1234,
         'example': 5678

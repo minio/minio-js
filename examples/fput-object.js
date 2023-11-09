@@ -25,14 +25,14 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-var metaData = {
+const metaData = {
   'Content-Type': 'application/octet-stream',
   'X-Amz-Meta-Testing': 1234,
   example: 5678,
 }
 
 // Put a file in bucket my-bucketname.
-var file = 'my-testfile'
+const file = 'my-testfile'
 s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function (e) {
   if (e) {
     return console.log(e)
@@ -42,7 +42,7 @@ s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function (
 
 // Put a file in bucket my-bucketname with content-type detected automatically.
 // In this case it is `text/plain`.
-var file = 'my-testfile.txt'
+const file = 'my-testfile.txt'
 s3Client.fPutObject('my-bucketname', 'my-objectname', file, function (e) {
   if (e) {
     return console.log(e)

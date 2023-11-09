@@ -27,9 +27,9 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-var config = new Minio.NotificationConfig()
-var arn = Minio.buildARN('minio', 'sqs', '', '1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const config = new Minio.NotificationConfig()
+const arn = Minio.buildARN('minio', 'sqs', '', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')

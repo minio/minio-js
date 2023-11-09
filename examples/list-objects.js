@@ -46,7 +46,7 @@ objectsStreamWithVersions.on('error', function (e) {
 //Non versioned bucket with Prefix listing.
 function listPrefixesOfABucket(buckName) {
   var objectsStream = s3Client.listObjects(buckName, '', false, {})
-  var counter = 0
+  let counter = 0
   objectsStream.on('data', function (obj) {
     if (obj.prefix) {
       counter += 1

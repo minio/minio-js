@@ -7,7 +7,7 @@
 ```js
 import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
   	useSSL: true,
@@ -16,7 +16,7 @@ var minioClient = new Minio.Client({
 });
 ```
 
-## AWS S3 
+## AWS S3
 
 ```js
 import * as Minio from 'minio'
@@ -33,13 +33,13 @@ const s3Client = new Minio.Client({
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | 
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-  
+
 
 
 ## 1.  构造函数
@@ -74,7 +74,7 @@ __示例__
 ```js
 import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -96,7 +96,7 @@ const s3Client = new Minio.Client({
 })
 ```
 
-## Ali OSS 
+## Ali OSS
 
 ```js
 import * as Minio from 'minio'
@@ -266,7 +266,7 @@ __示例__
 
 
 ```js
-var stream = minioClient.listObjects('mybucket','', true)
+const stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
@@ -307,7 +307,7 @@ __示例__
 
 
 ```js
-var stream = minioClient.listObjectsV2('mybucket','', true)
+const stream = minioClient.listObjectsV2('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
@@ -345,7 +345,7 @@ __示例__
 
 
 ```js
-var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
+const Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function(obj) {
   console.log(obj)
 })
@@ -377,7 +377,7 @@ __示例__
 
 
 ```js
-var size = 0
+const size = 0
 minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
   if (err) {
     return console.log(err)
@@ -413,7 +413,7 @@ __示例__
 
 
 ```js
-var size = 0
+const size = 0
 // reads 30 bytes from the offset 10.
 minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, dataStream) {
   if (err) {
@@ -450,7 +450,7 @@ __示例__
 
 
 ```js
-var size = 0
+const size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) {
   if (err) {
     return console.log(err)
@@ -484,9 +484,9 @@ __示例__
 
 ```js
 import * as Fs from 'fs'
-var file = '/tmp/40mbfile'
-var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function(err, stats) {
+const file = '/tmp/40mbfile'
+const fileStream = Fs.createReadStream(file)
+const fileStat = Fs.stat(file, function(err, stats) {
   if (err) {
     return console.log(err)
   }
@@ -514,7 +514,7 @@ __示例__
 
 
 ```js
-var buffer = 'Hello World'
+const buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -539,7 +539,7 @@ __示例__
 
 
 ```js
-var file = '/tmp/40mbfile'
+const file = '/tmp/40mbfile'
 minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -564,7 +564,7 @@ __参数__
 __示例__
 
 ```js
-var conds = new Minio.CopyConditions()
+const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function(e, data) {
   if (e) {
@@ -791,7 +791,7 @@ __参数__
 
 
 ```js
-var policy = minioClient.newPostPolicy()
+const policy = minioClient.newPostPolicy()
 ```
 
 设置上传策略：
@@ -809,7 +809,7 @@ policy.setKey('hello.txt')
 // Policy restricted for incoming objects with keyPrefix.
 policy.setKeyStartsWith('keyPrefix')
 
-var expires = new Date
+const expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10)
 // Policy expires in 10 days.
 policy.setExpires(expires)
@@ -836,7 +836,7 @@ policy.setUserMetaData({
 minioClient.presignedPostPolicy(policy, function(err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(data.postURL)
+  const req = superagent.post(data.postURL)
   _.each(data.formData, function(value, key) {
     req.field(key, value)
   })
@@ -902,11 +902,11 @@ __示例__
 
 ```js
 // Create a new notification object
-var bucketNotification = new Minio.NotificationConfig();
+const bucketNotification = new Minio.NotificationConfig();
 
 // Setup a new Queue configuration
-var arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')
 queue.addEvent(Minio.ObjectReducedRedundancyLostObject)
@@ -965,7 +965,7 @@ __参数__
 这里是你要的[完整示例](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js)，拿走不谢。
 
 ```js
-var listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 listener.on('notification', function(record) {
   // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
   console.log('%s event occurred (%s)', record.eventName, record.eventTime)

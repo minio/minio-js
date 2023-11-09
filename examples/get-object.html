@@ -9,7 +9,7 @@
         secretKey: 'YOUR-SECRETACCESSKEY',
       })
 
-      var size = 0
+      let size = 0
       // Get a full object.
       s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
         if (e) {

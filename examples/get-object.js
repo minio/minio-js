@@ -25,7 +25,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-var size = 0
+const size = 0
 // Get a full object.
 s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
   if (e) {
@@ -43,7 +43,7 @@ s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
 })
 
 //Get a specific version of an object
-var versionedObjSize = 0
+const versionedObjSize = 0
 s3Client.getObject(
   'my-versioned-bucket',
   'my-versioned-object',

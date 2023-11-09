@@ -33,15 +33,15 @@ const oneMB = 1024 * 1024
 
 // Create a bucket prior to running: mc mb local/source-bucket
 function sampleRunComposeObject() {
-  var tmpDir = os.tmpdir()
+  const tmpDir = os.tmpdir()
 
   const bucketName = 'source-bucket'
   // generate 100 MB buffer and write to a file.
-  var local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
+  const local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
 
   const composedObjName = '_100-mb-file-to-test-compose'
   const tmpSubDir = `${tmpDir}/compose`
-  var fileToSplit = `${tmpSubDir}/${composedObjName}`
+  const fileToSplit = `${tmpSubDir}/${composedObjName}`
   let partObjNameList = []
 
   fs.mkdir(tmpSubDir, { recursive: true }, function (err) {
