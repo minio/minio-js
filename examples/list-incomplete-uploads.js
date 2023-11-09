@@ -26,7 +26,7 @@ const s3Client = new Minio.Client({
 })
 
 // List all object paths in bucket my-bucketname that begins with my-prefixname.
-var incompleteObjectsStream = s3Client.listIncompleteUploads('my-bucketname', 'my-prefixname', true)
+const incompleteObjectsStream = s3Client.listIncompleteUploads('my-bucketname', 'my-prefixname', true)
 incompleteObjectsStream.on('data', function (obj) {
   console.log(obj)
 })

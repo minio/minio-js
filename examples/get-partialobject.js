@@ -42,7 +42,7 @@ s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096, function
   })
 })
 
-var versionedObjSize = 0
+let versionedObjSize = 0
 // reads 30 bytes from the offset 10.
 s3Client.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' }, function (err, dataStream) {
   if (err) {

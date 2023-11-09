@@ -34,6 +34,8 @@ s3Client.makeBucket('my-bucketname', 'us-west-1', function (e) {
 
 // Create a bucket with object locking enabled.
 s3Client.makeBucket('mybucket', 'us-east-1', { ObjectLocking: true }, function (err) {
-  if (err) return console.log('Error creating bucket with lock .', err)
+  if (err) {
+    return console.log('Error creating bucket with lock .', err)
+  }
   console.log('Bucket created successfully in "us-east-1" and enabled object lock')
 })

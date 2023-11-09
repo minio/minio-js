@@ -40,7 +40,7 @@ s3Client.setBucketEncryption('my-bucket', function (error) {
  * ` { ApplyServerSideEncryptionByDefault: { KMSMasterKeyID: 'arn:aws:kms:us-east-1:1234/5678example', SSEAlgorithm:   "aws:kms" } }`
  */
 
-var encryptionConfig = {
+const encryptionConfig = {
   Rule: [
     {
       ApplyServerSideEncryptionByDefault: {

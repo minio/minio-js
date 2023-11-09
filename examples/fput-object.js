@@ -42,8 +42,8 @@ s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function (
 
 // Put a file in bucket my-bucketname with content-type detected automatically.
 // In this case it is `text/plain`.
-const file = 'my-testfile.txt'
-s3Client.fPutObject('my-bucketname', 'my-objectname', file, function (e) {
+const file2 = 'my-testfile.txt'
+s3Client.fPutObject('my-bucketname', 'my-objectname', file2, function (e) {
   if (e) {
     return console.log(e)
   }

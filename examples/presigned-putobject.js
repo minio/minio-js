@@ -26,7 +26,9 @@ const s3Client = new Minio.Client({
   useSSL: true, // Default is true.
 })
 
-var presignedUrl = s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function (e, presignedUrl) {
-  if (e) return console.log(e)
+s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function (e, presignedUrl) {
+  if (e) {
+    return console.log(e)
+  }
   console.log(presignedUrl)
 })

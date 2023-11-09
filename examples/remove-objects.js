@@ -34,7 +34,7 @@ const recursive = false
 
 function removeObjects(bucketName, prefix, recursive, includeVersion) {
   // List all object paths in bucket
-  var objectsStream = s3Client.listObjects(bucketName, prefix, recursive, { IncludeVersion: includeVersion })
+  const objectsStream = s3Client.listObjects(bucketName, prefix, recursive, { IncludeVersion: includeVersion })
 
   objectsStream.on('data', function (obj) {
     if (includeVersion) {

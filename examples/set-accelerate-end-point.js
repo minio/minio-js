@@ -29,7 +29,7 @@ const s3Client = new Minio.Client({
 s3Client.SetS3TransferAccelerate('s3-accelerate.amazonaws.com')
 
 // Upload a buffer
-var buf = new Buffer(10)
+const buf = new Buffer(10)
 buf.fill('a')
 s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function (e) {
   if (e) {

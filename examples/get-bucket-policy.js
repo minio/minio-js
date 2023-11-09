@@ -27,7 +27,9 @@ const s3Client = new Minio.Client({
 
 // Retrieves the bucket policy and logs it to the console.
 s3Client.getBucketPolicy('testbucket', (err, policy) => {
-  if (err) throw err
+  if (err) {
+    throw err
+  }
 
   console.log(`Bucket policy: ${policy}`)
 })

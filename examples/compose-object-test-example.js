@@ -16,12 +16,11 @@
 
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
-import os from 'os'
-import fs from 'fs'
-
-import splitFile from 'split-file'
+import fs from 'node:fs'
+import os from 'node:os'
 
 import * as Minio from 'minio'
+import splitFile from 'split-file'
 
 const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
@@ -42,7 +41,7 @@ function sampleRunComposeObject() {
   const composedObjName = '_100-mb-file-to-test-compose'
   const tmpSubDir = `${tmpDir}/compose`
   const fileToSplit = `${tmpSubDir}/${composedObjName}`
-  let partObjNameList = []
+  const partObjNameList = []
 
   fs.mkdir(tmpSubDir, { recursive: true }, function (err) {
     if (err) {
