@@ -920,7 +920,7 @@ Downloads an object as a stream.
 **Example**
 
 ```js
-const size = 0
+let size = 0
 minioClient.getObject('mybucket', 'photo.jpg', function (err, dataStream) {
   if (err) {
     return console.log(err)
@@ -942,7 +942,7 @@ minioClient.getObject('mybucket', 'photo.jpg', function (err, dataStream) {
 Get a specific object version.
 
 ```js
-const size = 0
+let size = 0
 minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' }, function (err, dataStream) {
   if (err) {
     return console.log(err)
@@ -985,7 +985,7 @@ Downloads the specified range bytes of an object as a stream.
 **Example**
 
 ```js
-const size = 0
+let size = 0
 // reads 30 bytes from the offset 10.
 minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function (err, dataStream) {
   if (err) {
@@ -1058,7 +1058,6 @@ Downloads and saves the object as a file in the local filesystem.
 **Example**
 
 ```js
-const size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function (err) {
   if (err) {
     return console.log(err)

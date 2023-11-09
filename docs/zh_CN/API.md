@@ -377,7 +377,7 @@ __示例__
 
 
 ```js
-const size = 0
+let size = 0
 minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
   if (err) {
     return console.log(err)
@@ -413,7 +413,7 @@ __示例__
 
 
 ```js
-const size = 0
+let size = 0
 // reads 30 bytes from the offset 10.
 minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, dataStream) {
   if (err) {
@@ -450,7 +450,6 @@ __示例__
 
 
 ```js
-const size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) {
   if (err) {
     return console.log(err)
