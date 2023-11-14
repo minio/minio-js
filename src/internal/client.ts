@@ -1261,6 +1261,7 @@ export class TypedClient {
     const res = await this.makeRequestAsync({ method, bucketName, query })
     return await readAsString(res)
   }
+
   async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
