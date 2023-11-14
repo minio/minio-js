@@ -5,7 +5,8 @@ import { XMLParser } from 'fast-xml-parser'
 import * as errors from '../errors.ts'
 import { isObject, parseXml, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
-import type { BucketItemFromList, BucketItemWithMetadata, ReplicationConfig } from './type.ts'
+import type { BucketItemFromList, BucketItemWithMetadata, ObjectLockInfo, ReplicationConfig } from './type.ts'
+import { RETENTION_VALIDITY_UNITS } from './type.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -260,4 +261,35 @@ export function parseTagging(xml: string) {
     }
   }
   return result
+}
+
+export function parseObjectLockConfig(xml: string): ObjectLockInfo {
+  const xmlObj = parseXml(xml)
+  let lockConfigResult = {} as ObjectLockInfo
+  if (xmlObj.ObjectLockConfiguration) {
+    lockConfigResult = {
+      objectLockEnabled: xmlObj.ObjectLockConfiguration.ObjectLockEnabled,
+    } as ObjectLockInfo
+    let retentionResp
+    if (
+      xmlObj.ObjectLockConfiguration &&
+      xmlObj.ObjectLockConfiguration.Rule &&
+      xmlObj.ObjectLockConfiguration.Rule.DefaultRetention
+    ) {
+      retentionResp = xmlObj.ObjectLockConfiguration.Rule.DefaultRetention || {}
+      lockConfigResult.mode = retentionResp.Mode
+    }
+    if (retentionResp) {
+      const isUnitYears = retentionResp.Years
+      if (isUnitYears) {
+        lockConfigResult.validity = isUnitYears
+        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.YEARS
+      } else {
+        lockConfigResult.validity = retentionResp.Days
+        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.DAYS
+      }
+    }
+  }
+
+  return lockConfigResult
 }
