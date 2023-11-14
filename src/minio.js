@@ -2254,5 +2254,4 @@ Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTaggin
 Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
 Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)
-
 Client.prototype.setBucketPolicy = callbackify(Client.prototype.setBucketPolicy)
