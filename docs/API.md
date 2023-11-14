@@ -151,26 +151,23 @@ const s3Client = new Minio.Client({
 
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName[, region, makeOpts , callback])
+### async makeBucket(bucketName, [region, makeOpts]): Promise<void>
 
 Creates a new bucket.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                 |
-| --------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                         |
-| `region`        | _string_   | Region where the bucket is created. This parameter is optional. Default value is us-east-1.                                                                 |
-| `makeOpts`      | _object_   | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                                                                                           |
-| `callback(err)` | _function_ | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `region`     | _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
+| `makeOpts`   | _object_ | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                           |
 
 **Example**
 
 ```js
-minioClient.makeBucket('mybucket', 'us-east-1', function (err) {
-  if (err) return console.log('Error creating bucket.', err)
-  console.log('Bucket created successfully in "us-east-1".')
-})
+await minioClient.makeBucket('mybucket', 'us-east-1')
+console.log('Bucket created successfully in "us-east-1".')
 ```
 
 **Example 1**

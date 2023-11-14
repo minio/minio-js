@@ -77,22 +77,17 @@ const minioClient = new Minio.Client({
 const file = '/tmp/photos-europe.tar'
 
 // Make a bucket called europetrip.
-minioClient.makeBucket('europetrip', 'us-east-1', function (err) {
-  if (err) return console.log(err)
+await minioClient.makeBucket('europetrip', 'us-east-1')
+console.log('Bucket created successfully in "us-east-1".')
 
-  console.log('Bucket created successfully in "us-east-1".')
-
-  const metaData = {
-    'Content-Type': 'application/octet-stream',
-    'X-Amz-Meta-Testing': 1234,
-    example: 5678,
-  }
-  // Using fPutObject API upload your file to the bucket europetrip.
-  minioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData, function (err, etag) {
-    if (err) return console.log(err)
-    console.log('File uploaded successfully.')
-  })
-})
+var metaData = {
+  'Content-Type': 'application/octet-stream',
+  'X-Amz-Meta-Testing': 1234,
+  example: 5678,
+}
+// Using fPutObject API upload your file to the bucket europetrip.
+awaitminioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData)
+console.log('File uploaded successfully.')
 ```
 
 #### Run file-uploader

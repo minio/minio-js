@@ -25,17 +25,10 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 // Create a bucket name my-bucketname.
-s3Client.makeBucket('my-bucketname', 'us-west-1', function (e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Success')
-})
+await s3Client.makeBucket('my-bucketname', 'us-west-1')
+
+console.log('Success')
 
 // Create a bucket with object locking enabled.
-s3Client.makeBucket('mybucket', 'us-east-1', { ObjectLocking: true }, function (err) {
-  if (err) {
-    return console.log('Error creating bucket with lock .', err)
-  }
-  console.log('Bucket created successfully in "us-east-1" and enabled object lock')
-})
+await s3Client.makeBucket('mybucket', 'us-east-1', { ObjectLocking: true })
+console.log('Bucket created successfully in "us-east-1" and enabled object lock')
