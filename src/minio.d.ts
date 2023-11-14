@@ -13,7 +13,6 @@ import type {
 import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
-import type { NotificationConfig, NotificationEvent, NotificationPoller } from './internal/notification.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import type {
   BucketItem,
@@ -48,11 +47,12 @@ import type {
   Tag,
   VersionIdentificator,
 } from './internal/type.ts'
+import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
 export * from './helpers.ts'
-export type * from './internal/notification.ts'
-export * from './internal/notification.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export type * from './notification.ts'
+export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 export type { MakeBucketOpt } from './internal/client.ts'
 export type {

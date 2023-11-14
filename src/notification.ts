@@ -17,9 +17,9 @@
 import { EventEmitter } from 'eventemitter3'
 import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
-import { DEFAULT_REGION } from '../helpers.ts'
-import type { TypedClient } from './client.ts'
-import { pipesetup, uriEscape } from './helper.ts'
+import { DEFAULT_REGION } from './helpers.ts'
+import type { TypedClient } from './internal/client.ts'
+import { pipesetup, uriEscape } from './internal/helper.ts'
 
 // TODO: type this
 

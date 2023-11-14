@@ -58,8 +58,8 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
-import { NotificationConfig, NotificationPoller } from './internal/notification.ts'
 import { PostPolicy } from './internal/post-policy.ts'
+import { NotificationConfig, NotificationPoller } from './notification.ts'
 import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
@@ -67,7 +67,7 @@ import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
 export * from './helpers.ts'
-export * from './internal/notification.ts'
+export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 
 export class Client extends TypedClient {
