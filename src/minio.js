@@ -26,7 +26,7 @@ import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
-import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from './helpers.ts'
+import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
 import { callbackify } from './internal/callbackify.js'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
@@ -117,88 +117,6 @@ export class Client extends TypedClient {
       // Try part sizes as 64MB, 80MB, 96MB etc.
       partSize += 16 * 1024 * 1024
     }
-  }
-
-  // Creates the bucket `bucketName`.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ - Name of the bucket
-  // * `region` _string_ - region valid values are _us-west-1_, _us-west-2_,  _eu-west-1_, _eu-central-1_, _ap-southeast-1_, _ap-northeast-1_, _ap-southeast-2_, _sa-east-1_.
-  // * `makeOpts` _object_ - Options to create a bucket. e.g {ObjectLocking:true} (Optional)
-  // * `callback(err)` _function_ - callback function with `err` as the error argument. `err` is null if the bucket is successfully created.
-  makeBucket(bucketName, region, makeOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    // Backward Compatibility
-    if (isObject(region)) {
-      cb = makeOpts
-      makeOpts = region
-      region = ''
-    }
-    if (isFunction(region)) {
-      cb = region
-      region = ''
-      makeOpts = {}
-    }
-    if (isFunction(makeOpts)) {
-      cb = makeOpts
-      makeOpts = {}
-    }
-
-    if (!isString(region)) {
-      throw new TypeError('region should be of type "string"')
-    }
-    if (!isObject(makeOpts)) {
-      throw new TypeError('makeOpts should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    var payload = ''
-
-    // Region already set in constructor, validate if
-    // caller requested bucket location is same.
-    if (region && this.region) {
-      if (region !== this.region) {
-        throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
-      }
-    }
-    // sending makeBucket request with XML containing 'us-east-1' fails. For
-    // default region server expects the request without body
-    if (region && region !== DEFAULT_REGION) {
-      const builder = new xml2js.Builder()
-      payload = builder.buildObject({
-        CreateBucketConfiguration: {
-          $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
-          LocationConstraint: region,
-        },
-      })
-    }
-    var method = 'PUT'
-    var headers = {}
-
-    if (makeOpts.ObjectLocking) {
-      headers['x-amz-bucket-object-lock-enabled'] = true
-    }
-
-    if (!region) {
-      region = DEFAULT_REGION
-    }
-
-    const processWithRetry = (err) => {
-      if (err && (region === '' || region === DEFAULT_REGION)) {
-        if (err.code === 'AuthorizationHeaderMalformed' && err.region !== '') {
-          // Retry with region returned as part of error
-          this.makeRequest({ method, bucketName, headers }, payload, [200], err.region, false, cb)
-        } else {
-          return cb && cb(err)
-        }
-      }
-      return cb && cb(err)
-    }
-    this.makeRequest({ method, bucketName, headers }, payload, [200], region, false, processWithRetry)
   }
 
   // To check if a bucket already exists.
@@ -2190,7 +2108,6 @@ export class Client extends TypedClient {
 }
 
 // Promisify various public-facing APIs on the Client module.
-Client.prototype.makeBucket = promisify(Client.prototype.makeBucket)
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 
 Client.prototype.getObject = promisify(Client.prototype.getObject)
@@ -2228,6 +2145,8 @@ Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 // refactored API use promise internally
+Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
+
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
