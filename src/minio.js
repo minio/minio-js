@@ -2243,11 +2243,11 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 // refactored API use promise internally
 Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
 Client.prototype.bucketExists = callbackify(Client.prototype.bucketExists)
+Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
+Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
-Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
-Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)
 Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketReplication)
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
