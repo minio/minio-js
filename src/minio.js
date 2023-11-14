@@ -2248,6 +2248,7 @@ Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
+
 Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)
 Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketReplication)
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
