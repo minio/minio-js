@@ -15,7 +15,6 @@ import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import type { Region } from './internal/s3-endpoints.ts'
 import type {
   BucketItem,
   BucketItemCopy,
@@ -52,6 +51,7 @@ import type {
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
+export type { MakeBucketOpt } from './internal/client.ts'
 export type {
   BucketItem,
   BucketItemCopy,
@@ -221,18 +221,8 @@ export class TargetConfig {
   addFilterPrefix(prefix: string): void
 }
 
-export interface MakeBucketOpt {
-  ObjectLocking: boolean
-}
-
 // Exports from library
 export class Client extends TypedClient {
-  // Bucket operations
-  makeBucket(bucketName: string, region: Region, makeOpts: MakeBucketOpt, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region: Region, callback: NoResultCallback): void
-  makeBucket(bucketName: string, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region?: Region, makeOpts?: MakeBucketOpt): Promise<void>
-
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
 

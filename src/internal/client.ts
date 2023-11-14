@@ -63,6 +63,8 @@ import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseCompleteMultipart, parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
+const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
+
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
 
@@ -112,6 +114,10 @@ export type RequestOption = Partial<IRequest> & {
 }
 
 export type NoResultCallback = (error: unknown) => void
+
+export interface MakeBucketOpt {
+  ObjectLocking?: boolean
+}
 
 export interface RemoveOptions {
   versionId?: string
@@ -786,6 +792,78 @@ export class TypedClient {
       // @ts-ignore
       (err) => cb(err),
     )
+  }
+
+  // Bucket operations
+
+  /**
+   * Creates the bucket `bucketName`.
+   *
+   */
+  async makeBucket(bucketName: string, region: Region = '', makeOpts: MakeBucketOpt = {}): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    // Backward Compatibility
+    if (isObject(region)) {
+      makeOpts = region
+      region = ''
+    }
+
+    if (!isString(region)) {
+      throw new TypeError('region should be of type "string"')
+    }
+    if (!isObject(makeOpts)) {
+      throw new TypeError('makeOpts should be of type "object"')
+    }
+
+    let payload = ''
+
+    // Region already set in constructor, validate if
+    // caller requested bucket location is same.
+    if (region && this.region) {
+      if (region !== this.region) {
+        throw new errors.InvalidArgumentError(`Configured region ${this.region}, requested ${region}`)
+      }
+    }
+    // sending makeBucket request with XML containing 'us-east-1' fails. For
+    // default region server expects the request without body
+    if (region && region !== DEFAULT_REGION) {
+      payload = xml.buildObject({
+        CreateBucketConfiguration: {
+          $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
+          LocationConstraint: region,
+        },
+      })
+    }
+    const method = 'PUT'
+    const headers: RequestHeaders = {}
+
+    if (makeOpts.ObjectLocking) {
+      headers['x-amz-bucket-object-lock-enabled'] = true
+    }
+
+    if (!region) {
+      region = DEFAULT_REGION
+    }
+    const finalRegion = region // type narrow
+    const requestOpt: RequestOption = { method, bucketName, headers }
+
+    try {
+      await this.makeRequestAsyncOmit(requestOpt, payload, [200], finalRegion)
+    } catch (err: unknown) {
+      if (region === '' || region === DEFAULT_REGION) {
+        if (err instanceof errors.S3Error) {
+          const errCode = err.code
+          const errRegion = err.region
+          if (errCode === 'AuthorizationHeaderMalformed' && errRegion !== '') {
+            // Retry with region returned as part of error
+            await this.makeRequestAsyncOmit(requestOpt, payload, [200], errCode)
+          }
+        }
+      }
+      throw err
+    }
   }
 
   async removeBucket(bucketName: string): Promise<void>
