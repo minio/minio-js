@@ -214,52 +214,41 @@ export class NotificationPoller extends EventEmitter<{
     }
     const region = this.client.region || DEFAULT_REGION
 
-    this.client
-      .makeRequestAsync(
-        {
-          method,
-          bucketName: this.bucketName,
-          query,
-        },
-        '',
-        [200],
-        region,
-      )
-      .then(
-        (response) => {
-          const asm = jsonLineParser.make()
+    this.client.makeRequestAsync({ method, bucketName: this.bucketName, query }, '', [200], region).then(
+      (response) => {
+        const asm = jsonLineParser.make()
 
-          pipesetup(response, asm)
-            .on('data', (data) => {
-              // Data is flushed periodically (every 5 seconds), so we should
-              // handle it after flushing from the JSON parser.
-              let records = data.value.Records
-              // If null (= no records), change to an empty array.
-              if (!records) {
-                records = []
-              }
+        pipesetup(response, asm)
+          .on('data', (data) => {
+            // Data is flushed periodically (every 5 seconds), so we should
+            // handle it after flushing from the JSON parser.
+            let records = data.value.Records
+            // If null (= no records), change to an empty array.
+            if (!records) {
+              records = []
+            }
 
-              // Iterate over the notifications and emit them individually.
-              records.forEach((record: NotificationRecord) => {
-                this.emit('notification', record)
-              })
-
-              // If we're done, stop.
-              if (this.ending) {
-                response?.destroy()
-              }
+            // Iterate over the notifications and emit them individually.
+            records.forEach((record: NotificationRecord) => {
+              this.emit('notification', record)
             })
-            .on('error', (e) => this.emit('error', e))
-            .on('end', () => {
-              // Do it again, if we haven't cancelled yet.
-              process.nextTick(() => {
-                this.checkForChanges()
-              })
+
+            // If we're done, stop.
+            if (this.ending) {
+              response?.destroy()
+            }
+          })
+          .on('error', (e) => this.emit('error', e))
+          .on('end', () => {
+            // Do it again, if we haven't cancelled yet.
+            process.nextTick(() => {
+              this.checkForChanges()
             })
-        },
-        (e) => {
-          return this.emit('error', e)
-        },
-      )
+          })
+      },
+      (e) => {
+        return this.emit('error', e)
+      },
+    )
   }
 }
