@@ -45,7 +45,6 @@ import type {
   BucketItemStat,
   GetObjectLegalHoldOptions,
   IRequest,
-  LegalHoldStatus,
   ObjectLockConfigParam,
   ObjectLockInfo,
   PutObjectLegalHoldOptions,
@@ -54,6 +53,7 @@ import type {
   RequestHeaders,
   ResponseHeader,
   ResultCallback,
+  Retention,
   StatObjectOpts,
   Tag,
   Transport,
@@ -62,6 +62,8 @@ import type {
 import type { UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
+
+const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -112,6 +114,10 @@ export type RequestOption = Partial<IRequest> & {
 }
 
 export type NoResultCallback = (error: unknown) => void
+
+export interface MakeBucketOpt {
+  ObjectLocking?: boolean
+}
 
 export interface RemoveOptions {
   versionId?: string
@@ -788,27 +794,6 @@ export class TypedClient {
     )
   }
 
-  /**
-   * To check if a bucket already exists.
-   */
-  async bucketExists(bucketName: string): Promise<boolean> {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    const method = 'HEAD'
-    try {
-      await this.makeRequestAsyncOmit({ method, bucketName })
-    } catch (err) {
-      // @ts-ignore
-      if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
-        return false
-      }
-      throw err
-    }
-
-    return true
-  }
-
   async removeBucket(bucketName: string): Promise<void>
 
   /**
@@ -1064,13 +1049,13 @@ export class TypedClient {
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-    callback?: ResultCallback<LegalHoldStatus>,
-  ): Promise<LegalHoldStatus>
+    callback?: ResultCallback<LEGAL_HOLD_STATUS>,
+  ): Promise<LEGAL_HOLD_STATUS>
   async getObjectLegalHold(
     bucketName: string,
     objectName: string,
     getOpts?: GetObjectLegalHoldOptions,
-  ): Promise<LegalHoldStatus> {
+  ): Promise<LEGAL_HOLD_STATUS> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1190,6 +1175,59 @@ export class TypedClient {
     return xmlParsers.parseTagging(body)
   }
 
+  async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(retentionOpts)) {
+      throw new errors.InvalidArgumentError('retentionOpts should be of type "object"')
+    } else {
+      if (retentionOpts.governanceBypass && !isBoolean(retentionOpts.governanceBypass)) {
+        throw new errors.InvalidArgumentError(`Invalid value for governanceBypass: ${retentionOpts.governanceBypass}`)
+      }
+      if (
+        retentionOpts.mode &&
+        ![RETENTION_MODES.COMPLIANCE, RETENTION_MODES.GOVERNANCE].includes(retentionOpts.mode)
+      ) {
+        throw new errors.InvalidArgumentError(`Invalid object retention mode: ${retentionOpts.mode}`)
+      }
+      if (retentionOpts.retainUntilDate && !isString(retentionOpts.retainUntilDate)) {
+        throw new errors.InvalidArgumentError(`Invalid value for retainUntilDate: ${retentionOpts.retainUntilDate}`)
+      }
+      if (retentionOpts.versionId && !isString(retentionOpts.versionId)) {
+        throw new errors.InvalidArgumentError(`Invalid value for versionId: ${retentionOpts.versionId}`)
+      }
+    }
+
+    const method = 'PUT'
+    let query = 'retention'
+
+    const headers: RequestHeaders = {}
+    if (retentionOpts.governanceBypass) {
+      headers['X-Amz-Bypass-Governance-Retention'] = true
+    }
+
+    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
+    const params: Record<string, string> = {}
+
+    if (retentionOpts.mode) {
+      params.Mode = retentionOpts.mode
+    }
+    if (retentionOpts.retainUntilDate) {
+      params.RetainUntilDate = retentionOpts.retainUntilDate
+    }
+    if (retentionOpts.versionId) {
+      query += `&versionId=${retentionOpts.versionId}`
+    }
+
+    const payload = builder.buildObject(params)
+
+    headers['Content-MD5'] = toMd5(payload)
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
+  }
   getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
   getObjectLockConfig(bucketName: string): void
   async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>

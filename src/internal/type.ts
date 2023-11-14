@@ -209,7 +209,14 @@ export type PutObjectLegalHoldOptions = {
   versionId?: string
   status: LEGAL_HOLD_STATUS
 }
-
+export interface RetentionOptions {
+  versionId: string
+  mode?: RETENTION_MODES
+  retainUntilDate?: IsoDate
+  governanceBypass?: boolean
+}
+export type Retention = RetentionOptions | EmptyObject
+export type IsoDate = string
 export type EmptyObject = Record<string, never>
 
 export type ObjectLockInfo =

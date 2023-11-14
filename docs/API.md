@@ -151,26 +151,23 @@ var s3Client = new Minio.Client({
 
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName[, region, makeOpts , callback])
+### async makeBucket(bucketName, [region, makeOpts]): Promise<void>
 
 Creates a new bucket.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                 |
-| --------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                         |
-| `region`        | _string_   | Region where the bucket is created. This parameter is optional. Default value is us-east-1.                                                                 |
-| `makeOpts`      | _object_   | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                                                                                           |
-| `callback(err)` | _function_ | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `region`     | _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
+| `makeOpts`   | _object_ | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                           |
 
 **Example**
 
 ```js
-minioClient.makeBucket('mybucket', 'us-east-1', function (err) {
-  if (err) return console.log('Error creating bucket.', err)
-  console.log('Bucket created successfully in "us-east-1".')
-})
+await minioClient.makeBucket('mybucket', 'us-east-1')
+console.log('Bucket created successfully in "us-east-1".')
 ```
 
 **Example 1**
@@ -1398,18 +1395,17 @@ minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function (err) {
 
 <a name="putObjectRetention"></a>
 
-### putObjectRetention(bucketName, objectName [, retentionOpts] [, callback])
+### async putObjectRetention(bucketName, objectName [, retentionOpts])
 
 Apply retention on an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                               |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                       |
-| `objectName`    | _string_   | Name of the object.                                                                                                                                                       |
-| `retentionOpts` | _object_   | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }` Default is `{}` (Optional) |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                    |
+| Param           | Type     | Description                                                                                                                                                               |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`    | _string_ | Name of the bucket.                                                                                                                                                       |
+| `objectName`    | _string_ | Name of the object.                                                                                                                                                       |
+| `retentionOpts` | _object_ | Options for retention like : `{ governanceBypass:true/false ,mode:COMPLIANCE/GOVERNANCE, retainUntilDate: _date_ , versionId:"my-versionId" }` Default is `{}` (Optional) |
 
 **Example**
 Apply object retention on an object
@@ -1423,17 +1419,11 @@ expirationDate.setDate(expirationDate.getDate() + 1)
 expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
 const versionId = 'e67b4b08-144d-4fc4-ba15-43c3f7f9ba74'
 
-const objRetPromise = minioClient.putObjectRetention(
-  bucketName,
-  objectName,
-  { Mode: 'GOVERNANCE', retainUntilDate: retainUntilDate.toISOString(), versionId: versionId },
-  function (err) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success')
-  },
-)
+await minioClient.putObjectRetention(bucketName, objectName, {
+  Mode: 'GOVERNANCE',
+  retainUntilDate: retainUntilDate.toISOString(),
+  versionId: versionId,
+})
 ```
 
 <a name="getObjectRetention"></a>
