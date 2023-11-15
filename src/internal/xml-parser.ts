@@ -311,7 +311,7 @@ export function parseListMultipart(xml: string): ListMultipartResult {
     result.nextKeyMarker = xmlobj.NextKeyMarker
   }
   if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+ result.nextUploadIdMarker = xmlobj.nextUploadIdMarker || ''
   }
 
   if (xmlobj.CommonPrefixes) {
