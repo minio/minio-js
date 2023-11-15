@@ -86,7 +86,7 @@ var metaData = {
   example: 5678,
 }
 // Using fPutObject API upload your file to the bucket europetrip.
-awaitminioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData)
+await minioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData)
 console.log('File uploaded successfully.')
 ```
 
