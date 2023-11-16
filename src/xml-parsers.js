@@ -181,30 +181,6 @@ export function parseBucketNotification(xml) {
   return result
 }
 
-// parse XML response when a multipart upload is completed
-export function parseCompleteMultipart(xml) {
-  var xmlobj = parseXml(xml).CompleteMultipartUploadResult
-  if (xmlobj.Location) {
-    var location = toArray(xmlobj.Location)[0]
-    var bucket = toArray(xmlobj.Bucket)[0]
-    var key = xmlobj.Key
-    var etag = xmlobj.ETag.replace(/^"/g, '')
-      .replace(/"$/g, '')
-      .replace(/^&quot;/g, '')
-      .replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '')
-      .replace(/&#34;$/g, '')
-
-    return { location, bucket, key, etag }
-  }
-  // Complete Multipart can return XML Error after a 200 OK response
-  if (xmlobj.Code && xmlobj.Message) {
-    var errCode = toArray(xmlobj.Code)[0]
-    var errMessage = toArray(xmlobj.Message)[0]
-    return { errCode, errMessage }
-  }
-}
-
 const formatObjInfo = (content, opts = {}) => {
   let { Key, LastModified, ETag, Size, VersionId, IsLatest } = content
 
