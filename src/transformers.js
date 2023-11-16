@@ -135,10 +135,6 @@ export function lifecycleTransformer() {
   return getConcater(xmlParsers.parseLifecycleConfig)
 }
 
-export function objectLockTransformer() {
-  return getConcater(xmlParsers.parseObjectLockConfig)
-}
-
 export function objectRetentionTransformer() {
   return getConcater(xmlParsers.parseObjectRetentionConfig)
 }
