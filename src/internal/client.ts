@@ -1059,7 +1059,7 @@ export class TypedClient {
     metaData?: ItemBucketMetadata,
   ): Promise<UploadedObjectInfo> {
     if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
@@ -1070,7 +1070,6 @@ export class TypedClient {
     if (isObject(size)) {
       metaData = size
     }
-
     // Ensures Metadata has appropriate prefix for A3 API
     const headers = prependXAMZMeta(metaData)
     if (typeof stream === 'string' || stream instanceof Buffer) {
@@ -1091,8 +1090,6 @@ export class TypedClient {
       size = this.maxObjectSize
     }
 
-    size = this.calculatePartSize(size)
-
     // Get the part size and forward that to the BlockStream. Default to the
     // largest block size possible if necessary.
     if (size === undefined) {
@@ -1108,8 +1105,7 @@ export class TypedClient {
     }
 
     const partSize = this.calculatePartSize(size)
-
-    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= this.partSize) {
+    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= partSize) {
       const uploader = this.getUploader(bucketName, objectName, headers, false)
       const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
       const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)

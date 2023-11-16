@@ -607,16 +607,15 @@ export async function getContentLength(s: stream.Readable | Buffer | string): Pr
     return length
   }
 
-  // property of fs.ReadStream
+  // property of `fs.ReadStream`
   const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
   if (filePath) {
     const stat = await fsp.lstat(filePath)
     return stat.size
   }
 
-  // property of fs.ReadStream
+  // property of `fs.ReadStream`
   const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
-
   if (fd) {
     const stat = await fstat(fd)
     return stat.size
