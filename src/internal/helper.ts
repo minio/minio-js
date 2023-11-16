@@ -602,6 +602,7 @@ export function parseXml(xml: string): any {
  * get content size of object content to upload
  */
 export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
+  // use length property of string | Buffer
   const length = (s as unknown as Record<string, unknown>).length as number | undefined
   if (isNumber(length)) {
     return length
