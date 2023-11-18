@@ -1147,13 +1147,16 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
+    let latestUpload: ListMultipartResult['uploads'][number] | undefined
     let keyMarker = ''
     let uploadIdMarker = ''
     for (;;) {
       const result = await this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
       for (const upload of result.uploads) {
         if (upload.key === objectName) {
-          return upload.uploadId
+          if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
+            latestUpload = upload
+          }
         }
       }
       if (result.isTruncated) {
@@ -1164,7 +1167,7 @@ export class TypedClient {
 
       break
     }
-    return undefined
+    return latestUpload?.uploadId
   }
 
   /**
