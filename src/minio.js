@@ -162,13 +162,10 @@ export class Client extends TypedClient {
     var removeUploadId
     async.during(
       (cb) => {
-        this.findUploadId(bucketName, objectName, (e, uploadId) => {
-          if (e) {
-            return cb(e)
-          }
+        this.findUploadId(bucketName, objectName).then((uploadId) => {
           removeUploadId = uploadId
           cb(null, uploadId)
-        })
+        }, cb)
       },
       (cb) => {
         var method = 'DELETE'
