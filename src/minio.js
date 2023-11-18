@@ -119,81 +119,6 @@ export class Client extends TypedClient {
     }
   }
 
-  // Returns a stream that emits objects that are partially uploaded.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `prefix` _string_: prefix of the object names that are partially uploaded (optional, default `''`)
-  // * `recursive` _bool_: directory style listing when false, recursive listing when true (optional, default `false`)
-  //
-  // __Return Value__
-  // * `stream` _Stream_ : emits objects of the format:
-  //   * `object.key` _string_: name of the object
-  //   * `object.uploadId` _string_: upload ID of the object
-  //   * `object.size` _Integer_: size of the partially uploaded object
-  listIncompleteUploads(bucket, prefix, recursive) {
-    if (prefix === undefined) {
-      prefix = ''
-    }
-    if (recursive === undefined) {
-      recursive = false
-    }
-    if (!isValidBucketName(bucket)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
-    }
-    if (!isValidPrefix(prefix)) {
-      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
-    }
-    if (!isBoolean(recursive)) {
-      throw new TypeError('recursive should be of type "boolean"')
-    }
-    var delimiter = recursive ? '' : '/'
-    var keyMarker = ''
-    var uploadIdMarker = ''
-    var uploads = []
-    var ended = false
-    var readStream = Stream.Readable({ objectMode: true })
-    readStream._read = () => {
-      // push one upload info per _read()
-      if (uploads.length) {
-        return readStream.push(uploads.shift())
-      }
-      if (ended) {
-        return readStream.push(null)
-      }
-      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
-        .on('error', (e) => readStream.emit('error', e))
-        .on('data', (result) => {
-          result.prefixes.forEach((prefix) => uploads.push(prefix))
-          async.eachSeries(
-            result.uploads,
-            (upload, cb) => {
-              // for each incomplete upload add the sizes of its uploaded parts
-              this.listParts(bucket, upload.key, upload.uploadId).then((parts) => {
-                upload.size = parts.reduce((acc, item) => acc + item.size, 0)
-                uploads.push(upload)
-                cb()
-              }, cb)
-            },
-            (err) => {
-              if (err) {
-                readStream.emit('error', err)
-                return
-              }
-              if (result.isTruncated) {
-                keyMarker = result.nextKeyMarker
-                uploadIdMarker = result.nextUploadIdMarker
-              } else {
-                ended = true
-              }
-              readStream._read()
-            },
-          )
-        })
-    }
-    return readStream
-  }
-
   // To check if a bucket already exists.
   //
   // __Arguments__
@@ -1326,54 +1251,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Called by listIncompleteUploads to fetch a batch of incomplete uploads.
-  listIncompleteUploadsQuery(bucketName, prefix, keyMarker, uploadIdMarker, delimiter) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isString(prefix)) {
-      throw new TypeError('prefix should be of type "string"')
-    }
-    if (!isString(keyMarker)) {
-      throw new TypeError('keyMarker should be of type "string"')
-    }
-    if (!isString(uploadIdMarker)) {
-      throw new TypeError('uploadIdMarker should be of type "string"')
-    }
-    if (!isString(delimiter)) {
-      throw new TypeError('delimiter should be of type "string"')
-    }
-    var queries = []
-    queries.push(`prefix=${uriEscape(prefix)}`)
-    queries.push(`delimiter=${uriEscape(delimiter)}`)
-
-    if (keyMarker) {
-      keyMarker = uriEscape(keyMarker)
-      queries.push(`key-marker=${keyMarker}`)
-    }
-    if (uploadIdMarker) {
-      queries.push(`upload-id-marker=${uploadIdMarker}`)
-    }
-
-    var maxUploads = 1000
-    queries.push(`max-uploads=${maxUploads}`)
-    queries.sort()
-    queries.unshift('uploads')
-    var query = ''
-    if (queries.length > 0) {
-      query = `${queries.join('&')}`
-    }
-    var method = 'GET'
-    var transformer = transformers.getListMultipartTransformer()
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return transformer.emit('error', e)
-      }
-      pipesetup(response, transformer)
-    })
-    return transformer
-  }
-
   // Find uploadId of an incomplete upload.
   findUploadId(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1387,9 +1264,8 @@ export class Client extends TypedClient {
     }
     var latestUpload
     var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
-        .on('error', (e) => cb(e))
-        .on('data', (result) => {
+      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
+        (result) => {
           result.uploads.forEach((upload) => {
             if (upload.key === objectName) {
               if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
@@ -1406,7 +1282,9 @@ export class Client extends TypedClient {
             return cb(null, latestUpload.uploadId)
           }
           cb(null, undefined)
-        })
+        },
+        (err) => cb(err),
+      )
     }
     listNext('', '')
   }
