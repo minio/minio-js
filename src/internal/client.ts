@@ -878,7 +878,7 @@ export class TypedClient {
       await this.makeRequestAsyncOmit({ method, bucketName })
     } catch (err) {
       // @ts-ignore
-      if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
+      if (err.code === 'NoSuchBucket' || err.code === 'NotFound') {
         return false
       }
       throw err
