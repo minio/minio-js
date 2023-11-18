@@ -1532,7 +1532,7 @@ export class TypedClient {
     return simpleUploader
   }
 
-  findUploadId(bucketName: string, objectName: string): void | Promise<string | undefined> {
+  async findUploadId(bucketName: string, objectName: string): Promise<string | undefined> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1541,6 +1541,7 @@ export class TypedClient {
     }
     return new Promise((resolve, reject) => {
       let latestUpload: ListMultipartResult['uploads'][number] | undefined
+      // TODO: rewrite recursive function call to for look with async/await
       const listNext = (keyMarker: string, uploadIdMarker: string) => {
         this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
           (result) => {
