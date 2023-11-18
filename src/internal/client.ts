@@ -38,7 +38,6 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
-  pipesetup,
   prependXAMZMeta,
   readableStream,
   sanitizeETag,
@@ -51,12 +50,13 @@ import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
-import * as transformers from './transformers.ts'
 import type {
   Binary,
   BucketItemFromList,
   BucketItemStat,
+  BucketStream,
   GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
   IRequest,
   ItemBucketMetadata,
   ObjectLockConfigParam,
@@ -75,7 +75,7 @@ import type {
   UploadedObjectInfo,
   VersionIdentificator,
 } from './type.ts'
-import type { UploadedPart } from './xml-parser.ts'
+import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseCompleteMultipart, parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
@@ -979,28 +979,13 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
 
-  /**
-   * Initiate a new multipart upload.
-   * @internal
-   */
-  async initiateNewMultipartUpload(bucketName: string, objectName: string, headers: RequestHeaders): Promise<string> {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(headers)) {
-      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
-    }
-    const method = 'POST'
-    const query = 'uploads'
-    const res = await this.makeRequestAsync({ method, bucketName, objectName, query, headers })
-    const body = await readAsBuffer(res)
-    return parseInitiateMultipart(body.toString())
-  }
+  // Calls implemented below are related to multipart.
 
-  listIncompleteUploads(bucket: string, prefix: string, recursive: boolean): stream.Readable {
+  listIncompleteUploads(
+    bucket: string,
+    prefix: string,
+    recursive: boolean,
+  ): BucketStream<IncompleteUploadedBucketItem> {
     if (prefix === undefined) {
       prefix = ''
     }
@@ -1021,6 +1006,8 @@ export class TypedClient {
     let uploadIdMarker = ''
     const uploads: unknown[] = []
     let ended = false
+
+    // TODO: refactor this with async/await and `stream.Readable.from`
     const readStream = new stream.Readable({ objectMode: true })
     readStream._read = () => {
       // push one upload info per _read()
@@ -1030,9 +1017,8 @@ export class TypedClient {
       if (ended) {
         return readStream.push(null)
       }
-      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter)
-        .on('error', (e) => readStream.emit('error', e))
-        .on('data', (result) => {
+      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter).then(
+        (result) => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           result.prefixes.forEach((prefix) => uploads.push(prefix))
@@ -1043,14 +1029,14 @@ export class TypedClient {
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               this.listParts(bucket, upload.key, upload.uploadId).then(
-                (parts: any) => {
+                (parts: Part[]) => {
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-ignore
                   upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                   uploads.push(upload)
                   cb()
                 },
-                (err: any) => cb(err),
+                (err: Error) => cb(err),
               )
             },
             (err) => {
@@ -1070,7 +1056,11 @@ export class TypedClient {
               readStream._read()
             },
           )
-        })
+        },
+        (e) => {
+          readStream.emit('error', e)
+        },
+      )
     }
     return readStream
   }
@@ -1078,13 +1068,13 @@ export class TypedClient {
   /**
    * Called by listIncompleteUploads to fetch a batch of incomplete uploads.
    */
-  listIncompleteUploadsQuery(
+  async listIncompleteUploadsQuery(
     bucketName: string,
     prefix: string,
     keyMarker: string,
     uploadIdMarker: string,
     delimiter: string,
-  ): stream.Transform {
+  ): Promise<ListMultipartResult> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1105,8 +1095,7 @@ export class TypedClient {
     queries.push(`delimiter=${uriEscape(delimiter)}`)
 
     if (keyMarker) {
-      keyMarker = uriEscape(keyMarker)
-      queries.push(`key-marker=${keyMarker}`)
+      queries.push(`key-marker=${uriEscape(keyMarker)}`)
     }
     if (uploadIdMarker) {
       queries.push(`upload-id-marker=${uploadIdMarker}`)
@@ -1121,20 +1110,30 @@ export class TypedClient {
       query = `${queries.join('&')}`
     }
     const method = 'GET'
-    const transformer = transformers.getListMultipartTransformer()
-    this.makeRequestAsync({ method, bucketName, query }).then(
-      (response) => {
-        if (!response) {
-          throw new Error('BUG: no response')
-        }
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseListMultipart(body)
+  }
 
-        pipesetup(response, transformer)
-      },
-      (e) => {
-        return transformer.emit('error', e)
-      },
-    )
-    return transformer
+  /**
+   * Initiate a new multipart upload.
+   * @internal
+   */
+  async initiateNewMultipartUpload(bucketName: string, objectName: string, headers: RequestHeaders): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isObject(headers)) {
+      throw new errors.InvalidObjectNameError('contentType should be of type "object"')
+    }
+    const method = 'POST'
+    const query = 'uploads'
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query, headers })
+    const body = await readAsBuffer(res)
+    return parseInitiateMultipart(body.toString())
   }
 
   /**
@@ -1533,11 +1532,7 @@ export class TypedClient {
     return simpleUploader
   }
 
-  findUploadId(
-    bucketName: string,
-    objectName: string,
-    cb?: ResultCallback<string | undefined>,
-  ): void | Promise<string | undefined> {
+  findUploadId(bucketName: string, objectName: string): void | Promise<string | undefined> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1545,13 +1540,10 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
     return new Promise((resolve, reject) => {
-      let latestUpload: string | undefined
+      let latestUpload: ListMultipartResult['uploads'][number] | undefined
       const listNext = (keyMarker: string, uploadIdMarker: string) => {
-        this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          .on('error', (e) => reject(e))
-          .on('data', (result) => {
+        this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
+          (result) => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             result.uploads.forEach((upload) => {
@@ -1574,7 +1566,11 @@ export class TypedClient {
               return resolve(latestUpload.uploadId as string)
             }
             resolve(undefined)
-          })
+          },
+          (err) => {
+            reject(err)
+          },
+        )
       }
       listNext('', '')
     })
@@ -1890,6 +1886,7 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
   }
+
   getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
   getObjectLockConfig(bucketName: string): void
   async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>
