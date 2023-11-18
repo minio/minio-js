@@ -101,11 +101,6 @@ export function getCopyObjectTransformer() {
   return getConcater(xmlParsers.parseCopyObject)
 }
 
-// Parses listMultipartUploads response.
-export function getListMultipartTransformer() {
-  return getConcater(xmlParsers.parseListMultipart)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
