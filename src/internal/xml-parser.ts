@@ -269,7 +269,7 @@ export function parseTagging(xml: string) {
   return result
 }
 
-type UploadID = unknown
+type UploadID = string
 
 export type ListMultipartResult = {
   uploads: {
@@ -278,7 +278,7 @@ export type ListMultipartResult = {
     initiator: unknown
     owner: unknown
     storageClass: unknown
-    initiated: unknown
+    initiated: Date
   }[]
   prefixes: {
     prefix: string

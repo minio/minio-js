@@ -1279,44 +1279,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Find uploadId of an incomplete upload.
-  findUploadId(bucketName, objectName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-    var latestUpload
-    var listNext = (keyMarker, uploadIdMarker) => {
-      this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
-        (result) => {
-          result.uploads.forEach((upload) => {
-            if (upload.key === objectName) {
-              if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
-                latestUpload = upload
-                return
-              }
-            }
-          })
-          if (result.isTruncated) {
-            listNext(result.nextKeyMarker, result.nextUploadIdMarker)
-            return
-          }
-          if (latestUpload) {
-            return cb(null, latestUpload.uploadId)
-          }
-          cb(null, undefined)
-        },
-        (err) => cb(err),
-      )
-    }
-    listNext('', '')
-  }
-
   // Remove all the notification configurations in the S3 provider
   setBucketNotification(bucketName, config, cb) {
     if (!isValidBucketName(bucketName)) {
