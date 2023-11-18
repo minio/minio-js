@@ -1,7 +1,8 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
-import type * as stream from 'node:stream'
+import * as stream from 'node:stream'
 
+import * as async from 'async'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
@@ -27,6 +28,7 @@ import {
   isValidEndpoint,
   isValidObjectName,
   isValidPort,
+  isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
   sanitizeETag,
@@ -43,7 +45,9 @@ import type {
   Binary,
   BucketItemFromList,
   BucketItemStat,
+  BucketStream,
   GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
   IRequest,
   ObjectLockConfigParam,
   ObjectLockInfo,
@@ -59,7 +63,7 @@ import type {
   Transport,
   VersionIdentificator,
 } from './type.ts'
-import type { UploadedPart } from './xml-parser.ts'
+import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
@@ -123,6 +127,11 @@ export interface RemoveOptions {
   versionId?: string
   governanceBypass?: boolean
   forceDelete?: boolean
+}
+
+type Part = {
+  part: number
+  etag: string
 }
 
 export class TypedClient {
@@ -329,8 +338,13 @@ export class TypedClient {
    * Takes care of constructing virtual-host-style or path-style hostname
    */
   protected getRequestOptions(
-    opts: RequestOption & { region: string },
-  ): IRequest & { host: string; headers: Record<string, string> } {
+    opts: RequestOption & {
+      region: string
+    },
+  ): IRequest & {
+    host: string
+    headers: Record<string, string>
+  } {
     const method = opts.method
     const region = opts.region
     const bucketName = opts.bucketName
@@ -975,6 +989,140 @@ export class TypedClient {
   }
 
   // Calls implemented below are related to multipart.
+
+  listIncompleteUploads(
+    bucket: string,
+    prefix: string,
+    recursive: boolean,
+  ): BucketStream<IncompleteUploadedBucketItem> {
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (!isValidBucketName(bucket)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucket)
+    }
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
+    }
+    if (!isBoolean(recursive)) {
+      throw new TypeError('recursive should be of type "boolean"')
+    }
+    const delimiter = recursive ? '' : '/'
+    let keyMarker = ''
+    let uploadIdMarker = ''
+    const uploads: unknown[] = []
+    let ended = false
+
+    // TODO: refactor this with async/await and `stream.Readable.from`
+    const readStream = new stream.Readable({ objectMode: true })
+    readStream._read = () => {
+      // push one upload info per _read()
+      if (uploads.length) {
+        return readStream.push(uploads.shift())
+      }
+      if (ended) {
+        return readStream.push(null)
+      }
+      this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter).then(
+        (result) => {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          result.prefixes.forEach((prefix) => uploads.push(prefix))
+          async.eachSeries(
+            result.uploads,
+            (upload, cb) => {
+              // for each incomplete upload add the sizes of its uploaded parts
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              this.listParts(bucket, upload.key, upload.uploadId).then(
+                (parts: Part[]) => {
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
+                  upload.size = parts.reduce((acc, item) => acc + item.size, 0)
+                  uploads.push(upload)
+                  cb()
+                },
+                (err: Error) => cb(err),
+              )
+            },
+            (err) => {
+              if (err) {
+                readStream.emit('error', err)
+                return
+              }
+              if (result.isTruncated) {
+                keyMarker = result.nextKeyMarker
+                uploadIdMarker = result.nextUploadIdMarker
+              } else {
+                ended = true
+              }
+
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              readStream._read()
+            },
+          )
+        },
+        (e) => {
+          readStream.emit('error', e)
+        },
+      )
+    }
+    return readStream
+  }
+
+  /**
+   * Called by listIncompleteUploads to fetch a batch of incomplete uploads.
+   */
+  async listIncompleteUploadsQuery(
+    bucketName: string,
+    prefix: string,
+    keyMarker: string,
+    uploadIdMarker: string,
+    delimiter: string,
+  ): Promise<ListMultipartResult> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(keyMarker)) {
+      throw new TypeError('keyMarker should be of type "string"')
+    }
+    if (!isString(uploadIdMarker)) {
+      throw new TypeError('uploadIdMarker should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    const queries = []
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
+    if (keyMarker) {
+      queries.push(`key-marker=${uriEscape(keyMarker)}`)
+    }
+    if (uploadIdMarker) {
+      queries.push(`upload-id-marker=${uploadIdMarker}`)
+    }
+
+    const maxUploads = 1000
+    queries.push(`max-uploads=${maxUploads}`)
+    queries.sort()
+    queries.unshift('uploads')
+    let query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+    const method = 'GET'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseListMultipart(body)
+  }
 
   /**
    * Initiate a new multipart upload.
