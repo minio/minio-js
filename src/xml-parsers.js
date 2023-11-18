@@ -62,8 +62,6 @@ export function parseCopyObject(xml) {
   return result
 }
 
-// parse XML response to list all the owned buckets
-
 // parse XML response for bucket notification
 export function parseBucketNotification(xml) {
   var result = {

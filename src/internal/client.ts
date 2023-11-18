@@ -4,7 +4,7 @@ import * as http from 'node:http'
 import * as https from 'node:https'
 import * as stream from 'node:stream'
 
-import async from 'async'
+import * as async from 'async'
 import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
@@ -350,8 +350,13 @@ export class TypedClient {
    * Takes care of constructing virtual-host-style or path-style hostname
    */
   protected getRequestOptions(
-    opts: RequestOption & { region: string },
-  ): IRequest & { host: string; headers: Record<string, string> } {
+    opts: RequestOption & {
+      region: string
+    },
+  ): IRequest & {
+    host: string
+    headers: Record<string, string>
+  } {
     const method = opts.method
     const region = opts.region
     const bucketName = opts.bucketName
@@ -973,8 +978,6 @@ export class TypedClient {
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
-
-  // Calls implemented below are related to multipart.
 
   /**
    * Initiate a new multipart upload.

@@ -147,7 +147,9 @@ export type Multipart = {
     storageClass: unknown
     initiated: unknown
   }>
-  prefixes: { prefix: string }[]
+  prefixes: {
+    prefix: string
+  }[]
   isTruncated: boolean
   nextKeyMarker: undefined
   nextUploadIdMarker: undefined
@@ -167,7 +169,11 @@ export function parseListParts(xml: string): {
   parts: UploadedPart[]
 } {
   let xmlobj = parseXml(xml)
-  const result: { isTruncated: boolean; marker: number; parts: UploadedPart[] } = {
+  const result: {
+    isTruncated: boolean
+    marker: number
+    parts: UploadedPart[]
+  } = {
     isTruncated: false,
     parts: [],
     marker: 0,
@@ -265,21 +271,31 @@ export function parseTagging(xml: string) {
 
 type UploadID = unknown
 
+export type ListMultipartResult = {
+  uploads: {
+    key: string
+    uploadId: UploadID
+    initiator: unknown
+    owner: unknown
+    storageClass: unknown
+    initiated: unknown
+  }[]
+  prefixes: {
+    prefix: string
+  }[]
+  isTruncated: boolean
+  nextKeyMarker: string
+  nextUploadIdMarker: string
+}
+
 // parse XML response for listing in-progress multipart uploads
-export function parseListMultipart(xml: string) {
-  const result = {
-    uploads: [] as {
-      key: string
-      uploadId: UploadID
-      initiator: unknown
-      owner: unknown
-      storageClass: unknown
-      initiated: unknown
-    }[],
-    prefixes: [] as { prefix: string }[],
+export function parseListMultipart(xml: string): ListMultipartResult {
+  const result: ListMultipartResult = {
+    prefixes: [],
+    uploads: [],
     isTruncated: false,
-    nextKeyMarker: undefined,
-    nextUploadIdMarker: undefined,
+    nextKeyMarker: '',
+    nextUploadIdMarker: '',
   }
 
   let xmlobj = parseXml(xml)
@@ -295,7 +311,7 @@ export function parseListMultipart(xml: string) {
     result.nextKeyMarker = xmlobj.NextKeyMarker
   }
   if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
+    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker || ''
   }
 
   if (xmlobj.CommonPrefixes) {
@@ -342,6 +358,7 @@ export function parseCompleteMultipart(xml: string) {
     return { errCode, errMessage }
   }
 }
+
 export function parseObjectLockConfig(xml: string): ObjectLockInfo {
   const xmlObj = parseXml(xml)
   let lockConfigResult = {} as ObjectLockInfo
