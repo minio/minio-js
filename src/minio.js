@@ -777,7 +777,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({ method }, '', [200], this?.region ?? '', true, (e, response) => {
+    this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
       if (e) {
         return cb(e)
       }
