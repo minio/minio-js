@@ -1,5 +1,6 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
+import { isIP } from 'node:net'
 import * as stream from 'node:stream'
 
 import * as async from 'async'
@@ -417,7 +418,14 @@ export class TypedClient {
     }
     reqOptions.headers.host = host
     if ((reqOptions.protocol === 'http:' && port !== 80) || (reqOptions.protocol === 'https:' && port !== 443)) {
-      reqOptions.headers.host = `${host}:${port}`
+      const ipVersion = isIP(host)
+      if (ipVersion === 6) {
+        // IP is IPv6, we should
+        reqOptions.headers.host = `[${host}]:${port}`
+      } else {
+        // IP must be IPv4
+        reqOptions.headers.host = `${host}:${port}`
+      }
     }
     reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
