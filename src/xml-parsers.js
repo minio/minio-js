@@ -16,34 +16,24 @@
 
 import crc32 from 'buffer-crc32'
 import { XMLParser } from 'fast-xml-parser'
-import _ from 'lodash'
 
 import * as errors from './errors.ts'
 import { SelectResults } from './helpers.ts'
-import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './internal/helper.ts'
-import { RETENTION_VALIDITY_UNITS } from './internal/type.ts'
+import {
+  isObject,
+  parseXml,
+  readableStream,
+  sanitizeETag,
+  sanitizeObjectKey,
+  sanitizeSize,
+  toArray,
+} from './internal/helper.ts'
 
-// Parse XML and return information as Javascript types
-const fxp = new XMLParser()
-
-// parse error XML response
-export function parseError(xml, headerInfo) {
-  var xmlErr = {}
-  var xmlObj = fxp.parse(xml)
-  if (xmlObj.Error) {
-    xmlErr = xmlObj.Error
-  }
-
-  var e = new errors.S3Error()
-  _.each(xmlErr, (value, key) => {
-    e[key.toLowerCase()] = value
-  })
-
-  _.each(headerInfo, (value, key) => {
-    e[key] = value
-  })
-  return e
-}
+const fxpWithoutNumParser = new XMLParser({
+  numberParseOptions: {
+    skipLike: /./,
+  },
+})
 
 // parse XML response for copy object
 export function parseCopyObject(xml) {
@@ -69,72 +59,6 @@ export function parseCopyObject(xml) {
     result.lastModified = new Date(xmlobj.LastModified)
   }
 
-  return result
-}
-
-// parse XML response for listing in-progress multipart uploads
-export function parseListMultipart(xml) {
-  var result = {
-    uploads: [],
-    prefixes: [],
-    isTruncated: false,
-  }
-
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.ListMultipartUploadsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListMultipartUploadsResult"')
-  }
-  xmlobj = xmlobj.ListMultipartUploadsResult
-  if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncated
-  }
-  if (xmlobj.NextKeyMarker) {
-    result.nextKeyMarker = xmlobj.NextKeyMarker
-  }
-  if (xmlobj.NextUploadIdMarker) {
-    result.nextUploadIdMarker = xmlobj.nextUploadIdMarker
-  }
-
-  if (xmlobj.CommonPrefixes) {
-    toArray(xmlobj.CommonPrefixes).forEach((prefix) => {
-      result.prefixes.push({ prefix: sanitizeObjectKey(toArray(prefix.Prefix)[0]) })
-    })
-  }
-
-  if (xmlobj.Upload) {
-    toArray(xmlobj.Upload).forEach((upload) => {
-      var key = upload.Key
-      var uploadId = upload.UploadId
-      var initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
-      var owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
-      var storageClass = upload.StorageClass
-      var initiated = new Date(upload.Initiated)
-      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
-    })
-  }
-  return result
-}
-
-// parse XML response to list all the owned buckets
-export function parseListBucket(xml) {
-  var result = []
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.ListAllMyBucketsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
-  }
-  xmlobj = xmlobj.ListAllMyBucketsResult
-
-  if (xmlobj.Buckets) {
-    if (xmlobj.Buckets.Bucket) {
-      toArray(xmlobj.Buckets.Bucket).forEach((bucket) => {
-        var name = bucket.Name
-        var creationDate = new Date(bucket.CreationDate)
-        result.push({ name, creationDate })
-      })
-    }
-  }
   return result
 }
 
@@ -211,61 +135,6 @@ export function parseBucketNotification(xml) {
   return result
 }
 
-// parse XML response for bucket region
-export function parseBucketRegion(xml) {
-  // return region information
-  return parseXml(xml).LocationConstraint
-}
-
-// parse XML response for list parts of an in progress multipart upload
-export function parseListParts(xml) {
-  var xmlobj = parseXml(xml)
-  var result = {
-    isTruncated: false,
-    parts: [],
-    marker: undefined,
-  }
-  if (!xmlobj.ListPartsResult) {
-    throw new errors.InvalidXMLError('Missing tag: "ListPartsResult"')
-  }
-  xmlobj = xmlobj.ListPartsResult
-  if (xmlobj.IsTruncated) {
-    result.isTruncated = xmlobj.IsTruncated
-  }
-  if (xmlobj.NextPartNumberMarker) {
-    result.marker = +toArray(xmlobj.NextPartNumberMarker)[0]
-  }
-  if (xmlobj.Part) {
-    toArray(xmlobj.Part).forEach((p) => {
-      var part = +toArray(p.PartNumber)[0]
-      var lastModified = new Date(p.LastModified)
-      var etag = p.ETag.replace(/^"/g, '')
-        .replace(/"$/g, '')
-        .replace(/^&quot;/g, '')
-        .replace(/&quot;$/g, '')
-        .replace(/^&#34;/g, '')
-        .replace(/&#34;$/g, '')
-      result.parts.push({ part, lastModified, etag })
-    })
-  }
-  return result
-}
-
-// parse XML response when a new multipart upload is initiated
-export function parseInitiateMultipart(xml) {
-  var xmlobj = parseXml(xml)
-
-  if (!xmlobj.InitiateMultipartUploadResult) {
-    throw new errors.InvalidXMLError('Missing tag: "InitiateMultipartUploadResult"')
-  }
-  xmlobj = xmlobj.InitiateMultipartUploadResult
-
-  if (xmlobj.UploadId) {
-    return xmlobj.UploadId
-  }
-  throw new errors.InvalidXMLError('Missing tag: "UploadId"')
-}
-
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml) {
   var xmlobj = parseXml(xml).CompleteMultipartUploadResult
@@ -300,12 +169,13 @@ const formatObjInfo = (content, opts = {}) => {
   const name = sanitizeObjectKey(toArray(Key)[0])
   const lastModified = new Date(toArray(LastModified)[0])
   const etag = sanitizeETag(toArray(ETag)[0])
+  const size = sanitizeSize(Size)
 
   return {
     name,
     lastModified,
     etag,
-    size: Size,
+    size,
     versionId: VersionId,
     isLatest: IsLatest,
     isDeleteMarker: opts.IsDeleteMarker ? opts.IsDeleteMarker : false,
@@ -320,7 +190,7 @@ export function parseListObjects(xml) {
   }
   let isTruncated = false
   let nextMarker, nextVersionKeyMarker
-  const xmlobj = parseXml(xml)
+  const xmlobj = fxpWithoutNumParser.parse(xml)
 
   const parseCommonPrefixesEntity = (responseEntity) => {
     if (responseEntity) {
@@ -342,7 +212,7 @@ export function parseListObjects(xml) {
         const name = sanitizeObjectKey(toArray(content.Key)[0])
         const lastModified = new Date(toArray(content.LastModified)[0])
         const etag = sanitizeETag(toArray(content.ETag)[0])
-        const size = content.Size
+        const size = sanitizeSize(content.Size)
         result.objects.push({ name, lastModified, etag, size })
       })
     }
@@ -465,57 +335,10 @@ export function parseBucketVersioningConfig(xml) {
   var xmlObj = parseXml(xml)
   return xmlObj.VersioningConfiguration
 }
-
-export function parseTagging(xml) {
-  const xmlObj = parseXml(xml)
-  let result = []
-  if (xmlObj.Tagging && xmlObj.Tagging.TagSet && xmlObj.Tagging.TagSet.Tag) {
-    const tagResult = xmlObj.Tagging.TagSet.Tag
-    // if it is a single tag convert into an array so that the return value is always an array.
-    if (isObject(tagResult)) {
-      result.push(tagResult)
-    } else {
-      result = tagResult
-    }
-  }
-  return result
-}
-
 export function parseLifecycleConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LifecycleConfiguration
 }
-
-export function parseObjectLockConfig(xml) {
-  const xmlObj = parseXml(xml)
-  let lockConfigResult = {}
-  if (xmlObj.ObjectLockConfiguration) {
-    lockConfigResult = {
-      objectLockEnabled: xmlObj.ObjectLockConfiguration.ObjectLockEnabled,
-    }
-    let retentionResp
-    if (
-      xmlObj.ObjectLockConfiguration &&
-      xmlObj.ObjectLockConfiguration.Rule &&
-      xmlObj.ObjectLockConfiguration.Rule.DefaultRetention
-    ) {
-      retentionResp = xmlObj.ObjectLockConfiguration.Rule.DefaultRetention || {}
-      lockConfigResult.mode = retentionResp.Mode
-    }
-    if (retentionResp) {
-      const isUnitYears = retentionResp.Years
-      if (isUnitYears) {
-        lockConfigResult.validity = isUnitYears
-        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.YEARS
-      } else {
-        lockConfigResult.validity = retentionResp.Days
-        lockConfigResult.unit = RETENTION_VALIDITY_UNITS.DAYS
-      }
-    }
-    return lockConfigResult
-  }
-}
-
 export function parseObjectRetentionConfig(xml) {
   const xmlObj = parseXml(xml)
   const retentionConfig = xmlObj.Retention
@@ -529,16 +352,6 @@ export function parseObjectRetentionConfig(xml) {
 export function parseBucketEncryptionConfig(xml) {
   let encConfig = parseXml(xml)
   return encConfig
-}
-export function parseReplicationConfig(xml) {
-  const xmlObj = parseXml(xml)
-  const replicationConfig = {
-    ReplicationConfiguration: {
-      role: xmlObj.ReplicationConfiguration.Role,
-      rules: toArray(xmlObj.ReplicationConfiguration.Rule),
-    },
-  }
-  return replicationConfig
 }
 
 export function parseObjectLegalHoldConfig(xml) {

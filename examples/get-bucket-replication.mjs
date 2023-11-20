@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
-// replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.listBuckets(function (e, buckets) {
-  if (e) return console.log(e)
-  console.log('buckets :', buckets)
-})
+try {
+  const response = await s3Client.getBucketReplication('source-bucket')
+  console.log('Success', JSON.stringify(response))
+} catch (err) {
+  console.log(err.message)
+}

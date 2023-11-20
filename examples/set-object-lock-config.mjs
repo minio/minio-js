@@ -17,26 +17,27 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 //Set Object lock on a bucket
-s3Client.setObjectLockConfig('my-bucketname', { mode: 'COMPLIANCE', unit: 'Days', validity: 10 }, function (err) {
-  if (err) {
-    return console.log(err)
-  }
+try {
+  await s3Client.setObjectLockConfig('my-bucketname', { mode: 'GOVERNANCE', unit: 'Days', validity: 20 })
   console.log('Success')
-})
+} catch (err) {
+  console.log('Error::', err.message)
+}
 
 //To reset/remove object lock config.
-s3Client.setObjectLockConfig('my-bucketname', {}, function (err) {
-  if (err) {
-    return console.log(err)
-  }
+//Set Object lock on a bucket
+try {
+  await s3Client.setObjectLockConfig('my-bucketname', {})
   console.log('Success')
-})
+} catch (err) {
+  console.log('Error::', err.message)
+}

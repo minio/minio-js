@@ -112,6 +112,9 @@ export class InvalidXMLError extends ExtendableError {}
  * S3Error is generated for errors returned from S3 server.
  * see getErrorTransformer for details
  */
-export class S3Error extends ExtendableError {}
+export class S3Error extends ExtendableError {
+  code?: string
+  region?: string
+}
 
 export class IsValidBucketNameError extends ExtendableError {}

@@ -10,9 +10,7 @@ MinIO JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的�
 
 ## 使用NPM下载
 
-```sh
-npm install --save minio
-```
+`minio>7.1.0` 拥有自带的类型定义，不再需要安装 `@types/minio`。
 
 ## 下载并安装源码
 
@@ -158,7 +156,7 @@ mc ls play/europetrip/
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 * [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
-* [remove-bucket.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.js)
+* [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 
 #### 完整示例 : 操作文件对象
@@ -172,7 +170,7 @@ mc ls play/europetrip/
 * [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
-* [stat-object.js](https://github.com/minio/minio-js/blob/master/examples/stat-object.js)
+* [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 
 #### 完整示例 : Presigned操作
 * [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)

@@ -114,37 +114,22 @@ var s3Client = new Minio.Client({
 ## 2. 操作存储桶
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName, region[, callback])
+### async makeBucket(bucketName, [region, makeOpts]): Promise<void>
 
 创建一个新的存储桶。
 
 __参数__
 
-| 参数| 类型 | 描述 |
-|---|---|---|
-|`bucketName`  | _string_  | 存储桶名称。 |
-| `region`  |  _string_ | 存储桶被创建的region(地区)，默认是us-east-1(美国东一区)，下面列举的是其它合法的值： |
-| | |us-east-1 |
-| | |us-west-1 |
-| | |us-west-2 |
-| | |eu-west-1 |
-| | |eu-central-1|
-| | |ap-southeast-1|
-| | |ap-northeast-1|
-| | |ap-southeast-2|
-| | |sa-east-1|
-| | |cn-north-1|
-|`callback(err)`  |_function_   | 回调函数，`err`做为错误信息参数。如果创建存储桶成功则`err`为null。如果没有传callback的话，则返回一个`Promise`对象。 |
-
+| 参数           | 类型       | 描述                                    |
+|--------------|----------|---------------------------------------|
+| `bucketName` | _string_ | 存储桶名称。                                |
+| `region`     | _string_ | 存储桶被创建的region(地区)，默认是us-east-1(美国东一区) |
+| `makeOpts`   | _object_ | 额外选项，例如： `{ObjectLocking:true}`       |
 
 __示例__
 
-
 ```js
-minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
-  if (err) return console.log('Error creating bucket.', err)
-  console.log('Bucket created successfully in "us-east-1".')
-})
+await minioClient.makeBucket('mybucket', 'us-east-1')
 ```
 
 <a name="listBuckets"></a>
@@ -631,12 +616,12 @@ __示例__
 
 
 ```js
-minioClient.removeObject('mybucket', 'photo.jpg', function(err) {
-  if (err) {
-    return console.log('Unable to remove object', err)
-  }
+try {
+  await minioClient.removeObject('mybucket', 'photo.jpg')
   console.log('Removed the object')
-})
+} catch (err) {
+  console.log('Unable to remove object', err)
+}
 ```
 
 <a name="removeIncompleteUpload"></a>

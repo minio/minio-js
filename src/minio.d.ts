@@ -1,7 +1,7 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { EventEmitter } from 'node:events'
-import type { RequestOptions } from 'node:https'
 import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
@@ -11,14 +11,80 @@ import type {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from './helpers.ts'
+import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
+import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import type { Region } from './internal/s3-endpoints.ts'
-import type { Transport } from './internal/type.ts'
+import type {
+  BucketItem,
+  BucketItemCopy,
+  BucketItemFromList,
+  BucketItemStat,
+  BucketItemWithMetadata,
+  BucketStream,
+  EmptyObject,
+  ExistingObjectReplication,
+  GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
+  IsoDate,
+  ItemBucketMetadata,
+  ItemBucketMetadataList,
+  MetadataItem,
+  ObjectLockInfo,
+  PutObjectLegalHoldOptions,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  ResultCallback,
+  Retention,
+  RetentionOptions,
+  SourceSelectionCriteria,
+  Tag,
+  VersionIdentificator,
+} from './internal/type.ts'
 
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
+export type { MakeBucketOpt } from './internal/client.ts'
+export type {
+  BucketItem,
+  BucketItemCopy,
+  BucketItemFromList,
+  BucketItemStat,
+  BucketItemWithMetadata,
+  BucketStream,
+  ClientOptions,
+  EmptyObject,
+  ExistingObjectReplication,
+  GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
+  IsoDate,
+  ItemBucketMetadata,
+  ItemBucketMetadataList,
+  MetadataItem,
+  NoResultCallback,
+  ObjectLockInfo,
+  PutObjectLegalHoldOptions,
+  RemoveOptions,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  Retention,
+  RetentionOptions,
+  SourceSelectionCriteria,
+  Tag,
+}
 
 // Exports only from typings
 export type NotificationEvent =
@@ -54,77 +120,10 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
  * @deprecated keep for backward compatible
  */
 export type LegalHoldStatus = LEGAL_HOLD_STATUS
-
-export type NoResultCallback = (error: Error | null) => void
-export type ResultCallback<T> = (error: Error | null, result: T) => void
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
-export type EmptyObject = Record<string, never>
-export type VersionIdentificator = Pick<RetentionOptions, 'versionId'>
 export type Lifecycle = LifecycleConfig | null | ''
-export type Lock = LockConfig | EmptyObject
 export type Encryption = EncryptionConfig | EmptyObject
-export type Retention = RetentionOptions | EmptyObject
-export type IsoDate = string
-
-export interface ClientOptions {
-  endPoint: string
-  accessKey: string
-  secretKey: string
-  useSSL?: boolean | undefined
-  port?: number | undefined
-  region?: Region | undefined
-  transport?: Transport
-  sessionToken?: string | undefined
-  partSize?: number | undefined
-  pathStyle?: boolean | undefined
-}
-
-export interface BucketItemFromList {
-  name: string
-  creationDate: Date
-}
-
-export interface BucketItemCopy {
-  etag: string
-  lastModified: Date
-}
-
-export interface BucketItem {
-  name: string
-  prefix: string
-  size: number
-  etag: string
-  lastModified: Date
-}
-
-export interface BucketItemWithMetadata extends BucketItem {
-  metadata: ItemBucketMetadata | ItemBucketMetadataList
-}
-
-export interface BucketItemStat {
-  size: number
-  etag: string
-  lastModified: Date
-  metaData: ItemBucketMetadata
-}
-
-export interface IncompleteUploadedBucketItem {
-  key: string
-  uploadId: string
-  size: number
-}
-
-export interface BucketStream<T> extends ReadableStream {
-  on(event: 'data', listener: (item: T) => void): this
-
-  on(event: 'end' | 'pause' | 'readable' | 'resume' | 'close', listener: () => void): this
-
-  on(event: 'error', listener: (err: Error) => void): this
-
-  on(event: string | symbol, listener: (...args: any[]) => void): this
-}
-
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -132,27 +131,9 @@ export interface PostPolicyResult {
   }
 }
 
-export interface MetadataItem {
-  Key: string
-  Value: string
-}
-
-export interface ItemBucketMetadataList {
-  Items: MetadataItem[]
-}
-
-export interface ItemBucketMetadata {
-  [key: string]: any
-}
-
 export interface UploadedObjectInfo {
   etag: string
   versionId: string | null
-}
-
-export interface Tag {
-  Key: string
-  Value: string
 }
 
 export interface LifecycleConfig {
@@ -175,22 +156,6 @@ export interface EncryptionConfig {
 
 export interface EncryptionRule {
   [key: string]: any
-}
-
-export interface ReplicationConfig {
-  role: string
-  rules: []
-}
-
-export interface ReplicationConfig {
-  [key: string]: any
-}
-
-export interface RetentionOptions {
-  versionId: string
-  mode?: RETENTION_MODES
-  retainUntilDate?: IsoDate
-  governanceBypass?: boolean
 }
 
 export interface LegalHoldOptions {
@@ -256,52 +221,20 @@ export class TargetConfig {
   addFilterPrefix(prefix: string): void
 }
 
-export interface MakeBucketOpt {
-  ObjectLocking: boolean
-}
-
-export interface RemoveOptions {
-  versionId?: string
-  governanceBypass?: boolean
-}
-
 // Exports from library
-export class Client {
-  constructor(options: ClientOptions)
-
-  // Bucket operations
-  makeBucket(bucketName: string, region: Region, makeOpts: MakeBucketOpt, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region: Region, callback: NoResultCallback): void
-  makeBucket(bucketName: string, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region?: Region, makeOpts?: MakeBucketOpt): Promise<void>
-
-  listBuckets(callback: ResultCallback<BucketItemFromList[]>): void
-  listBuckets(): Promise<BucketItemFromList[]>
-
+export class Client extends TypedClient {
   bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
   bucketExists(bucketName: string): Promise<boolean>
-
-  removeBucket(bucketName: string, callback: NoResultCallback): void
-  removeBucket(bucketName: string): Promise<void>
 
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  listIncompleteUploads(
-    bucketName: string,
-    prefix?: string,
-    recursive?: boolean,
-  ): BucketStream<IncompleteUploadedBucketItem>
 
   getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
   getBucketVersioning(bucketName: string): Promise<VersioningConfig>
 
   setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
   setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
-
-  getBucketTagging(bucketName: string, callback: ResultCallback<Tag[]>): void
-  getBucketTagging(bucketName: string): Promise<Tag[]>
 
   setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
   setBucketTagging(bucketName: string, tags: TagList): Promise<void>
@@ -318,13 +251,6 @@ export class Client {
   removeBucketLifecycle(bucketName: string, callback: NoResultCallback): void
   removeBucketLifecycle(bucketName: string): Promise<void>
 
-  setObjectLockConfig(bucketName: string, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig: Lock, callback: NoResultCallback): void
-  setObjectLockConfig(bucketName: string, lockConfig?: Lock): Promise<void>
-
-  getObjectLockConfig(bucketName: string, callback: ResultCallback<Lock>): void
-  getObjectLockConfig(bucketName: string): Promise<Lock>
-
   getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
   getBucketEncryption(bucketName: string): Promise<Encryption>
 
@@ -333,15 +259,6 @@ export class Client {
 
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
-
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig, callback: NoResultCallback): void
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfig): Promise<void>
-
-  getBucketReplication(bucketName: string, callback: ResultCallback<ReplicationConfig>): void
-  getBucketReplication(bucketName: string): Promise<ReplicationConfig>
-
-  removeBucketReplication(bucketName: string, callback: NoResultCallback): void
-  removeBucketReplication(bucketName: string): Promise<void>
 
   // Object operations
   getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
@@ -428,27 +345,11 @@ export class Client {
     conditions: CopyConditions,
   ): Promise<BucketItemCopy>
 
-  statObject(bucketName: string, objectName: string, callback: ResultCallback<BucketItemStat>): void
-  statObject(bucketName: string, objectName: string): Promise<BucketItemStat>
-
-  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
-
   removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
   removeObjects(bucketName: string, objectsList: string[]): Promise<void>
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-
-  putObjectRetention(bucketName: string, objectName: string, callback: NoResultCallback): void
-  putObjectRetention(
-    bucketName: string,
-    objectName: string,
-    retentionOptions: Retention,
-    callback: NoResultCallback,
-  ): void
-  putObjectRetention(bucketName: string, objectName: string, retentionOptions?: Retention): Promise<void>
 
   getObjectRetention(
     bucketName: string,
@@ -457,31 +358,6 @@ export class Client {
     callback: ResultCallback<Retention>,
   ): void
   getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
-
-  // It seems, putObjectTagging is deprecated in favor or setObjectTagging - there is no such a method in the library source code
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  /**
-   * @deprecated Use setObjectTagging instead.
-   */
-  putObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions?: VersionIdentificator,
-  ): Promise<void>
 
   setObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
   setObjectTagging(
@@ -506,37 +382,6 @@ export class Client {
     callback: NoResultCallback,
   ): void
   removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentificator): Promise<void>
-
-  getObjectTagging(bucketName: string, objectName: string, callback: ResultCallback<Tag[]>): void
-  getObjectTagging(
-    bucketName: string,
-    objectName: string,
-    getOptions: VersionIdentificator,
-    callback: ResultCallback<Tag[]>,
-  ): void
-  getObjectTagging(bucketName: string, objectName: string, getOptions?: VersionIdentificator): Promise<Tag[]>
-
-  getObjectLegalHold(bucketName: string, objectName: string, callback: ResultCallback<LegalHoldOptions>): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions: VersionIdentificator,
-    callback: ResultCallback<LegalHoldOptions>,
-  ): void
-  getObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    getOptions?: VersionIdentificator,
-  ): Promise<LegalHoldOptions>
-
-  setObjectLegalHold(bucketName: string, objectName: string, callback: NoResultCallback): void
-  setObjectLegalHold(
-    bucketName: string,
-    objectName: string,
-    setOptions: LegalHoldOptions,
-    callback: NoResultCallback,
-  ): void
-  setObjectLegalHold(bucketName: string, objectName: string, setOptions?: LegalHoldOptions): Promise<void>
 
   composeObject(
     destObjConfig: CopyDestinationOptions,
@@ -647,23 +492,8 @@ export class Client {
     events: NotificationEvent[],
   ): NotificationPoller
 
-  // Custom Settings
-  setS3TransferAccelerate(endpoint: string): void
-
   // Other
   newPostPolicy(): PostPolicy
-
-  setRequestOptions(options: RequestOptions): void
-
-  // Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
-  extensions: {
-    listObjectsV2WithMetadata(
-      bucketName: string,
-      prefix?: string,
-      recursive?: boolean,
-      startAfter?: string,
-    ): BucketStream<BucketItemWithMetadata>
-  }
 }
 
 export declare class NotificationPoller extends EventEmitter {

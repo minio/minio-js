@@ -75,6 +75,7 @@ module.exports = {
       },
     ],
     '@typescript-eslint/no-explicit-any': ['warn'],
+    '@typescript-eslint/ban-ts-comment': 0,
 
     '@typescript-eslint/prefer-optional-chain': 0, // ["warn"],
     'no-empty-function': 0,
@@ -100,6 +101,7 @@ module.exports = {
         fixStyle: 'separate-type-imports',
       },
     ],
+    'import/no-duplicates': 'error',
     'unused-imports/no-unused-imports': 'error',
     'import/no-amd': 'error',
   },
@@ -113,7 +115,7 @@ module.exports = {
     {
       files: ['./src/**/*.ts'],
       rules: {
-        'prefer-const': 'error',
+        'prefer-const': ['error', { destructuring: 'all' }],
       },
     },
     {
