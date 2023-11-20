@@ -77,6 +77,7 @@ import { postPresignSignatureV4, presignSignatureV4, signV4 } from './signing.ts
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
+export * from './errors.ts'
 export * from './helpers.ts'
 export * from './notification.js'
 export { CopyConditions, PostPolicy }
@@ -776,7 +777,7 @@ export class Client {
       throw new TypeError('callback should be of type "function"')
     }
     var method = 'GET'
-    this.makeRequest({ method }, '', [200], DEFAULT_REGION, true, (e, response) => {
+    this.makeRequest({ method }, '', [200], this?.region ?? '', true, (e, response) => {
       if (e) {
         return cb(e)
       }
