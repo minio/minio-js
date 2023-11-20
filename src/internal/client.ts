@@ -420,7 +420,7 @@ export class TypedClient {
     if ((reqOptions.protocol === 'http:' && port !== 80) || (reqOptions.protocol === 'https:' && port !== 443)) {
       const ipVersion = isIP(host)
       if (ipVersion === 6) {
-        // IP is IPv6, we should
+        // IP is IPv6, we should enclose the host with brackets
         reqOptions.headers.host = `[${host}]:${port}`
       } else {
         // IP must be IPv4
