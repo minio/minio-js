@@ -269,6 +269,30 @@ export function parseTagging(xml: string) {
   return result
 }
 
+// parse XML response when a multipart upload is completed
+export function parseCompleteMultipart(xml: string) {
+  const xmlobj = parseXml(xml).CompleteMultipartUploadResult
+  if (xmlobj.Location) {
+    const location = toArray(xmlobj.Location)[0]
+    const bucket = toArray(xmlobj.Bucket)[0]
+    const key = xmlobj.Key
+    const etag = xmlobj.ETag.replace(/^"/g, '')
+      .replace(/"$/g, '')
+      .replace(/^&quot;/g, '')
+      .replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '')
+      .replace(/&#34;$/g, '')
+
+    return { location, bucket, key, etag }
+  }
+  // Complete Multipart can return XML Error after a 200 OK response
+  if (xmlobj.Code && xmlobj.Message) {
+    const errCode = toArray(xmlobj.Code)[0]
+    const errMessage = toArray(xmlobj.Message)[0]
+    return { errCode, errMessage }
+  }
+}
+
 type UploadID = unknown
 
 export type ListMultipartResult = {
