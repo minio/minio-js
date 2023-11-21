@@ -17,16 +17,16 @@
 // Note that `listenBucketNotification` is only available for MinIO, and not
 // Amazon.
 
-const Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: '...',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Start listening for notifications on the bucket, using our arn.
-let poller = s3Client.listenBucketNotification('bucket1', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+const poller = s3Client.listenBucketNotification('bucket1', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 // Notification will be emitted every time a new notification is received.
 // For object creation, here is a sample record:
 
@@ -56,5 +56,8 @@ poller.on('notification', (record) => {
 
 // Create an object - this should trigger a notification.
 s3Client.putObject('bucket1', 'file.jpg', 'stringdata', (err, etag) => {
-  if (err) throw err
+  if (err) {
+    throw err
+  }
+  console.log(etag)
 })

@@ -35,9 +35,9 @@ npm install -g
 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -55,11 +55,11 @@ var minioClient = new Minio.Client({
 #### file-uploader.js
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -68,7 +68,7 @@ var minioClient = new Minio.Client({
 });
 
 // File that needs to be uploaded.
-var file = '/tmp/photos-europe.tar'
+const file = '/tmp/photos-europe.tar'
 
 // Make a bucket called europetrip.
 minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
@@ -76,7 +76,7 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
 
     console.log('Bucket created successfully in "us-east-1".')
 
-    var metaData = {
+    const metaData = {
         'Content-Type': 'application/octet-stream',
         'X-Amz-Meta-Testing': 1234,
         'example': 5678
