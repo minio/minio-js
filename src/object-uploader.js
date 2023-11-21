@@ -77,8 +77,7 @@ export class ObjectUploader extends Transform {
     if (this.partNumber == 1 && chunk.length < this.partSize) {
       // PUT the chunk in a single request — use an empty query.
       let options = {
-        method,
-        // Set user metadata as this is not a multipart upload
+        method, // Set user metadata as this is not a multipart upload
         headers: Object.assign({}, this.metaData, headers),
         query: '',
         bucketName: this.bucketName,
@@ -267,19 +266,18 @@ export class ObjectUploader extends Transform {
 
     // This is called when all of the chunks uploaded successfully, thus
     // completing the multipart upload.
-    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id, this.etags, (err, etag) => {
-      if (err) {
-        return callback(err)
-      }
+    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id, this.etags).then(
+      (etag) => {
+        // Call our callback on the next tick to allow the streams infrastructure
+        // to finish what its doing before we continue.
+        process.nextTick(() => {
+          this.callback(null, etag)
+        })
 
-      // Call our callback on the next tick to allow the streams infrastructure
-      // to finish what its doing before we continue.
-      process.nextTick(() => {
-        this.callback(null, etag)
-      })
-
-      callback()
-    })
+        callback()
+      },
+      (err) => callback(err),
+    )
   }
 }
 
