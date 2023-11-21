@@ -1432,7 +1432,7 @@ export class TypedClient {
     return this.uploadStream(bucketName, objectName, headers, stream, partSize)
   }
 
-  async uploadStream(
+  private async uploadStream(
     bucketName: string,
     objectName: string,
     headers: RequestHeaders,
