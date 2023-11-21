@@ -1441,7 +1441,7 @@ export class TypedClient {
     buf: Buffer,
   ): Promise<UploadedObjectInfo> {
     const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
-    headers['Content-Length'] = length
+    headers['Content-Length'] = buf.length
     if (!this.enableSHA256) {
       headers['Content-MD5'] = md5sum
     }
@@ -1457,6 +1457,7 @@ export class TypedClient {
       [200],
       '',
     )
+    await drainResponse(res)
     return {
       etag: sanitizeETag(res.headers.etag),
       versionId: getVersionId(res.headers as ResponseHeader),
