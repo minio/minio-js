@@ -65,7 +65,7 @@ import type {
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
-import { parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
+import { parseCompleteMultipart, parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -1210,6 +1210,73 @@ export class TypedClient {
 
     const requestOptions = { method, bucketName, objectName: objectName, query }
     await this.makeRequestAsyncOmit(requestOptions, '', [204])
+  }
+
+  /**
+   * this call will aggregate the parts on the server into a single object.
+   */
+  async completeMultipartUpload(
+    bucketName: string,
+    objectName: string,
+    uploadId: string,
+    etags: {
+      part: number
+      etag?: string
+    }[],
+  ): Promise<{ etag: string; versionId: string | null }> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(uploadId)) {
+      throw new TypeError('uploadId should be of type "string"')
+    }
+    if (!isObject(etags)) {
+      throw new TypeError('etags should be of type "Array"')
+    }
+
+    if (!uploadId) {
+      throw new errors.InvalidArgumentError('uploadId cannot be empty')
+    }
+
+    const method = 'POST'
+    const query = `uploadId=${uriEscape(uploadId)}`
+
+    const builder = new xml2js.Builder()
+    const payload = builder.buildObject({
+      CompleteMultipartUpload: {
+        $: {
+          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
+        },
+        Part: etags.map((etag) => {
+          return {
+            PartNumber: etag.part,
+            ETag: etag.etag,
+          }
+        }),
+      },
+    })
+
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
+    const body = await readAsBuffer(res)
+    const result = parseCompleteMultipart(body.toString())
+    if (!result) {
+      throw new Error('BUG: failed to parse server response')
+    }
+
+    if (result.errCode) {
+      // Multipart Complete API returns an error XML after a 200 http status
+      throw new errors.S3Error(result.errMessage)
+    }
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      etag: result.etag as string,
+      versionId: getVersionId(res.headers as ResponseHeader),
+    }
   }
 
   /**
