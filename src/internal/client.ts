@@ -1151,6 +1151,37 @@ export class TypedClient {
     await this.makeRequestAsyncOmit(requestOptions, '', [204])
   }
 
+  async findUploadId(bucketName: string, objectName: string): Promise<string | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    let latestUpload: ListMultipartResult['uploads'][number] | undefined
+    let keyMarker = ''
+    let uploadIdMarker = ''
+    for (;;) {
+      const result = await this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
+      for (const upload of result.uploads) {
+        if (upload.key === objectName) {
+          if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
+            latestUpload = upload
+          }
+        }
+      }
+      if (result.isTruncated) {
+        keyMarker = result.nextKeyMarker
+        uploadIdMarker = result.nextUploadIdMarker
+        continue
+      }
+
+      break
+    }
+    return latestUpload?.uploadId
+  }
+
   /**
    * this call will aggregate the parts on the server into a single object.
    */
@@ -1597,51 +1628,6 @@ export class TypedClient {
       return multipartUploader
     }
     return simpleUploader
-  }
-
-  async findUploadId(bucketName: string, objectName: string): Promise<string | undefined> {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    return new Promise((resolve, reject) => {
-      let latestUpload: ListMultipartResult['uploads'][number] | undefined
-      // TODO: rewrite recursive function call to for look with async/await
-      const listNext = (keyMarker: string, uploadIdMarker: string) => {
-        this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '').then(
-          (result) => {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            result.uploads.forEach((upload) => {
-              if (upload.key === objectName) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
-                  latestUpload = upload
-                  return
-                }
-              }
-            })
-            if (result.isTruncated) {
-              listNext(result.nextKeyMarker as string, result.nextUploadIdMarker as string)
-              return
-            }
-            if (latestUpload) {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              return resolve(latestUpload.uploadId as string)
-            }
-            resolve(undefined)
-          },
-          (err) => {
-            reject(err)
-          },
-        )
-      }
-      listNext('', '')
-    })
   }
 
   async removeBucketReplication(bucketName: string): Promise<void>
