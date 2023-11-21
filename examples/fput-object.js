@@ -17,23 +17,22 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
-var Fs = require('fs')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-var metaData = {
+const metaData = {
   'Content-Type': 'application/octet-stream',
   'X-Amz-Meta-Testing': 1234,
   example: 5678,
 }
 
 // Put a file in bucket my-bucketname.
-var file = 'my-testfile'
+const file = 'my-testfile'
 s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function (e) {
   if (e) {
     return console.log(e)
@@ -43,8 +42,8 @@ s3Client.fPutObject('my-bucketname', 'my-objectname', file, metaData, function (
 
 // Put a file in bucket my-bucketname with content-type detected automatically.
 // In this case it is `text/plain`.
-var file = 'my-testfile.txt'
-s3Client.fPutObject('my-bucketname', 'my-objectname', file, function (e) {
+const file2 = 'my-testfile.txt'
+s3Client.fPutObject('my-bucketname', 'my-objectname', file2, function (e) {
   if (e) {
     return console.log(e)
   }
