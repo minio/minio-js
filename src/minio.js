@@ -133,13 +133,10 @@ export class Client extends TypedClient {
     var removeUploadId
     async.during(
       (cb) => {
-        this.findUploadId(bucketName, objectName, (e, uploadId) => {
-          if (e) {
-            return cb(e)
-          }
+        this.findUploadId(bucketName, objectName).then((uploadId) => {
           removeUploadId = uploadId
           cb(null, uploadId)
-        })
+        }, cb)
       },
       (cb) => {
         var method = 'DELETE'
@@ -1756,7 +1753,7 @@ export class Client extends TypedClient {
             }
             const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
             return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone).then(
-              (value) => cb(null, value),
+              (result) => cb(null, result),
               (err) => cb(err),
             )
           })
