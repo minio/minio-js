@@ -269,8 +269,6 @@ export function parseTagging(xml: string) {
   return result
 }
 
-type UploadID = string
-
 // parse XML response when a multipart upload is completed
 export function parseCompleteMultipart(xml: string) {
   const xmlobj = parseXml(xml).CompleteMultipartUploadResult
@@ -294,6 +292,8 @@ export function parseCompleteMultipart(xml: string) {
     return { errCode, errMessage }
   }
 }
+
+type UploadID = string
 
 export type ListMultipartResult = {
   uploads: {
