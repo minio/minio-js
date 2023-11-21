@@ -1423,15 +1423,50 @@ export class TypedClient {
 
     const partSize = this.calculatePartSize(size)
     if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= partSize) {
-      const uploader = this.getUploader(bucketName, objectName, headers, false)
       const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
-      const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
-      return uploader(buf, buf.length, sha256sum, md5sum)
+      return this.uploadBuffer(bucketName, objectName, headers, buf)
     }
 
     return this.uploadStream(bucketName, objectName, headers, stream, partSize)
   }
 
+  /**
+   * method to upload buffer in one call
+   * @private
+   */
+  private async uploadBuffer(
+    bucketName: string,
+    objectName: string,
+    headers: RequestHeaders,
+    buf: Buffer,
+  ): Promise<UploadedObjectInfo> {
+    const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
+    headers['Content-Length'] = length
+    if (!this.enableSHA256) {
+      headers['Content-MD5'] = md5sum
+    }
+    const res = await this.makeRequestStreamAsync(
+      {
+        method: 'PUT',
+        bucketName,
+        objectName,
+        headers,
+      },
+      buf,
+      sha256sum,
+      [200],
+      '',
+    )
+    return {
+      etag: sanitizeETag(res.headers.etag),
+      versionId: getVersionId(res.headers as ResponseHeader),
+    }
+  }
+
+  /**
+   * upload stream with MultipartUpload
+   * @private
+   */
   private async uploadStream(
     bucketName: string,
     objectName: string,
@@ -1512,122 +1547,6 @@ export class TypedClient {
     ])
 
     return o
-  }
-
-  getUploader(
-    bucketName: string,
-    objectName: string,
-    extraHeaders: RequestHeaders,
-    multipart: false,
-  ): (buf: Buffer, length: number, sha256sum: string, md5sum: string) => Promise<UploadedObjectInfo>
-  getUploader(
-    bucketName: string,
-    objectName: string,
-    extraHeaders: RequestHeaders,
-    multipart: true,
-  ): (
-    uploadId: string,
-    partNumber: number,
-    buf: Buffer,
-    length: number,
-    sha256sum: string,
-    md5sum: string,
-  ) => Promise<UploadedObjectInfo>
-
-  // a part of the multipart.
-  getUploader(bucketName: string, objectName: string, extraHeaders: RequestHeaders, multipart: boolean) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isBoolean(multipart)) {
-      throw new TypeError('multipart should be of type "boolean"')
-    }
-    if (!isObject(extraHeaders)) {
-      throw new TypeError('metadata should be of type "object"')
-    }
-
-    const validate = (stream: stream.Readable | Buffer, length: number, sha256sum: string, md5sum: string) => {
-      if (!(Buffer.isBuffer(stream) || isReadableStream(stream))) {
-        throw new TypeError('stream should be of type "Stream" or Buffer')
-      }
-      if (!isNumber(length)) {
-        throw new TypeError('length should be of type "number"')
-      }
-      if (!isString(sha256sum)) {
-        throw new TypeError('sha256sum should be of type "string"')
-      }
-      if (!isString(md5sum)) {
-        throw new TypeError('md5sum should be of type "string"')
-      }
-    }
-
-    const simpleUploader = (buf: Buffer, length: number, sha256sum: string, md5sum: string) => {
-      validate(buf, length, sha256sum, md5sum)
-      return upload('', buf, length, sha256sum, md5sum)
-    }
-
-    const multipartUploader = (
-      uploadId: string,
-      partNumber: number,
-      buf: Buffer,
-      length: number,
-      sha256sum: string,
-      md5sum: string,
-    ) => {
-      if (!isString(uploadId)) {
-        throw new TypeError('uploadId should be of type "string"')
-      }
-      if (!isNumber(partNumber)) {
-        throw new TypeError('partNumber should be of type "number"')
-      }
-      if (!uploadId) {
-        throw new errors.InvalidArgumentError('Empty uploadId')
-      }
-      if (!partNumber) {
-        throw new errors.InvalidArgumentError('partNumber cannot be 0')
-      }
-      validate(buf, length, sha256sum, md5sum)
-      const query = `partNumber=${partNumber}&uploadId=${uriEscape(uploadId)}`
-      return upload(query, buf, length, sha256sum, md5sum)
-    }
-
-    const upload = async (query: string, stream: Buffer, length: number, sha256sum: string, md5sum: string) => {
-      const method = 'PUT'
-      let headers: RequestHeaders = { 'Content-Length': length }
-
-      if (!multipart) {
-        headers = Object.assign({}, extraHeaders, headers)
-      }
-
-      if (!this.enableSHA256) {
-        headers['Content-MD5'] = md5sum
-      }
-
-      const response = await this.makeRequestStreamAsync(
-        {
-          method,
-          bucketName,
-          objectName,
-          query,
-          headers,
-        },
-        stream,
-        sha256sum,
-        [200],
-        '',
-      )
-      return {
-        etag: sanitizeETag(response.headers.etag),
-        versionId: getVersionId(response.headers as ResponseHeader),
-      }
-    }
-    if (multipart) {
-      return multipartUploader
-    }
-    return simpleUploader
   }
 
   async removeBucketReplication(bucketName: string): Promise<void>
