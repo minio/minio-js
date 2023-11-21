@@ -1185,69 +1185,6 @@ export class Client extends TypedClient {
     })
   }
 
-  // Complete the multipart upload. After all the parts are uploaded issuing
-  // this call will aggregate the parts on the server into a single object.
-  completeMultipartUpload(bucketName, objectName, uploadId, etags, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(uploadId)) {
-      throw new TypeError('uploadId should be of type "string"')
-    }
-    if (!isObject(etags)) {
-      throw new TypeError('etags should be of type "Array"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-
-    if (!uploadId) {
-      throw new errors.InvalidArgumentError('uploadId cannot be empty')
-    }
-
-    var method = 'POST'
-    var query = `uploadId=${uriEscape(uploadId)}`
-
-    const builder = new xml2js.Builder()
-    const payload = builder.buildObject({
-      CompleteMultipartUpload: {
-        $: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
-        },
-        Part: etags.map((etag) => {
-          return {
-            PartNumber: etag.part,
-            ETag: etag.etag,
-          }
-        }),
-      },
-    })
-
-    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getCompleteMultipartTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (result) => {
-          if (result.errCode) {
-            // Multipart Complete API returns an error XML after a 200 http status
-            cb(new errors.S3Error(result.errMessage))
-          } else {
-            const completeMultipartResult = {
-              etag: result.etag,
-              versionId: getVersionId(response.headers),
-            }
-            cb(null, completeMultipartResult)
-          }
-        })
-    })
-  }
-
   // Find uploadId of an incomplete upload.
   findUploadId(bucketName, objectName, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -1971,7 +1908,10 @@ export class Client extends TypedClient {
               return
             }
             const partsDone = res.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
-            return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone, cb)
+            return me.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone).then(
+              (result) => cb(null, result),
+              (err) => cb(err),
+            )
           })
         }
 

@@ -116,11 +116,6 @@ export function getListObjectsV2WithMetadataTransformer() {
   return getConcater(xmlParsers.parseListObjectsV2WithMetadata)
 }
 
-// Parses completeMultipartUpload response.
-export function getCompleteMultipartTransformer() {
-  return getConcater(xmlParsers.parseCompleteMultipart)
-}
-
 // Parses GET/SET BucketNotification response
 export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
