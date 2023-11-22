@@ -48,6 +48,7 @@ import type {
   VersionIdentificator,
 } from './internal/type.ts'
 
+export * from './errors.ts'
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export { CopyConditions, PostPolicy }
