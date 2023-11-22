@@ -602,27 +602,27 @@ describe('Client', function () {
           })
         })
         it('should fail with invalid bucket name', () => {
-          return expect(client.putObject('ab', 'object')).to.be.rejectedWith('invalid bucket name')
+          return expect(client.putObject('ab', 'object')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail with invalid object name', () => {
-          return expect(client.putObject('bucket', '')).to.be.rejectedWith('invalid object name')
+          return expect(client.putObject('bucket', '')).to.be.rejectedWith('Invalid object name')
         })
         it('should error with size > maxObjectSize', () => {
           return expect(
             client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1),
-          ).to.be.rejectedWith('length')
+          ).to.be.rejectedWith('size should not be more than')
         })
         it('should fail on null bucket', () => {
-          return expect(client.putObject(null, 'hello', null, 1, '')).rejectedWith('null bucket')
+          return expect(client.putObject(null, 'hello', null, 1, '')).rejectedWith('Invalid bucket name')
         })
         it('should fail on empty bucket', () => {
-          return expect(client.putObject(' \n \t ', 'hello', null, 1, '')).to.be.rejectedWith('empty bucket')
+          return expect(client.putObject(' \n \t ', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail on empty bucket', () => {
-          return expect(client.putObject('', 'hello', null, 1, '')).to.be.rejectedWith('empty bucket')
+          return expect(client.putObject('', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail on null object', () => {
-          return expect(client.putObject('hello', null, null, 1, '')).to.be.rejectedWith('null object')
+          return expect(client.putObject('hello', null, null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
         it('should fail on empty object', () => {
           return expect(client.putObject('hello', '', null, 1, '')).to.be.rejectedWith('Invalid object name')
