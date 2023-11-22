@@ -66,6 +66,8 @@ import type {
   ObjectLockInfo,
   ObjectMetaData,
   PutObjectLegalHoldOptions,
+  PutTaggingParams,
+  RemoveTaggingParams,
   ReplicationConfig,
   ReplicationConfigOpts,
   RequestHeaders,
@@ -74,6 +76,8 @@ import type {
   Retention,
   StatObjectOpts,
   Tag,
+  TaggingOpts,
+  Tags,
   Transport,
   UploadedObjectInfo,
   VersionIdentificator,
@@ -2101,5 +2105,111 @@ export class TypedClient {
     const payload = builder.buildObject(versionConfig)
 
     await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
+  }
+
+  async setTagging(taggingParams: PutTaggingParams): Promise<void> {
+    const { bucketName, objectName, tags, putOpts } = taggingParams
+    const method = 'PUT'
+    let query = 'tagging'
+
+    if (putOpts && putOpts?.versionId) {
+      query = `${query}&versionId=${putOpts.versionId}`
+    }
+    const tagsList = []
+    for (const [key, value] of Object.entries(tags)) {
+      tagsList.push({ Key: key, Value: value })
+    }
+    const taggingConfig = {
+      Tagging: {
+        TagSet: {
+          Tag: tagsList,
+        },
+      },
+    }
+    const encoder = new TextEncoder()
+    const headers = {} as RequestHeaders
+    const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
+    const payload = builder.buildObject(taggingConfig)
+    const payloadBuf = Buffer.from(encoder.encode(payload))
+    const requestOptions = {
+      method,
+      bucketName,
+      query,
+      headers,
+
+      ...(objectName && { objectName: objectName }),
+    }
+
+    headers['Content-MD5'] = toMd5(payloadBuf)
+
+    await this.makeRequestAsyncOmit(requestOptions, payloadBuf)
+  }
+
+  async removeTagging({ bucketName, objectName, removeOpts }: RemoveTaggingParams): Promise<void> {
+    const method = 'DELETE'
+    let query = 'tagging'
+
+    if (removeOpts && Object.keys(removeOpts).length && removeOpts.versionId) {
+      query = `${query}&versionId=${removeOpts.versionId}`
+    }
+    const requestOptions = { method, bucketName, objectName, query }
+
+    if (objectName) {
+      requestOptions['objectName'] = objectName
+    }
+    await this.makeRequestAsync(requestOptions, '', [200, 204])
+  }
+
+  async setBucketTagging(bucketName: string, tags: Tag): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(tags)) {
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if (Object.keys(tags).length > 10) {
+      throw new errors.InvalidArgumentError('maximum tags allowed is 10"')
+    }
+
+    await this.setTagging({ bucketName, tags })
+  }
+
+  async removeBucketTagging(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    await this.removeTagging({ bucketName })
+  }
+
+  async setObjectTagging(bucketName: string, objectName: string, tags: Tags, putOpts: TaggingOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+
+    if (!isObject(tags)) {
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if (Object.keys(tags).length > 10) {
+      throw new errors.InvalidArgumentError('Maximum tags allowed is 10"')
+    }
+
+    await this.setTagging({ bucketName, objectName, tags, putOpts })
+  }
+
+  async removeObjectTagging(bucketName: string, objectName: string, removeOpts: TaggingOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+    if (removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)) {
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
+
+    await this.removeTagging({ bucketName, objectName, removeOpts })
   }
 }

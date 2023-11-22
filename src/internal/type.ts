@@ -146,6 +146,8 @@ export type Tag = {
   Value: string
 }
 
+export type Tags = Record<string, string>
+
 export type ReplicationRuleDestination = {
   Bucket: string
   StorageClass: string
@@ -255,4 +257,21 @@ export type VersioningSuspended = 'Suspended'
 export type BucketVersioningConfiguration = {
   Status: VersioningEnabled | VersioningSuspended
   // TODO add ExcludedPrefixes, ExcludeFolders which are  part of MinIO's extension, as an enhancement.
+}
+
+export type TaggingOpts = {
+  versionId: string
+}
+
+export type PutTaggingParams = {
+  bucketName: string
+  objectName?: string
+  tags: Tags
+  putOpts?: TaggingOpts
+}
+
+export type RemoveTaggingParams = {
+  bucketName: string
+  objectName?: string
+  removeOpts?: TaggingOpts
 }

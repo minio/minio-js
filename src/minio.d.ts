@@ -207,6 +207,9 @@ export class Client extends TypedClient {
   removeBucketTagging(bucketName: string, callback: NoResultCallback): void
   removeBucketTagging(bucketName: string): Promise<void>
 
+  setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
+  setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
+
   setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle, callback: NoResultCallback): void
   setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle): Promise<void>
 
@@ -252,30 +255,6 @@ export class Client extends TypedClient {
     callback: ResultCallback<Retention>,
   ): void
   getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
-
-  setObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
-  setObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  setObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions?: VersionIdentificator,
-  ): Promise<void>
-
-  removeObjectTagging(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObjectTagging(
-    bucketName: string,
-    objectName: string,
-    removeOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentificator): Promise<void>
 
   composeObject(
     destObjConfig: CopyDestinationOptions,
