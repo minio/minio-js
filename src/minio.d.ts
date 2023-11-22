@@ -49,6 +49,7 @@ import type {
 } from './internal/type.ts'
 import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
+export * from './errors.ts'
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
 export type * from './notification.ts'

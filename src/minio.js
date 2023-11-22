@@ -66,6 +66,7 @@ import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
 import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
+export * from './errors.ts'
 export * from './helpers.ts'
 export * from './notification.ts'
 export { CopyConditions, PostPolicy }
