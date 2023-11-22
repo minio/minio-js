@@ -1160,6 +1160,37 @@ export class TypedClient {
     await this.makeRequestAsyncOmit(requestOptions, '', [204])
   }
 
+  async findUploadId(bucketName: string, objectName: string): Promise<string | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    let latestUpload: ListMultipartResult['uploads'][number] | undefined
+    let keyMarker = ''
+    let uploadIdMarker = ''
+    for (;;) {
+      const result = await this.listIncompleteUploadsQuery(bucketName, objectName, keyMarker, uploadIdMarker, '')
+      for (const upload of result.uploads) {
+        if (upload.key === objectName) {
+          if (!latestUpload || upload.initiated.getTime() > latestUpload.initiated.getTime()) {
+            latestUpload = upload
+          }
+        }
+      }
+      if (result.isTruncated) {
+        keyMarker = result.nextKeyMarker
+        uploadIdMarker = result.nextUploadIdMarker
+        continue
+      }
+
+      break
+    }
+    return latestUpload?.uploadId
+  }
+
   /**
    * this call will aggregate the parts on the server into a single object.
    */
