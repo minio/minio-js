@@ -77,8 +77,7 @@ export class ObjectUploader extends Transform {
     if (this.partNumber == 1 && chunk.length < this.partSize) {
       // PUT the chunk in a single request — use an empty query.
       let options = {
-        method,
-        // Set user metadata as this is not a multipart upload
+        method, // Set user metadata as this is not a multipart upload
         headers: Object.assign({}, this.metaData, headers),
         query: '',
         bucketName: this.bucketName,
@@ -118,51 +117,52 @@ export class ObjectUploader extends Transform {
       })
 
       // Check for an incomplete previous upload.
-      this.client.findUploadId(this.bucketName, this.objectName, (err, id) => {
-        if (err) {
-          return this.emit('error', err)
-        }
+      this.client.findUploadId(this.bucketName, this.objectName).then(
+        (id) => {
+          // If no upload ID exists, initiate a new one.
+          if (!id) {
+            this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData).then(
+              (id) => {
+                this.id = id
 
-        // If no upload ID exists, initiate a new one.
-        if (!id) {
-          this.client.initiateNewMultipartUpload(this.bucketName, this.objectName, this.metaData).then(
-            (id) => {
-              this.id = id
+                // We are now ready to accept new chunks — this will flush the buffered chunk.
+                this.emit('ready')
+              },
+              (err) => callback(err),
+            )
 
-              // We are now ready to accept new chunks — this will flush the buffered chunk.
+            return
+          }
+
+          this.id = id
+
+          // Retrieve the pre-uploaded parts, if we need to resume the upload.
+          this.client.listParts(this.bucketName, this.objectName, id).then(
+            (etags) => {
+              // It is possible for no parts to be already uploaded.
+              if (!etags) {
+                etags = []
+              }
+
+              // oldParts will become an object, allowing oldParts[partNumber].etag
+              this.oldParts = etags.reduce(function (prev, item) {
+                if (!prev[item.part]) {
+                  prev[item.part] = item
+                }
+                return prev
+              }, {})
+
               this.emit('ready')
             },
-            (err) => callback(err),
+            (err) => {
+              return this.emit('error', err)
+            },
           )
-
-          return
-        }
-
-        this.id = id
-
-        // Retrieve the pre-uploaded parts, if we need to resume the upload.
-        this.client.listParts(this.bucketName, this.objectName, id).then(
-          (etags) => {
-            // It is possible for no parts to be already uploaded.
-            if (!etags) {
-              etags = []
-            }
-
-            // oldParts will become an object, allowing oldParts[partNumber].etag
-            this.oldParts = etags.reduce(function (prev, item) {
-              if (!prev[item.part]) {
-                prev[item.part] = item
-              }
-              return prev
-            }, {})
-
-            this.emit('ready')
-          },
-          (err) => {
-            return this.emit('error', err)
-          },
-        )
-      })
+        },
+        (err) => {
+          return this.emit('error', err)
+        },
+      )
 
       return
     }
@@ -267,19 +267,18 @@ export class ObjectUploader extends Transform {
 
     // This is called when all of the chunks uploaded successfully, thus
     // completing the multipart upload.
-    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id, this.etags, (err, etag) => {
-      if (err) {
-        return callback(err)
-      }
+    this.client.completeMultipartUpload(this.bucketName, this.objectName, this.id, this.etags).then(
+      (etag) => {
+        // Call our callback on the next tick to allow the streams infrastructure
+        // to finish what its doing before we continue.
+        process.nextTick(() => {
+          this.callback(null, etag)
+        })
 
-      // Call our callback on the next tick to allow the streams infrastructure
-      // to finish what its doing before we continue.
-      process.nextTick(() => {
-        this.callback(null, etag)
-      })
-
-      callback()
-    })
+        callback()
+      },
+      (err) => callback(err),
+    )
   }
 }
 
