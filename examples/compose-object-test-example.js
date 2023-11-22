@@ -16,14 +16,13 @@
 
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
-const os = require('os')
-const splitFile = require('split-file')
-const fs = require('fs')
+import fs from 'node:fs'
+import os from 'node:os'
 
-var Minio = require('minio')
-var Helpers = require('minio/dist/main/helpers')
+import * as Minio from 'minio'
+import splitFile from 'split-file'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -33,16 +32,16 @@ const oneMB = 1024 * 1024
 
 // Create a bucket prior to running: mc mb local/source-bucket
 function sampleRunComposeObject() {
-  var tmpDir = os.tmpdir()
+  const tmpDir = os.tmpdir()
 
   const bucketName = 'source-bucket'
   // generate 100 MB buffer and write to a file.
-  var local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
+  const local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
 
   const composedObjName = '_100-mb-file-to-test-compose'
   const tmpSubDir = `${tmpDir}/compose`
-  var fileToSplit = `${tmpSubDir}/${composedObjName}`
-  let partObjNameList = []
+  const fileToSplit = `${tmpSubDir}/${composedObjName}`
+  const partObjNameList = []
 
   fs.mkdir(tmpSubDir, { recursive: true }, function (err) {
     if (err) {
@@ -71,13 +70,13 @@ function sampleRunComposeObject() {
           .then(() => {
             console.log('Uploaded part Files: ', names)
             const sourcePartObjList = partObjNameList.map((partObjName) => {
-              return new Helpers.CopySourceOptions({
+              return new Minio.CopySourceOptions({
                 Bucket: bucketName,
                 Object: partObjName,
               })
             })
 
-            const destObjConfig = new Helpers.CopyDestinationOptions({
+            const destObjConfig = new Minio.CopyDestinationOptions({
               Bucket: bucketName,
               Object: composedObjName,
             })

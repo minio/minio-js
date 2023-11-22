@@ -41,9 +41,9 @@ You need five items in order to connect to MinIO object storage server.
 | useSSL    | Set this value to 'true' to enable secure (HTTPS) access                                            |
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -74,7 +74,7 @@ const minioClient = new Minio.Client({
 })
 
 // File that needs to be uploaded.
-var file = '/tmp/photos-europe.tar'
+const file = '/tmp/photos-europe.tar'
 
 // Make a bucket called europetrip.
 await minioClient.makeBucket('europetrip', 'us-east-1')

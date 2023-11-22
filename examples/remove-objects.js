@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID and YOUR-SECRETACCESSKEY are dummy values, please
 // replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   port: 9000,
   useSSL: false,
@@ -34,7 +34,7 @@ const recursive = false
 
 function removeObjects(bucketName, prefix, recursive, includeVersion) {
   // List all object paths in bucket
-  var objectsStream = s3Client.listObjects(bucketName, prefix, recursive, { IncludeVersion: includeVersion })
+  const objectsStream = s3Client.listObjects(bucketName, prefix, recursive, { IncludeVersion: includeVersion })
 
   objectsStream.on('data', function (obj) {
     if (includeVersion) {

@@ -63,6 +63,6 @@ const policy = `
     }
   ]
 }
-`
 
 await s3Client.setBucketPolicy('testbucket', policy)
+console.log('Set bucket policy')
