@@ -17,19 +17,20 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-testfile, my-bucketname
 // and my-objectname are dummy values, please replace them with original values.
 
-var Minio = require('minio')
-var Fs = require('fs')
+import * as Fs from 'node:fs'
 
-var s3Client = new Minio.Client({
+import * as Minio from 'minio'
+
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
 // Upload a stream
-var file = 'my-testfile.ogg'
-var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function (e, stat) {
+const file = 'my-testfile.ogg'
+const fileStream = Fs.createReadStream(file)
+Fs.stat(file, function (e, stat) {
   if (e) {
     return console.log(e)
   }
@@ -42,7 +43,7 @@ var fileStat = Fs.stat(file, function (e, stat) {
 })
 
 // Upload a buffer
-var buf = new Buffer(10)
+const buf = new Buffer(10)
 buf.fill('a')
 s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-stream', function (e) {
   if (e) {
@@ -52,7 +53,7 @@ s3Client.putObject('my-bucketname', 'my-objectname2', buf, 'application/octet-st
 })
 
 // Upload a string
-var str = 'random string to be uploaded'
+const str = 'random string to be uploaded'
 s3Client.putObject('my-bucketname', 'my-objectname3', str, 'text/plain', function (e) {
   if (e) {
     return console.log(e)

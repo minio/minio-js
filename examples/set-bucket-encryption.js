@@ -17,9 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -40,7 +40,7 @@ s3Client.setBucketEncryption('my-bucket', function (error) {
  * ` { ApplyServerSideEncryptionByDefault: { KMSMasterKeyID: 'arn:aws:kms:us-east-1:1234/5678example', SSEAlgorithm:   "aws:kms" } }`
  */
 
-var encryptionConfig = {
+const encryptionConfig = {
   Rule: [
     {
       ApplyServerSideEncryptionByDefault: {
