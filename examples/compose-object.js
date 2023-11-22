@@ -17,10 +17,9 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
-var Helpers = require('minio/dist/main/helpers')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -29,28 +28,28 @@ var s3Client = new Minio.Client({
 const bucketName = 'source-bucket'
 
 const sourceList = [
-  new Helpers.CopySourceOptions({
+  new Minio.CopySourceOptions({
     Bucket: bucketName,
     Object: 'parta',
     // other options if any.
   }),
-  new Helpers.CopySourceOptions({
+  new Minio.CopySourceOptions({
     Bucket: bucketName,
     Object: 'partb',
     // other options if any.
     //    VersionID:""
   }),
-  new Helpers.CopySourceOptions({
+  new Minio.CopySourceOptions({
     Bucket: bucketName,
     Object: 'partc',
   }),
-  new Helpers.CopySourceOptions({
+  new Minio.CopySourceOptions({
     Bucket: bucketName,
     Object: 'partd',
   }),
 ]
 
-const destOption = new Helpers.CopyDestinationOptions({
+const destOption = new Minio.CopyDestinationOptions({
   Bucket: bucketName,
   Object: '100MB.zip',
   /** Other possible options */
