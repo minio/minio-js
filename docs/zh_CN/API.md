@@ -364,9 +364,6 @@ __示例__
 ```js
 let size = 0
 const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
-
-let seize=0
-
 dataStream.on('data', function(chunk) {
     size += chunk.length
 })
