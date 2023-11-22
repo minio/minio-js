@@ -17,16 +17,18 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
 // are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
   useSSL: true, // Default is true.
 })
 
-var presignedUrl = s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function (e, presignedUrl) {
-  if (e) return console.log(e)
+s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000, function (e, presignedUrl) {
+  if (e) {
+    return console.log(e)
+  }
   console.log(presignedUrl)
 })
