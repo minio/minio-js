@@ -960,7 +960,7 @@ describe('Client', function () {
       it('should fail on invalid bucket', (done) => {
         client.getObjectTagging('nv', null).then(
           () => done(new Error('callback should receive error')),
-          (err) => done(),
+          () => done(),
         )
       })
       it('should fail on null object', async () => {

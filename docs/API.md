@@ -5,9 +5,9 @@
 ## MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -19,9 +19,9 @@ var minioClient = new Minio.Client({
 ## AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -86,9 +86,9 @@ var s3Client = new Minio.Client({
 ## Create client for MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -100,9 +100,9 @@ var minioClient = new Minio.Client({
 ## Create client for AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -112,9 +112,9 @@ var s3Client = new Minio.Client({
 ## Create client with temporary credentials
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-TEMP-ACCESSKEYID',
   secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
@@ -125,11 +125,11 @@ var s3Client = new Minio.Client({
 ## Create client with custom HTTPS Agent
 
 ```js
-var Minio = require('minio')
-var fs = require('fs')
-var https = require('https')
+import * as Minio from 'minio'
+import * as fs from 'fs'
+import * as https from 'https'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -296,8 +296,8 @@ The object is of the format:
 **Example**
 
 ```js
-var data = []
-var stream = minioClient.listObjects('mybucket', '', true)
+const data = []
+const stream = minioClient.listObjects('mybucket', '', true)
 stream.on('data', function (obj) {
   data.push(obj)
 })
@@ -313,8 +313,8 @@ stream.on('error', function (err) {
 To get Object versions
 
 ```js
-var data = []
-var stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: true })
+const data = []
+const stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: true })
 stream.on('data', function (obj) {
   data.push(obj)
 })
@@ -360,7 +360,7 @@ The object is of the format:
 **Example**
 
 ```js
-var stream = minioClient.listObjectsV2('mybucket', '', true, '')
+const stream = minioClient.listObjectsV2('mybucket', '', true, '')
 stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -404,7 +404,7 @@ The object is of the format:
 **Example**
 
 ```js
-var stream = minioClient.extensions.listObjectsV2WithMetadata('mybucket', '', true, '')
+const stream = minioClient.extensions.listObjectsV2WithMetadata('mybucket', '', true, '')
 stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -442,7 +442,7 @@ Lists partially uploaded objects in a bucket.
 **Example**
 
 ```js
-var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
+const Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -496,7 +496,7 @@ Set Versioning state on a Bucket
 **Example**
 
 ```js
-var versioningConfig = { Status: 'Enabled' }
+const versioningConfig = { Status: 'Enabled' }
 minioClient.setBucketVersioning('bucketname', versioningConfig, function (err) {
   if (err) {
     return console.log(err)
@@ -916,7 +916,7 @@ Downloads an object as a stream.
 **Example**
 
 ```js
-var size = 0
+let size = 0
 const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
 dataStream.on('data', function (chunk) {
   size += chunk.length
@@ -934,7 +934,7 @@ dataStream.on('error', function (err) {
 Get a specific object version.
 
 ```js
-var size = 0
+let size = 0
 const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
 dataStream.on('data', function (chunk) {
   size += chunk.length
@@ -973,7 +973,7 @@ Downloads the specified range bytes of an object as a stream.
 **Example**
 
 ```js
-var size = 0
+let size = 0
 // reads 30 bytes from the offset 10.
 const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
 dataStream.on('data', function (chunk) {
@@ -991,7 +991,7 @@ dataStream.on('error', function (err) {
 To get a specific version of an object
 
 ```js
-var versionedObjSize = 0
+const versionedObjSize = 0
 // reads 30 bytes from the offset 10.
 const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' })
 dataStream.on('data', function (chunk) {
@@ -1031,7 +1031,6 @@ Downloads and saves the object as a file in the local filesystem.
 **Example**
 
 ```js
-var size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function (err) {
   if (err) {
     return console.log(err)
@@ -1084,10 +1083,10 @@ Uploads an object from a stream/Buffer.
 The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-var Fs = require('fs')
-var file = '/tmp/40mbfile'
-var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function (err, stats) {
+import * as Fs from 'fs'
+const file = '/tmp/40mbfile'
+const fileStream = Fs.createReadStream(file)
+const fileStat = Fs.stat(file, function (err, stats) {
   if (err) {
     return console.log(err)
   }
@@ -1115,7 +1114,7 @@ var fileStat = Fs.stat(file, function (err, stats) {
 **Example**
 
 ```js
-var buffer = 'Hello World'
+const buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, function (err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -1150,8 +1149,8 @@ Uploads contents from a file to objectName.
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-var file = '/tmp/40mbfile'
-var metaData = {
+const file = '/tmp/40mbfile'
+const metaData = {
   'Content-Type': 'text/html',
   'Content-Language': 123,
   'X-Amz-Meta-Testing': 1234,
@@ -1184,7 +1183,7 @@ Copy a source object into a new object in the specified bucket.
 **Example**
 
 ```js
-var conds = new Minio.CopyConditions()
+const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function (e, data) {
   if (e) {
@@ -1299,10 +1298,10 @@ Remove all objects in the objectsList.
 **Example**
 
 ```js
-var objectsList = []
+const objectsList = []
 
 // List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
+const objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
 
 objectsStream.on('data', function (obj) {
   objectsList.push(obj.name)
@@ -1327,12 +1326,12 @@ objectsStream.on('end', function () {
 With versioning Support
 
 ```js
-var objectsList = []
-var bucket = 'my-bucket'
-var prefix = 'my-prefix'
-var recursive = false
+const objectsList = []
+const bucket = 'my-bucket'
+const prefix = 'my-prefix'
+const recursive = false
 
-var objectsStream = s3Client.listObjects(bucket, prefix, recursive, { IncludeVersion: true })
+const objectsStream = s3Client.listObjects(bucket, prefix, recursive, { IncludeVersion: true })
 objectsStream.on('data', function (obj) {
   objectsList.push(obj)
 })
@@ -1622,26 +1621,28 @@ Compose an object from parts
 Compose an Object from its parts .
 
 ```js
+import * as minio from 'minio'
+
 const sourceList = [
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'parta',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partb',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partc',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partd',
   }),
 ]
 
-const destOption = new Helpers.CopyDestinationOptions({
+const destOption = new minio.CopyDestinationOptions({
   Bucket: 'dest-bucket',
   Object: '100MB.zip',
 })
@@ -1831,7 +1832,7 @@ Allows setting policy conditions to a presigned URL for POST operations. Policie
 Create policy:
 
 ```js
-var policy = minioClient.newPostPolicy()
+const policy = minioClient.newPostPolicy()
 ```
 
 Apply upload policy restrictions:
@@ -1850,7 +1851,7 @@ or
 // Policy restricted for incoming objects with keyPrefix.
 policy.setKeyStartsWith('keyPrefix')
 
-var expires = new Date()
+const expires = new Date()
 expires.setSeconds(24 * 60 * 60 * 10)
 // Policy expires in 10 days.
 policy.setExpires(expires)
@@ -1876,7 +1877,7 @@ POST your content from the browser using `superagent`:
 minioClient.presignedPostPolicy(policy, function (err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(data.postURL)
+  const req = superagent.post(data.postURL)
   _.each(data.formData, function (value, key) {
     req.field(key, value)
   })
@@ -1937,11 +1938,11 @@ Upload a user-created notification configuration and associate it to the specifi
 
 ```js
 // Create a new notification object
-var bucketNotification = new Minio.NotificationConfig()
+const bucketNotification = new Minio.NotificationConfig()
 
 // Setup a new Queue configuration
-var arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')
 queue.addEvent(Minio.ObjectReducedRedundancyLostObject)
@@ -2003,7 +2004,7 @@ To stop listening, call `.stop()` on the returned `EventEmitter`.
 See [here](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) for a full example.
 
 ```js
-var listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 listener.on('notification', function (record) {
   // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
   console.log('%s event occurred (%s)', record.eventName, record.eventTime)

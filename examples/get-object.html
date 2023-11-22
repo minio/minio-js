@@ -3,13 +3,13 @@
   <body>
     <script type="text/javascript" src="minio-browser.js"></script>
     <script>
-      var s3Client = new Minio.Client({
+      const s3Client = new Minio.Client({
         endPoint: 's3.amazonaws.com',
         accessKey: 'YOUR-ACCESSKEYID',
         secretKey: 'YOUR-SECRETACCESSKEY',
       })
 
-      var size = 0
+      let size = 0
       // Get a full object.
       s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
         if (e) {
