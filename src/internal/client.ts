@@ -2126,11 +2126,9 @@ export class TypedClient {
         },
       },
     }
-    const encoder = new TextEncoder()
     const headers = {} as RequestHeaders
     const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
-    const payload = builder.buildObject(taggingConfig)
-    const payloadBuf = Buffer.from(encoder.encode(payload))
+    const payloadBuf = Buffer.from(builder.buildObject(taggingConfig))
     const requestOptions = {
       method,
       bucketName,
