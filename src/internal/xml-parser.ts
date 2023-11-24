@@ -389,3 +389,8 @@ export function parseObjectLockConfig(xml: string): ObjectLockInfo {
 
   return lockConfigResult
 }
+
+export function parseBucketVersioningConfig(xml: string) {
+  const xmlObj = parseXml(xml)
+  return xmlObj.VersioningConfiguration
+}

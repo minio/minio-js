@@ -462,47 +462,35 @@ Get Versioning state of a Bucket
 
 **Parameters**
 
-| Param                | Type       | Description                                                                                                                      |
-| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
-| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.getBucketVersioning('bucketname', function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
-  console.log('Success')
-})
+const versionInfo = await minioClient.getBucketVersioning('bucketname')
+console.log('Success ', versionInfo)
 ```
 
 <a name="setBucketVersioning"></a>
 
-### setBucketVersioning(bucketName, versioningConfig, callback)
+### setBucketVersioning(bucketName, versioningConfig)
 
 Set Versioning state on a Bucket
 
 **Parameters**
 
-| Param              | Type       | Description                                        |
-| ------------------ | ---------- | -------------------------------------------------- |
-| `bucketName`       | _string_   | Name of the bucket.                                |
-| `versioningConfig` | _object_   | Versioning Configuration e.g: `{Status:"Enabled"}` |
-| `callback(err)`    | _function_ | Callback is called with `err` in case of error.    |
+| Param              | Type     | Description                                        |
+| ------------------ | -------- | -------------------------------------------------- |
+| `bucketName`       | _string_ | Name of the bucket.                                |
+| `versioningConfig` | _object_ | Versioning Configuration e.g: `{Status:"Enabled"}` |
 
 **Example**
 
 ```js
 const versioningConfig = { Status: 'Enabled' }
-minioClient.setBucketVersioning('bucketname', versioningConfig, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setBucketVersioning('bucketname', versioningConfig)
 ```
 
 <a name="setBucketReplication"></a>

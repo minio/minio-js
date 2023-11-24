@@ -47,6 +47,7 @@ import type {
   BucketItemFromList,
   BucketItemStat,
   BucketStream,
+  BucketVersioningConfiguration,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
   IRequest,
@@ -1627,5 +1628,37 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
 
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  async getBucketVersioning(bucketName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'versioning'
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, query })
+    const xmlResult = await readAsString(httpRes)
+    return await xmlParsers.parseBucketVersioningConfig(xmlResult)
+  }
+
+  async setBucketVersioning(bucketName: string, versionConfig: BucketVersioningConfiguration): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!Object.keys(versionConfig).length) {
+      throw new errors.InvalidArgumentError('versionConfig should be of type "object"')
+    }
+
+    const method = 'PUT'
+    const query = 'versioning'
+    const builder = new xml2js.Builder({
+      rootName: 'VersioningConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(versionConfig)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
   }
 }

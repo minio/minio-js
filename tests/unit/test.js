@@ -836,43 +836,49 @@ describe('Client', function () {
   describe('Bucket Versioning APIs', () => {
     describe('getBucketVersioning(bucket, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.getBucketVersioning(null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.getBucketVersioning(null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
+
       it('should fail on empty bucket', (done) => {
-        try {
-          client.getBucketVersioning('', function () {})
-        } catch (e) {
-          done()
-        }
+        client.getBucketVersioning('', function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
 
     describe('setBucketVersioning(bucket, versionConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.setBucketVersioning(null, {}, function () {})
-        } catch (e) {
-          done()
-        }
-      })
-      it('should fail on empty bucket', (done) => {
-        try {
-          client.setBucketVersioning('', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketVersioning(null, {}, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
 
-      it('should fail on empty versionConfig', (done) => {
-        try {
-          client.setBucketVersioning('', null, function () {})
-        } catch (e) {
-          done()
-        }
+      it('should fail on empty bucket', (done) => {
+        client.setBucketVersioning(null, {}, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
+      })
+      it('should fail on empty bucket', (done) => {
+        client.setBucketVersioning('', null, function (err) {
+          if (err) {
+            return done()
+          }
+          done(new Error('callback should receive error'))
+        })
       })
     })
   })
