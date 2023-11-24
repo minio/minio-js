@@ -37,6 +37,7 @@ import {
   uriEscape,
   uriResourceEscape,
 } from './helper.ts'
+import { joinHostPort } from './join-host-port.ts'
 import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
@@ -417,8 +418,9 @@ export class TypedClient {
     }
     reqOptions.headers.host = host
     if ((reqOptions.protocol === 'http:' && port !== 80) || (reqOptions.protocol === 'https:' && port !== 443)) {
-      reqOptions.headers.host = `${host}:${port}`
+      reqOptions.headers.host = joinHostPort(host, port)
     }
+
     reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
       // have all header keys in lower case - to make signing easy
