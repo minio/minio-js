@@ -603,9 +603,8 @@ export function parseXml(xml: string): any {
  */
 export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
   // use length property of string | Buffer
-  const length = (s as unknown as Record<string, unknown>).length as number | undefined
-  if (isNumber(length)) {
-    return length
+  if (typeof s === 'string' || Buffer.isBuffer(s)) {
+    return s.length
   }
 
   // property of `fs.ReadStream`
