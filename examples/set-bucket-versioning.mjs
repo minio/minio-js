@@ -25,10 +25,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketVersioning('my-bucketname', function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
-  console.log('Success')
-})
+const versioningStateConfig = { Status: 'Enabled' }
+
+await s3Client.setBucketVersioning('my-bucket', versioningStateConfig)
+console.log('Success')

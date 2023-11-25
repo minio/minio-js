@@ -307,10 +307,6 @@ export function parseListObjectsV2WithMetadata(xml) {
   return result
 }
 
-export function parseBucketVersioningConfig(xml) {
-  var xmlObj = parseXml(xml)
-  return xmlObj.VersioningConfiguration
-}
 export function parseLifecycleConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LifecycleConfiguration
