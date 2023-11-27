@@ -2107,7 +2107,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
   }
 
-  async setTagging(taggingParams: PutTaggingParams): Promise<void> {
+  private async setTagging(taggingParams: PutTaggingParams): Promise<void> {
     const { bucketName, objectName, tags, putOpts } = taggingParams
     const method = 'PUT'
     let query = 'tagging'
@@ -2143,7 +2143,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit(requestOptions, payloadBuf)
   }
 
-  async removeTagging({ bucketName, objectName, removeOpts }: RemoveTaggingParams): Promise<void> {
+  private async removeTagging({ bucketName, objectName, removeOpts }: RemoveTaggingParams): Promise<void> {
     const method = 'DELETE'
     let query = 'tagging'
 
