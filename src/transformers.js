@@ -127,10 +127,6 @@ export function getNotificationTransformer() {
   return new JSONParser()
 }
 
-export function bucketVersioningTransformer() {
-  return getConcater(xmlParsers.parseBucketVersioningConfig)
-}
-
 export function lifecycleTransformer() {
   return getConcater(xmlParsers.parseLifecycleConfig)
 }
