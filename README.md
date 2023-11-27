@@ -166,7 +166,7 @@ The full API Reference is available here.
 - [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 - [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 - [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
-- [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
+- [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 - [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 - [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 - [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
