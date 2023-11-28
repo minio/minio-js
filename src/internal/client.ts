@@ -2,6 +2,7 @@ import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
+import * as path from 'node:path'
 import * as stream from 'node:stream'
 
 import * as async from 'async'
@@ -15,7 +16,7 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
-import { fsp } from './async.ts'
+import { fsp, streamPromise } from './async.ts'
 import { Extensions } from './extensions.ts'
 import {
   extractMetadata,
@@ -982,6 +983,67 @@ export class TypedClient {
 
     const query = qs.stringify(getOpts)
     return await this.makeRequestAsync({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes)
+  }
+
+  /**
+   * download object content to a file.
+   * This method will create a temp file named `${filename}.${etag}.part.minio` when downloading.
+   *
+   * @param bucketName - name of the bucket
+   * @param objectName - name of the object
+   * @param filePath - path to which the object data will be written to
+   * @param getOpts - Optional object get option
+   */
+  async fGetObject(bucketName: string, objectName: string, filePath: string, getOpts: VersionIdentificator = {}) {
+    // Input validation.
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!isString(filePath)) {
+      throw new TypeError('filePath should be of type "string"')
+    }
+
+    const downloadToTmpFile = async (): Promise<string> => {
+      let partFileStream: stream.Writable
+      const objStat = await this.statObject(bucketName, objectName, getOpts)
+      const partFile = `${filePath}.${objStat.etag}.part.minio`
+
+      await fsp.mkdir(path.dirname(filePath), { recursive: true })
+
+      let offset = 0
+      try {
+        const stats = await fsp.stat(partFile)
+        if (objStat.size === stats.size) {
+          return partFile
+        }
+        offset = stats.size
+        partFileStream = fs.createWriteStream(partFile, { flags: 'a' })
+      } catch (e) {
+        if (e instanceof Error && (e as unknown as { code: string }).code === 'ENOENT') {
+          // file not exist
+          partFileStream = fs.createWriteStream(partFile, { flags: 'w' })
+        } else {
+          // other error, maybe access deny
+          throw e
+        }
+      }
+
+      const downloadStream = await this.getPartialObject(bucketName, objectName, offset, 0, getOpts)
+
+      await streamPromise.pipeline(downloadStream, partFileStream)
+      const stats = await fsp.stat(partFile)
+      if (stats.size === objStat.size) {
+        return partFile
+      }
+
+      throw new Error('Size mismatch between downloaded file and the object')
+    }
+
+    const partFile = await downloadToTmpFile()
+    await fsp.rename(partFile, filePath)
   }
 
   /**

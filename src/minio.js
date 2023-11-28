@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'node:fs'
-import * as path from 'node:path'
 import * as Stream from 'node:stream'
 
 import async from 'async'
@@ -145,89 +143,6 @@ export class Client extends TypedClient {
         this.makeRequest({ method, bucketName, objectName, query }, '', [204], '', false, (e) => cb(e))
       },
       cb,
-    )
-  }
-
-  // Callback is called with `error` in case of error or `null` in case of success
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `filePath` _string_: path to which the object data will be written to
-  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
-  // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, getOpts = {}, cb) {
-    // Input validation.
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(filePath)) {
-      throw new TypeError('filePath should be of type "string"')
-    }
-    // Backward Compatibility
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    // Internal data.
-    var partFile
-    var partFileStream
-    var objStat
-
-    // Rename wrapper.
-    var rename = (err) => {
-      if (err) {
-        return cb(err)
-      }
-      fs.rename(partFile, filePath, cb)
-    }
-
-    async.waterfall(
-      [
-        (cb) => this.statObject(bucketName, objectName, getOpts, cb),
-        (result, cb) => {
-          objStat = result
-          // Create any missing top level directories.
-          fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => cb(err))
-        },
-        (cb) => {
-          partFile = `${filePath}.${objStat.etag}.part.minio`
-          fs.stat(partFile, (e, stats) => {
-            var offset = 0
-            if (e) {
-              partFileStream = fs.createWriteStream(partFile, { flags: 'w' })
-            } else {
-              if (objStat.size === stats.size) {
-                return rename()
-              }
-              offset = stats.size
-              partFileStream = fs.createWriteStream(partFile, { flags: 'a' })
-            }
-            this.getPartialObject(bucketName, objectName, offset, 0, getOpts, cb)
-          })
-        },
-        (downloadStream, cb) => {
-          pipesetup(downloadStream, partFileStream)
-            .on('error', (e) => cb(e))
-            .on('finish', cb)
-        },
-        (cb) => fs.stat(partFile, cb),
-        (stats, cb) => {
-          if (stats.size === objStat.size) {
-            return cb()
-          }
-          cb(new Error('Size mismatch between downloaded file and the object'))
-        },
-      ],
-      rename,
     )
   }
 
@@ -1724,7 +1639,6 @@ export class Client extends TypedClient {
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 
-Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
@@ -1760,6 +1674,7 @@ Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
 Client.prototype.getObject = callbackify(Client.prototype.getObject)
+Client.prototype.fGetObject = callbackify(Client.prototype.fGetObject)
 Client.prototype.getPartialObject = callbackify(Client.prototype.getPartialObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.putObject = callbackify(Client.prototype.putObject)
