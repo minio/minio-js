@@ -22,10 +22,21 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
+import { fsp, fstat } from './async.ts'
 import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
 const MetaDataHeaderPrefix = 'x-amz-meta-'
+
+export function hashBinary(buf: Buffer, enableSHA256: boolean) {
+  let sha256sum = ''
+  if (enableSHA256) {
+    sha256sum = crypto.createHash('sha256').update(buf).digest('hex')
+  }
+  const md5sum = crypto.createHash('md5').update(buf).digest('base64')
+
+  return { md5sum, sha256sum }
+}
 
 /**
  * All characters in string which are NOT unreserved should be percent encoded.
@@ -585,4 +596,30 @@ export function parseXml(xml: string): any {
   }
 
   return result
+}
+
+/**
+ * get content size of object content to upload
+ */
+export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
+  // use length property of string | Buffer
+  if (typeof s === 'string' || Buffer.isBuffer(s)) {
+    return s.length
+  }
+
+  // property of `fs.ReadStream`
+  const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
+  if (filePath && typeof filePath === 'string') {
+    const stat = await fsp.lstat(filePath)
+    return stat.size
+  }
+
+  // property of `fs.ReadStream`
+  const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
+  if (fd && typeof fd === 'number') {
+    const stat = await fstat(fd)
+    return stat.size
+  }
+
+  return null
 }
