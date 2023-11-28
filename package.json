@@ -89,7 +89,6 @@
     "eventemitter3": "^5.0.1",
     "fast-xml-parser": "^4.2.2",
     "ipaddr.js": "^2.0.1",
-    "json-stream": "^1.0.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
     "query-string": "^7.1.3",
