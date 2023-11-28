@@ -54,7 +54,6 @@ import {
   uriResourceEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-
 import { NotificationConfig, NotificationPoller } from './notification.ts'
 
 import { promisify } from './promisify.js'
