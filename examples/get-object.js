@@ -27,39 +27,30 @@ const s3Client = new Minio.Client({
 
 let size = 0
 // Get a full object.
-s3Client.getObject('my-bucketname', 'my-objectname', function (e, dataStream) {
-  if (e) {
-    return console.log(e)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (e) {
-    console.log(e)
-  })
+const dataStream1 = await s3Client.getObject('my-bucketname', 'my-objectname')
+
+dataStream1.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream1.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream1.on('error', function (e) {
+  console.log(e)
 })
 
 //Get a specific version of an object
 let versionedObjSize = 0
-s3Client.getObject(
-  'my-versioned-bucket',
-  'my-versioned-object',
-  { versionId: 'my-versionId' },
-  function (err, dataStream) {
-    if (err) {
-      return console.log(err)
-    }
-    dataStream.on('data', function (chunk) {
-      versionedObjSize += chunk.length
-    })
-    dataStream.on('end', function () {
-      console.log('End. Total size = ' + versionedObjSize)
-    })
-    dataStream.on('error', function (err) {
-      console.log(err)
-    })
-  },
-)
+const dataStream2 = await s3Client.getObject('my-versioned-bucket', 'my-versioned-object', {
+  versionId: 'my-versionId',
+})
+
+dataStream2.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream2.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream2.on('error', function (err) {
+  console.log(err)
+})

@@ -192,7 +192,7 @@ The full API Reference is available here.
 #### Full Examples : Object Operations
 
 - [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
-- [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+- [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
 - [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
 - [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
 - [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
