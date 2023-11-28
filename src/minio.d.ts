@@ -112,11 +112,6 @@ export interface PostPolicyResult {
   }
 }
 
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
-}
-
 export interface LifecycleConfig {
   Rule: LifecycleRule[]
 }
@@ -256,55 +251,6 @@ export class Client extends TypedClient {
 
   fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
   fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
-
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size?: number,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
 
   copyObject(
     bucketName: string,
