@@ -19,7 +19,6 @@ import * as path from 'node:path'
 import * as Stream from 'node:stream'
 
 import async from 'async'
-import BlockStream2 from 'block-stream2'
 import _ from 'lodash'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
@@ -36,12 +35,10 @@ import {
   getScope,
   getSourceVersionId,
   getVersionId,
-  insertContentType,
   isBoolean,
   isFunction,
   isNumber,
   isObject,
-  isReadableStream,
   isString,
   isValidBucketName,
   isValidDate,
@@ -51,8 +48,6 @@ import {
   PART_CONSTRAINTS,
   partsRequired,
   pipesetup,
-  prependXAMZMeta,
-  readableStream,
   sanitizeETag,
   toMd5,
   uriEscape,
@@ -60,7 +55,6 @@ import {
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import { NotificationConfig, NotificationPoller } from './notification.js'
-import { ObjectUploader } from './object-uploader.js'
 import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
@@ -95,29 +89,6 @@ export class Client extends TypedClient {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
-  }
-
-  // Calculate part size given the object size. Part size will be atleast this.partSize
-  calculatePartSize(size) {
-    if (!isNumber(size)) {
-      throw new TypeError('size should be of type "number"')
-    }
-    if (size > this.maxObjectSize) {
-      throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
-    }
-    if (this.overRidePartSize) {
-      return this.partSize
-    }
-    var partSize = this.partSize
-    for (;;) {
-      // while(true) {...} throws linting error.
-      // If partSize is big enough to accomodate the object size, then use it.
-      if (partSize * 10000 > size) {
-        return partSize
-      }
-      // Try part sizes as 64MB, 80MB, 96MB etc.
-      partSize += 16 * 1024 * 1024
-    }
   }
 
   // To check if a bucket already exists.
@@ -258,123 +229,6 @@ export class Client extends TypedClient {
       ],
       rename,
     )
-  }
-
-  // Uploads the object using contents from a file
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `filePath` _string_: file path of the file to be uploaded
-  // * `metaData` _Javascript Object_: metaData assosciated with the object
-  // * `callback(err, objInfo)` _function_: non null `err` indicates error, `objInfo` _object_ which contains versionId and etag.
-  fPutObject(bucketName, objectName, filePath, metaData, callback) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-
-    if (!isString(filePath)) {
-      throw new TypeError('filePath should be of type "string"')
-    }
-    if (isFunction(metaData)) {
-      callback = metaData
-      metaData = {} // Set metaData empty if no metaData provided.
-    }
-    if (!isObject(metaData)) {
-      throw new TypeError('metaData should be of type "object"')
-    }
-
-    // Inserts correct `content-type` attribute based on metaData and filePath
-    metaData = insertContentType(metaData, filePath)
-
-    fs.lstat(filePath, (err, stat) => {
-      if (err) {
-        return callback(err)
-      }
-      return this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData, callback)
-    })
-  }
-
-  // Uploads the object.
-  //
-  // Uploading a stream
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `stream` _Stream_: Readable stream
-  // * `size` _number_: size of the object (optional)
-  // * `callback(err, etag)` _function_: non null `err` indicates error, `etag` _string_ is the etag of the object uploaded.
-  //
-  // Uploading "Buffer" or "string"
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `string or Buffer` _string_ or _Buffer_: string or buffer
-  // * `callback(err, objInfo)` _function_: `err` is `null` in case of success and `info` will have the following object details:
-  //   * `etag` _string_: etag of the object
-  //   * `versionId` _string_: versionId of the object
-  putObject(bucketName, objectName, stream, size, metaData, callback) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-
-    // We'll need to shift arguments to the left because of size and metaData.
-    if (isFunction(size)) {
-      callback = size
-      metaData = {}
-    } else if (isFunction(metaData)) {
-      callback = metaData
-      metaData = {}
-    }
-
-    // We'll need to shift arguments to the left because of metaData
-    // and size being optional.
-    if (isObject(size)) {
-      metaData = size
-    }
-
-    // Ensures Metadata has appropriate prefix for A3 API
-    metaData = prependXAMZMeta(metaData)
-    if (typeof stream === 'string' || stream instanceof Buffer) {
-      // Adapts the non-stream interface into a stream.
-      size = stream.length
-      stream = readableStream(stream)
-    } else if (!isReadableStream(stream)) {
-      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
-    }
-
-    if (!isFunction(callback)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    if (isNumber(size) && size < 0) {
-      throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
-    }
-
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
-    if (!isNumber(size)) {
-      size = this.maxObjectSize
-    }
-
-    size = this.calculatePartSize(size)
-
-    // s3 requires that all non-end chunks be at least `this.partSize`,
-    // so we chunk the stream until we hit either that size or the end before
-    // we flush it to s3.
-    let chunker = new BlockStream2({ size, zeroPadding: false })
-
-    // This is a Writable stream that can be written to in order to upload
-    // to the specified bucket and object automatically.
-    let uploader = new ObjectUploader(this, bucketName, objectName, size, metaData, callback)
-    // stream => chunker => uploader
-    pipesetup(stream, chunker, uploader)
   }
 
   // Copy the object.
@@ -1194,56 +1048,6 @@ export class Client extends TypedClient {
     return listener
   }
 
-  getBucketVersioning(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    var method = 'GET'
-    var query = 'versioning'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let versionConfig = Buffer.from('')
-      pipesetup(response, transformers.bucketVersioningTransformer())
-        .on('data', (data) => {
-          versionConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, versionConfig)
-        })
-    })
-  }
-
-  setBucketVersioning(bucketName, versionConfig, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!Object.keys(versionConfig).length) {
-      throw new errors.InvalidArgumentError('versionConfig should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    var method = 'PUT'
-    var query = 'versioning'
-    var builder = new xml2js.Builder({
-      rootName: 'VersioningConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    var payload = builder.buildObject(versionConfig)
-
-    this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
-  }
-
   /** To set Tags on a bucket or object based on the params
    *  __Arguments__
    * taggingParams _object_ Which contains the following properties
@@ -1921,8 +1725,6 @@ export class Client extends TypedClient {
 Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
 
 Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
-Client.prototype.putObject = promisify(Client.prototype.putObject)
-Client.prototype.fPutObject = promisify(Client.prototype.fPutObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
@@ -1936,8 +1738,6 @@ Client.prototype.removeAllBucketNotification = promisify(Client.prototype.remove
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-Client.prototype.getBucketVersioning = promisify(Client.prototype.getBucketVersioning)
-Client.prototype.setBucketVersioning = promisify(Client.prototype.setBucketVersioning)
 Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
 Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
 Client.prototype.setObjectTagging = promisify(Client.prototype.setObjectTagging)
@@ -1954,14 +1754,18 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 
 // refactored API use promise internally
 Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
-
-Client.prototype.getObject = callbackify(Client.prototype.getObject)
-Client.prototype.getPartialObject = callbackify(Client.prototype.getPartialObject)
-
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
+
+Client.prototype.getObject = callbackify(Client.prototype.getObject)
+Client.prototype.getPartialObject = callbackify(Client.prototype.getPartialObject)
+Client.prototype.statObject = callbackify(Client.prototype.statObject)
+Client.prototype.putObject = callbackify(Client.prototype.putObject)
+Client.prototype.fPutObject = callbackify(Client.prototype.fPutObject)
+Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
+
 Client.prototype.removeBucketReplication = callbackify(Client.prototype.removeBucketReplication)
 Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketReplication)
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
@@ -1972,3 +1776,6 @@ Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTaggin
 Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
 Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)
+
+Client.prototype.getBucketVersioning = callbackify(Client.prototype.getBucketVersioning)
+Client.prototype.setBucketVersioning = callbackify(Client.prototype.setBucketVersioning)

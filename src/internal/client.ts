@@ -1,8 +1,11 @@
+import * as crypto from 'node:crypto'
+import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import * as stream from 'node:stream'
 
 import * as async from 'async'
+import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
 import * as qs from 'query-string'
@@ -12,10 +15,14 @@ import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
+import { fsp } from './async.ts'
 import { Extensions } from './extensions.ts'
 import {
   extractMetadata,
+  getContentLength,
   getVersionId,
+  hashBinary,
+  insertContentType,
   isAmazonEndpoint,
   isBoolean,
   isDefined,
@@ -31,12 +38,15 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
+  prependXAMZMeta,
+  readableStream,
   sanitizeETag,
   toMd5,
   toSha256,
   uriEscape,
   uriResourceEscape,
 } from './helper.ts'
+import { joinHostPort } from './join-host-port.ts'
 import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
@@ -46,11 +56,14 @@ import type {
   BucketItemFromList,
   BucketItemStat,
   BucketStream,
+  BucketVersioningConfiguration,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
   IRequest,
+  ItemBucketMetadata,
   ObjectLockConfigParam,
   ObjectLockInfo,
+  ObjectMetaData,
   PutObjectLegalHoldOptions,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -61,6 +74,7 @@ import type {
   StatObjectOpts,
   Tag,
   Transport,
+  UploadedObjectInfo,
   VersionIdentificator,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
@@ -417,8 +431,9 @@ export class TypedClient {
     }
     reqOptions.headers.host = host
     if ((reqOptions.protocol === 'http:' && port !== 80) || (reqOptions.protocol === 'https:' && port !== 443)) {
-      reqOptions.headers.host = `${host}:${port}`
+      reqOptions.headers.host = joinHostPort(host, port)
     }
+
     reqOptions.headers['user-agent'] = this.userAgent
     if (headers) {
       // have all header keys in lower case - to make signing easy
@@ -1376,6 +1391,241 @@ export class TypedClient {
     return xmlParsers.parseListBucket(xmlResult)
   }
 
+  /**
+   * Calculate part size given the object size. Part size will be atleast this.partSize
+   */
+  calculatePartSize(size: number) {
+    if (!isNumber(size)) {
+      throw new TypeError('size should be of type "number"')
+    }
+    if (size > this.maxObjectSize) {
+      throw new TypeError(`size should not be more than ${this.maxObjectSize}`)
+    }
+    if (this.overRidePartSize) {
+      return this.partSize
+    }
+    let partSize = this.partSize
+    for (;;) {
+      // while(true) {...} throws linting error.
+      // If partSize is big enough to accomodate the object size, then use it.
+      if (partSize * 10000 > size) {
+        return partSize
+      }
+      // Try part sizes as 64MB, 80MB, 96MB etc.
+      partSize += 16 * 1024 * 1024
+    }
+  }
+
+  /**
+   * Uploads the object using contents from a file
+   */
+  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    if (!isString(filePath)) {
+      throw new TypeError('filePath should be of type "string"')
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
+    }
+
+    // Inserts correct `content-type` attribute based on metaData and filePath
+    metaData = insertContentType(metaData, filePath)
+    const stat = await fsp.lstat(filePath)
+    await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
+  }
+
+  /**
+   *  Uploading a stream, "Buffer" or "string".
+   *  It's recommended to pass `size` argument with stream.
+   */
+  async putObject(
+    bucketName: string,
+    objectName: string,
+    stream: stream.Readable | Buffer | string,
+    size?: number,
+    metaData?: ItemBucketMetadata,
+  ): Promise<UploadedObjectInfo> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+
+    // We'll need to shift arguments to the left because of metaData
+    // and size being optional.
+    if (isObject(size)) {
+      metaData = size
+    }
+    // Ensures Metadata has appropriate prefix for A3 API
+    const headers = prependXAMZMeta(metaData)
+    if (typeof stream === 'string' || stream instanceof Buffer) {
+      // Adapts the non-stream interface into a stream.
+      size = stream.length
+      stream = readableStream(stream)
+    } else if (!isReadableStream(stream)) {
+      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
+    }
+
+    if (isNumber(size) && size < 0) {
+      throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
+    }
+
+    // Get the part size and forward that to the BlockStream. Default to the
+    // largest block size possible if necessary.
+    if (!isNumber(size)) {
+      size = this.maxObjectSize
+    }
+
+    // Get the part size and forward that to the BlockStream. Default to the
+    // largest block size possible if necessary.
+    if (size === undefined) {
+      const statSize = await getContentLength(stream)
+      if (statSize !== null) {
+        size = statSize
+      }
+    }
+
+    if (!isNumber(size)) {
+      // Backward compatibility
+      size = this.maxObjectSize
+    }
+
+    const partSize = this.calculatePartSize(size)
+    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= partSize) {
+      const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
+      return this.uploadBuffer(bucketName, objectName, headers, buf)
+    }
+
+    return this.uploadStream(bucketName, objectName, headers, stream, partSize)
+  }
+
+  /**
+   * method to upload buffer in one call
+   * @private
+   */
+  private async uploadBuffer(
+    bucketName: string,
+    objectName: string,
+    headers: RequestHeaders,
+    buf: Buffer,
+  ): Promise<UploadedObjectInfo> {
+    const { md5sum, sha256sum } = hashBinary(buf, this.enableSHA256)
+    headers['Content-Length'] = buf.length
+    if (!this.enableSHA256) {
+      headers['Content-MD5'] = md5sum
+    }
+    const res = await this.makeRequestStreamAsync(
+      {
+        method: 'PUT',
+        bucketName,
+        objectName,
+        headers,
+      },
+      buf,
+      sha256sum,
+      [200],
+      '',
+    )
+    await drainResponse(res)
+    return {
+      etag: sanitizeETag(res.headers.etag),
+      versionId: getVersionId(res.headers as ResponseHeader),
+    }
+  }
+
+  /**
+   * upload stream with MultipartUpload
+   * @private
+   */
+  private async uploadStream(
+    bucketName: string,
+    objectName: string,
+    headers: RequestHeaders,
+    body: stream.Readable,
+    partSize: number,
+  ): Promise<UploadedObjectInfo> {
+    // A map of the previously uploaded chunks, for resuming a file upload. This
+    // will be null if we aren't resuming an upload.
+    const oldParts: Record<number, Part> = {}
+
+    // Keep track of the etags for aggregating the chunks together later. Each
+    // etag represents a single chunk of the file.
+    const eTags: Part[] = []
+
+    const previousUploadId = await this.findUploadId(bucketName, objectName)
+    let uploadId: string
+    if (!previousUploadId) {
+      uploadId = await this.initiateNewMultipartUpload(bucketName, objectName, headers)
+    } else {
+      uploadId = previousUploadId
+      const oldTags = await this.listParts(bucketName, objectName, previousUploadId)
+      oldTags.forEach((e) => {
+        oldTags[e.part] = e
+      })
+    }
+
+    const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
+
+    const [_, o] = await Promise.all([
+      new Promise((resolve, reject) => {
+        body.pipe(chunkier).on('error', reject)
+        chunkier.on('end', resolve).on('error', reject)
+      }),
+      (async () => {
+        let partNumber = 1
+
+        for await (const chunk of chunkier) {
+          const md5 = crypto.createHash('md5').update(chunk).digest()
+
+          const oldPart = oldParts[partNumber]
+          if (oldPart) {
+            if (oldPart.etag === md5.toString('hex')) {
+              eTags.push({ part: partNumber, etag: oldPart.etag })
+              partNumber++
+              continue
+            }
+          }
+
+          partNumber++
+
+          // now start to upload missing part
+          const options: RequestOption = {
+            method: 'PUT',
+            query: qs.stringify({ partNumber, uploadId }),
+            headers: {
+              'Content-Length': chunk.length,
+              'Content-MD5': md5.toString('base64'),
+            },
+            bucketName,
+            objectName,
+          }
+
+          const response = await this.makeRequestAsyncOmit(options, chunk)
+
+          let etag = response.headers.etag
+          if (etag) {
+            etag = etag.replace(/^"/, '').replace(/"$/, '')
+          } else {
+            etag = ''
+          }
+
+          eTags.push({ part: partNumber, etag })
+        }
+
+        return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
+      })(),
+    ])
+
+    return o
+  }
+
   async removeBucketReplication(bucketName: string): Promise<void>
   removeBucketReplication(bucketName: string, callback: NoResultCallback): void
   async removeBucketReplication(bucketName: string): Promise<void> {
@@ -1619,6 +1869,7 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
   }
+
   getObjectLockConfig(bucketName: string, callback: ResultCallback<ObjectLockInfo>): void
   getObjectLockConfig(bucketName: string): void
   async getObjectLockConfig(bucketName: string): Promise<ObjectLockInfo>
@@ -1698,5 +1949,37 @@ export class TypedClient {
     headers['Content-MD5'] = toMd5(payload)
 
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  async getBucketVersioning(bucketName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'versioning'
+
+    const httpRes = await this.makeRequestAsync({ method, bucketName, query })
+    const xmlResult = await readAsString(httpRes)
+    return await xmlParsers.parseBucketVersioningConfig(xmlResult)
+  }
+
+  async setBucketVersioning(bucketName: string, versionConfig: BucketVersioningConfiguration): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!Object.keys(versionConfig).length) {
+      throw new errors.InvalidArgumentError('versionConfig should be of type "object"')
+    }
+
+    const method = 'PUT'
+    const query = 'versioning'
+    const builder = new xml2js.Builder({
+      rootName: 'VersioningConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(versionConfig)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
   }
 }

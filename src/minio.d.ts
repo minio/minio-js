@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { EventEmitter } from 'node:events'
-import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
   CopyDestinationOptions,
@@ -132,11 +131,6 @@ export interface PostPolicyResult {
   }
 }
 
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
-}
-
 export interface LifecycleConfig {
   Rule: LifecycleRule[]
 }
@@ -231,12 +225,6 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
-  getBucketVersioning(bucketName: string): Promise<VersioningConfig>
-
-  setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
-  setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
-
   setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
   setBucketTagging(bucketName: string, tags: TagList): Promise<void>
 
@@ -263,55 +251,6 @@ export class Client extends TypedClient {
 
   fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
   fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
-
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size?: number,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
 
   copyObject(
     bucketName: string,
