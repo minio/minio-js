@@ -209,6 +209,12 @@ export type PutObjectLegalHoldOptions = {
   versionId?: string
   status: LEGAL_HOLD_STATUS
 }
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
+}
+
 export interface RetentionOptions {
   versionId: string
   mode?: RETENTION_MODES
