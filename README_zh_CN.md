@@ -161,7 +161,7 @@ mc ls play/europetrip/
 
 #### 完整示例 : 操作文件对象
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
-* [fget-object.js](https://github.com/minio/minio-js/blob/master/examples/fget-object.js)
+* [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
 * [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)

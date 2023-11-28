@@ -187,7 +187,7 @@ The full API Reference is available here.
 #### Full Examples : File Object Operations
 
 - [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
-- [fget-object.js](https://github.com/minio/minio-js/blob/master/examples/fget-object.js)
+- [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### Full Examples : Object Operations
 
