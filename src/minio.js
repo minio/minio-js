@@ -55,7 +55,6 @@ import {
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
-
 import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
