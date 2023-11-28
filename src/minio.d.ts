@@ -249,9 +249,6 @@ export class Client extends TypedClient {
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
 
-  fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
-  fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
-
   copyObject(
     bucketName: string,
     objectName: string,
