@@ -16,7 +16,10 @@
 
 import * as Stream from 'node:stream'
 
-import { assert } from 'chai'
+import { assert, expect, use } from 'chai'
+import chaiAsPromised from 'chai-as-promised'
+use(chaiAsPromised)
+
 import Nock from 'nock'
 
 import { CopyDestinationOptions, CopySourceOptions } from '../../src/helpers.ts'
@@ -77,12 +80,21 @@ describe('Helpers', () => {
     const expectedPartsRequiredTestCases = [
       { value: 0, expected: 0 },
       { value: 1, expected: 1 },
-      { value: fiveGB, expected: 10 },
+      {
+        value: fiveGB,
+        expected: 10,
+      },
       { value: OBJ_SIZES.gb5p1, expected: 10 },
       { value: 2 * fiveGB, expected: 20 },
-      { value: OBJ_SIZES.gb10p1, expected: 20 },
+      {
+        value: OBJ_SIZES.gb10p1,
+        expected: 20,
+      },
       { value: OBJ_SIZES.gb10p2, expected: 20 },
-      { value: OBJ_SIZES.gb10p1 + OBJ_SIZES.gb10p2, expected: 40 },
+      {
+        value: OBJ_SIZES.gb10p1 + OBJ_SIZES.gb10p2,
+        expected: 40,
+      },
       { value: maxMultipartPutObjectSize, expected: 10000 },
     ]
 
@@ -94,8 +106,18 @@ describe('Helpers', () => {
   it('Even split of Sizes Test cases ', () => {
     // Adopted from minio-go sdk
     const expectedSplitsTestCases = [
-      { size: 0, sourceConfig: new CopySourceOptions({ Start: -1 }), expectedStart: null, expectedEnd: null },
-      { size: 1, sourceConfig: new CopySourceOptions({ Start: -1 }), expectedStart: [undefined], expectedEnd: [NaN] },
+      {
+        size: 0,
+        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        expectedStart: null,
+        expectedEnd: null,
+      },
+      {
+        size: 1,
+        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        expectedStart: [undefined],
+        expectedEnd: [NaN],
+      },
       { size: 1, sourceConfig: new CopySourceOptions({ Start: 0 }), expectedStart: [0], expectedEnd: [0] },
       {
         size: OBJ_SIZES.gb1,
@@ -581,54 +603,30 @@ describe('Client', function () {
           })
         })
         it('should fail with invalid bucket name', () => {
-          assert.throws(() => {
-            client.putObject('ab', 'object', () => {})
-          }, /Invalid bucket name/)
+          return expect(client.putObject('ab', 'object')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail with invalid object name', () => {
-          assert.throws(() => {
-            client.putObject('bucket', '', () => {})
-          }, /Invalid object name/)
+          return expect(client.putObject('bucket', '')).to.be.rejectedWith('Invalid object name')
         })
         it('should error with size > maxObjectSize', () => {
-          assert.throws(() => {
-            client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1, () => {})
-          }, /size should not be more than/)
+          return expect(
+            client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1),
+          ).to.be.rejectedWith('size should not be more than')
         })
-        it('should fail on null bucket', (done) => {
-          try {
-            client.putObject(null, 'hello', null, 1, '', function () {})
-          } catch (e) {
-            done()
-          }
+        it('should fail on null bucket', () => {
+          return expect(client.putObject(null, 'hello', null, 1, '')).rejectedWith('Invalid bucket name')
         })
-        it('should fail on empty bucket', (done) => {
-          try {
-            client.putObject(' \n \t ', 'hello', null, 1, '', function () {})
-          } catch (e) {
-            done()
-          }
+        it('should fail on empty bucket', () => {
+          return expect(client.putObject(' \n \t ', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
-        it('should fail on empty bucket', (done) => {
-          try {
-            client.putObject('', 'hello', null, 1, '', function () {})
-          } catch (e) {
-            done()
-          }
+        it('should fail on empty bucket', () => {
+          return expect(client.putObject('', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
-        it('should fail on null object', (done) => {
-          try {
-            client.putObject('hello', null, null, 1, '', function () {})
-          } catch (e) {
-            done()
-          }
+        it('should fail on null object', () => {
+          return expect(client.putObject('hello', null, null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
-        it('should fail on empty object', (done) => {
-          try {
-            client.putObject('hello', '', null, 1, '', function () {})
-          } catch (e) {
-            done()
-          }
+        it('should fail on empty object', () => {
+          return expect(client.putObject('hello', '', null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
       })
     })
@@ -1135,7 +1133,11 @@ describe('Client', function () {
       it('should fail on passing invalid validity ', (done) => {
         client.setObjectLockConfig(
           'my-bucket',
-          { mode: 'COMPLIANCE', unit: 'invalid_unit', validity: '' },
+          {
+            mode: 'COMPLIANCE',
+            unit: 'invalid_unit',
+            validity: '',
+          },
           function (err) {
             if (err) {
               return done()
@@ -1148,7 +1150,11 @@ describe('Client', function () {
       it('should fail on passing  invalid config ', (done) => {
         client.setObjectLockConfig(
           'my-bucket',
-          { mode: 'COMPLIANCE', randomProp: true, nonExisting: false },
+          {
+            mode: 'COMPLIANCE',
+            randomProp: true,
+            nonExisting: false,
+          },
           function (err) {
             if (err) {
               return done()
