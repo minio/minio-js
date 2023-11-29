@@ -1878,6 +1878,28 @@ export class TypedClient {
     return xmlParsers.parseTagging(body)
   }
 
+  /**
+   *  Set the policy on a bucket or an object prefix.
+   */
+  async setBucketPolicy(bucketName: string, policy: string): Promise<void> {
+    // Validate arguments.
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isString(policy)) {
+      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy} - must be "string"`)
+    }
+
+    const query = 'policy'
+
+    let method = 'DELETE'
+    if (policy) {
+      method = 'PUT'
+    }
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, policy, [204], '')
+  }
+
   async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
