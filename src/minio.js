@@ -1796,7 +1796,6 @@ Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
-Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
 Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.putObject = callbackify(Client.prototype.putObject)
 Client.prototype.fPutObject = callbackify(Client.prototype.fPutObject)
