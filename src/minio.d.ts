@@ -420,9 +420,6 @@ export class Client extends TypedClient {
   getBucketPolicy(bucketName: string, callback: ResultCallback<string>): void
   getBucketPolicy(bucketName: string): Promise<string>
 
-  setBucketPolicy(bucketName: string, bucketPolicy: string, callback: NoResultCallback): void
-  setBucketPolicy(bucketName: string, bucketPolicy: string): Promise<void>
-
   listenBucketNotification(
     bucketName: string,
     prefix: string,

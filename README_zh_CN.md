@@ -185,7 +185,7 @@ mc ls play/europetrip/
 
 #### 完整示例 : 存储桶策略
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
-* [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
+* [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## 了解更多
 * [完整文档]([https://docs.min.i](https://min.io/docs/minio/kubernetes/upstream/index.html)o)
