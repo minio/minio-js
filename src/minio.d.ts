@@ -218,9 +218,6 @@ export class TargetConfig {
 
 // Exports from library
 export class Client extends TypedClient {
-  bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
-  bucketExists(bucketName: string): Promise<boolean>
-
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>

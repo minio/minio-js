@@ -154,7 +154,7 @@ mc ls play/europetrip/
 * [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
 * [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
-* [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
+* [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
