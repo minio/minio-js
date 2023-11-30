@@ -7,7 +7,7 @@ The MinIO JavaScript Client SDK provides high level APIs to access any Amazon S3
 This guide will show you how to install the client SDK and execute an example JavaScript program. 
 For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html) documentation.
 
-This document presumes you have a working [Node.js](http://nodejs.org/) development environment, version 16 or later.
+This document presumes you have a working [Node.js](http://nodejs.org/) development environment, LTS versions v16, v18 or v20.
 
 ## Download from NPM
 
@@ -55,20 +55,22 @@ var minioClient = new Minio.Client({
 
 ## Quick Start Example - File Uploader
 
-This sample code connects to an object storage server, creates a bucket, and uploads a file to the bucket.
+This sample ECMAScript module connects to an object storage server, creates a bucket, and uploads a file to the bucket.
 It uses the MinIO `play` server, a public MinIO cluster located at [https://play.min.io](https://play.min.io).
 
 The `play` server runs the latest stable version of MinIO and may be used for testing and development.
-The access credentials shown in this example are open to the public and all data uploaded to `play` should be considered public and non-protected.
+The access credentials shown in this example are open to the public.
+All data uploaded to `play` should be considered public and non-protected.
 
-#### file-uploader.js
+#### file-uploader.mjs
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-// Instantiate the minio client with the endpoint
-// and access keys as shown below.
-var minioClient = new Minio.Client({
+// Instantiate the MinIO client with the endpoint,
+// access, and secret keys
+// play.min.io is the MinIO public test cluster
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -76,50 +78,62 @@ var minioClient = new Minio.Client({
   secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
 })
 
+// File to upload
+const sourceFile = '/tmp/test-file.txt'
+
 // Destination bucket
-var bucket = 'js-test-bucket'
+const bucket = 'js-test-bucket'
 
-// File to upload and name to save as to the bucket
-var source_file = '/tmp/test-file.txt'
-var destination_file = 'my-test-file.txt'
+// Destination object name
+const destinationObject = 'my-test-file.txt'
 
-// Create the bucket, if it doesn't already exist
+
+/* How to do this? exists is always undefined
+// Create the bucket if it doesn't already exist
 minioClient.bucketExists(bucket, function (err, exists) {
   if (err) {
-    return console.log(err)
+    console.log(err)
+    return
   }
+})
+if (exists) {
+  console.log('Bucket ' + bucket + ' exists.')
+}
+else {
+*/
 
-  if (exists) {
-      console.log('Bucket ' + bucket + ' exists.')
-  }
-  else {
-      minioClient.makeBucket(bucket, 'us-east-1', function (err) {
-        if (err) return console.log(err)
 
-        console.log('Bucket ' + bucket + ' created successfully in "us-east-1".')
-      })
+// Create the bucket, default region is us-east-1
+await minioClient.makeBucket(bucket, 'us-east-1')
+console.log('Bucket ' + bucket + ' created in "us-east-1".')
+
+// Set the metadata for the new object
+var metaData = {
+  'Content-Type': 'text/plain',
+  'X-Amz-Meta-Testing': 1234,
+  example: 5678,
 }
 
+// fPutObject uploads the file and creates an object in the bucket
+// If the object already exists, it is updated with new data
+await minioClient.fPutObject(bucket, destinationObject, sourceFile, metaData)
+console.log('File ' + sourceFile +
+            ' uploaded as object ' + destinationObject +
+	    ' to bucket ' + bucket)
 
-  var metaData = {
-    'Content-Type': 'application/octet-stream',
-    'X-Amz-Meta-Testing': 1234,
-    example: 5678,
-  }
-  // Using fPutObject API upload your file to the bucket europetrip-test.
-  minioClient.fPutObject(bucket, destination_file, source_file, metaData, function (err, etag) {
-    if (err) return console.log(err)
-    console.log('File ' + source_file + ' uploaded successfully as ' + destination_file)
-  })
-})
 ```
 
-#### Run file-uploader
+#### Run the File Uploader
 
 ```sh
+node file-uploader.mjs
 Bucket js-test-bucket created successfully in "us-east-1".
-File /tmp/test-file.txt uploaded successfully as my-test-file.txt
+File /tmp/test-file.txt uploaded successfully as my-test-file.txt to bucket js-test-bucket
+```
 
+Verify the object was created with [`mc`](https://min.io/docs/minio/linux/reference/minio-mc.html):
+
+```
 mc ls play/js-test-bucket
 [2023-11-10 17:52:20 UTC]  20KiB STANDARD my-test-file.txt
 ```
