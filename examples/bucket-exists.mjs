@@ -25,11 +25,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.bucketExists('my-bucketname', function (err, exists) {
-  if (err) {
-    return console.log(err)
-  }
-  if (exists) {
-    console.log('Bucket exists.')
-  }
-})
+const exists = await s3Client.bucketExists('my-bucketname')
+if (exists) {
+  console.log('Bucket exists.')
+}

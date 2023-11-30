@@ -165,7 +165,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName[, callback])
+#### async bucketExists(bucketName): Promise<boolean>
 
 验证存储桶是否存在。
 
@@ -176,20 +176,12 @@ __参数__
 | 参数| 类型 | 描述 |
 |---|---|---|
 | `bucketName`  |  _string_ | 存储桶名称。  |
-| `callback(err)`  | _function_  | 如果存储桶存在的话`err`就是null，否则`err.code`是`NoSuchBucket`。如果没有传callback的话，则返回一个`Promise`对象。 |
 
 __示例__
 
 
 ```js
-minioClient.bucketExists('mybucket', function(err) {
-  if (err) {
-     if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
-     return console.log(err)
-  }
-  // if err is null it indicates that the bucket exists.
-  console.log('Bucket exists.')
-})
+await minioClient.bucketExists('mybucket')
 ```
 
 <a name="removeBucket"></a>
