@@ -895,6 +895,27 @@ export class TypedClient {
     }
   }
 
+  /**
+   * To check if a bucket already exists.
+   */
+  async bucketExists(bucketName: string): Promise<boolean> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'HEAD'
+    try {
+      await this.makeRequestAsyncOmit({ method, bucketName })
+    } catch (err) {
+      // @ts-ignore
+      if (err.code === 'NoSuchBucket' || err.code === 'NotFound') {
+        return false
+      }
+      throw err
+    }
+
+    return true
+  }
+
   async removeBucket(bucketName: string): Promise<void>
 
   /**
