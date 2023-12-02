@@ -219,9 +219,6 @@ export class TargetConfig {
 
 // Exports from library
 export class Client extends TypedClient {
-  bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
-  bucketExists(bucketName: string): Promise<boolean>
-
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
@@ -422,9 +419,6 @@ export class Client extends TypedClient {
 
   getBucketPolicy(bucketName: string, callback: ResultCallback<string>): void
   getBucketPolicy(bucketName: string): Promise<string>
-
-  setBucketPolicy(bucketName: string, bucketPolicy: string, callback: NoResultCallback): void
-  setBucketPolicy(bucketName: string, bucketPolicy: string): Promise<void>
 
   listenBucketNotification(
     bucketName: string,

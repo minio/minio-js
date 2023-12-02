@@ -165,7 +165,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName[, callback])
+#### async bucketExists(bucketName): Promise<boolean>
 
 验证存储桶是否存在。
 
@@ -176,20 +176,12 @@ __参数__
 | 参数| 类型 | 描述 |
 |---|---|---|
 | `bucketName`  |  _string_ | 存储桶名称。  |
-| `callback(err)`  | _function_  | 如果存储桶存在的话`err`就是null，否则`err.code`是`NoSuchBucket`。如果没有传callback的话，则返回一个`Promise`对象。 |
 
 __示例__
 
 
 ```js
-minioClient.bucketExists('mybucket', function(err) {
-  if (err) {
-     if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
-     return console.log(err)
-  }
-  // if err is null it indicates that the bucket exists.
-  console.log('Bucket exists.')
-})
+await minioClient.bucketExists('mybucket')
 ```
 
 <a name="removeBucket"></a>
@@ -983,9 +975,9 @@ minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
 ```
 
 <a name="setBucketPolicy"></a>
-### setBucketPolicy(bucketName, objectPrefix, bucketPolicy[, callback])
+### async setBucketPolicy(bucketName, bucketPolicy): Promise<void>
 
-设置指定存储桶的策略。如果`objectPrefix`不为空，则会给符合该前缀的对象（们）设置策略。
+设置指定存储桶的策略。
 
 __参数__
 
@@ -993,19 +985,13 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 要设置访问策略的对象前缀。`''`代表整个存储桶。 |
-| `bucketPolicy` | _string_ | 存储桶策略。可选值有：`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`或者`minio.Policy.READWRITE`。 |
-| `callback(err)`  | _function_  | 如果`err`不是null则代表有错误。如果没有传callback的话，则返回一个`Promise`对象。 |
+| `bucketPolicy` | _string_ | 存储桶策略。 |
 
 
 ```js
 // Set the bucket policy of `my-bucketname` to `readonly` (only allow retrieval),
 // but only for objects that start with 'img-'.
-minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, function(err) {
-  if (err) throw err
-
-  console.log('Set bucket policy to \'readonly\'.')
-})
+await minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy))
 ```
 
 

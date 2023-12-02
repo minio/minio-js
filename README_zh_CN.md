@@ -154,7 +154,7 @@ mc ls play/europetrip/
 * [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
 * [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
-* [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
+* [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
@@ -185,7 +185,7 @@ mc ls play/europetrip/
 
 #### 完整示例 : 存储桶策略
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
-* [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
+* [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## 了解更多
 * [完整文档]([https://docs.min.i](https://min.io/docs/minio/kubernetes/upstream/index.html)o)

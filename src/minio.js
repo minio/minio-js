@@ -91,30 +91,6 @@ export class Client extends TypedClient {
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
 
-  // To check if a bucket already exists.
-  //
-  // __Arguments__
-  // * `bucketName` _string_ : name of the bucket
-  // * `callback(err)` _function_ : `err` is `null` if the bucket exists
-  bucketExists(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var method = 'HEAD'
-    this.makeRequest({ method, bucketName }, '', [200], '', false, (err) => {
-      if (err) {
-        if (err.code == 'NoSuchBucket' || err.code == 'NotFound') {
-          return cb(null, false)
-        }
-        return cb(err)
-      }
-      cb(null, true)
-    })
-  }
-
   // Remove the partially uploaded object.
   //
   // __Arguments__
@@ -849,34 +825,6 @@ export class Client extends TypedClient {
           cb(null, policy.toString())
         })
     })
-  }
-
-  // Set the policy on a bucket or an object prefix.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `bucketPolicy` _string_: bucket policy (JSON stringify'ed)
-  // * `callback(err)` _function_: callback function
-  setBucketPolicy(bucketName, policy, cb) {
-    // Validate arguments.
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-    if (!isString(policy)) {
-      throw new errors.InvalidBucketPolicyError(`Invalid bucket policy: ${policy} - must be "string"`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    let method = 'DELETE'
-    let query = 'policy'
-
-    if (policy) {
-      method = 'PUT'
-    }
-
-    this.makeRequest({ method, bucketName, query }, policy, [204], '', false, cb)
   }
 
   // Generate a generic presigned URL which can be
@@ -1812,8 +1760,6 @@ export class Client extends TypedClient {
 }
 
 // Promisify various public-facing APIs on the Client module.
-Client.prototype.bucketExists = promisify(Client.prototype.bucketExists)
-
 Client.prototype.getObject = promisify(Client.prototype.getObject)
 Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
 Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
@@ -1828,7 +1774,6 @@ Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNot
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.getBucketPolicy = promisify(Client.prototype.getBucketPolicy)
-Client.prototype.setBucketPolicy = promisify(Client.prototype.setBucketPolicy)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
 Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
@@ -1846,10 +1791,12 @@ Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectCo
 
 // refactored API use promise internally
 Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
+Client.prototype.bucketExists = callbackify(Client.prototype.bucketExists)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
+Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.putObject = callbackify(Client.prototype.putObject)
 Client.prototype.fPutObject = callbackify(Client.prototype.fPutObject)
 Client.prototype.removeObject = callbackify(Client.prototype.removeObject)
@@ -1861,9 +1808,8 @@ Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLega
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
 Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
 Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
-Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
 Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)
-
+Client.prototype.setBucketPolicy = callbackify(Client.prototype.setBucketPolicy)
 Client.prototype.getBucketVersioning = callbackify(Client.prototype.getBucketVersioning)
 Client.prototype.setBucketVersioning = callbackify(Client.prototype.setBucketVersioning)
