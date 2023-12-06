@@ -941,7 +941,7 @@ listener.on('notification', function(record) {
 ```
 
 <a name="getBucketPolicy"></a>
-### getBucketPolicy(bucketName, objectPrefix[, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 获取指定存储桶的访问策略，如果`objectPrefix`不为空，则会取相应对象前缀上的访问策略。
 
@@ -951,18 +951,13 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 用于过滤的对象前缀，`''`代表整个存储桶。 |
-| `callback(err, policy)`  | _function_  | 如果`err`不是null则代表有错误。`policy`是存储桶策略的字符串表示(`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`，或者`minio.Policy.READWRITE`). 如果没有传callback的话，则返回一个`Promise`对象。 |
 
 
 ```js
 // Retrieve bucket policy of 'my-bucketname' that applies to all objects that
-// start with 'img-'.
-minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>
