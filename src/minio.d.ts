@@ -397,9 +397,6 @@ export class Client extends TypedClient {
   removeAllBucketNotification(bucketName: string, callback: NoResultCallback): void
   removeAllBucketNotification(bucketName: string): Promise<void>
 
-  getBucketPolicy(bucketName: string, callback: ResultCallback<string>): void
-  getBucketPolicy(bucketName: string): Promise<string>
-
   listenBucketNotification(
     bucketName: string,
     prefix: string,

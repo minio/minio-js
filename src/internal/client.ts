@@ -1786,6 +1786,21 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, policy, [204], '')
   }
 
+  /**
+   * Get the policy on a bucket or an object prefix.
+   */
+  async getBucketPolicy(bucketName: string): Promise<string> {
+    // Validate arguments.
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+
+    const method = 'GET'
+    const query = 'policy'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    return await readAsString(res)
+  }
+
   async putObjectRetention(bucketName: string, objectName: string, retentionOpts: Retention = {}): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
