@@ -2021,7 +2021,7 @@ listener.on('notification', function (record) {
 
 <a name="getBucketPolicy"></a>
 
-### getBucketPolicy(bucketName [, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 Get the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will be filtered based on object permissions
@@ -2029,18 +2029,15 @@ as well.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                                                                                                                           |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket                                                                                                                                                                                                                    |
-| `callback(err, policy)` | _function_ | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description        |
+| ------------ | -------- | ------------------ |
+| `bucketName` | _string_ | Name of the bucket |
 
 ```js
 // Retrieve bucket policy of 'my-bucketname'
-minioClient.getBucketPolicy('my-bucketname', function (err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy file: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>
