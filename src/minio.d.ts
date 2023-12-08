@@ -1,7 +1,7 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { Readable as ReadableStream } from 'node:stream'
+import { EventEmitter } from 'node:events'
 
 import type {
   CopyDestinationOptions,
