@@ -25,36 +25,32 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-// Download the object my-objectname at an offset 1024, for a total of 4096 bytes.
 let size = 0
-s3Client.getPartialObject('my-bucketname', 'my-objectname', 1024, 4096, function (e, dataStream) {
-  if (e) {
-    return console.log(e)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (e) {
-    console.log(e)
-  })
+// Get a full object.
+const dataStream1 = await s3Client.getObject('my-bucketname', 'my-objectname')
+
+dataStream1.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream1.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream1.on('error', function (e) {
+  console.log(e)
 })
 
+//Get a specific version of an object
 let versionedObjSize = 0
-// reads 30 bytes from the offset 10.
-s3Client.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' }, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    versionedObjSize += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + versionedObjSize)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream2 = await s3Client.getObject('my-versioned-bucket', 'my-versioned-object', {
+  versionId: 'my-versionId',
+})
+
+dataStream2.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream2.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream2.on('error', function (err) {
+  console.log(err)
 })
