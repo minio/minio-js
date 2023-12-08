@@ -161,13 +161,13 @@ mc ls play/europetrip/
 
 #### 完整示例 : 操作文件对象
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
-* [fget-object.js](https://github.com/minio/minio-js/blob/master/examples/fget-object.js)
+* [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
 * [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
-* [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+* [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
 * [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
-* [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
+* [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 * [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)

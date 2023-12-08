@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { EventEmitter } from 'node:events'
-import type { Readable as ReadableStream } from 'node:stream'
 
 import type {
   CopyDestinationOptions,
@@ -246,28 +245,6 @@ export class Client extends TypedClient {
 
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
-
-  // Object operations
-  getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
-  getObject(bucketName: string, objectName: string): Promise<ReadableStream>
-
-  getPartialObject(
-    bucketName: string,
-    objectName: string,
-    offset: number,
-    callback: ResultCallback<ReadableStream>,
-  ): void
-  getPartialObject(
-    bucketName: string,
-    objectName: string,
-    offset: number,
-    length: number,
-    callback: ResultCallback<ReadableStream>,
-  ): void
-  getPartialObject(bucketName: string, objectName: string, offset: number, length?: number): Promise<ReadableStream>
-
-  fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
-  fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
 
   copyObject(
     bucketName: string,

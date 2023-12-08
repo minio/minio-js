@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'node:fs'
-import * as path from 'node:path'
 import * as Stream from 'node:stream'
 
 import async from 'async'
@@ -122,179 +120,6 @@ export class Client extends TypedClient {
       },
       cb,
     )
-  }
-
-  // Callback is called with `error` in case of error or `null` in case of success
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `filePath` _string_: path to which the object data will be written to
-  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
-  // * `callback(err)` _function_: callback is called with `err` in case of error.
-  fGetObject(bucketName, objectName, filePath, getOpts = {}, cb) {
-    // Input validation.
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(filePath)) {
-      throw new TypeError('filePath should be of type "string"')
-    }
-    // Backward Compatibility
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    // Internal data.
-    var partFile
-    var partFileStream
-    var objStat
-
-    // Rename wrapper.
-    var rename = (err) => {
-      if (err) {
-        return cb(err)
-      }
-      fs.rename(partFile, filePath, cb)
-    }
-
-    async.waterfall(
-      [
-        (cb) => this.statObject(bucketName, objectName, getOpts, cb),
-        (result, cb) => {
-          objStat = result
-          // Create any missing top level directories.
-          fs.mkdir(path.dirname(filePath), { recursive: true }, (err) => cb(err))
-        },
-        (cb) => {
-          partFile = `${filePath}.${objStat.etag}.part.minio`
-          fs.stat(partFile, (e, stats) => {
-            var offset = 0
-            if (e) {
-              partFileStream = fs.createWriteStream(partFile, { flags: 'w' })
-            } else {
-              if (objStat.size === stats.size) {
-                return rename()
-              }
-              offset = stats.size
-              partFileStream = fs.createWriteStream(partFile, { flags: 'a' })
-            }
-            this.getPartialObject(bucketName, objectName, offset, 0, getOpts, cb)
-          })
-        },
-        (downloadStream, cb) => {
-          pipesetup(downloadStream, partFileStream)
-            .on('error', (e) => cb(e))
-            .on('finish', cb)
-        },
-        (cb) => fs.stat(partFile, cb),
-        (stats, cb) => {
-          if (stats.size === objStat.size) {
-            return cb()
-          }
-          cb(new Error('Size mismatch between downloaded file and the object'))
-        },
-      ],
-      rename,
-    )
-  }
-
-  // Callback is called with readable stream of the object content.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
-  // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getObject(bucketName, objectName, getOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    // Backward Compatibility
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    this.getPartialObject(bucketName, objectName, 0, 0, getOpts, cb)
-  }
-
-  // Callback is called with readable stream of the partial object content.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `offset` _number_: offset of the object from where the stream will start
-  // * `length` _number_: length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
-  // * `getOpts` _object_: Version of the object in the form `{versionId:'my-uuid'}`. Default is `{}`. (optional)
-  // * `callback(err, stream)` _function_: callback is called with `err` in case of error. `stream` is the object content stream
-  getPartialObject(bucketName, objectName, offset, length, getOpts = {}, cb) {
-    if (isFunction(length)) {
-      cb = length
-      length = 0
-    }
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isNumber(offset)) {
-      throw new TypeError('offset should be of type "number"')
-    }
-    if (!isNumber(length)) {
-      throw new TypeError('length should be of type "number"')
-    }
-    // Backward Compatibility
-    if (isFunction(getOpts)) {
-      cb = getOpts
-      getOpts = {}
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    var range = ''
-    if (offset || length) {
-      if (offset) {
-        range = `bytes=${+offset}-`
-      } else {
-        range = 'bytes=0-'
-        offset = 0
-      }
-      if (length) {
-        range += `${+length + offset - 1}`
-      }
-    }
-
-    var headers = {}
-    if (range !== '') {
-      headers.range = range
-    }
-
-    var expectedStatusCodes = [200]
-    if (range) {
-      expectedStatusCodes.push(206)
-    }
-    var method = 'GET'
-
-    var query = querystring.stringify(getOpts)
-    this.makeRequest({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes, '', true, cb)
   }
 
   // Copy the object.
@@ -1729,9 +1554,6 @@ export class Client extends TypedClient {
 }
 
 // Promisify various public-facing APIs on the Client module.
-Client.prototype.getObject = promisify(Client.prototype.getObject)
-Client.prototype.getPartialObject = promisify(Client.prototype.getPartialObject)
-Client.prototype.fGetObject = promisify(Client.prototype.fGetObject)
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
 Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
@@ -1763,6 +1585,9 @@ Client.prototype.bucketExists = callbackify(Client.prototype.bucketExists)
 Client.prototype.removeBucket = callbackify(Client.prototype.removeBucket)
 Client.prototype.listBuckets = callbackify(Client.prototype.listBuckets)
 
+Client.prototype.getObject = callbackify(Client.prototype.getObject)
+Client.prototype.fGetObject = callbackify(Client.prototype.fGetObject)
+Client.prototype.getPartialObject = callbackify(Client.prototype.getPartialObject)
 Client.prototype.statObject = callbackify(Client.prototype.statObject)
 Client.prototype.putObjectRetention = callbackify(Client.prototype.putObjectRetention)
 Client.prototype.putObject = callbackify(Client.prototype.putObject)
