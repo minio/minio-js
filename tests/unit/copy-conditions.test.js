@@ -21,43 +21,43 @@ use(chaiAsPromised)
 import * as Minio from '../../src/minio.js'
 
 describe('CopyConditions', () => {
-    let date = 'Fri, 11 Aug 2017 19:34:18 GMT'
-  
-    let cc = new Minio.CopyConditions()
-  
-    describe('#setModified', () => {
-      it('should take a date argument', () => {
-        cc.setModified(new Date(date))
-  
-        assert.equal(cc.modified, date)
-      })
-  
-      it('should throw without date', () => {
-        assert.throws(() => {
-          cc.setModified()
-        }, /date must be of type Date/)
-  
-        assert.throws(() => {
-          cc.setModified({ hi: 'there' })
-        }, /date must be of type Date/)
-      })
+  let date = 'Fri, 11 Aug 2017 19:34:18 GMT'
+
+  let cc = new Minio.CopyConditions()
+
+  describe('#setModified', () => {
+    it('should take a date argument', () => {
+      cc.setModified(new Date(date))
+
+      assert.equal(cc.modified, date)
     })
-  
-    describe('#setUnmodified', () => {
-      it('should take a date argument', () => {
-        cc.setUnmodified(new Date(date))
-  
-        assert.equal(cc.unmodified, date)
-      })
-  
-      it('should throw without date', () => {
-        assert.throws(() => {
-          cc.setUnmodified()
-        }, /date must be of type Date/)
-  
-        assert.throws(() => {
-          cc.setUnmodified({ hi: 'there' })
-        }, /date must be of type Date/)
-      })
+
+    it('should throw without date', () => {
+      assert.throws(() => {
+        cc.setModified()
+      }, /date must be of type Date/)
+
+      assert.throws(() => {
+        cc.setModified({ hi: 'there' })
+      }, /date must be of type Date/)
     })
   })
+
+  describe('#setUnmodified', () => {
+    it('should take a date argument', () => {
+      cc.setUnmodified(new Date(date))
+
+      assert.equal(cc.unmodified, date)
+    })
+
+    it('should throw without date', () => {
+      assert.throws(() => {
+        cc.setUnmodified()
+      }, /date must be of type Date/)
+
+      assert.throws(() => {
+        cc.setUnmodified({ hi: 'there' })
+      }, /date must be of type Date/)
+    })
+  })
+})
