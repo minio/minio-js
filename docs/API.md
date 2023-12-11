@@ -878,42 +878,37 @@ s3Client.removeBucketEncryption('my-bucketname', function (err) {
 
 <a name="getObject"></a>
 
-### getObject(bucketName, objectName, getOpts[, callback])
+### getObject(bucketName, objectName, getOpts)
 
 Downloads an object as a stream.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                               |
-| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket.                                                                                                                       |
-| `objectName`            | _string_   | Name of the object.                                                                                                                       |
-| `getOpts`               | _object_   | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)                                               |
-| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `objectName` | _string_ | Name of the object.                                                                         |
+| `getOpts`    | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 
 **Return Value**
 
-| Param    | Type     | Description                         |
-| -------- | -------- | ----------------------------------- |
-| `stream` | _Stream_ | Stream emitting the object content. |
+| Param    | Type              | Description                         |
+| -------- | ----------------- | ----------------------------------- |
+| `stream` | `stream.Readable` | Stream emitting the object content. |
 
 **Example**
 
 ```js
 let size = 0
-minioClient.getObject('mybucket', 'photo.jpg', function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -923,19 +918,15 @@ Get a specific object version.
 
 ```js
 let size = 0
-minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' }, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -967,19 +958,15 @@ Downloads the specified range bytes of an object as a stream.
 ```js
 let size = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -989,27 +976,16 @@ To get a specific version of an object
 ```js
 const versionedObjSize = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject(
-  'mybucket',
-  'photo.jpg',
-  10,
-  30,
-  { versionId: 'my-versionId' },
-  function (err, dataStream) {
-    if (err) {
-      return console.log(err)
-    }
-    dataStream.on('data', function (chunk) {
-      versionedObjSize += chunk.length
-    })
-    dataStream.on('end', function () {
-      console.log('End. Total size = ' + versionedObjSize)
-    })
-    dataStream.on('error', function (err) {
-      console.log(err)
-    })
-  },
-)
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
+})
 ```
 
 <a name="fGetObject"></a>
@@ -2021,7 +1997,7 @@ listener.on('notification', function (record) {
 
 <a name="getBucketPolicy"></a>
 
-### getBucketPolicy(bucketName [, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 Get the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will be filtered based on object permissions
@@ -2029,18 +2005,15 @@ as well.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                                                                                                                           |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket                                                                                                                                                                                                                    |
-| `callback(err, policy)` | _function_ | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description        |
+| ------------ | -------- | ------------------ |
+| `bucketName` | _string_ | Name of the bucket |
 
 ```js
 // Retrieve bucket policy of 'my-bucketname'
-minioClient.getBucketPolicy('my-bucketname', function (err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy file: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>

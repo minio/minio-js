@@ -337,7 +337,7 @@ Stream.on('error', function(err) {
 ## 3.  操作对象
 
 <a name="getObject"></a>
-### getObject(bucketName, objectName[, callback])
+### async getObject(bucketName, objectName,[ getOpts]): Promise<stream.Readable>
 
 下载对象。
 
@@ -348,63 +348,54 @@ __参数__
 |---|---|---|
 |`bucketName` | _string_ | 存储桶名称。 |
 |`objectName` | _string_ | 对象名称。 |
-|`callback(err, stream)` | _function_ | 回调函数，第一个参数是错误信息。`stream`是对象的内容。如果没有传callback的话，则返回一个`Promise`对象。 |
+|`getOpts` | _string_ | 对象名称。 |
 
 __示例__
 
 
 ```js
 let size = 0
-minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function(chunk) {
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
+dataStream.on('data', function(chunk) {
     size += chunk.length
-  })
-  dataStream.on('end', function() {
+})
+dataStream.on('end', function() {
     console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function(err) {
+})
+dataStream.on('error', function(err) {
     console.log(err)
-  })
 })
 ```
 <a name="getPartialObject"></a>
-### getPartialObject(bucketName, objectName, offset, length[, callback])
+### async getPartialObject(bucketName, objectName, offset,[ length, getOpts]): Promise<stream.Readable>
 
 下载对象中指定区间的字节数组，并返回流。
 
 __参数__
 
 
-| 参数  |  类型 | 描述  |
-|---|---|---|
-|  `bucketName` | _string_  | 存储桶名称。  |
-| `objectName`   | _string_  | 对象名称。  |
-| `offset`   | _number_  | `offset`是从第几个字节始  |
-| `length`  | _number_  | `length`是要下载的字节数组长度（可选值，如果为空的话则代表从offset一直到文件的末尾）。  |
-|`callback(err, stream)` | _function_  | 回调函数，第一个参数是错误信息。`stream`是对象的内容。如果没有传callback的话，则返回一个`Promise`对象。 |
-
+| 参数  |  类型 | 描述                                                 |
+|---|---|----------------------------------------------------|
+|  `bucketName` | _string_  | 存储桶名称。                                             |
+| `objectName`   | _string_  | 对象名称。                                              |
+| `offset`   | _number_  | `offset`是从第几个字节始                                   |
+| `length`  | _number_  | `length`是要下载的字节数组长度（可选值，如果为空的话则代表从offset一直到文件的末尾）。 |
+| `getOpts` | object| 获取对象时的额外选项，例如：`{versionId: '...'}`                 |
 __示例__
 
 
 ```js
 let size = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function(chunk) {
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
+dataStream.on('data', function(chunk) {
     size += chunk.length
-  })
-  dataStream.on('end', function() {
+})
+dataStream.on('end', function() {
     console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function(err) {
+})
+dataStream.on('error', function(err) {
     console.log(err)
-  })
 })
 ```
 
@@ -950,7 +941,7 @@ listener.on('notification', function(record) {
 ```
 
 <a name="getBucketPolicy"></a>
-### getBucketPolicy(bucketName, objectPrefix[, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 获取指定存储桶的访问策略，如果`objectPrefix`不为空，则会取相应对象前缀上的访问策略。
 
@@ -960,18 +951,13 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 用于过滤的对象前缀，`''`代表整个存储桶。 |
-| `callback(err, policy)`  | _function_  | 如果`err`不是null则代表有错误。`policy`是存储桶策略的字符串表示(`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`，或者`minio.Policy.READWRITE`). 如果没有传callback的话，则返回一个`Promise`对象。 |
 
 
 ```js
 // Retrieve bucket policy of 'my-bucketname' that applies to all objects that
-// start with 'img-'.
-minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>
