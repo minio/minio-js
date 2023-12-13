@@ -209,6 +209,12 @@ export type PutObjectLegalHoldOptions = {
   versionId?: string
   status: LEGAL_HOLD_STATUS
 }
+
+export interface UploadedObjectInfo {
+  etag: string
+  versionId: string | null
+}
+
 export interface RetentionOptions {
   versionId: string
   mode?: RETENTION_MODES
@@ -241,4 +247,12 @@ export type ObjectLockConfigParam = {
           | EmptyObject
       }
     | EmptyObject
+}
+
+export type VersioningEnabled = 'Enabled'
+export type VersioningSuspended = 'Suspended'
+
+export type BucketVersioningConfiguration = {
+  Status: VersioningEnabled | VersioningSuspended
+  // TODO add ExcludedPrefixes, ExcludeFolders which are  part of MinIO's extension, as an enhancement.
 }

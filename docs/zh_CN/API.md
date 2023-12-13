@@ -5,9 +5,9 @@
 ## MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
   	useSSL: true,
@@ -16,12 +16,12 @@ var minioClient = new Minio.Client({
 });
 ```
 
-## AWS S3 
+## AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
@@ -33,13 +33,13 @@ var s3Client = new Minio.Client({
 | [`makeBucket`](#makeBucket)    | [`getObject`](#getObject) | [`presignedUrl`](#presignedUrl) | [`getBucketNotification`](#getBucketNotification) |
 | [`listBuckets`](#listBuckets)  | [`getPartialObject`](#getPartialObject)    |   [`presignedGetObject`](#presignedGetObject) | [`setBucketNotification`](#setBucketNotification) |
 | [`bucketExists`](#bucketExists) | [`fGetObject`](#fGetObject)    |    [`presignedPutObject`](#presignedPutObject) | [`removeAllBucketNotification`](#removeAllBucketNotification) |
-| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  | 
+| [`removeBucket`](#removeBucket)      | [`putObject`](#putObject) |    [`presignedPostPolicy`](#presignedPostPolicy) | [`getBucketPolicy`](#getBucketPolicy) |  |
 | [`listObjects`](#listObjects) | [`fPutObject`](#fPutObject)   |   |   [`setBucketPolicy`](#setBucketPolicy)
 | [`listObjectsV2`](#listObjectsV2) | [`copyObject`](#copyObject) | | [`listenBucketNotification`](#listenBucketNotification)|
 | [`listIncompleteUploads`](#listIncompleteUploads) |  [`statObject`](#statObject) |
 |     |  [`removeObject`](#removeObject)    |
 |  | [`removeIncompleteUpload`](#removeIncompleteUpload)  |
-  
+
 
 
 ## 1.  构造函数
@@ -72,9 +72,9 @@ __示例__
 ## 创建连接Minio Server的客户端
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -87,21 +87,21 @@ var minioClient = new Minio.Client({
 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  's3.amazonaws.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY'
 })
 ```
 
-## Ali OSS 
+## Ali OSS
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
     endPoint:  'oss-cn-hangzhou.aliyuncs.com',
     accessKey: 'YOUR-ACCESSKEYID',
     secretKey: 'YOUR-SECRETACCESSKEY',
@@ -114,37 +114,22 @@ var s3Client = new Minio.Client({
 ## 2. 操作存储桶
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName, region[, callback])
+### async makeBucket(bucketName, [region, makeOpts]): Promise<void>
 
 创建一个新的存储桶。
 
 __参数__
 
-| 参数| 类型 | 描述 |
-|---|---|---|
-|`bucketName`  | _string_  | 存储桶名称。 |
-| `region`  |  _string_ | 存储桶被创建的region(地区)，默认是us-east-1(美国东一区)，下面列举的是其它合法的值： |
-| | |us-east-1 |
-| | |us-west-1 |
-| | |us-west-2 |
-| | |eu-west-1 |
-| | |eu-central-1|
-| | |ap-southeast-1|
-| | |ap-northeast-1|
-| | |ap-southeast-2|
-| | |sa-east-1|
-| | |cn-north-1|
-|`callback(err)`  |_function_   | 回调函数，`err`做为错误信息参数。如果创建存储桶成功则`err`为null。如果没有传callback的话，则返回一个`Promise`对象。 |
-
+| 参数           | 类型       | 描述                                    |
+|--------------|----------|---------------------------------------|
+| `bucketName` | _string_ | 存储桶名称。                                |
+| `region`     | _string_ | 存储桶被创建的region(地区)，默认是us-east-1(美国东一区) |
+| `makeOpts`   | _object_ | 额外选项，例如： `{ObjectLocking:true}`       |
 
 __示例__
 
-
 ```js
-minioClient.makeBucket('mybucket', 'us-east-1', function(err) {
-  if (err) return console.log('Error creating bucket.', err)
-  console.log('Bucket created successfully in "us-east-1".')
-})
+await minioClient.makeBucket('mybucket', 'us-east-1')
 ```
 
 <a name="listBuckets"></a>
@@ -180,7 +165,7 @@ minioClient.listBuckets(function(err, buckets) {
 ```
 
 <a name="bucketExists"></a>
-#### bucketExists(bucketName[, callback])
+#### async bucketExists(bucketName): Promise<boolean>
 
 验证存储桶是否存在。
 
@@ -191,20 +176,12 @@ __参数__
 | 参数| 类型 | 描述 |
 |---|---|---|
 | `bucketName`  |  _string_ | 存储桶名称。  |
-| `callback(err)`  | _function_  | 如果存储桶存在的话`err`就是null，否则`err.code`是`NoSuchBucket`。如果没有传callback的话，则返回一个`Promise`对象。 |
 
 __示例__
 
 
 ```js
-minioClient.bucketExists('mybucket', function(err) {
-  if (err) {
-     if (err.code == 'NoSuchBucket') return console.log("bucket does not exist.")
-     return console.log(err)
-  }
-  // if err is null it indicates that the bucket exists.
-  console.log('Bucket exists.')
-})
+await minioClient.bucketExists('mybucket')
 ```
 
 <a name="removeBucket"></a>
@@ -266,7 +243,7 @@ __示例__
 
 
 ```js
-var stream = minioClient.listObjects('mybucket','', true)
+const stream = minioClient.listObjects('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
@@ -307,7 +284,7 @@ __示例__
 
 
 ```js
-var stream = minioClient.listObjectsV2('mybucket','', true)
+const stream = minioClient.listObjectsV2('mybucket','', true)
 stream.on('data', function(obj) { console.log(obj) } )
 stream.on('error', function(err) { console.log(err) } )
 ```
@@ -345,7 +322,7 @@ __示例__
 
 
 ```js
-var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
+const Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function(obj) {
   console.log(obj)
 })
@@ -360,7 +337,7 @@ Stream.on('error', function(err) {
 ## 3.  操作对象
 
 <a name="getObject"></a>
-### getObject(bucketName, objectName[, callback])
+### async getObject(bucketName, objectName,[ getOpts]): Promise<stream.Readable>
 
 下载对象。
 
@@ -371,63 +348,54 @@ __参数__
 |---|---|---|
 |`bucketName` | _string_ | 存储桶名称。 |
 |`objectName` | _string_ | 对象名称。 |
-|`callback(err, stream)` | _function_ | 回调函数，第一个参数是错误信息。`stream`是对象的内容。如果没有传callback的话，则返回一个`Promise`对象。 |
+|`getOpts` | _string_ | 对象名称。 |
 
 __示例__
 
 
 ```js
-var size = 0
-minioClient.getObject('mybucket', 'photo.jpg', function(err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function(chunk) {
+let size = 0
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
+dataStream.on('data', function(chunk) {
     size += chunk.length
-  })
-  dataStream.on('end', function() {
+})
+dataStream.on('end', function() {
     console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function(err) {
+})
+dataStream.on('error', function(err) {
     console.log(err)
-  })
 })
 ```
 <a name="getPartialObject"></a>
-### getPartialObject(bucketName, objectName, offset, length[, callback])
+### async getPartialObject(bucketName, objectName, offset,[ length, getOpts]): Promise<stream.Readable>
 
 下载对象中指定区间的字节数组，并返回流。
 
 __参数__
 
 
-| 参数  |  类型 | 描述  |
-|---|---|---|
-|  `bucketName` | _string_  | 存储桶名称。  |
-| `objectName`   | _string_  | 对象名称。  |
-| `offset`   | _number_  | `offset`是从第几个字节始  |
-| `length`  | _number_  | `length`是要下载的字节数组长度（可选值，如果为空的话则代表从offset一直到文件的末尾）。  |
-|`callback(err, stream)` | _function_  | 回调函数，第一个参数是错误信息。`stream`是对象的内容。如果没有传callback的话，则返回一个`Promise`对象。 |
-
+| 参数  |  类型 | 描述                                                 |
+|---|---|----------------------------------------------------|
+|  `bucketName` | _string_  | 存储桶名称。                                             |
+| `objectName`   | _string_  | 对象名称。                                              |
+| `offset`   | _number_  | `offset`是从第几个字节始                                   |
+| `length`  | _number_  | `length`是要下载的字节数组长度（可选值，如果为空的话则代表从offset一直到文件的末尾）。 |
+| `getOpts` | object| 获取对象时的额外选项，例如：`{versionId: '...'}`                 |
 __示例__
 
 
 ```js
-var size = 0
+let size = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function(err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function(chunk) {
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
+dataStream.on('data', function(chunk) {
     size += chunk.length
-  })
-  dataStream.on('end', function() {
+})
+dataStream.on('end', function() {
     console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function(err) {
+})
+dataStream.on('error', function(err) {
     console.log(err)
-  })
 })
 ```
 
@@ -450,7 +418,6 @@ __示例__
 
 
 ```js
-var size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function(err) {
   if (err) {
     return console.log(err)
@@ -483,10 +450,10 @@ __示例__
 单个对象的最大大小限制在5TB。putObject在对象大于5MiB时，自动使用multiple parts方式上传。这样的话，当上传失败的时候，客户端只需要上传未成功的部分即可（类似断点上传）。上传的对象使用MD5SUM签名进行完整性验证。
 
 ```js
-var Fs = require('fs')
-var file = '/tmp/40mbfile'
-var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function(err, stats) {
+import * as Fs from 'fs'
+const file = '/tmp/40mbfile'
+const fileStream = Fs.createReadStream(file)
+const fileStat = Fs.stat(file, function(err, stats) {
   if (err) {
     return console.log(err)
   }
@@ -514,7 +481,7 @@ __示例__
 
 
 ```js
-var buffer = 'Hello World'
+const buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, function(err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -539,7 +506,7 @@ __示例__
 
 
 ```js
-var file = '/tmp/40mbfile'
+const file = '/tmp/40mbfile'
 minioClient.fPutObject('mybucket', '40mbfile', file, 'application/octet-stream', function(err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -564,7 +531,7 @@ __参数__
 __示例__
 
 ```js
-var conds = new Minio.CopyConditions()
+const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function(e, data) {
   if (e) {
@@ -791,7 +758,7 @@ __参数__
 
 
 ```js
-var policy = minioClient.newPostPolicy()
+const policy = minioClient.newPostPolicy()
 ```
 
 设置上传策略：
@@ -809,7 +776,7 @@ policy.setKey('hello.txt')
 // Policy restricted for incoming objects with keyPrefix.
 policy.setKeyStartsWith('keyPrefix')
 
-var expires = new Date
+const expires = new Date
 expires.setSeconds(24 * 60 * 60 * 10)
 // Policy expires in 10 days.
 policy.setExpires(expires)
@@ -836,7 +803,7 @@ policy.setUserMetaData({
 minioClient.presignedPostPolicy(policy, function(err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(data.postURL)
+  const req = superagent.post(data.postURL)
   _.each(data.formData, function(value, key) {
     req.field(key, value)
   })
@@ -902,11 +869,11 @@ __示例__
 
 ```js
 // Create a new notification object
-var bucketNotification = new Minio.NotificationConfig();
+const bucketNotification = new Minio.NotificationConfig();
 
 // Setup a new Queue configuration
-var arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')
 queue.addEvent(Minio.ObjectReducedRedundancyLostObject)
@@ -965,7 +932,7 @@ __参数__
 这里是你要的[完整示例](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js)，拿走不谢。
 
 ```js
-var listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 listener.on('notification', function(record) {
   // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
   console.log('%s event occurred (%s)', record.eventName, record.eventTime)
@@ -974,7 +941,7 @@ listener.on('notification', function(record) {
 ```
 
 <a name="getBucketPolicy"></a>
-### getBucketPolicy(bucketName, objectPrefix[, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 获取指定存储桶的访问策略，如果`objectPrefix`不为空，则会取相应对象前缀上的访问策略。
 
@@ -984,24 +951,19 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 用于过滤的对象前缀，`''`代表整个存储桶。 |
-| `callback(err, policy)`  | _function_  | 如果`err`不是null则代表有错误。`policy`是存储桶策略的字符串表示(`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`，或者`minio.Policy.READWRITE`). 如果没有传callback的话，则返回一个`Promise`对象。 |
 
 
 ```js
 // Retrieve bucket policy of 'my-bucketname' that applies to all objects that
-// start with 'img-'.
-minioClient.getBucketPolicy('my-bucketname', 'img-', function(err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>
-### setBucketPolicy(bucketName, objectPrefix, bucketPolicy[, callback])
+### async setBucketPolicy(bucketName, bucketPolicy): Promise<void>
 
-设置指定存储桶的策略。如果`objectPrefix`不为空，则会给符合该前缀的对象（们）设置策略。
+设置指定存储桶的策略。
 
 __参数__
 
@@ -1009,19 +971,13 @@ __参数__
 | 参数  |  类型 | 描述  |
 |---|---|---|
 | `bucketName`  | _string_  | 存储桶名称。 |
-| `objectPrefix` | _string_ | 要设置访问策略的对象前缀。`''`代表整个存储桶。 |
-| `bucketPolicy` | _string_ | 存储桶策略。可选值有：`minio.Policy.NONE`，`minio.Policy.READONLY`，`minio.Policy.WRITEONLY`或者`minio.Policy.READWRITE`。 |
-| `callback(err)`  | _function_  | 如果`err`不是null则代表有错误。如果没有传callback的话，则返回一个`Promise`对象。 |
+| `bucketPolicy` | _string_ | 存储桶策略。 |
 
 
 ```js
 // Set the bucket policy of `my-bucketname` to `readonly` (only allow retrieval),
 // but only for objects that start with 'img-'.
-minioClient.setBucketPolicy('my-bucketname', 'img-', minio.Policy.READONLY, function(err) {
-  if (err) throw err
-
-  console.log('Set bucket policy to \'readonly\'.')
-})
+await minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy))
 ```
 
 

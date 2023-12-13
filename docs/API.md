@@ -5,9 +5,9 @@
 ## MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -19,9 +19,9 @@ var minioClient = new Minio.Client({
 ## AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -86,9 +86,9 @@ var s3Client = new Minio.Client({
 ## Create client for MinIO
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -100,9 +100,9 @@ var minioClient = new Minio.Client({
 ## Create client for AWS S3
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
@@ -112,9 +112,9 @@ var s3Client = new Minio.Client({
 ## Create client with temporary credentials
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-TEMP-ACCESSKEYID',
   secretKey: 'YOUR-TEMP-SECRETACCESSKEY',
@@ -125,11 +125,11 @@ var s3Client = new Minio.Client({
 ## Create client with custom HTTPS Agent
 
 ```js
-var Minio = require('minio')
-var fs = require('fs')
-var https = require('https')
+import * as Minio from 'minio'
+import * as fs from 'fs'
+import * as https from 'https'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -151,26 +151,23 @@ var s3Client = new Minio.Client({
 
 <a name="makeBucket"></a>
 
-### makeBucket(bucketName[, region, makeOpts , callback])
+### async makeBucket(bucketName, [region, makeOpts]): Promise<void>
 
 Creates a new bucket.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                 |
-| --------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                         |
-| `region`        | _string_   | Region where the bucket is created. This parameter is optional. Default value is us-east-1.                                                                 |
-| `makeOpts`      | _object_   | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                                                                                           |
-| `callback(err)` | _function_ | Callback function with `err` as the error argument. `err` is null if the bucket is successfully created. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `region`     | _string_ | Region where the bucket is created. This parameter is optional. Default value is us-east-1. |
+| `makeOpts`   | _object_ | Options to create a bucket. e.g `{ObjectLocking:true}` (Optional)                           |
 
 **Example**
 
 ```js
-minioClient.makeBucket('mybucket', 'us-east-1', function (err) {
-  if (err) return console.log('Error creating bucket.', err)
-  console.log('Bucket created successfully in "us-east-1".')
-})
+await minioClient.makeBucket('mybucket', 'us-east-1')
+console.log('Bucket created successfully in "us-east-1".')
 ```
 
 **Example 1**
@@ -215,28 +212,23 @@ try {
 
 <a name="bucketExists"></a>
 
-#### bucketExists(bucketName[, callback])
+#### async bucketExists(bucketName): Promise<boolean>
 
 Checks if a bucket exists.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                                                                          |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bucketName`            | _string_   | Name of the bucket.                                                                                                                                                                  |
-| `callback(err, exists)` | _function_ | `exists` is a boolean which indicates whether `bucketName` exists or not. `err` is set when an error occurs during the operation. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.bucketExists('mybucket', function (err, exists) {
-  if (err) {
-    return console.log(err)
-  }
-  if (exists) {
-    return console.log('Bucket exists.')
-  }
-})
+const exists = await minioClient.bucketExists('mybucket')
+if (exists) {
+  return console.log('Bucket exists.')
+}
 ```
 
 <a name="removeBucket"></a>
@@ -299,8 +291,8 @@ The object is of the format:
 **Example**
 
 ```js
-var data = []
-var stream = minioClient.listObjects('mybucket', '', true)
+const data = []
+const stream = minioClient.listObjects('mybucket', '', true)
 stream.on('data', function (obj) {
   data.push(obj)
 })
@@ -316,8 +308,8 @@ stream.on('error', function (err) {
 To get Object versions
 
 ```js
-var data = []
-var stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: true })
+const data = []
+const stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: true })
 stream.on('data', function (obj) {
   data.push(obj)
 })
@@ -363,7 +355,7 @@ The object is of the format:
 **Example**
 
 ```js
-var stream = minioClient.listObjectsV2('mybucket', '', true, '')
+const stream = minioClient.listObjectsV2('mybucket', '', true, '')
 stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -407,7 +399,7 @@ The object is of the format:
 **Example**
 
 ```js
-var stream = minioClient.extensions.listObjectsV2WithMetadata('mybucket', '', true, '')
+const stream = minioClient.extensions.listObjectsV2WithMetadata('mybucket', '', true, '')
 stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -445,7 +437,7 @@ Lists partially uploaded objects in a bucket.
 **Example**
 
 ```js
-var Stream = minioClient.listIncompleteUploads('mybucket', '', true)
+const Stream = minioClient.listIncompleteUploads('mybucket', '', true)
 Stream.on('data', function (obj) {
   console.log(obj)
 })
@@ -465,47 +457,35 @@ Get Versioning state of a Bucket
 
 **Parameters**
 
-| Param                | Type       | Description                                                                                                                      |
-| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
-| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.getBucketVersioning('bucketname', function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
-  console.log('Success')
-})
+const versionInfo = await minioClient.getBucketVersioning('bucketname')
+console.log('Success ', versionInfo)
 ```
 
 <a name="setBucketVersioning"></a>
 
-### setBucketVersioning(bucketName, versioningConfig, callback)
+### setBucketVersioning(bucketName, versioningConfig)
 
 Set Versioning state on a Bucket
 
 **Parameters**
 
-| Param              | Type       | Description                                        |
-| ------------------ | ---------- | -------------------------------------------------- |
-| `bucketName`       | _string_   | Name of the bucket.                                |
-| `versioningConfig` | _object_   | Versioning Configuration e.g: `{Status:"Enabled"}` |
-| `callback(err)`    | _function_ | Callback is called with `err` in case of error.    |
+| Param              | Type     | Description                                        |
+| ------------------ | -------- | -------------------------------------------------- |
+| `bucketName`       | _string_ | Name of the bucket.                                |
+| `versioningConfig` | _object_ | Versioning Configuration e.g: `{Status:"Enabled"}` |
 
 **Example**
 
 ```js
-var versioningConfig = { Status: 'Enabled' }
-minioClient.setBucketVersioning('bucketname', versioningConfig, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+const versioningConfig = { Status: 'Enabled' }
+await minioClient.setBucketVersioning('bucketname', versioningConfig)
 ```
 
 <a name="setBucketReplication"></a>
@@ -898,42 +878,37 @@ s3Client.removeBucketEncryption('my-bucketname', function (err) {
 
 <a name="getObject"></a>
 
-### getObject(bucketName, objectName, getOpts[, callback])
+### getObject(bucketName, objectName, getOpts)
 
 Downloads an object as a stream.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                               |
-| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket.                                                                                                                       |
-| `objectName`            | _string_   | Name of the object.                                                                                                                       |
-| `getOpts`               | _object_   | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional)                                               |
-| `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                                 |
+| ------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                         |
+| `objectName` | _string_ | Name of the object.                                                                         |
+| `getOpts`    | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
 
 **Return Value**
 
-| Param    | Type     | Description                         |
-| -------- | -------- | ----------------------------------- |
-| `stream` | _Stream_ | Stream emitting the object content. |
+| Param    | Type              | Description                         |
+| -------- | ----------------- | ----------------------------------- |
+| `stream` | `stream.Readable` | Stream emitting the object content. |
 
 **Example**
 
 ```js
-var size = 0
-minioClient.getObject('mybucket', 'photo.jpg', function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+let size = 0
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg')
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -942,20 +917,16 @@ minioClient.getObject('mybucket', 'photo.jpg', function (err, dataStream) {
 Get a specific object version.
 
 ```js
-var size = 0
-minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' }, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+let size = 0
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -985,21 +956,17 @@ Downloads the specified range bytes of an object as a stream.
 **Example**
 
 ```js
-var size = 0
+let size = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function (err, dataStream) {
-  if (err) {
-    return console.log(err)
-  }
-  dataStream.on('data', function (chunk) {
-    size += chunk.length
-  })
-  dataStream.on('end', function () {
-    console.log('End. Total size = ' + size)
-  })
-  dataStream.on('error', function (err) {
-    console.log(err)
-  })
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30)
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
 })
 ```
 
@@ -1007,29 +974,18 @@ minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, function (err, dat
 To get a specific version of an object
 
 ```js
-var versionedObjSize = 0
+const versionedObjSize = 0
 // reads 30 bytes from the offset 10.
-minioClient.getPartialObject(
-  'mybucket',
-  'photo.jpg',
-  10,
-  30,
-  { versionId: 'my-versionId' },
-  function (err, dataStream) {
-    if (err) {
-      return console.log(err)
-    }
-    dataStream.on('data', function (chunk) {
-      versionedObjSize += chunk.length
-    })
-    dataStream.on('end', function () {
-      console.log('End. Total size = ' + versionedObjSize)
-    })
-    dataStream.on('error', function (err) {
-      console.log(err)
-    })
-  },
-)
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, { versionId: 'my-versionId' })
+dataStream.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
+})
 ```
 
 <a name="fGetObject"></a>
@@ -1058,7 +1014,6 @@ Downloads and saves the object as a file in the local filesystem.
 **Example**
 
 ```js
-var size = 0
 minioClient.fGetObject('mybucket', 'photo.jpg', '/tmp/photo.jpg', function (err) {
   if (err) {
     return console.log(err)
@@ -1111,10 +1066,10 @@ Uploads an object from a stream/Buffer.
 The maximum size of a single object is limited to 5TB. putObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-var Fs = require('fs')
-var file = '/tmp/40mbfile'
-var fileStream = Fs.createReadStream(file)
-var fileStat = Fs.stat(file, function (err, stats) {
+import * as Fs from 'fs'
+const file = '/tmp/40mbfile'
+const fileStream = Fs.createReadStream(file)
+const fileStat = Fs.stat(file, function (err, stats) {
   if (err) {
     return console.log(err)
   }
@@ -1142,7 +1097,7 @@ var fileStat = Fs.stat(file, function (err, stats) {
 **Example**
 
 ```js
-var buffer = 'Hello World'
+const buffer = 'Hello World'
 minioClient.putObject('mybucket', 'hello-file', buffer, function (err, etag) {
   return console.log(err, etag) // err should be null
 })
@@ -1177,8 +1132,8 @@ Uploads contents from a file to objectName.
 The maximum size of a single object is limited to 5TB. fPutObject transparently uploads objects larger than 64MiB in multiple parts. Uploaded data is carefully verified using MD5SUM signatures.
 
 ```js
-var file = '/tmp/40mbfile'
-var metaData = {
+const file = '/tmp/40mbfile'
+const metaData = {
   'Content-Type': 'text/html',
   'Content-Language': 123,
   'X-Amz-Meta-Testing': 1234,
@@ -1211,7 +1166,7 @@ Copy a source object into a new object in the specified bucket.
 **Example**
 
 ```js
-var conds = new Minio.CopyConditions()
+const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function (e, data) {
   if (e) {
@@ -1326,10 +1281,10 @@ Remove all objects in the objectsList.
 **Example**
 
 ```js
-var objectsList = []
+const objectsList = []
 
 // List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
+const objectsStream = s3Client.listObjects('my-bucketname', 'my-prefixname', true)
 
 objectsStream.on('data', function (obj) {
   objectsList.push(obj.name)
@@ -1354,12 +1309,12 @@ objectsStream.on('end', function () {
 With versioning Support
 
 ```js
-var objectsList = []
-var bucket = 'my-bucket'
-var prefix = 'my-prefix'
-var recursive = false
+const objectsList = []
+const bucket = 'my-bucket'
+const prefix = 'my-prefix'
+const recursive = false
 
-var objectsStream = s3Client.listObjects(bucket, prefix, recursive, { IncludeVersion: true })
+const objectsStream = s3Client.listObjects(bucket, prefix, recursive, { IncludeVersion: true })
 objectsStream.on('data', function (obj) {
   objectsList.push(obj)
 })
@@ -1649,26 +1604,28 @@ Compose an object from parts
 Compose an Object from its parts .
 
 ```js
+import * as minio from 'minio'
+
 const sourceList = [
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'parta',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partb',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partc',
   }),
-  new Helpers.CopySourceOptions({
+  new minio.CopySourceOptions({
     Bucket: 'source-bucket',
     Object: 'partd',
   }),
 ]
 
-const destOption = new Helpers.CopyDestinationOptions({
+const destOption = new minio.CopyDestinationOptions({
   Bucket: 'dest-bucket',
   Object: '100MB.zip',
 })
@@ -1858,7 +1815,7 @@ Allows setting policy conditions to a presigned URL for POST operations. Policie
 Create policy:
 
 ```js
-var policy = minioClient.newPostPolicy()
+const policy = minioClient.newPostPolicy()
 ```
 
 Apply upload policy restrictions:
@@ -1877,7 +1834,7 @@ or
 // Policy restricted for incoming objects with keyPrefix.
 policy.setKeyStartsWith('keyPrefix')
 
-var expires = new Date()
+const expires = new Date()
 expires.setSeconds(24 * 60 * 60 * 10)
 // Policy expires in 10 days.
 policy.setExpires(expires)
@@ -1903,7 +1860,7 @@ POST your content from the browser using `superagent`:
 minioClient.presignedPostPolicy(policy, function (err, data) {
   if (err) return console.log(err)
 
-  var req = superagent.post(data.postURL)
+  const req = superagent.post(data.postURL)
   _.each(data.formData, function (value, key) {
     req.field(key, value)
   })
@@ -1964,11 +1921,11 @@ Upload a user-created notification configuration and associate it to the specifi
 
 ```js
 // Create a new notification object
-var bucketNotification = new Minio.NotificationConfig()
+const bucketNotification = new Minio.NotificationConfig()
 
 // Setup a new Queue configuration
-var arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
-var queue = new Minio.QueueConfig(arn)
+const arn = Minio.buildARN('aws', 'sqs', 'us-west-2', '1', 'webhook')
+const queue = new Minio.QueueConfig(arn)
 queue.addFilterSuffix('.jpg')
 queue.addFilterPrefix('myphotos/')
 queue.addEvent(Minio.ObjectReducedRedundancyLostObject)
@@ -2030,7 +1987,7 @@ To stop listening, call `.stop()` on the returned `EventEmitter`.
 See [here](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) for a full example.
 
 ```js
-var listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
+const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])
 listener.on('notification', function (record) {
   // For example: 's3:ObjectCreated:Put event occurred (2016-08-23T18:26:07.214Z)'
   console.log('%s event occurred (%s)', record.eventName, record.eventTime)
@@ -2040,7 +1997,7 @@ listener.on('notification', function (record) {
 
 <a name="getBucketPolicy"></a>
 
-### getBucketPolicy(bucketName [, callback])
+### async getBucketPolicy(bucketName: string): Promise<string>
 
 Get the bucket policy associated with the specified bucket. If `objectPrefix`
 is not empty, the bucket policy will be filtered based on object permissions
@@ -2048,41 +2005,33 @@ as well.
 
 **Parameters**
 
-| Param                   | Type       | Description                                                                                                                                                                                                                           |
-| ----------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`            | _string_   | Name of the bucket                                                                                                                                                                                                                    |
-| `callback(err, policy)` | _function_ | Callback function is called with non `null` err value in case of error. `policy` is [bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html). If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description        |
+| ------------ | -------- | ------------------ |
+| `bucketName` | _string_ | Name of the bucket |
 
 ```js
 // Retrieve bucket policy of 'my-bucketname'
-minioClient.getBucketPolicy('my-bucketname', function (err, policy) {
-  if (err) throw err
+const policy = await minioClient.getBucketPolicy('my-bucketname')
 
-  console.log(`Bucket policy file: ${policy}`)
-})
+console.log(`Bucket policy file: ${policy}`)
 ```
 
 <a name="setBucketPolicy"></a>
 
-### setBucketPolicy(bucketName, bucketPolicy[, callback])
+### async setBucketPolicy(bucketName, bucketPolicy): Promise<void>
 
 Set the bucket policy on the specified bucket. [bucketPolicy](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html) is detailed here.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                |
-| --------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                        |
-| `bucketPolicy`  | _string_   | bucket policy.                                                                                                             |
-| `callback(err)` | _function_ | Callback function is called with non `null` err value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param          | Type     | Description         |
+| -------------- | -------- | ------------------- |
+| `bucketName`   | _string_ | Name of the bucket. |
+| `bucketPolicy` | _string_ | bucket policy.      |
 
 ```js
 // Set the bucket policy of `my-bucketname`
-minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy), function (err) {
-  if (err) throw err
-
-  console.log('Bucket policy set')
-})
+await minioClient.setBucketPolicy('my-bucketname', JSON.stringify(policy))
 ```
 
 ## 6. Custom Settings

@@ -35,9 +35,9 @@ npm install -g
 
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -55,11 +55,11 @@ var minioClient = new Minio.Client({
 #### file-uploader.js
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
 // Instantiate the minio client with the endpoint
 // and access keys as shown below.
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
     endPoint: 'play.min.io',
     port: 9000,
     useSSL: true,
@@ -68,7 +68,7 @@ var minioClient = new Minio.Client({
 });
 
 // File that needs to be uploaded.
-var file = '/tmp/photos-europe.tar'
+const file = '/tmp/photos-europe.tar'
 
 // Make a bucket called europetrip.
 minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
@@ -76,7 +76,7 @@ minioClient.makeBucket('europetrip', 'us-east-1', function(err) {
 
     console.log('Bucket created successfully in "us-east-1".')
 
-    var metaData = {
+    const metaData = {
         'Content-Type': 'application/octet-stream',
         'X-Amz-Meta-Testing': 1234,
         'example': 5678
@@ -154,20 +154,20 @@ mc ls play/europetrip/
 * [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
 * [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 * [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
-* [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
+* [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 * [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 * [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 
 #### 完整示例 : 操作文件对象
 * [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
-* [fget-object.js](https://github.com/minio/minio-js/blob/master/examples/fget-object.js)
+* [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
 * [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
-* [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+* [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
 * [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
-* [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
+* [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
 * [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 * [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 * [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
@@ -185,7 +185,7 @@ mc ls play/europetrip/
 
 #### 完整示例 : 存储桶策略
 * [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
-* [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
+* [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## 了解更多
 * [完整文档]([https://docs.min.i](https://min.io/docs/minio/kubernetes/upstream/index.html)o)

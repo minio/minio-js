@@ -16,7 +16,6 @@
 
 import * as Crypto from 'node:crypto'
 
-import JSONParser from 'json-stream'
 import Through2 from 'through2'
 
 import { isFunction } from './internal/helper.ts'
@@ -101,11 +100,6 @@ export function getCopyObjectTransformer() {
   return getConcater(xmlParsers.parseCopyObject)
 }
 
-// Parses listMultipartUploads response.
-export function getListMultipartTransformer() {
-  return getConcater(xmlParsers.parseListMultipart)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
@@ -121,24 +115,9 @@ export function getListObjectsV2WithMetadataTransformer() {
   return getConcater(xmlParsers.parseListObjectsV2WithMetadata)
 }
 
-// Parses completeMultipartUpload response.
-export function getCompleteMultipartTransformer() {
-  return getConcater(xmlParsers.parseCompleteMultipart)
-}
-
 // Parses GET/SET BucketNotification response
 export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
-}
-
-// Parses a notification.
-export function getNotificationTransformer() {
-  // This will parse and return each object.
-  return new JSONParser()
-}
-
-export function bucketVersioningTransformer() {
-  return getConcater(xmlParsers.parseBucketVersioningConfig)
 }
 
 export function lifecycleTransformer() {

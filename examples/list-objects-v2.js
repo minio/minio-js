@@ -17,15 +17,15 @@
 // Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
 // dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 // List all object paths in bucket my-bucketname.
-var objectsStream = s3Client.listObjectsV2('my-bucketname', '', true, '')
+const objectsStream = s3Client.listObjectsV2('my-bucketname', '', true, '')
 objectsStream.on('data', function (obj) {
   console.log(obj)
 })

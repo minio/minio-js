@@ -1,9 +1,6 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { EventEmitter } from 'node:events'
-import type { Readable as ReadableStream } from 'node:stream'
-
 import type {
   CopyDestinationOptions,
   CopySourceOptions,
@@ -15,7 +12,6 @@ import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
-import type { Region } from './internal/s3-endpoints.ts'
 import type {
   BucketItem,
   BucketItemCopy,
@@ -30,6 +26,7 @@ import type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   ObjectLockInfo,
   PutObjectLegalHoldOptions,
@@ -48,10 +45,15 @@ import type {
   Tag,
   VersionIdentificator,
 } from './internal/type.ts'
+import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
+export * from './errors.ts'
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export type * from './notification.ts'
+export * from './notification.ts'
 export { CopyConditions, PostPolicy }
+export type { MakeBucketOpt } from './internal/client.ts'
 export type {
   BucketItem,
   BucketItemCopy,
@@ -67,6 +69,7 @@ export type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
@@ -86,26 +89,6 @@ export type {
   Tag,
 }
 
-// Exports only from typings
-export type NotificationEvent =
-  | 's3:ObjectCreated:*'
-  | 's3:ObjectCreated:Put'
-  | 's3:ObjectCreated:Post'
-  | 's3:ObjectCreated:Copy'
-  | 's3:ObjectCreated:CompleteMultipartUpload'
-  | 's3:ObjectRemoved:*'
-  | 's3:ObjectRemoved:Delete'
-  | 's3:ObjectRemoved:DeleteMarkerCreated'
-  | 's3:ReducedRedundancyLostObject'
-  | 's3:TestEvent'
-  | 's3:ObjectRestore:Post'
-  | 's3:ObjectRestore:Completed'
-  | 's3:Replication:OperationFailedReplication'
-  | 's3:Replication:OperationMissedThreshold'
-  | 's3:Replication:OperationReplicatedAfterThreshold'
-  | 's3:Replication:OperationNotTracked'
-  | string
-
 /**
  * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
  */
@@ -116,10 +99,6 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
-/**
- * @deprecated keep for backward compatible
- */
-export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type Lifecycle = LifecycleConfig | null | ''
@@ -129,11 +108,6 @@ export interface PostPolicyResult {
   formData: {
     [key: string]: any
   }
-}
-
-export interface UploadedObjectInfo {
-  etag: string
-  versionId: string | null
 }
 
 export interface LifecycleConfig {
@@ -221,36 +195,11 @@ export class TargetConfig {
   addFilterPrefix(prefix: string): void
 }
 
-export interface MakeBucketOpt {
-  ObjectLocking: boolean
-}
-
 // Exports from library
 export class Client extends TypedClient {
-  // Bucket operations
-  makeBucket(bucketName: string, region: Region, makeOpts: MakeBucketOpt, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region: Region, callback: NoResultCallback): void
-  makeBucket(bucketName: string, callback: NoResultCallback): void
-  makeBucket(bucketName: string, region?: Region, makeOpts?: MakeBucketOpt): Promise<void>
-
-  bucketExists(bucketName: string, callback: ResultCallback<boolean>): void
-  bucketExists(bucketName: string): Promise<boolean>
-
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  listIncompleteUploads(
-    bucketName: string,
-    prefix?: string,
-    recursive?: boolean,
-  ): BucketStream<IncompleteUploadedBucketItem>
-
-  getBucketVersioning(bucketName: string, callback: ResultCallback<VersioningConfig>): void
-  getBucketVersioning(bucketName: string): Promise<VersioningConfig>
-
-  setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
-  setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
 
   setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
   setBucketTagging(bucketName: string, tags: TagList): Promise<void>
@@ -275,77 +224,6 @@ export class Client extends TypedClient {
 
   removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
   removeBucketEncryption(bucketName: string): Promise<void>
-
-  // Object operations
-  getObject(bucketName: string, objectName: string, callback: ResultCallback<ReadableStream>): void
-  getObject(bucketName: string, objectName: string): Promise<ReadableStream>
-
-  getPartialObject(
-    bucketName: string,
-    objectName: string,
-    offset: number,
-    callback: ResultCallback<ReadableStream>,
-  ): void
-  getPartialObject(
-    bucketName: string,
-    objectName: string,
-    offset: number,
-    length: number,
-    callback: ResultCallback<ReadableStream>,
-  ): void
-  getPartialObject(bucketName: string, objectName: string, offset: number, length?: number): Promise<ReadableStream>
-
-  fGetObject(bucketName: string, objectName: string, filePath: string, callback: NoResultCallback): void
-  fGetObject(bucketName: string, objectName: string, filePath: string): Promise<void>
-
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size: number,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    size?: number,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-  putObject(
-    bucketName: string,
-    objectName: string,
-    stream: ReadableStream | Buffer | string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
-
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData: ItemBucketMetadata,
-    callback: ResultCallback<UploadedObjectInfo>,
-  ): void
-  fPutObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    metaData?: ItemBucketMetadata,
-  ): Promise<UploadedObjectInfo>
 
   copyObject(
     bucketName: string,
@@ -495,12 +373,6 @@ export class Client extends TypedClient {
   removeAllBucketNotification(bucketName: string, callback: NoResultCallback): void
   removeAllBucketNotification(bucketName: string): Promise<void>
 
-  getBucketPolicy(bucketName: string, callback: ResultCallback<string>): void
-  getBucketPolicy(bucketName: string): Promise<string>
-
-  setBucketPolicy(bucketName: string, bucketPolicy: string, callback: NoResultCallback): void
-  setBucketPolicy(bucketName: string, bucketPolicy: string): Promise<void>
-
   listenBucketNotification(
     bucketName: string,
     prefix: string,
@@ -511,46 +383,3 @@ export class Client extends TypedClient {
   // Other
   newPostPolicy(): PostPolicy
 }
-
-export declare class NotificationPoller extends EventEmitter {
-  stop(): void
-
-  start(): void
-
-  // must to be public?
-  checkForChanges(): void
-}
-
-export declare class NotificationConfig {
-  add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
-}
-
-export declare class TopicConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class QueueConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class CloudFunctionConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare function buildARN(
-  partition: string,
-  service: string,
-  region: string,
-  accountId: string,
-  resource: string,
-): string
-
-export declare const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
-export declare const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
-export declare const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
-export declare const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
-export declare const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
-export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
-export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
-export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
-export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject

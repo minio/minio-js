@@ -42,9 +42,9 @@ The following parameters are needed to connect to a MinIO object storage server:
 | `useSSL`    | Optional, set to 'true' to enable secure (HTTPS) access.                     |
 
 ```js
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var minioClient = new Minio.Client({
+const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
   useSSL: true,
@@ -70,6 +70,7 @@ import * as Minio from 'minio'
 // Instantiate the MinIO client with the endpoint,
 // access, and secret keys
 // play.min.io is the MinIO public test cluster
+
 const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
@@ -204,12 +205,12 @@ The complete API Reference is available here:
 - [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
 - [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 - [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
-- [bucket-exists.js](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.js)
+- [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 - [make-bucket.js](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
 - [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 - [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
-- [get-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
-- [set-bucket-versioning.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
+- [get-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
+- [set-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
 - [set-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
 - [get-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-tagging.mjs)
 - [remove-bucket-tagging.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
@@ -225,14 +226,14 @@ The complete API Reference is available here:
 #### File Object Operations
 
 - [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
-- [fget-object.js](https://github.com/minio/minio-js/blob/master/examples/fget-object.js)
+- [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### Object Operations
 
 - [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
-- [get-object.js](https://github.com/minio/minio-js/blob/master/examples/get-object.js)
+- [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
 - [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
-- [get-partialobject.js](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.js)
+- [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
 - [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 - [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 - [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
@@ -262,7 +263,7 @@ The complete API Reference is available here:
 #### Bucket Policy Operations
 
 - [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
-- [set-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.js)
+- [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## Custom Settings
 

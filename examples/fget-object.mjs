@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
-// dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-objectname
+// are dummy values, please replace them with original values.
 
-var Minio = require('minio')
+import * as Minio from 'minio'
 
-var s3Client = new Minio.Client({
+const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketVersioning('my-bucketname', function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
-  console.log('Success')
+// Get a full object.
+await s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile')
+console.log('done')
+
+//To get a specific version of an object
+await s3Client.fGetObject('my-bucketname', 'my-objectname', '/tmp/objfile', {
+  versionId: '03fd1247-90d9-4b71-a27e-209d484a234b',
 })
+console.log('success')

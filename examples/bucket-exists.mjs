@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeBucketEncryption('my-bucket', function (error) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log('Success')
-})
+const exists = await s3Client.bucketExists('my-bucketname')
+if (exists) {
+  console.log('Bucket exists.')
+}
