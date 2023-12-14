@@ -1,8 +1,6 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { EventEmitter } from 'node:events'
-
 import type {
   CopyDestinationOptions,
   CopySourceOptions,
@@ -28,6 +26,7 @@ import type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   ObjectLockInfo,
   PutObjectLegalHoldOptions,
@@ -46,10 +45,13 @@ import type {
   Tag,
   VersionIdentificator,
 } from './internal/type.ts'
+import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
 export * from './errors.ts'
 export * from './helpers.ts'
 export type { Region } from './internal/s3-endpoints.ts'
+export type * from './notification.ts'
+export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 export type { MakeBucketOpt } from './internal/client.ts'
 export type {
@@ -67,6 +69,7 @@ export type {
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
+  LegalHoldStatus,
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
@@ -86,26 +89,6 @@ export type {
   Tag,
 }
 
-// Exports only from typings
-export type NotificationEvent =
-  | 's3:ObjectCreated:*'
-  | 's3:ObjectCreated:Put'
-  | 's3:ObjectCreated:Post'
-  | 's3:ObjectCreated:Copy'
-  | 's3:ObjectCreated:CompleteMultipartUpload'
-  | 's3:ObjectRemoved:*'
-  | 's3:ObjectRemoved:Delete'
-  | 's3:ObjectRemoved:DeleteMarkerCreated'
-  | 's3:ReducedRedundancyLostObject'
-  | 's3:TestEvent'
-  | 's3:ObjectRestore:Post'
-  | 's3:ObjectRestore:Completed'
-  | 's3:Replication:OperationFailedReplication'
-  | 's3:Replication:OperationMissedThreshold'
-  | 's3:Replication:OperationReplicatedAfterThreshold'
-  | 's3:Replication:OperationNotTracked'
-  | string
-
 /**
  * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
  */
@@ -116,10 +99,6 @@ export type Mode = RETENTION_MODES
  */
 export type LockUnit = RETENTION_VALIDITY_UNITS
 
-/**
- * @deprecated keep for backward compatible
- */
-export type LegalHoldStatus = LEGAL_HOLD_STATUS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 export type Lifecycle = LifecycleConfig | null | ''
@@ -404,46 +383,3 @@ export class Client extends TypedClient {
   // Other
   newPostPolicy(): PostPolicy
 }
-
-export declare class NotificationPoller extends EventEmitter {
-  stop(): void
-
-  start(): void
-
-  // must to be public?
-  checkForChanges(): void
-}
-
-export declare class NotificationConfig {
-  add(target: TopicConfig | QueueConfig | CloudFunctionConfig): void
-}
-
-export declare class TopicConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class QueueConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare class CloudFunctionConfig extends TargetConfig {
-  constructor(arn: string)
-}
-
-export declare function buildARN(
-  partition: string,
-  service: string,
-  region: string,
-  accountId: string,
-  resource: string,
-): string
-
-export declare const ObjectCreatedAll: NotificationEvent // s3:ObjectCreated:*'
-export declare const ObjectCreatedPut: NotificationEvent // s3:ObjectCreated:Put
-export declare const ObjectCreatedPost: NotificationEvent // s3:ObjectCreated:Post
-export declare const ObjectCreatedCopy: NotificationEvent // s3:ObjectCreated:Copy
-export declare const ObjectCreatedCompleteMultipartUpload: NotificationEvent // s3:ObjectCreated:CompleteMultipartUpload
-export declare const ObjectRemovedAll: NotificationEvent // s3:ObjectRemoved:*
-export declare const ObjectRemovedDelete: NotificationEvent // s3:ObjectRemoved:Delete
-export declare const ObjectRemovedDeleteMarkerCreated: NotificationEvent // s3:ObjectRemoved:DeleteMarkerCreated
-export declare const ObjectReducedRedundancyLostObject: NotificationEvent // s3:ReducedRedundancyLostObject
