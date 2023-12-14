@@ -195,6 +195,8 @@ export function parseListObjects(xml) {
 
     if (listBucketResult.NextMarker) {
       nextMarker = listBucketResult.NextMarker
+    } else if (isTruncated && result.objects.length > 0) {
+      nextMarker = result.objects.at(-1).name;
     }
     parseCommonPrefixesEntity(listBucketResult.CommonPrefixes)
   }
