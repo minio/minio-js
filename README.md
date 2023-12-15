@@ -55,7 +55,7 @@ const minioClient = new Minio.Client({
 
 ## Quick Start Example - File Uploader
 
-This sample ECMAScript module connects to an object storage server, creates a bucket, and uploads a file to the bucket.
+This example connects to an object storage server, creates a bucket, and uploads a file to the bucket.
 It uses the MinIO `play` server, a public MinIO cluster located at [https://play.min.io](https://play.min.io).
 
 The `play` server runs the latest stable version of MinIO and may be used for testing and development.
@@ -67,10 +67,9 @@ All data uploaded to `play` should be considered public and non-protected.
 ```js
 import * as Minio from 'minio'
 
-// Instantiate the MinIO client with the endpoint,
-// access, and secret keys
+// Instantiate the MinIO client with the object store service
+// endpoint and an authorized user's credentials
 // play.min.io is the MinIO public test cluster
-
 const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
@@ -88,40 +87,31 @@ const bucket = 'js-test-bucket'
 // Destination object name
 const destinationObject = 'my-test-file.txt'
 
-
-/* How to do this? exists is always undefined
-// Create the bucket if it doesn't already exist
-minioClient.bucketExists(bucket, function (err, exists) {
-  if (err) {
-    console.log(err)
-    return
-  }
-})
+// Check if the bucket exists
+// If it doesn't, create it
+const exists = await minioClient.bucketExists(bucket)
 if (exists) {
   console.log('Bucket ' + bucket + ' exists.')
 }
 else {
-*/
+  await minioClient.makeBucket(bucket, 'us-east-1')
+  console.log('Bucket ' + bucket + ' created in "us-east-1".')
+}
 
-
-// Create the bucket, default region is us-east-1
-await minioClient.makeBucket(bucket, 'us-east-1')
-console.log('Bucket ' + bucket + ' created in "us-east-1".')
-
-// Set the metadata for the new object
+// Set the object metadata
 var metaData = {
   'Content-Type': 'text/plain',
   'X-Amz-Meta-Testing': 1234,
   example: 5678,
 }
 
-// fPutObject uploads the file and creates an object in the bucket
-// If the object already exists, it is updated with new data
+// Upload the file with fPutObject
+// If an object with the same name exists,
+// it is updated with new data
 await minioClient.fPutObject(bucket, destinationObject, sourceFile, metaData)
 console.log('File ' + sourceFile +
             ' uploaded as object ' + destinationObject +
-	    ' to bucket ' + bucket)
-
+	    ' in bucket ' + bucket)
 ```
 
 #### Run the File Uploader
