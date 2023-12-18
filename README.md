@@ -4,7 +4,7 @@
 
 The MinIO JavaScript Client SDK provides high level APIs to access any Amazon S3 compatible object storage server.
 
-This guide will show you how to install the client SDK and execute an example JavaScript program. 
+This guide will show you how to install the client SDK and execute an example JavaScript program.
 For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html) documentation.
 
 This document presumes you have a working [Node.js](http://nodejs.org/) development environment, LTS versions v16, v18 or v20.
@@ -92,8 +92,7 @@ const destinationObject = 'my-test-file.txt'
 const exists = await minioClient.bucketExists(bucket)
 if (exists) {
   console.log('Bucket ' + bucket + ' exists.')
-}
-else {
+} else {
   await minioClient.makeBucket(bucket, 'us-east-1')
   console.log('Bucket ' + bucket + ' created in "us-east-1".')
 }
@@ -109,9 +108,7 @@ var metaData = {
 // If an object with the same name exists,
 // it is updated with new data
 await minioClient.fPutObject(bucket, destinationObject, sourceFile, metaData)
-console.log('File ' + sourceFile +
-            ' uploaded as object ' + destinationObject +
-	    ' in bucket ' + bucket)
+console.log('File ' + sourceFile + ' uploaded as object ' + destinationObject + ' in bucket ' + bucket)
 ```
 
 #### Run the File Uploader
