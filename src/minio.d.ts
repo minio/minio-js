@@ -201,12 +201,6 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
-  setBucketTagging(bucketName: string, tags: TagList): Promise<void>
-
-  removeBucketTagging(bucketName: string, callback: NoResultCallback): void
-  removeBucketTagging(bucketName: string): Promise<void>
-
   setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
   setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
 

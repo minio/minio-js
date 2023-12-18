@@ -1660,6 +1660,7 @@ export class TypedClient {
 
     const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, o] = await Promise.all([
       new Promise((resolve, reject) => {
         body.pipe(chunkier).on('error', reject)
