@@ -35,7 +35,7 @@ The following parameters are needed to connect to a MinIO object storage server:
 
 | Parameter   | Description                                                                  |
 | :---------- | :--------------------------------------------------------------------------- |
-| `endPoint`  | URL for the object storage service.                                          |
+| `endPoint`  | Hostname of the object storage service.                                      |
 | `port`      | TCP/IP port number. Optional, defaults to `80` for HTTP and `443` for HTTPs. |
 | `accessKey` | Access key (user ID) of an account in the S3 service.                        |
 | `secretKey` | Secret key (password) of an account in the S3 service.                       |
