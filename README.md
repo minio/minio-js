@@ -2,11 +2,12 @@
 
 [![NPM](https://nodei.co/npm/minio.png)](https://nodei.co/npm/minio/)
 
-The MinIO JavaScript Client SDK provides simple APIs to access any Amazon S3 compatible object storage server.
+The MinIO JavaScript Client SDK provides high level APIs to access any Amazon S3 compatible object storage server.
 
-This quickstart guide will show you how to install the client SDK and execute an example JavaScript program. For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html) documentation.
+This guide will show you how to install the client SDK and execute an example JavaScript program.
+For a complete list of APIs and examples, please take a look at the [JavaScript Client API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html) documentation.
 
-This document assumes that you have a working [nodejs](http://nodejs.org/) setup in place.
+This document presumes you have a working [Node.js](http://nodejs.org/) development environment, LTS versions v16, v18 or v20.
 
 ## Download from NPM
 
@@ -30,15 +31,15 @@ npm install -g
 
 ## Initialize MinIO Client
 
-You need five items in order to connect to MinIO object storage server.
+The following parameters are needed to connect to a MinIO object storage server:
 
-| Params    | Description                                                                                         |
-| :-------- | :-------------------------------------------------------------------------------------------------- |
-| endPoint  | URL to object storage service.                                                                      |
-| port      | TCP/IP port number. This input is optional. Default value set to `80` for HTTP and `443` for HTTPs. |
-| accessKey | Access key is like user ID that uniquely identifies your account.                                   |
-| secretKey | Secret key is the password to your account.                                                         |
-| useSSL    | Set this value to 'true' to enable secure (HTTPS) access                                            |
+| Parameter   | Description                                                                  |
+| :---------- | :--------------------------------------------------------------------------- |
+| `endPoint`  | Hostname of the object storage service.                                      |
+| `port`      | TCP/IP port number. Optional, defaults to `80` for HTTP and `443` for HTTPs. |
+| `accessKey` | Access key (user ID) of an account in the S3 service.                        |
+| `secretKey` | Secret key (password) of an account in the S3 service.                       |
+| `useSSL`    | Optional, set to 'true' to enable secure (HTTPS) access.                     |
 
 ```js
 import * as Minio from 'minio'
@@ -54,17 +55,21 @@ const minioClient = new Minio.Client({
 
 ## Quick Start Example - File Uploader
 
-This example program connects to an object storage server, makes a bucket on the server and then uploads a file to the bucket.
+This example connects to an object storage server, creates a bucket, and uploads a file to the bucket.
+It uses the MinIO `play` server, a public MinIO cluster located at [https://play.min.io](https://play.min.io).
 
-We will use the MinIO server running at [https://play.min.io](https://play.min.io) in this example. Feel free to use this service for testing and development. Access credentials shown in this example are open to the public.
+The `play` server runs the latest stable version of MinIO and may be used for testing and development.
+The access credentials shown in this example are open to the public.
+All data uploaded to `play` should be considered public and non-protected.
 
-#### file-uploader.js
+#### file-uploader.mjs
 
 ```js
 import * as Minio from 'minio'
 
-// Instantiate the minio client with the endpoint
-// and access keys as shown below.
+// Instantiate the MinIO client with the object store service
+// endpoint and an authorized user's credentials
+// play.min.io is the MinIO public test cluster
 const minioClient = new Minio.Client({
   endPoint: 'play.min.io',
   port: 9000,
@@ -73,40 +78,61 @@ const minioClient = new Minio.Client({
   secretKey: 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG',
 })
 
-// File that needs to be uploaded.
-const file = '/tmp/photos-europe.tar'
+// File to upload
+const sourceFile = '/tmp/test-file.txt'
 
-// Make a bucket called europetrip.
-await minioClient.makeBucket('europetrip', 'us-east-1')
-console.log('Bucket created successfully in "us-east-1".')
+// Destination bucket
+const bucket = 'js-test-bucket'
 
+// Destination object name
+const destinationObject = 'my-test-file.txt'
+
+// Check if the bucket exists
+// If it doesn't, create it
+const exists = await minioClient.bucketExists(bucket)
+if (exists) {
+  console.log('Bucket ' + bucket + ' exists.')
+} else {
+  await minioClient.makeBucket(bucket, 'us-east-1')
+  console.log('Bucket ' + bucket + ' created in "us-east-1".')
+}
+
+// Set the object metadata
 var metaData = {
-  'Content-Type': 'application/octet-stream',
+  'Content-Type': 'text/plain',
   'X-Amz-Meta-Testing': 1234,
   example: 5678,
 }
-// Using fPutObject API upload your file to the bucket europetrip.
-await minioClient.fPutObject('europetrip', 'photos-europe.tar', file, metaData)
-console.log('File uploaded successfully.')
+
+// Upload the file with fPutObject
+// If an object with the same name exists,
+// it is updated with new data
+await minioClient.fPutObject(bucket, destinationObject, sourceFile, metaData)
+console.log('File ' + sourceFile + ' uploaded as object ' + destinationObject + ' in bucket ' + bucket)
 ```
 
-#### Run file-uploader
+#### Run the File Uploader
 
 ```sh
-node file-uploader.js
-Bucket created successfully in "us-east-1".
+node file-uploader.mjs
+Bucket js-test-bucket created successfully in "us-east-1".
+File /tmp/test-file.txt uploaded successfully as my-test-file.txt to bucket js-test-bucket
+```
 
-mc ls play/europetrip/
-[2016-05-25 23:49:50 PDT]  17MiB photos-europe.tar
+Verify the object was created with [`mc`](https://min.io/docs/minio/linux/reference/minio-mc.html):
+
+```
+mc ls play/js-test-bucket
+[2023-11-10 17:52:20 UTC]  20KiB STANDARD my-test-file.txt
 ```
 
 ## API Reference
 
-The full API Reference is available here.
+The complete API Reference is available here:
 
-- [Complete API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html)
+- [MinIO JavaScript API Reference](https://min.io/docs/minio/linux/developers/javascript/API.html)
 
-### API Reference : Bucket Operations
+### Bucket Operations
 
 - [`makeBucket`](https://min.io/docs/minio/linux/developers/javascript/API.html#makeBucket)
 - [`listBuckets`](https://min.io/docs/minio/linux/developers/javascript/API.html#listBuckets)
@@ -124,12 +150,12 @@ The full API Reference is available here.
 - [`getObjectLockConfig`](https://min.io/docs/minio/linux/developers/javascript/API.html#getObjectLockConfig)
 - [`setObjectLockConfig`](https://min.io/docs/minio/linux/developers/javascript/API.html#setObjectLockConfig)
 
-### API Reference : File Object Operations
+### File Object Operations
 
 - [`fPutObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#fPutObject)
 - [`fGetObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#fGetObject)
 
-### API Reference : Object Operations
+### Object Operations
 
 - [`getObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#getObject)
 - [`putObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#putObject)
@@ -140,27 +166,27 @@ The full API Reference is available here.
 - [`removeIncompleteUpload`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeIncompleteUpload)
 - [`selectObjectContent`](https://min.io/docs/minio/linux/developers/javascript/API.html#selectObjectContent)
 
-### API Reference : Presigned Operations
+### Presigned Operations
 
 - [`presignedGetObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedGetObject)
 - [`presignedPutObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPutObject)
 - [`presignedPostPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPostPolicy)
 
-### API Reference : Bucket Notification Operations
+### Bucket Notification Operations
 
 - [`getBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketNotification)
 - [`setBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketNotification)
 - [`removeAllBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#removeAllBucketNotification)
 - [`listenBucketNotification`](https://min.io/docs/minio/linux/developers/javascript/API.html#listenBucketNotification) (MinIO Extension)
 
-### API Reference : Bucket Policy Operations
+### Bucket Policy Operations
 
 - [`getBucketPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#getBucketPolicy)
 - [`setBucketPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#setBucketPolicy)
 
-## Full Examples
+## Examples
 
-#### Full Examples : Bucket Operations
+#### Bucket Operations
 
 - [list-buckets.mjs](https://github.com/minio/minio-js/blob/master/examples/list-buckets.mjs)
 - [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
@@ -187,12 +213,12 @@ The full API Reference is available here.
 - [get-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-replication.mjs)
 - [remove-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.mjs)
 
-#### Full Examples : File Object Operations
+#### File Object Operations
 
 - [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
 - [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
-#### Full Examples : Object Operations
+#### Object Operations
 
 - [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
 - [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
@@ -211,20 +237,20 @@ The full API Reference is available here.
 - [compose-object.js](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
 - [select-object-content.js](https://github.com/minio/minio-js/blob/master/examples/select-object-content.js)
 
-#### Full Examples : Presigned Operations
+#### Presigned Operations
 
 - [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
 - [presigned-putobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
 - [presigned-postpolicy.js](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
 
-#### Full Examples: Bucket Notification Operations
+#### Bucket Notification Operations
 
 - [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
 - [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
 - [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
 - [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (MinIO Extension)
 
-#### Full Examples: Bucket Policy Operations
+#### Bucket Policy Operations
 
 - [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
 - [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
@@ -240,6 +266,6 @@ The full API Reference is available here.
 
 ## Contribute
 
-[Contributors Guide](https://github.com/minio/minio-js/blob/master/CONTRIBUTING.md)
+- [Contributors Guide](https://github.com/minio/minio-js/blob/master/CONTRIBUTING.md)
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/minio/minio-js/nodejs.yml)
