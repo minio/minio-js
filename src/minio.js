@@ -631,9 +631,12 @@ export class Client extends TypedClient {
   // * `expiry` _number_: expiry in seconds (optional, default 7 days)
   // * `reqParams` _object_: request parameters (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
   // * `requestDate` _Date_: A date object, the url will be issued at (optional)
-  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
+  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, signedHost, cb) {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
+    }
+    if (isFunction(signedHost)) {
+      cb = signedHost
     }
     if (isFunction(requestDate)) {
       cb = requestDate
@@ -670,7 +673,11 @@ export class Client extends TypedClient {
       // This statement is added to ensure that we send error through
       // callback on presign failure.
       var url
-      var reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query })
+      var headers = {}
+      if(signedHost) {
+        headers.host = signedHost
+      }
+      var reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query, headers })
 
       this.checkAndRefreshCreds()
       try {
