@@ -184,17 +184,6 @@ export interface SourceObjectStats {
   etag: string
 }
 
-// No need to export this. But without it - linter error.
-export class TargetConfig {
-  setId(id: unknown): void
-
-  addEvent(newEvent: unknown): void
-
-  addFilterSuffix(suffix: string): void
-
-  addFilterPrefix(prefix: string): void
-}
-
 // Exports from library
 export class Client extends TypedClient {
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
