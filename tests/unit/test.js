@@ -879,29 +879,26 @@ describe('Client', function () {
   describe('Bucket and Object Tags APIs', () => {
     describe('Set Bucket Tags ', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.setBucketTagging(null, {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging(null, {}).then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.setBucketTagging('', {}, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging('', {}).then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail if tags are more than 50', (done) => {
         const _50_plus_key_tags = {}
         for (let i = 0; i < 51; i += 1) {
           _50_plus_key_tags[i] = i
         }
-        try {
-          client.setBucketTagging('', _50_plus_key_tags, function () {})
-        } catch (e) {
-          done()
-        }
+        client.setBucketTagging('', _50_plus_key_tags).then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
     })
     describe('Get Bucket Tags', () => {
@@ -932,33 +929,29 @@ describe('Client', function () {
     })
     describe('Remove Bucket Tags', () => {
       it('should fail on null object', (done) => {
-        try {
-          client.removeBucketTagging(null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeBucketTagging(null).then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeBucketTagging('', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeBucketTagging('').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeBucketTagging('198.51.100.24', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeBucketTagging('198.51.100.24').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
 
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeBucketTagging('xy', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeBucketTagging('xy').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
     })
     describe('Get Object Tags', () => {
@@ -987,33 +980,29 @@ describe('Client', function () {
     })
     describe('Remove Object Tags', () => {
       it('should fail on null object', (done) => {
-        try {
-          client.removeObjectTagging('my-bucket', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('my-bucket', null).then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.removeObjectTagging('my-bucket', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('my-bucket', '').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeObjectTagging('198.51.100.24', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('198.51.100.24').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
 
       it('should fail on invalid bucket name', (done) => {
-        try {
-          client.removeObjectTagging('xy', function () {})
-        } catch (e) {
-          done()
-        }
+        client.removeObjectTagging('xy').then(
+          () => done(new Error('callback should receive error')),
+          () => done(),
+        )
       })
     })
   })

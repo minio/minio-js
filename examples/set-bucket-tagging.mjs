@@ -25,11 +25,5 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const tagsMap = { tagkey: 'tagvalue' }
-
-s3Client.setBucketTagging('bucketname', tagsMap, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+const tagsMap = { tagkey: 'my-bucket-tag' }
+await s3Client.setBucketTagging('test-bucket', tagsMap)
