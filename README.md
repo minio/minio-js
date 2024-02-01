@@ -235,7 +235,7 @@ The complete API Reference is available here:
 - [set-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.mjs)
 - [get-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
 - [compose-object.js](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
-- [select-object-content.js](https://github.com/minio/minio-js/blob/master/examples/select-object-content.js)
+- [select-object-content.js](https://github.com/minio/minio-js/blob/master/examples/select-object-content.mjs)
 
 #### Presigned Operations
 

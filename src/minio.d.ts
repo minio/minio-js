@@ -23,12 +23,14 @@ import type {
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  InputSerialization,
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   LegalHoldStatus,
   MetadataItem,
   ObjectLockInfo,
+  OutputSerialization,
   PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -41,6 +43,9 @@ import type {
   ResultCallback,
   Retention,
   RetentionOptions,
+  ScanRange,
+  SelectOptions,
+  SelectProgress,
   SourceSelectionCriteria,
   Tag,
   VersionIdentificator,
@@ -66,6 +71,7 @@ export type {
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  InputSerialization,
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
@@ -73,6 +79,7 @@ export type {
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
+  OutputSerialization,
   PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
@@ -85,6 +92,9 @@ export type {
   ReplicationRuleStatus,
   Retention,
   RetentionOptions,
+  ScanRange,
+  SelectOptions,
+  SelectProgress,
   SourceSelectionCriteria,
   Tag,
 }
@@ -135,45 +145,6 @@ export interface EncryptionRule {
 export interface LegalHoldOptions {
   versionId: string
   status: LEGAL_HOLD_STATUS
-}
-
-export interface InputSerialization {
-  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
-  CSV?: {
-    AllowQuotedRecordDelimiter?: boolean
-    Comments?: string
-    FieldDelimiter?: string
-    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    Type: 'DOCUMENT' | 'LINES'
-  }
-  Parquet?: EmptyObject
-}
-
-export interface OutputSerialization {
-  CSV?: {
-    FieldDelimiter?: string
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    QuoteFields?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    RecordDelimiter?: string
-  }
-}
-
-export interface SelectOptions {
-  expression: string
-  expressionType?: string
-  inputSerialization: InputSerialization
-  outputSerialization: OutputSerialization
-  requestProgress?: { Enabled: boolean }
-  scanRange?: { Start: number; End: number }
 }
 
 export interface SourceObjectStats {
@@ -245,14 +216,6 @@ export class Client extends TypedClient {
     callback: ResultCallback<SourceObjectStats>,
   ): void
   composeObject(destObjConfig: CopyDestinationOptions, sourceObjList: CopySourceOptions[]): Promise<SourceObjectStats>
-
-  selectObjectContent(
-    bucketName: string,
-    objectName: string,
-    selectOpts: SelectOptions,
-    callback: NoResultCallback,
-  ): void
-  selectObjectContent(bucketName: string, objectName: string, selectOpts: SelectOptions): Promise<void>
 
   // Presigned operations
   presignedUrl(httpMethod: string, bucketName: string, objectName: string, callback: ResultCallback<string>): void
