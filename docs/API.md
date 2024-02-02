@@ -1603,18 +1603,17 @@ composePromise
 
 <a name="selectObjectContent"></a>
 
-### selectObjectContent(bucketName, objectName, selectOpts[, callback])
+### selectObjectContent(bucketName, objectName, selectOpts)
 
 Select contents of an object (S3 Select).
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                          |
-| --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                  |
-| `objectName`    | _string_   | Name of the object.                                                                                                                                  |
-| `selectOpts`    | _object_   |                                                                                                                                                      |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned, with the `SelectResults` type |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `objectName` | _string_ | Name of the object. |
+| `selectOpts` | _object_ |                     |
 
 **Example 1**
 Select all values
@@ -1631,12 +1630,8 @@ const selectOpts = {
   requestProgress: { Enabled: true },
 }
 
-minioClient.selectObjectContent('bucketName', 'objectName', selectOpts, function (err, res) {
-  if (err) {
-    return console.log('Unable to process select object content.', err.message)
-  }
-  console.log('Success')
-})
+const res = await minioClient.selectObjectContent('bucketName', 'objectName', selectOpts)
+console.log(res)
 ```
 
 ## 4. Presigned operations

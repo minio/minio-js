@@ -138,9 +138,6 @@ export function objectLegalHoldTransformer() {
 export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }
-export function selectObjectContentTransformer() {
-  return getConcater()
-}
 
 export function removeObjectsTransformer() {
   return getConcater(xmlParsers.removeObjectsParser)

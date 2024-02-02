@@ -275,3 +275,44 @@ export type RemoveTaggingParams = {
   objectName?: string
   removeOpts?: TaggingOpts
 }
+
+export type InputSerialization = {
+  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
+  CSV?: {
+    AllowQuotedRecordDelimiter?: boolean
+    Comments?: string
+    FieldDelimiter?: string
+    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    Type: 'DOCUMENT' | 'LINES'
+  }
+  Parquet?: EmptyObject
+}
+
+export type OutputSerialization = {
+  CSV?: {
+    FieldDelimiter?: string
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    QuoteFields?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    RecordDelimiter?: string
+  }
+}
+
+export type SelectProgress = { Enabled: boolean }
+export type ScanRange = { Start: number; End: number }
+export type SelectOptions = {
+  expression: string
+  expressionType?: string
+  inputSerialization: InputSerialization
+  outputSerialization: OutputSerialization
+  requestProgress?: SelectProgress
+  scanRange?: ScanRange
+}

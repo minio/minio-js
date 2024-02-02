@@ -56,7 +56,6 @@ import { NotificationConfig, NotificationPoller } from './notification.ts'
 import { promisify } from './promisify.js'
 import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
-import { parseSelectObjectContentResponse } from './xml-parsers.js'
 
 export * from './errors.ts'
 export * from './helpers.ts'
@@ -880,173 +879,6 @@ export class Client extends TypedClient {
     return listener
   }
 
-  /** To set Tags on a bucket or object based on the params
-   *  __Arguments__
-   * taggingParams _object_ Which contains the following properties
-   *  bucketName _string_,
-   *  objectName _string_ (Optional),
-   *  tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
-   *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
-   *  cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  setTagging(taggingParams) {
-    const { bucketName, objectName, tags, putOpts = {}, cb } = taggingParams
-    const method = 'PUT'
-    let query = 'tagging'
-
-    if (putOpts && putOpts.versionId) {
-      query = `${query}&versionId=${putOpts.versionId}`
-    }
-    const tagsList = []
-    for (const [key, value] of Object.entries(tags)) {
-      tagsList.push({ Key: key, Value: value })
-    }
-    const taggingConfig = {
-      Tagging: {
-        TagSet: {
-          Tag: tagsList,
-        },
-      },
-    }
-    const encoder = new TextEncoder()
-    const headers = {}
-    const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
-    let payload = builder.buildObject(taggingConfig)
-    payload = Buffer.from(encoder.encode(payload))
-    headers['Content-MD5'] = toMd5(payload)
-    const requestOptions = { method, bucketName, query, headers }
-
-    if (objectName) {
-      requestOptions['objectName'] = objectName
-    }
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest(requestOptions, payload, [200], '', false, cb)
-  }
-
-  /** Set Tags on a Bucket
-   * __Arguments__
-   * bucketName _string_
-   * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  setBucketTagging(bucketName, tags, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isObject(tags)) {
-      throw new errors.InvalidArgumentError('tags should be of type "object"')
-    }
-    if (Object.keys(tags).length > 10) {
-      throw new errors.InvalidArgumentError('maximum tags allowed is 10"')
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-
-    return this.setTagging({ bucketName, tags, cb })
-  }
-
-  /** Set Tags on an Object
-   * __Arguments__
-   * bucketName _string_
-   * objectName _string_
-   *  * tags _object_ of the form {'<tag-key-1>':'<tag-value-1>','<tag-key-2>':'<tag-value-2>'}
-   *  putOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  setObjectTagging(bucketName, objectName, tags, putOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
-    }
-
-    if (isFunction(putOpts)) {
-      cb = putOpts
-      putOpts = {}
-    }
-
-    if (!isObject(tags)) {
-      throw new errors.InvalidArgumentError('tags should be of type "object"')
-    }
-    if (Object.keys(tags).length > 10) {
-      throw new errors.InvalidArgumentError('Maximum tags allowed is 10"')
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    return this.setTagging({ bucketName, objectName, tags, putOpts, cb })
-  }
-
-  /** Remove Tags on an Bucket/Object based on params
-   * __Arguments__
-   * bucketName _string_
-   * objectName _string_ (optional)
-   * removeOpts _object_ (Optional) e.g {versionId:"my-object-version-id"},
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  removeTagging({ bucketName, objectName, removeOpts, cb }) {
-    const method = 'DELETE'
-    let query = 'tagging'
-
-    if (removeOpts && Object.keys(removeOpts).length && removeOpts.versionId) {
-      query = `${query}&versionId=${removeOpts.versionId}`
-    }
-    const requestOptions = { method, bucketName, objectName, query }
-
-    if (objectName) {
-      requestOptions['objectName'] = objectName
-    }
-    this.makeRequest(requestOptions, '', [200, 204], '', true, cb)
-  }
-
-  /** Remove Tags associated with a bucket
-   *  __Arguments__
-   * bucketName _string_
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  removeBucketTagging(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    return this.removeTagging({ bucketName, cb })
-  }
-
-  /** Remove tags associated with an object
-   * __Arguments__
-   * bucketName _string_
-   * objectName _string_
-   * removeOpts _object_ (Optional) e.g. {VersionID:"my-object-version-id"}
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  removeObjectTagging(bucketName, objectName, removeOpts, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
-    }
-    if (isFunction(removeOpts)) {
-      cb = removeOpts
-      removeOpts = {}
-    }
-    if (removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)) {
-      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    return this.removeTagging({ bucketName, objectName, removeOpts, cb })
-  }
-
   /**
    * Apply lifecycle configuration on a bucket.
    * bucketName _string_
@@ -1467,90 +1299,6 @@ export class Client extends TypedClient {
         cb(error, null)
       })
   }
-  selectObjectContent(bucketName, objectName, selectOpts = {}, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!_.isEmpty(selectOpts)) {
-      if (!isString(selectOpts.expression)) {
-        throw new TypeError('sqlExpression should be of type "string"')
-      }
-      if (!_.isEmpty(selectOpts.inputSerialization)) {
-        if (!isObject(selectOpts.inputSerialization)) {
-          throw new TypeError('inputSerialization should be of type "object"')
-        }
-      } else {
-        throw new TypeError('inputSerialization is required')
-      }
-      if (!_.isEmpty(selectOpts.outputSerialization)) {
-        if (!isObject(selectOpts.outputSerialization)) {
-          throw new TypeError('outputSerialization should be of type "object"')
-        }
-      } else {
-        throw new TypeError('outputSerialization is required')
-      }
-    } else {
-      throw new TypeError('valid select configuration is required')
-    }
-
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const method = 'POST'
-    let query = `select`
-    query += '&select-type=2'
-
-    const config = [
-      {
-        Expression: selectOpts.expression,
-      },
-      {
-        ExpressionType: selectOpts.expressionType || 'SQL',
-      },
-      {
-        InputSerialization: [selectOpts.inputSerialization],
-      },
-      {
-        OutputSerialization: [selectOpts.outputSerialization],
-      },
-    ]
-
-    // Optional
-    if (selectOpts.requestProgress) {
-      config.push({ RequestProgress: selectOpts.requestProgress })
-    }
-    // Optional
-    if (selectOpts.scanRange) {
-      config.push({ ScanRange: selectOpts.scanRange })
-    }
-
-    const builder = new xml2js.Builder({
-      rootName: 'SelectObjectContentRequest',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(config)
-
-    this.makeRequest({ method, bucketName, objectName, query }, payload, [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let selectResult
-      pipesetup(response, transformers.selectObjectContentTransformer())
-        .on('data', (data) => {
-          selectResult = parseSelectObjectContentResponse(data)
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, selectResult)
-        })
-    })
-  }
 }
 
 // Promisify various public-facing APIs on the Client module.
@@ -1565,10 +1313,6 @@ Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNot
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-Client.prototype.setBucketTagging = promisify(Client.prototype.setBucketTagging)
-Client.prototype.removeBucketTagging = promisify(Client.prototype.removeBucketTagging)
-Client.prototype.setObjectTagging = promisify(Client.prototype.setObjectTagging)
-Client.prototype.removeObjectTagging = promisify(Client.prototype.removeObjectTagging)
 Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
 Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
 Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
@@ -1577,7 +1321,6 @@ Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncry
 Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
 Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
-Client.prototype.selectObjectContent = promisify(Client.prototype.selectObjectContent)
 
 // refactored API use promise internally
 Client.prototype.makeBucket = callbackify(Client.prototype.makeBucket)
@@ -1599,15 +1342,16 @@ Client.prototype.setBucketReplication = callbackify(Client.prototype.setBucketRe
 Client.prototype.getBucketReplication = callbackify(Client.prototype.getBucketReplication)
 Client.prototype.getObjectLegalHold = callbackify(Client.prototype.getObjectLegalHold)
 Client.prototype.setObjectLegalHold = callbackify(Client.prototype.setObjectLegalHold)
-Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
-Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
 Client.prototype.setObjectLockConfig = callbackify(Client.prototype.setObjectLockConfig)
 Client.prototype.getObjectLockConfig = callbackify(Client.prototype.getObjectLockConfig)
 Client.prototype.getBucketPolicy = callbackify(Client.prototype.getBucketPolicy)
 Client.prototype.setBucketPolicy = callbackify(Client.prototype.setBucketPolicy)
+Client.prototype.getBucketTagging = callbackify(Client.prototype.getBucketTagging)
+Client.prototype.getObjectTagging = callbackify(Client.prototype.getObjectTagging)
 Client.prototype.setBucketTagging = callbackify(Client.prototype.setBucketTagging)
 Client.prototype.removeBucketTagging = callbackify(Client.prototype.removeBucketTagging)
 Client.prototype.setObjectTagging = callbackify(Client.prototype.setObjectTagging)
 Client.prototype.removeObjectTagging = callbackify(Client.prototype.removeObjectTagging)
 Client.prototype.getBucketVersioning = callbackify(Client.prototype.getBucketVersioning)
 Client.prototype.setBucketVersioning = callbackify(Client.prototype.setBucketVersioning)
+Client.prototype.selectObjectContent = callbackify(Client.prototype.selectObjectContent)

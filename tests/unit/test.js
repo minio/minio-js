@@ -1635,33 +1635,29 @@ describe('Client', function () {
   describe('Select Object Content APIs', () => {
     describe('selectObjectContent(bucketName, objectName, selectOpts={}, cb)', () => {
       it('should fail on null bucket', (done) => {
-        try {
-          client.selectObjectContent(null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.selectObjectContent(null).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on empty bucket', (done) => {
-        try {
-          client.selectObjectContent('', function () {})
-        } catch (e) {
-          done()
-        }
+        client.selectObjectContent('').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
 
       it('should fail on empty object', (done) => {
-        try {
-          client.selectObjectContent('my-bucket', '', function () {})
-        } catch (e) {
-          done()
-        }
+        client.selectObjectContent('my-bucket', '').then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
       it('should fail on null object', (done) => {
-        try {
-          client.selectObjectContent('my-bucket', null, function () {})
-        } catch (e) {
-          done()
-        }
+        client.selectObjectContent('my-bucket', null).then(
+          () => done(new Error('expecting error')),
+          () => done(),
+        )
       })
     })
   })
