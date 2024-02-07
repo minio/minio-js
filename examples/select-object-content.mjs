@@ -39,9 +39,5 @@ const selectRequestConfig = {
   // scanRange:{ start:50, end:100 }
 }
 
-s3Client.selectObjectContent('my-bucketname', 'my-objectname', selectRequestConfig, function (e, stat) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log(stat)
-})
+const stat = await s3Client.selectObjectContent('test-bucket', 'sample_data.csv', selectRequestConfig)
+console.log(stat.records.toString())

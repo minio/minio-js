@@ -25,9 +25,9 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeBucketTagging('bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+const tagsMap = { tagkey: 'tagvalue' }
+
+await s3Client.setObjectTagging('bucketname', 'object-name', tagsMap)
+
+//Put tags on a version of an object
+await s3Client.setObjectTagging('bucketname', 'object-name', tagsMap, { versionId: 'my-version-id' })

@@ -578,27 +578,21 @@ await minioClient.removeBucketReplication('source-bucket')
 
 <a name="setBucketTagging"></a>
 
-### setBucketTagging(bucketName, tags, callback)
+### setBucketTagging(bucketName, tags)
 
 Set Tags on a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                               |
-| --------------- | ---------- | --------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                       |
-| `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.           |
+| Param        | Type     | Description                                               |
+| ------------ | -------- | --------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                       |
+| `tags`       | _object_ | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}` |
 
 **Example**
 
 ```js
-minioClient.setBucketTagging('bucketname', tags, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setBucketTagging('bucketname', tags)
 ```
 
 <a name="removeBucketTagging"></a>
@@ -609,44 +603,33 @@ Remove Tags on a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                     |
-| --------------- | ---------- | ----------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                             |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.removeBucketTagging('bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.removeBucketTagging('bucketname')
 ```
 
 <a name="getBucketTagging"></a>
 
-### getBucketTagging(bucketName, callback)
+### getBucketTagging(bucketName)
 
-Remove Tags on a Bucket
+Gets Tags on a Bucket
 
 **Parameters**
 
-| Param                     | Type       | Description                                     |
-| ------------------------- | ---------- | ----------------------------------------------- |
-| `bucketName`              | _string_   | Name of the bucket.                             |
-| `callback(err, tagsList)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.getBucketTagging('bucketname', function (err, tagsList) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', tagsList)
-})
+const tagList = await minioClient.getBucketTagging('bucketname')
+console.log(tagList)
 ```
 
 <a name="setBucketLifecycle"></a>
@@ -1417,79 +1400,57 @@ minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: 'my-vers
 
 <a name="setObjectTagging"></a>
 
-### setObjectTagging(bucketName, objectName, tags[, putOpts, callback])
+### setObjectTagging(bucketName, objectName, tags[, putOpts])
 
 Put Tags on an Object
 
 **Parameters**
 
-| Param           | Type       | Description                                                  |
-| --------------- | ---------- | ------------------------------------------------------------ |
-| `bucketName`    | _string_   | Name of the bucket.                                          |
-| `objectName`    | _string_   | Name of the object.                                          |
-| `tags`          | _object_   | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}`    |
-| `putOpts`       | _object_   | Default is {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.              |
+| Param        | Type     | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| `bucketName` | _string_ | Name of the bucket.                                          |
+| `objectName` | _string_ | Name of the object.                                          |
+| `tags`       | _object_ | Tags map Configuration e.g: `{<tag-key-1>:<tag-value-1>}`    |
+| `putOpts`    | _object_ | Default is {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 
 **Example**
 
 ```js
-minioClient.setObjectTagging('bucketname', 'object-name', tags, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setObjectTagging('bucketname', 'object-name', tags)
 ```
 
 **Example 1**
 Put tags on a version of an object.
 
 ```js
-minioClient.setObjectTagging('bucketname', 'object-name', tags, { versionId: 'my-version-id' }, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setObjectTagging('bucketname', 'object-name', tags, { versionId: 'my-version-id' })
 ```
 
 <a name="removeObjectTagging"></a>
 
-### removeObjectTagging(bucketName, objectName[, removeOpts, callback])
+### removeObjectTagging(bucketName, objectName[, removeOpts])
 
 Remove Tags on an Object
 
 **Parameters**
 
-| Param           | Type       | Description                                                   |
-| --------------- | ---------- | ------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                           |
-| `objectName`    | _string_   | Name of the object.                                           |
-| `removeOpts`    | _object_   | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error.               |
+| Param        | Type     | Description                                                   |
+| ------------ | -------- | ------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                           |
+| `objectName` | _string_ | Name of the object.                                           |
+| `removeOpts` | _object_ | Defaults to {}. e.g `{versionId:"my-version-id"}`. (Optional) |
 
 **Example**
 
 ```js
-minioClient.removeObjectTagging('bucketname', 'object-name', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.removeObjectTagging('bucketname', 'object-name')
 ```
 
 **Example1**
 Remove tags on a version of an object.
 
 ```js
-minioClient.removeObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' }, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.removeObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' })
 ```
 
 <a name="getObjectTagging"></a>
@@ -1509,15 +1470,14 @@ Get Tags of an Object
 **Example**
 
 ```js
-const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name')
-console.log('Success', tagsList)
+console.log(await minioClient.getObjectTagging('bucketname', 'object-name'))
 ```
 
 **Example1**
 Get tags on a version of an object.
 
 ```js
-const tagsList = await minioClient.getObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' })
+console.log(await minioClient.getObjectTagging('bucketname', 'object-name', { versionId: 'my-object-version-id' }))
 ```
 
 <a name="getObjectLegalHold"></a>
@@ -1643,18 +1603,17 @@ composePromise
 
 <a name="selectObjectContent"></a>
 
-### selectObjectContent(bucketName, objectName, selectOpts[, callback])
+### selectObjectContent(bucketName, objectName, selectOpts)
 
 Select contents of an object (S3 Select).
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                          |
-| --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                  |
-| `objectName`    | _string_   | Name of the object.                                                                                                                                  |
-| `selectOpts`    | _object_   |                                                                                                                                                      |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned, with the `SelectResults` type |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `objectName` | _string_ | Name of the object. |
+| `selectOpts` | _object_ |                     |
 
 **Example 1**
 Select all values
@@ -1671,12 +1630,8 @@ const selectOpts = {
   requestProgress: { Enabled: true },
 }
 
-minioClient.selectObjectContent('bucketName', 'objectName', selectOpts, function (err, res) {
-  if (err) {
-    return console.log('Unable to process select object content.', err.message)
-  }
-  console.log('Success')
-})
+const res = await minioClient.selectObjectContent('bucketName', 'objectName', selectOpts)
+console.log(res)
 ```
 
 ## 4. Presigned operations
