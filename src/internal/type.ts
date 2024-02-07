@@ -146,6 +146,8 @@ export type Tag = {
   Value: string
 }
 
+export type Tags = Record<string, string>
+
 export type ReplicationRuleDestination = {
   Bucket: string
   StorageClass: string
@@ -255,4 +257,62 @@ export type VersioningSuspended = 'Suspended'
 export type BucketVersioningConfiguration = {
   Status: VersioningEnabled | VersioningSuspended
   // TODO add ExcludedPrefixes, ExcludeFolders which are  part of MinIO's extension, as an enhancement.
+}
+
+export type TaggingOpts = {
+  versionId: string
+}
+
+export type PutTaggingParams = {
+  bucketName: string
+  objectName?: string
+  tags: Tags
+  putOpts?: TaggingOpts
+}
+
+export type RemoveTaggingParams = {
+  bucketName: string
+  objectName?: string
+  removeOpts?: TaggingOpts
+}
+
+export type InputSerialization = {
+  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
+  CSV?: {
+    AllowQuotedRecordDelimiter?: boolean
+    Comments?: string
+    FieldDelimiter?: string
+    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    Type: 'DOCUMENT' | 'LINES'
+  }
+  Parquet?: EmptyObject
+}
+
+export type OutputSerialization = {
+  CSV?: {
+    FieldDelimiter?: string
+    QuoteCharacter?: string
+    QuoteEscapeCharacter?: string
+    QuoteFields?: string
+    RecordDelimiter?: string
+  }
+  JSON?: {
+    RecordDelimiter?: string
+  }
+}
+
+export type SelectProgress = { Enabled: boolean }
+export type ScanRange = { Start: number; End: number }
+export type SelectOptions = {
+  expression: string
+  expressionType?: string
+  inputSerialization: InputSerialization
+  outputSerialization: OutputSerialization
+  requestProgress?: SelectProgress
+  scanRange?: ScanRange
 }

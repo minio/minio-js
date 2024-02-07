@@ -14,6 +14,7 @@ import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
+import type { SelectResults } from '../helpers.ts'
 import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
@@ -66,21 +67,31 @@ import type {
   ObjectLockInfo,
   ObjectMetaData,
   PutObjectLegalHoldOptions,
+  PutTaggingParams,
+  RemoveTaggingParams,
   ReplicationConfig,
   ReplicationConfigOpts,
   RequestHeaders,
   ResponseHeader,
   ResultCallback,
   Retention,
+  SelectOptions,
   StatObjectOpts,
   Tag,
+  TaggingOpts,
+  Tags,
   Transport,
   UploadedObjectInfo,
   VersionIdentificator,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
+import {
+  parseCompleteMultipart,
+  parseInitiateMultipart,
+  parseObjectLegalHoldConfig,
+  parseSelectObjectContentResponse,
+} from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
-import { parseCompleteMultipart, parseInitiateMultipart, parseObjectLegalHoldConfig } from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -1656,6 +1667,7 @@ export class TypedClient {
 
     const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, o] = await Promise.all([
       new Promise((resolve, reject) => {
         body.pipe(chunkier).on('error', reject)
@@ -2101,5 +2113,181 @@ export class TypedClient {
     const payload = builder.buildObject(versionConfig)
 
     await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
+  }
+
+  private async setTagging(taggingParams: PutTaggingParams): Promise<void> {
+    const { bucketName, objectName, tags, putOpts } = taggingParams
+    const method = 'PUT'
+    let query = 'tagging'
+
+    if (putOpts && putOpts?.versionId) {
+      query = `${query}&versionId=${putOpts.versionId}`
+    }
+    const tagsList = []
+    for (const [key, value] of Object.entries(tags)) {
+      tagsList.push({ Key: key, Value: value })
+    }
+    const taggingConfig = {
+      Tagging: {
+        TagSet: {
+          Tag: tagsList,
+        },
+      },
+    }
+    const headers = {} as RequestHeaders
+    const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
+    const payloadBuf = Buffer.from(builder.buildObject(taggingConfig))
+    const requestOptions = {
+      method,
+      bucketName,
+      query,
+      headers,
+
+      ...(objectName && { objectName: objectName }),
+    }
+
+    headers['Content-MD5'] = toMd5(payloadBuf)
+
+    await this.makeRequestAsyncOmit(requestOptions, payloadBuf)
+  }
+
+  private async removeTagging({ bucketName, objectName, removeOpts }: RemoveTaggingParams): Promise<void> {
+    const method = 'DELETE'
+    let query = 'tagging'
+
+    if (removeOpts && Object.keys(removeOpts).length && removeOpts.versionId) {
+      query = `${query}&versionId=${removeOpts.versionId}`
+    }
+    const requestOptions = { method, bucketName, objectName, query }
+
+    if (objectName) {
+      requestOptions['objectName'] = objectName
+    }
+    await this.makeRequestAsync(requestOptions, '', [200, 204])
+  }
+
+  async setBucketTagging(bucketName: string, tags: Tag): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(tags)) {
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if (Object.keys(tags).length > 10) {
+      throw new errors.InvalidArgumentError('maximum tags allowed is 10"')
+    }
+
+    await this.setTagging({ bucketName, tags })
+  }
+
+  async removeBucketTagging(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    await this.removeTagging({ bucketName })
+  }
+
+  async setObjectTagging(bucketName: string, objectName: string, tags: Tags, putOpts: TaggingOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+
+    if (!isObject(tags)) {
+      throw new errors.InvalidArgumentError('tags should be of type "object"')
+    }
+    if (Object.keys(tags).length > 10) {
+      throw new errors.InvalidArgumentError('Maximum tags allowed is 10"')
+    }
+
+    await this.setTagging({ bucketName, objectName, tags, putOpts })
+  }
+
+  async removeObjectTagging(bucketName: string, objectName: string, removeOpts: TaggingOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
+    }
+    if (removeOpts && Object.keys(removeOpts).length && !isObject(removeOpts)) {
+      throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
+    }
+
+    await this.removeTagging({ bucketName, objectName, removeOpts })
+  }
+
+  async selectObjectContent(
+    bucketName: string,
+    objectName: string,
+    selectOpts: SelectOptions,
+  ): Promise<SelectResults | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (!_.isEmpty(selectOpts)) {
+      if (!isString(selectOpts.expression)) {
+        throw new TypeError('sqlExpression should be of type "string"')
+      }
+      if (!_.isEmpty(selectOpts.inputSerialization)) {
+        if (!isObject(selectOpts.inputSerialization)) {
+          throw new TypeError('inputSerialization should be of type "object"')
+        }
+      } else {
+        throw new TypeError('inputSerialization is required')
+      }
+      if (!_.isEmpty(selectOpts.outputSerialization)) {
+        if (!isObject(selectOpts.outputSerialization)) {
+          throw new TypeError('outputSerialization should be of type "object"')
+        }
+      } else {
+        throw new TypeError('outputSerialization is required')
+      }
+    } else {
+      throw new TypeError('valid select configuration is required')
+    }
+
+    const method = 'POST'
+    const query = `select&select-type=2`
+
+    const config: Record<string, unknown>[] = [
+      {
+        Expression: selectOpts.expression,
+      },
+      {
+        ExpressionType: selectOpts.expressionType || 'SQL',
+      },
+      {
+        InputSerialization: [selectOpts.inputSerialization],
+      },
+      {
+        OutputSerialization: [selectOpts.outputSerialization],
+      },
+    ]
+
+    // Optional
+    if (selectOpts.requestProgress) {
+      config.push({ RequestProgress: selectOpts?.requestProgress })
+    }
+    // Optional
+    if (selectOpts.scanRange) {
+      config.push({ ScanRange: selectOpts.scanRange })
+    }
+
+    const builder = new xml2js.Builder({
+      rootName: 'SelectObjectContentRequest',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(config)
+
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
+    const body = await readAsBuffer(res)
+    return parseSelectObjectContentResponse(body)
   }
 }

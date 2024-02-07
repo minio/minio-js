@@ -23,12 +23,14 @@ import type {
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  InputSerialization,
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
   LegalHoldStatus,
   MetadataItem,
   ObjectLockInfo,
+  OutputSerialization,
   PutObjectLegalHoldOptions,
   ReplicaModifications,
   ReplicationConfig,
@@ -41,6 +43,9 @@ import type {
   ResultCallback,
   Retention,
   RetentionOptions,
+  ScanRange,
+  SelectOptions,
+  SelectProgress,
   SourceSelectionCriteria,
   Tag,
   VersionIdentificator,
@@ -66,6 +71,7 @@ export type {
   ExistingObjectReplication,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
+  InputSerialization,
   IsoDate,
   ItemBucketMetadata,
   ItemBucketMetadataList,
@@ -73,6 +79,7 @@ export type {
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
+  OutputSerialization,
   PutObjectLegalHoldOptions,
   RemoveOptions,
   ReplicaModifications,
@@ -85,6 +92,9 @@ export type {
   ReplicationRuleStatus,
   Retention,
   RetentionOptions,
+  ScanRange,
+  SelectOptions,
+  SelectProgress,
   SourceSelectionCriteria,
   Tag,
 }
@@ -137,45 +147,6 @@ export interface LegalHoldOptions {
   status: LEGAL_HOLD_STATUS
 }
 
-export interface InputSerialization {
-  CompressionType?: 'NONE' | 'GZIP' | 'BZIP2'
-  CSV?: {
-    AllowQuotedRecordDelimiter?: boolean
-    Comments?: string
-    FieldDelimiter?: string
-    FileHeaderInfo?: 'NONE' | 'IGNORE' | 'USE'
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    Type: 'DOCUMENT' | 'LINES'
-  }
-  Parquet?: EmptyObject
-}
-
-export interface OutputSerialization {
-  CSV?: {
-    FieldDelimiter?: string
-    QuoteCharacter?: string
-    QuoteEscapeCharacter?: string
-    QuoteFields?: string
-    RecordDelimiter?: string
-  }
-  JSON?: {
-    RecordDelimiter?: string
-  }
-}
-
-export interface SelectOptions {
-  expression: string
-  expressionType?: string
-  inputSerialization: InputSerialization
-  outputSerialization: OutputSerialization
-  requestProgress?: { Enabled: boolean }
-  scanRange?: { Start: number; End: number }
-}
-
 export interface SourceObjectStats {
   size: number
   metaData: string
@@ -190,11 +161,8 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  setBucketTagging(bucketName: string, tags: TagList, callback: NoResultCallback): void
-  setBucketTagging(bucketName: string, tags: TagList): Promise<void>
-
-  removeBucketTagging(bucketName: string, callback: NoResultCallback): void
-  removeBucketTagging(bucketName: string): Promise<void>
+  setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
+  setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
 
   setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle, callback: NoResultCallback): void
   setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle): Promise<void>
@@ -242,44 +210,12 @@ export class Client extends TypedClient {
   ): void
   getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
 
-  setObjectTagging(bucketName: string, objectName: string, tags: TagList, callback: NoResultCallback): void
-  setObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  setObjectTagging(
-    bucketName: string,
-    objectName: string,
-    tags: TagList,
-    putOptions?: VersionIdentificator,
-  ): Promise<void>
-
-  removeObjectTagging(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeObjectTagging(
-    bucketName: string,
-    objectName: string,
-    removeOptions: VersionIdentificator,
-    callback: NoResultCallback,
-  ): void
-  removeObjectTagging(bucketName: string, objectName: string, removeOptions?: VersionIdentificator): Promise<void>
-
   composeObject(
     destObjConfig: CopyDestinationOptions,
     sourceObjList: CopySourceOptions[],
     callback: ResultCallback<SourceObjectStats>,
   ): void
   composeObject(destObjConfig: CopyDestinationOptions, sourceObjList: CopySourceOptions[]): Promise<SourceObjectStats>
-
-  selectObjectContent(
-    bucketName: string,
-    objectName: string,
-    selectOpts: SelectOptions,
-    callback: NoResultCallback,
-  ): void
-  selectObjectContent(bucketName: string, objectName: string, selectOpts: SelectOptions): Promise<void>
 
   // Presigned operations
   presignedUrl(httpMethod: string, bucketName: string, objectName: string, callback: ResultCallback<string>): void
