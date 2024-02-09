@@ -951,6 +951,7 @@ export class TypedClient {
     bucketName: string,
     objectName: string,
     getOpts: VersionIdentificator = {},
+    metaData: ItemBucketMetadata = {},
   ): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -958,7 +959,7 @@ export class TypedClient {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    return this.getPartialObject(bucketName, objectName, 0, 0, getOpts)
+    return this.getPartialObject(bucketName, objectName, 0, 0, getOpts, metaData)
   }
 
   /**
@@ -968,6 +969,7 @@ export class TypedClient {
    * @param offset
    * @param length - length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
    * @param getOpts
+   * @param metaData - Optional metadata to be sent with the request
    */
   async getPartialObject(
     bucketName: string,
@@ -975,6 +977,7 @@ export class TypedClient {
     offset: number,
     length = 0,
     getOpts: VersionIdentificator = {},
+    metaData: ItemBucketMetadata = {},
   ): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -987,6 +990,9 @@ export class TypedClient {
     }
     if (!isNumber(length)) {
       throw new TypeError('length should be of type "number"')
+    }
+    if (!isObject(metaData)) {
+      throw new TypeError('metaData should be of type "object"')
     }
 
     let range = ''
@@ -1002,9 +1008,9 @@ export class TypedClient {
       }
     }
 
-    const headers: RequestHeaders = {}
-    if (range !== '') {
-      headers.range = range
+    const headers: RequestHeaders = {
+      ...prependXAMZMeta(metaData),
+      ...(range !== '' && { range }),
     }
 
     const expectedStatusCodes = [200]
@@ -1025,8 +1031,15 @@ export class TypedClient {
    * @param objectName - name of the object
    * @param filePath - path to which the object data will be written to
    * @param getOpts - Optional object get option
+   * @param metaData - Optional metadata to be sent with the request
    */
-  async fGetObject(bucketName: string, objectName: string, filePath: string, getOpts: VersionIdentificator = {}) {
+  async fGetObject(
+    bucketName: string,
+    objectName: string,
+    filePath: string,
+    getOpts: VersionIdentificator = {},
+    metaData: ItemBucketMetadata = {},
+  ): Promise<void> {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1063,7 +1076,7 @@ export class TypedClient {
         }
       }
 
-      const downloadStream = await this.getPartialObject(bucketName, objectName, offset, 0, getOpts)
+      const downloadStream = await this.getPartialObject(bucketName, objectName, offset, 0, getOpts, metaData)
 
       await streamPromise.pipeline(downloadStream, partFileStream)
       const stats = await fsp.stat(partFile)
