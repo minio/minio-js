@@ -85,7 +85,7 @@
     "async": "^3.2.4",
     "block-stream2": "^2.1.0",
     "browser-or-node": "^2.1.1",
-    "buffer-crc32": "^0.2.13",
+    "buffer-crc32": "^1.0.0",
     "eventemitter3": "^5.0.1",
     "fast-xml-parser": "^4.2.2",
     "ipaddr.js": "^2.0.1",
