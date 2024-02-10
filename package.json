@@ -106,7 +106,6 @@
     "@nodelib/fs.walk": "^1.2.8",
     "@types/async": "^3.2.20",
     "@types/block-stream2": "^2.1.2",
-    "@types/buffer-crc32": "^0.2.4",
     "@types/chai": "^4.3.11",
     "@types/chai-as-promised": "^7.1.8",
     "@types/lodash": "^4.14.194",
