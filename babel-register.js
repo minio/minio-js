@@ -19,7 +19,6 @@ register({
         importInterop: 'node',
       },
     ],
-    '@upleveled/remove-node-prefix', // lower version of node (<14) doesn't support require('node:fs')
   ],
   presets: [
     ['@babel/preset-typescript', { allExtensions: true }],

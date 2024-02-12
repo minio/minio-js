@@ -21,7 +21,6 @@ function options(module) {
         importInterop: 'node',
       },
     ],
-    ['@upleveled/remove-node-prefix'],
     [
       'replace-import-extension',
       {
