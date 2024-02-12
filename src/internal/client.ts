@@ -8,9 +8,9 @@ import * as stream from 'node:stream'
 import * as async from 'async'
 import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
+import { XMLBuilder } from "fast-xml-parser"
 import _ from 'lodash'
 import * as qs from 'query-string'
-import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
@@ -93,7 +93,11 @@ import {
 } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
-const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
+const xml = new XMLBuilder({    
+  ignoreAttributes: false,
+  attributeNamePrefix: "$_",
+  
+})
 
 // will be replaced by bundler.
 const Package = { version: process.env.MINIO_JS_PACKAGE_VERSION || 'development' }
@@ -870,9 +874,9 @@ export class TypedClient {
     // sending makeBucket request with XML containing 'us-east-1' fails. For
     // default region server expects the request without body
     if (region && region !== DEFAULT_REGION) {
-      payload = xml.buildObject({
+      payload = xml.build({
         CreateBucketConfiguration: {
-          $: { xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/' },
+          $_xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
           LocationConstraint: region,
         },
       })
@@ -1384,12 +1388,9 @@ export class TypedClient {
     const method = 'POST'
     const query = `uploadId=${uriEscape(uploadId)}`
 
-    const builder = new xml2js.Builder()
-    const payload = builder.buildObject({
+    const payload = xml.build({
       CompleteMultipartUpload: {
-        $: {
-          xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
-        },
+        $_xmlns: 'http://s3.amazonaws.com/doc/2006-03-01/',
         Part: etags.map((etag) => {
           return {
             PartNumber: etag.part,
@@ -1761,8 +1762,7 @@ export class TypedClient {
       },
     }
 
-    const builder = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
-    const payload = builder.buildObject(replicationParamsConfig)
+    const payload = xml.build(replicationParamsConfig)
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
@@ -1856,8 +1856,7 @@ export class TypedClient {
       Status: setOpts.status,
     }
 
-    const builder = new xml2js.Builder({ rootName: 'LegalHold', renderOpts: { pretty: false }, headless: true })
-    const payload = builder.buildObject(config)
+    const payload = xml.build({LegalHold: config})
     const headers: Record<string, string> = {}
     headers['Content-MD5'] = toMd5(payload)
 
@@ -1983,7 +1982,6 @@ export class TypedClient {
       headers['X-Amz-Bypass-Governance-Retention'] = true
     }
 
-    const builder = new xml2js.Builder({ rootName: 'Retention', renderOpts: { pretty: false }, headless: true })
     const params: Record<string, string> = {}
 
     if (retentionOpts.mode) {
@@ -1996,7 +1994,7 @@ export class TypedClient {
       query += `&versionId=${retentionOpts.versionId}`
     }
 
-    const payload = builder.buildObject(params)
+    const payload = xml.build({Retention: params})
 
     headers['Content-MD5'] = toMd5(payload)
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query, headers }, payload, [200, 204])
@@ -2070,12 +2068,7 @@ export class TypedClient {
       }
     }
 
-    const builder = new xml2js.Builder({
-      rootName: 'ObjectLockConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(config)
+    const payload = xml.build({ObjectLockConfiguration: config})
 
     const headers: RequestHeaders = {}
     headers['Content-MD5'] = toMd5(payload)
@@ -2105,12 +2098,7 @@ export class TypedClient {
 
     const method = 'PUT'
     const query = 'versioning'
-    const builder = new xml2js.Builder({
-      rootName: 'VersioningConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(versionConfig)
+    const payload = xml.build({VersioningConfiguration: versionConfig})
 
     await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
   }
@@ -2135,8 +2123,9 @@ export class TypedClient {
       },
     }
     const headers = {} as RequestHeaders
-    const builder = new xml2js.Builder({ headless: true, renderOpts: { pretty: false } })
-    const payloadBuf = Buffer.from(builder.buildObject(taggingConfig))
+    const payload = xml.build(taggingConfig)
+    const payloadBuf = Buffer.from(payload)
+
     const requestOptions = {
       method,
       bucketName,
@@ -2279,12 +2268,7 @@ export class TypedClient {
       config.push({ ScanRange: selectOpts.scanRange })
     }
 
-    const builder = new xml2js.Builder({
-      rootName: 'SelectObjectContentRequest',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    const payload = builder.buildObject(config)
+    const payload = new XMLBuilder({oneListGroup: true}).build({SelectObjectContentRequest: config})
 
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
     const body = await readAsBuffer(res)
