@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "moduleResolution": "Node",
-    "module": "ESNext",
+    "moduleResolution": "node16",
+    "module": "node16",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,

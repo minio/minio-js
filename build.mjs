@@ -1,131 +1,49 @@
-/* eslint-disable no-console */
-import { exec } from 'node:child_process'
-import * as fs from 'node:fs'
-import * as fsp from 'node:fs/promises'
-import * as path from 'node:path'
-import { promisify } from 'node:util'
+import esbuild from 'esbuild';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import { fileURLToPath } from 'url';
 
-import * as babel from '@babel/core'
-import * as fsWalk from '@nodelib/fs.walk'
+// Helper function to get the directory name of the current module
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const pkg = JSON.parse(fs.readFileSync('package.json').toString())
+const pkg = JSON.parse(await fs.readFile('package.json', 'utf8'));
 
-/**
- * @param {'esm'|'cjs'} module
- */
-function options(module) {
-  const plugins = [
-    [
-      '@babel/plugin-transform-modules-commonjs',
-      {
-        importInterop: 'node',
-      },
-    ],
-    ['@upleveled/remove-node-prefix'],
-    [
-      'replace-import-extension',
-      {
-        extMapping: {
-          '.ts': extMap[module],
-          '.js': extMap[module],
-        },
-      },
-    ],
-    [
-      'babel-plugin-transform-replace-expressions',
-      {
-        replace: {
-          'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),
-        },
-      },
-    ],
-  ]
+async function build(module) {
+  console.log(`Building for ${module}...`);
 
-  return {
-    sourceMaps: 'inline',
-    assumptions: {
-      constantSuper: true,
-      noIncompleteNsImportDetection: true,
-      constantReexports: true,
+  const outDir = module === 'cjs' ? './dist/main/' : './dist/esm/';
+  const format = module === 'cjs' ? 'cjs' : 'esm';
+  const extension = module === 'cjs' ? '.js' : '.mjs';
+
+  await esbuild.build({
+    entryPoints: [path.join(__dirname, 'src/minio.js')],
+    outdir: outDir,
+    platform: 'node',
+    target: 'node16',
+    format: format,
+    bundle: true,
+    sourcemap: true,
+    external: Object.keys(pkg.dependencies || {}),
+    define: {
+      'process.env.MINIO_JS_PACKAGE_VERSION': JSON.stringify(pkg.version),
     },
-    plugins: module === 'esm' ? plugins.splice(1) : plugins,
-    presets: [['@babel/env', { targets: { node: '14' }, modules: false }], ['@babel/preset-typescript']],
-  }
-}
-
-const extMap = { cjs: '.js', esm: '.mjs' }
-
-async function buildFiles({ files, module, outDir }) {
-  console.log(`building for ${module}`)
-  await promisify(exec)(`npx tsc --outDir ${outDir}`, { stdio: 'inherit' })
-  const ext = extMap[module]
-
-  const opt = options(module)
-  for (const file of files) {
-    if (!file.dirent.isFile()) {
-      continue
-    }
-
-    const outFilePath = path.join(outDir, path.relative('src/', file.path))
-    const outDirPath = path.dirname(outFilePath)
-
-    await fsp.mkdir(outDirPath, { recursive: true })
-    const distCodePath = outFilePath.replace(/\.[tj]s$/g, ext)
-
-    if (file.path.endsWith('.d.ts')) {
-      await fsp.copyFile(file.path, outFilePath)
-      continue
-    }
-
-    try {
-      const result = await babel.transformAsync(await fsp.readFile(file.path, 'utf-8'), {
-        filename: file.path,
-        ...opt,
-      })
-
-      await fsp.writeFile(distCodePath, result.code)
-    } catch (e) {
-      console.error(`failed to transpile ${file.path}`)
-      throw e
-    }
-  }
-
-  for (const file of fsWalk.walkSync(outDir)) {
-    if (file.dirent.isDirectory()) {
-      continue
-    }
-
-    if (!file.path.endsWith('.d.ts')) {
-      continue
-    }
-
-    const fileContent = fs.readFileSync(file.path).toString()
-
-    const mts = babel.transformSync(fileContent, {
-      filename: file.path,
-      sourceMaps: true,
-      plugins: [['@babel/plugin-syntax-typescript'], ['replace-import-extension', { extMapping: { '.ts': ext } }]],
-    })
-
-    await fsp.unlink(file.path)
-
-    let outFilePath = file.path.slice(0, file.path.length - '.d.ts'.length) + '.d.ts'
-    if (module === 'esm') {
-      outFilePath = file.path.slice(0, file.path.length - '.d.ts'.length) + '.d.mts'
-    }
-    await fsp.writeFile(outFilePath, mts.code)
-  }
+    plugins: [
+      // Add any esbuild plugins you need here
+    ],
+  });
 }
 
 async function main() {
-  await fsp.rm('dist', { recursive: true, force: true })
+  await fs.rm('dist', { recursive: true, force: true });
 
-  const entries = fsWalk.walkSync('src/')
-
+  // Build for both CommonJS and ES Module formats
   await Promise.all([
-    buildFiles({ files: entries, module: 'cjs', outDir: './dist/main/' }),
-    buildFiles({ files: entries, module: 'esm', outDir: './dist/esm/' }),
-  ])
+    build('cjs'),
+    build('esm'),
+  ]);
 }
 
-await main()
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

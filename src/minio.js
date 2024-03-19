@@ -17,10 +17,10 @@
 import * as Stream from 'node:stream'
 
 import async from 'async'
+import { XMLBuilder } from "fast-xml-parser"
 import _ from 'lodash'
 import * as querystring from 'query-string'
 import { TextEncoder } from 'web-encoding'
-import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
 import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
@@ -61,6 +61,11 @@ export * from './errors.ts'
 export * from './helpers.ts'
 export * from './notification.ts'
 export { CopyConditions, PostPolicy }
+
+const xml = new XMLBuilder({    
+  ignoreAttributes: false,
+  attributeNamePrefix: "$_",
+})
 
 export class Client extends TypedClient {
   // Set application specific information.
@@ -589,8 +594,7 @@ export class Client extends TypedClient {
           }
         })
         let deleteObjects = { Delete: { Quiet: true, Object: objects } }
-        const builder = new xml2js.Builder({ headless: true })
-        let payload = builder.buildObject(deleteObjects)
+        let payload = xml.build(deleteObjects)
         payload = Buffer.from(encoder.encode(payload))
         const headers = {}
 
@@ -820,14 +824,9 @@ export class Client extends TypedClient {
     if (!isFunction(cb)) {
       throw new TypeError('callback should be of type "function"')
     }
-    var method = 'PUT'
-    var query = 'notification'
-    var builder = new xml2js.Builder({
-      rootName: 'NotificationConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    var payload = builder.buildObject(config)
+    const method = 'PUT'
+    const query = 'notification'
+    const payload = xml.build({NotificationConfiguration: config})
     this.makeRequest({ method, bucketName, query }, payload, [200], '', false, cb)
   }
 
@@ -891,12 +890,7 @@ export class Client extends TypedClient {
 
     const encoder = new TextEncoder()
     const headers = {}
-    const builder = new xml2js.Builder({
-      rootName: 'LifecycleConfiguration',
-      headless: true,
-      renderOpts: { pretty: false },
-    })
-    let payload = builder.buildObject(policyConfig)
+    let payload = xml.build({LifecycleConfiguration: policyConfig})
     payload = Buffer.from(encoder.encode(payload))
     const requestOptions = { method, bucketName, query, headers }
     headers['Content-MD5'] = toMd5(payload)
@@ -1029,12 +1023,7 @@ export class Client extends TypedClient {
 
     let method = 'PUT'
     let query = 'encryption'
-    let builder = new xml2js.Builder({
-      rootName: 'ServerSideEncryptionConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    let payload = builder.buildObject(encryptionObj)
+    let payload = xml.build({ServerSideEncryptionConfiguration: encryptionObj})
 
     const headers = {}
     headers['Content-MD5'] = toMd5(payload)

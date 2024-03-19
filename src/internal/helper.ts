@@ -20,7 +20,7 @@ import * as stream from 'node:stream'
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
-import * as mime from 'mime-types'
+import mime from 'mime'
 
 import { fsp, fstat } from './async.ts'
 import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
@@ -158,7 +158,7 @@ export function isValidDomain(host: string) {
  * ```
  */
 export function probeContentType(path: string) {
-  let contentType = mime.lookup(path)
+  let contentType = mime.getType(path)
   if (!contentType) {
     contentType = 'application/octet-stream'
   }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { JSONParser } from '@streamparser/json-node'
 import { EventEmitter } from 'eventemitter3'
-import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
 import { DEFAULT_REGION } from './helpers.ts'
 import type { TypedClient } from './internal/client.ts'
@@ -216,7 +216,7 @@ export class NotificationPoller extends EventEmitter<{
 
     this.client.makeRequestAsync({ method, bucketName: this.bucketName, query }, '', [200], region).then(
       (response) => {
-        const asm = jsonLineParser.make()
+        const asm = new JSONParser()
 
         pipesetup(response, asm)
           .on('data', (data) => {
