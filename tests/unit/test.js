@@ -1266,78 +1266,83 @@ describe('Client', function () {
 
   describe('Bucket Encryption APIs', () => {
     describe('setBucketEncryption(bucket, encryptionConfig, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.setBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.setBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.setBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.setBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on multiple rules', (done) => {
+      it('should fail on multiple rules', async () => {
         try {
-          client.setBucketEncryption(
-            'my-bucket',
-            {
-              // Default Rule
-              Rule: [
-                {
-                  ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: 'AES256',
-                  },
+          await client.setBucketEncryption('my-bucket', {
+            // Default Rule
+            Rule: [
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm: 'AES256',
                 },
-                {
-                  ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: 'AES256',
-                  },
+              },
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm: 'AES256',
                 },
-              ],
-            },
-            function () {},
-          )
-        } catch (e) {
-          done()
+              },
+            ],
+          })
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('getBucketEncryption(bucket, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+
+      it('should fail on empty bucket', async () => {
         try {
-          client.getBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('removeBucketEncryption(bucket, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+
+      it('should fail on null bucket', async () => {
         try {
-          client.removeBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })

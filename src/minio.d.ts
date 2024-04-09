@@ -116,7 +116,6 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
 
-export type Encryption = EncryptionConfig | EmptyObject
 export interface PostPolicyResult {
   postURL: string
   formData: {
@@ -128,14 +127,6 @@ export interface LockConfig {
   mode: RETENTION_MODES
   unit: RETENTION_VALIDITY_UNITS
   validity: number
-}
-
-export interface EncryptionConfig {
-  Rule: EncryptionRule[]
-}
-
-export interface EncryptionRule {
-  [key: string]: any
 }
 
 export interface LegalHoldOptions {
@@ -156,15 +147,6 @@ export class Client extends TypedClient {
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
-  getBucketEncryption(bucketName: string): Promise<Encryption>
-
-  setBucketEncryption(bucketName: string, encryptionConfig: Encryption, callback: NoResultCallback): void
-  setBucketEncryption(bucketName: string, encryptionConfig: Encryption): Promise<void>
-
-  removeBucketEncryption(bucketName: string, callback: NoResultCallback): void
-  removeBucketEncryption(bucketName: string): Promise<void>
 
   copyObject(
     bucketName: string,

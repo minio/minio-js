@@ -917,91 +917,6 @@ export class Client extends TypedClient {
     })
   }
 
-  setBucketEncryption(bucketName, encryptionConfig, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-
-    if (isFunction(encryptionConfig)) {
-      cb = encryptionConfig
-      encryptionConfig = null
-    }
-
-    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
-      throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
-    }
-    if (cb && !isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    let encryptionObj = encryptionConfig
-    if (_.isEmpty(encryptionConfig)) {
-      encryptionObj = {
-        // Default MinIO Server Supported Rule
-        Rule: [
-          {
-            ApplyServerSideEncryptionByDefault: {
-              SSEAlgorithm: 'AES256',
-            },
-          },
-        ],
-      }
-    }
-
-    let method = 'PUT'
-    let query = 'encryption'
-    let builder = new xml2js.Builder({
-      rootName: 'ServerSideEncryptionConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    let payload = builder.buildObject(encryptionObj)
-
-    const headers = {}
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
-  }
-
-  getBucketEncryption(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    const query = 'encryption'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let bucketEncConfig = Buffer.from('')
-      pipesetup(response, transformers.bucketEncryptionTransformer())
-        .on('data', (data) => {
-          bucketEncConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, bucketEncConfig)
-        })
-    })
-  }
-  removeBucketEncryption(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'DELETE'
-    const query = 'encryption'
-
-    this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
-  }
-
   /**
    * Internal method to upload a part during compose object.
    * @param partConfig __object__ contains the following.
@@ -1235,9 +1150,6 @@ Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNot
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
-Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
-Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
-Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // refactored API use promise internally
@@ -1276,3 +1188,6 @@ Client.prototype.selectObjectContent = callbackify(Client.prototype.selectObject
 Client.prototype.setBucketLifecycle = callbackify(Client.prototype.setBucketLifecycle)
 Client.prototype.getBucketLifecycle = callbackify(Client.prototype.getBucketLifecycle)
 Client.prototype.removeBucketLifecycle = callbackify(Client.prototype.removeBucketLifecycle)
+Client.prototype.setBucketEncryption = callbackify(Client.prototype.setBucketEncryption)
+Client.prototype.getBucketEncryption = callbackify(Client.prototype.getBucketEncryption)
+Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBucketEncryption)

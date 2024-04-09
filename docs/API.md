@@ -749,94 +749,69 @@ await minioClient.getObjectLockConfig('my-bucketname')
 
 <a name="setBucketEncryption"></a>
 
-### setBucketEncryption(bucketName [,encryptionConfig, callback])
+### setBucketEncryption(bucketName [,encryptionConfig])
 
 Set encryption configuration on a Bucket
 
 **Parameters**
 
-| Param              | Type       | Description                                                                                                                                                                                        |
-| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`       | _string_   | Name of the bucket.                                                                                                                                                                                |
-| `encryptionConfig` | _object_   | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
-| `callback(err)`    | _function_ | Callback is called with `err` in case of error.                                                                                                                                                    |
+| Param              | Type     | Description                                                                                                                                                                                        |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`       | _string_ | Name of the bucket.                                                                                                                                                                                |
+| `encryptionConfig` | _object_ | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
 
 **Example **
 Set Encryption configuration on a Bucket
 
 ```js
-s3Client.setBucketEncryption('my-bucketname', function (err, lockConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(lockConfig)
-})
+await s3Client.setBucketEncryption('my-bucketname')
 ```
 
 **Example 1**
 Set Encryption configuration on a Bucket with an Algorithm
 
 ```js
-s3Client.setBucketEncryption(
-  'my-bucketname',
-  { Rule: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }] },
-  function (err, lockConfig) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success')
-  },
-)
+await s3Client.setBucketEncryption('my-bucketname', {
+  Rule: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+})
 ```
 
 <a name="getBucketEncryption"></a>
 
-### getBucketEncryption(bucketName [, callback])
+### getBucketEncryption(bucketName)
 
 Get encryption configuration of a Bucket
 
 **Parameters**
 
-| Param                      | Type       | Description                                                                               |
-| -------------------------- | ---------- | ----------------------------------------------------------------------------------------- |
-| `bucketName`               | _string_   | Name of the bucket.                                                                       |
-| `callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example **
 Get Encryption configuration of a Bucket
 
 ```js
-s3Client.getBucketEncryption('my-bucketname', function (err, encConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(encConfig)
-})
+await s3Client.getBucketEncryption('my-bucketname')
 ```
 
 <a name="removeBucketEncryption"></a>
 
-### removeBucketEncryption(bucketName [, callback])
+### removeBucketEncryption(bucketName)
 
 Remove encryption configuration of a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                     |
-| --------------- | ---------- | ----------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                             |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example **
 Remove Encryption configuration of a Bucket
 
 ```js
-s3Client.removeBucketEncryption('my-bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await s3Client.removeBucketEncryption('my-bucketname')
 ```
 
 ## 3. Object operations
