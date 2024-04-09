@@ -1008,55 +1008,60 @@ describe('Client', function () {
   })
 
   describe('setBucketLifecycle(bucket, lifecycleConfig, callback)', () => {
-    it('should fail on null bucket', (done) => {
+    it('should fail on null bucket', async () => {
       try {
-        client.setBucketLifecycle(null, null, function () {})
-      } catch (e) {
-        done()
+        await client.setBucketLifecycle(null, null)
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
-
-    it('should fail on empty bucket', (done) => {
+    it('should fail on empty bucket', async () => {
       try {
-        client.setBucketLifecycle('', null, function () {})
-      } catch (e) {
-        done()
+        await client.setBucketLifecycle('', null)
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
   })
 
   describe('getBucketLifecycle(bucket, callback)', () => {
-    it('should fail on null bucket', (done) => {
+    it('should fail on null bucket', async () => {
       try {
-        client.getBucketLifecycle(null, function () {})
-      } catch (e) {
-        done()
+        await client.getBucketLifecycle(null)
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
 
-    it('should fail on empty bucket', (done) => {
+    it('should fail on empty bucket', async () => {
       try {
-        client.getBucketLifecycle('', function () {})
-      } catch (e) {
-        done()
+        await client.getBucketLifecycle('')
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
   })
   describe('removeBucketLifecycle(bucket, callback)', () => {
-    it('should fail on null bucket', (done) => {
+    it('should fail on null bucket', async () => {
       try {
-        client.removeBucketLifecycle(null, null, function () {})
-      } catch (e) {
-        done()
+        await client.removeBucketLifecycle(null, null)
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
 
-    it('should fail on empty bucket', (done) => {
+    it('should fail on empty bucket', async () => {
       try {
-        client.removeBucketLifecycle('', null, function () {})
-      } catch (e) {
-        done()
+        await client.removeBucketLifecycle('', null)
+      } catch (err) {
+        return
       }
+      throw new Error('callback should receive error')
     })
   })
 

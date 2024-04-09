@@ -63,6 +63,7 @@ import type {
   IncompleteUploadedBucketItem,
   IRequest,
   ItemBucketMetadata,
+  LifecycleConfig,
   ObjectLockConfigParam,
   ObjectLockInfo,
   ObjectMetaData,
@@ -2289,5 +2290,53 @@ export class TypedClient {
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
     const body = await readAsBuffer(res)
     return parseSelectObjectContentResponse(body)
+  }
+
+  private async applyBucketLifecycle(bucketName: string, policyConfig: LifecycleConfig): Promise<void> {
+    const method = 'PUT'
+    const query = 'lifecycle'
+
+    const headers: RequestHeaders = {}
+    const builder = new xml2js.Builder({
+      rootName: 'LifecycleConfiguration',
+      headless: true,
+      renderOpts: { pretty: false },
+    })
+    const payload = builder.buildObject(policyConfig)
+    headers['Content-MD5'] = toMd5(payload)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  async removeBucketLifecycle(bucketName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query = 'lifecycle'
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [204])
+  }
+
+  async setBucketLifecycle(bucketName: string, lifeCycleConfig: LifecycleConfig | null): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (_.isEmpty(lifeCycleConfig)) {
+      await this.removeBucketLifecycle(bucketName)
+    } else {
+      await this.applyBucketLifecycle(bucketName, lifeCycleConfig)
+    }
+  }
+
+  async getBucketLifecycle(bucketName: string): Promise<LifecycleConfig | null> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'lifecycle'
+
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseLifecycleConfig(body)
   }
 }

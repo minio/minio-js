@@ -28,6 +28,8 @@ import type {
   ItemBucketMetadata,
   ItemBucketMetadataList,
   LegalHoldStatus,
+  LifecycleConfig,
+  LifecycleRule,
   MetadataItem,
   ObjectLockInfo,
   OutputSerialization,
@@ -76,6 +78,8 @@ export type {
   ItemBucketMetadata,
   ItemBucketMetadataList,
   LegalHoldStatus,
+  LifecycleConfig,
+  LifecycleRule,
   MetadataItem,
   NoResultCallback,
   ObjectLockInfo,
@@ -111,21 +115,13 @@ export type LockUnit = RETENTION_VALIDITY_UNITS
 
 export type VersioningConfig = Record<string | number | symbol, unknown>
 export type TagList = Record<string, string>
-export type Lifecycle = LifecycleConfig | null | ''
+
 export type Encryption = EncryptionConfig | EmptyObject
 export interface PostPolicyResult {
   postURL: string
   formData: {
     [key: string]: any
   }
-}
-
-export interface LifecycleConfig {
-  Rule: LifecycleRule[]
-}
-
-export interface LifecycleRule {
-  [key: string]: any
 }
 
 export interface LockConfig {
@@ -160,18 +156,6 @@ export class Client extends TypedClient {
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  setBucketVersioning(bucketName: string, versioningConfig: any, callback: NoResultCallback): void
-  setBucketVersioning(bucketName: string, versioningConfig: any): Promise<void>
-
-  setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle, callback: NoResultCallback): void
-  setBucketLifecycle(bucketName: string, lifecycleConfig: Lifecycle): Promise<void>
-
-  getBucketLifecycle(bucketName: string, callback: ResultCallback<Lifecycle>): void
-  getBucketLifecycle(bucketName: string): Promise<Lifecycle>
-
-  removeBucketLifecycle(bucketName: string, callback: NoResultCallback): void
-  removeBucketLifecycle(bucketName: string): Promise<void>
 
   getBucketEncryption(bucketName: string, callback: ResultCallback<Encryption>): void
   getBucketEncryption(bucketName: string): Promise<Encryption>
