@@ -64,6 +64,7 @@ import type {
   IRequest,
   ItemBucketMetadata,
   LifecycleConfig,
+  LifeCycleConfigParam,
   ObjectLockConfigParam,
   ObjectLockInfo,
   ObjectMetaData,
@@ -2292,7 +2293,7 @@ export class TypedClient {
     return parseSelectObjectContentResponse(body)
   }
 
-  private async applyBucketLifecycle(bucketName: string, policyConfig: LifecycleConfig): Promise<void> {
+  private async applyBucketLifecycle(bucketName: string, policyConfig: LifeCycleConfigParam): Promise<void> {
     const method = 'PUT'
     const query = 'lifecycle'
 
@@ -2317,7 +2318,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [204])
   }
 
-  async setBucketLifecycle(bucketName: string, lifeCycleConfig: LifecycleConfig | null): Promise<void> {
+  async setBucketLifecycle(bucketName: string, lifeCycleConfig: LifeCycleConfigParam): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }

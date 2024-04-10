@@ -26,7 +26,8 @@ const s3Client = new Minio.Client({
 })
 
 try {
-  await s3Client.getBucketLifecycle('test-bucket')
+  const lifecycleConfig = await s3Client.getBucketLifecycle('test-bucket')
+  console.log(JSON.stringify(lifecycleConfig))
 } catch (err) {
   console.log(err.message)
 }

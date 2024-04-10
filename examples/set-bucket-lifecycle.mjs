@@ -40,8 +40,7 @@ const ilmPolicyExpDays = {
   ],
 }
 
-const ilmExpiryDays = await s3Client.setBucketLifecycle('test-bucket', ilmPolicyExpDays)
-console.log(ilmExpiryDays)
+await s3Client.setBucketLifecycle('test-bucket', ilmPolicyExpDays)
 
 //Example to demonstrate Expiration Date
 const expirationDate = new Date()
@@ -63,5 +62,4 @@ const lifecycleConfigWithExpirationDate = {
   ],
 }
 
-const ilmDatePolicyRes = await s3Client.setBucketLifecycle('test-bucket', lifecycleConfigWithExpirationDate)
-console.log(ilmDatePolicyRes)
+await s3Client.setBucketLifecycle('test-bucket', lifecycleConfigWithExpirationDate)

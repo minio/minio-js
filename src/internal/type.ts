@@ -334,7 +334,7 @@ export type RuleFilter = {
   Tag?: Tag[]
 }
 
-type NoncurrentVersionExpiration = {
+export type NoncurrentVersionExpiration = {
   NoncurrentDays: number
   NewerNoncurrentVersions?: number
 }
@@ -368,3 +368,5 @@ export type LifecycleRule = {
 export type LifecycleConfig = {
   Rule: LifecycleRule[]
 }
+
+export type LifeCycleConfigParam = LifecycleConfig | null | undefined | ''
