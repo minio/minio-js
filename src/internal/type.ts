@@ -316,3 +316,57 @@ export type SelectOptions = {
   requestProgress?: SelectProgress
   scanRange?: ScanRange
 }
+
+export type Expiration = {
+  Date: string
+  Days: number
+  DeleteMarker: boolean
+  DeleteAll: boolean
+}
+
+export type RuleFilterAnd = {
+  Prefix: string
+  Tags: Tag[]
+}
+export type RuleFilter = {
+  And?: RuleFilterAnd
+  Prefix: string
+  Tag?: Tag[]
+}
+
+export type NoncurrentVersionExpiration = {
+  NoncurrentDays: number
+  NewerNoncurrentVersions?: number
+}
+
+export type NoncurrentVersionTransition = {
+  StorageClass: string
+  NoncurrentDays?: number
+  NewerNoncurrentVersions?: number
+}
+
+export type Transition = {
+  Date?: string
+  StorageClass: string
+  Days: number
+}
+export type AbortIncompleteMultipartUpload = {
+  DaysAfterInitiation: number
+}
+export type LifecycleRule = {
+  AbortIncompleteMultipartUpload?: AbortIncompleteMultipartUpload
+  ID: string
+  Prefix?: string
+  Status?: string
+  Expiration?: Expiration
+  RuleFilter?: RuleFilter
+  NoncurrentVersionExpiration?: NoncurrentVersionExpiration
+  NoncurrentVersionTransition?: NoncurrentVersionTransition
+  Transition?: Transition
+}
+
+export type LifecycleConfig = {
+  Rule: LifecycleRule[]
+}
+
+export type LifeCycleConfigParam = LifecycleConfig | null | undefined | ''

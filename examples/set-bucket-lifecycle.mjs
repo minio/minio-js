@@ -25,7 +25,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const lifecycleConfig = {
+const ilmPolicyExpDays = {
   Rule: [
     {
       ID: 'Expiration Days Rule',
@@ -40,12 +40,7 @@ const lifecycleConfig = {
   ],
 }
 
-s3Client.setBucketLifecycle('bucketname', lifecycleConfig, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await s3Client.setBucketLifecycle('test-bucket', ilmPolicyExpDays)
 
 //Example to demonstrate Expiration Date
 const expirationDate = new Date()
@@ -67,9 +62,4 @@ const lifecycleConfigWithExpirationDate = {
   ],
 }
 
-s3Client.setBucketLifecycle('bucketname', lifecycleConfigWithExpirationDate, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await s3Client.setBucketLifecycle('test-bucket', lifecycleConfigWithExpirationDate)
