@@ -25,9 +25,9 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeBucketLifecycle('bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+try {
+  const lifecycleConfig = await s3Client.getBucketLifecycle('test-bucket')
+  console.log(JSON.stringify(lifecycleConfig))
+} catch (err) {
+  console.log(err.message)
+}
