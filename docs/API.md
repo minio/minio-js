@@ -634,17 +634,16 @@ console.log(tagList)
 
 <a name="setBucketLifecycle"></a>
 
-### setBucketLifecycle(bucketName, lifecycleConfig, callback)
+### setBucketLifecycle(bucketName, lifecycleConfig)
 
 Set Lifecycle Configuration on a Bucket
 
 **Parameters**
 
-| Param             | Type       | Description                                                                        |
-| ----------------- | ---------- | ---------------------------------------------------------------------------------- |
-| `bucketName`      | _string_   | Name of the bucket.                                                                |
-| `lifecycleConfig` | _object_   | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
-| `callback(err)`   | _function_ | Callback is called with `err` in case of error.                                    |
+| Param             | Type     | Description                                                                        |
+| ----------------- | -------- | ---------------------------------------------------------------------------------- |
+| `bucketName`      | _string_ | Name of the bucket.                                                                |
+| `lifecycleConfig` | _object_ | Valid Lifecycle Configuration or ( `null` or `''` ) to remove policy configuration |
 
 **Example**
 
@@ -664,60 +663,43 @@ const lifecycleConfig = {
   ],
 }
 
-minioClient.setBucketLifecycle('bucketname', lifecycleConfig, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.setBucketLifecycle('bucketname', lifecycleConfig)
 ```
 
 <a name="getBucketLifecycle"></a>
 
-### getBucketLifecycle(bucketName, callback)
+### getBucketLifecycle(bucketName)
 
 Get Lifecycle Configuration of a Bucket
 
 **Parameters**
 
-| Param                              | Type       | Description                                                                                       |
-| ---------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| `bucketName`                       | _string_   | Name of the bucket.                                                                               |
-| `callback(error, lifecycleConfig)` | _function_ | Callback is called with `lifecycleConfig` in case of success. Otherwise it is called with `error` |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.getBucketLifecycle('bucketname', function (err, lifecycleConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success', lifecycleConfig)
-})
+await minioClient.getBucketLifecycle('bucketname')
 ```
 
 <a name="removeBucketLifecycle"></a>
 
-### removeBucketLifecycle(bucketName, callback)
+### removeBucketLifecycle(bucketName)
 
 Remove Lifecycle Configuration of a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                     |
-| --------------- | ---------- | ----------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                             |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example**
 
 ```js
-minioClient.removeBucketLifecycle('bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await minioClient.removeBucketLifecycle('bucketname')
 ```
 
 <a name="setObjectLockConfig"></a>
