@@ -316,7 +316,6 @@ export type SelectOptions = {
   requestProgress?: SelectProgress
   scanRange?: ScanRange
 }
-
 export type Expiration = {
   Date: string
   Days: number
@@ -370,3 +369,16 @@ export type LifecycleConfig = {
 }
 
 export type LifeCycleConfigParam = LifecycleConfig | null | undefined | ''
+
+export type ApplySSEByDefault = {
+  KmsMasterKeyID?: string
+  SSEAlgorithm: string
+}
+
+export type EncryptionRule = {
+  ApplyServerSideEncryptionByDefault?: ApplySSEByDefault
+}
+
+export type EncryptionConfig = {
+  Rule: EncryptionRule[]
+}

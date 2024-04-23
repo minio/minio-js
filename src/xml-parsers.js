@@ -309,11 +309,6 @@ export function parseObjectRetentionConfig(xml) {
   }
 }
 
-export function parseBucketEncryptionConfig(xml) {
-  let encConfig = parseXml(xml)
-  return encConfig
-}
-
 export function parseObjectLegalHoldConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold
