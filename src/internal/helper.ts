@@ -38,38 +38,10 @@ export function hashBinary(buf: Buffer, enableSHA256: boolean) {
   return { md5sum, sha256sum }
 }
 
-/**
- * All characters in string which are NOT unreserved should be percent encoded.
- * Unreserved characters are : ALPHA / DIGIT / "-" / "." / "_" / "~"
- * Reference https://tools.ietf.org/html/rfc3986#section-2.2
- */
-export function uriEscape(string: string) {
-  return string.split('').reduce((acc: string, elem: string) => {
-    const buf = Buffer.from(elem)
-    if (buf.length === 1) {
-      // length 1 indicates that elem is not a unicode character.
-      // Check if it is an unreserved characer.
-      if (
-        ('A' <= elem && elem <= 'Z') ||
-        ('a' <= elem && elem <= 'z') ||
-        ('0' <= elem && elem <= '9') ||
-        elem === '_' ||
-        elem === '.' ||
-        elem === '~' ||
-        elem === '-'
-      ) {
-        // Unreserved characer should not be encoded.
-        acc = acc + elem
-        return acc
-      }
-    }
-    // elem needs encoding - i.e elem should be encoded if it's not unreserved
-    // character or if it's a unicode character.
-    for (const char of buf) {
-      acc = acc + '%' + char.toString(16).toUpperCase()
-    }
-    return acc
-  }, '')
+// S3 percent-encodes some extra non-standard characters in a URI . So comply with S3.
+const encodeAsHex = (c: string) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+export function uriEscape(uriStr: string): string {
+  return encodeURIComponent(uriStr).replace(/[!'()*]/g, encodeAsHex)
 }
 
 export function uriResourceEscape(string: string) {

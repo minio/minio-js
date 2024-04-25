@@ -59,6 +59,7 @@ import type {
   BucketItemStat,
   BucketStream,
   BucketVersioningConfiguration,
+  EncryptionConfig,
   GetObjectLegalHoldOptions,
   IncompleteUploadedBucketItem,
   IRequest,
@@ -2339,5 +2340,63 @@ export class TypedClient {
     const res = await this.makeRequestAsync({ method, bucketName, query })
     const body = await readAsString(res)
     return xmlParsers.parseLifecycleConfig(body)
+  }
+  async setBucketEncryption(bucketName: string, encryptionConfig?: EncryptionConfig): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
+      throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
+    }
+
+    let encryptionObj = encryptionConfig
+    if (_.isEmpty(encryptionConfig)) {
+      encryptionObj = {
+        // Default MinIO Server Supported Rule
+        Rule: [
+          {
+            ApplyServerSideEncryptionByDefault: {
+              SSEAlgorithm: 'AES256',
+            },
+          },
+        ],
+      }
+    }
+
+    const method = 'PUT'
+    const query = 'encryption'
+    const builder = new xml2js.Builder({
+      rootName: 'ServerSideEncryptionConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(encryptionObj)
+
+    const headers: RequestHeaders = {}
+    headers['Content-MD5'] = toMd5(payload)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  async getBucketEncryption(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'encryption'
+
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseBucketEncryptionConfig(body)
+  }
+
+  async removeBucketEncryption(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query = 'encryption'
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [204])
   }
 }
