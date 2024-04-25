@@ -299,10 +299,6 @@ export function parseListObjectsV2WithMetadata(xml) {
   return result
 }
 
-export function parseLifecycleConfig(xml) {
-  const xmlObj = parseXml(xml)
-  return xmlObj.LifecycleConfiguration
-}
 export function parseObjectRetentionConfig(xml) {
   const xmlObj = parseXml(xml)
   const retentionConfig = xmlObj.Retention
@@ -311,11 +307,6 @@ export function parseObjectRetentionConfig(xml) {
     mode: retentionConfig.Mode,
     retainUntilDate: retentionConfig.RetainUntilDate,
   }
-}
-
-export function parseBucketEncryptionConfig(xml) {
-  let encConfig = parseXml(xml)
-  return encConfig
 }
 
 export function parseObjectLegalHoldConfig(xml) {

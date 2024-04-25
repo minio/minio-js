@@ -539,3 +539,12 @@ export function parseSelectObjectContentResponse(res: Buffer) {
     }
   }
 }
+
+export function parseLifecycleConfig(xml: string) {
+  const xmlObj = parseXml(xml)
+  return xmlObj.LifecycleConfiguration
+}
+
+export function parseBucketEncryptionConfig(xml: string) {
+  return parseXml(xml)
+}

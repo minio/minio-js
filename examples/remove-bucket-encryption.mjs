@@ -25,9 +25,4 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketEncryption('my-bucket', function (error, enConfig) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log(enConfig)
-})
+await s3Client.removeBucketEncryption('test-bucket')

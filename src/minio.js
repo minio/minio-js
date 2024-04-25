@@ -879,85 +879,6 @@ export class Client extends TypedClient {
     return listener
   }
 
-  /**
-   * Apply lifecycle configuration on a bucket.
-   * bucketName _string_
-   * policyConfig _object_ a valid policy configuration object.
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  applyBucketLifecycle(bucketName, policyConfig, cb) {
-    const method = 'PUT'
-    const query = 'lifecycle'
-
-    const encoder = new TextEncoder()
-    const headers = {}
-    const builder = new xml2js.Builder({
-      rootName: 'LifecycleConfiguration',
-      headless: true,
-      renderOpts: { pretty: false },
-    })
-    let payload = builder.buildObject(policyConfig)
-    payload = Buffer.from(encoder.encode(payload))
-    const requestOptions = { method, bucketName, query, headers }
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest(requestOptions, payload, [200], '', false, cb)
-  }
-
-  /** Remove lifecycle configuration of a bucket.
-   * bucketName _string_
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  removeBucketLifecycle(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    const method = 'DELETE'
-    const query = 'lifecycle'
-    this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
-  }
-
-  /** Set/Override lifecycle configuration on a bucket. if the configuration is empty, it removes the configuration.
-   * bucketName _string_
-   * lifeCycleConfig _object_ one of the following values: (null or '') to remove the lifecycle configuration. or a valid lifecycle configuration
-   * `cb(error)` _function_ - callback function with `err` as the error argument. `err` is null if the operation is successful.
-   */
-  setBucketLifecycle(bucketName, lifeCycleConfig = null, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (_.isEmpty(lifeCycleConfig)) {
-      this.removeBucketLifecycle(bucketName, cb)
-    } else {
-      this.applyBucketLifecycle(bucketName, lifeCycleConfig, cb)
-    }
-  }
-
-  /** Get lifecycle configuration on a bucket.
-   * bucketName _string_
-   * `cb(config)` _function_ - callback function with lifecycle configuration as the error argument.
-   */
-  getBucketLifecycle(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    const method = 'GET'
-    const query = 'lifecycle'
-    const requestOptions = { method, bucketName, query }
-
-    this.makeRequest(requestOptions, '', [200], '', true, (e, response) => {
-      const transformer = transformers.lifecycleTransformer()
-      if (e) {
-        return cb(e)
-      }
-      let lifecycleConfig
-      pipesetup(response, transformer)
-        .on('data', (result) => (lifecycleConfig = result))
-        .on('error', (e) => cb(e))
-        .on('end', () => cb(null, lifecycleConfig))
-    })
-  }
-
   getObjectRetention(bucketName, objectName, getOpts, cb) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -994,91 +915,6 @@ export class Client extends TypedClient {
           cb(null, retentionConfig)
         })
     })
-  }
-
-  setBucketEncryption(bucketName, encryptionConfig, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-
-    if (isFunction(encryptionConfig)) {
-      cb = encryptionConfig
-      encryptionConfig = null
-    }
-
-    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
-      throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
-    }
-    if (cb && !isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    let encryptionObj = encryptionConfig
-    if (_.isEmpty(encryptionConfig)) {
-      encryptionObj = {
-        // Default MinIO Server Supported Rule
-        Rule: [
-          {
-            ApplyServerSideEncryptionByDefault: {
-              SSEAlgorithm: 'AES256',
-            },
-          },
-        ],
-      }
-    }
-
-    let method = 'PUT'
-    let query = 'encryption'
-    let builder = new xml2js.Builder({
-      rootName: 'ServerSideEncryptionConfiguration',
-      renderOpts: { pretty: false },
-      headless: true,
-    })
-    let payload = builder.buildObject(encryptionObj)
-
-    const headers = {}
-    headers['Content-MD5'] = toMd5(payload)
-
-    this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', false, cb)
-  }
-
-  getBucketEncryption(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    const query = 'encryption'
-
-    this.makeRequest({ method, bucketName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let bucketEncConfig = Buffer.from('')
-      pipesetup(response, transformers.bucketEncryptionTransformer())
-        .on('data', (data) => {
-          bucketEncConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, bucketEncConfig)
-        })
-    })
-  }
-  removeBucketEncryption(bucketName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'DELETE'
-    const query = 'encryption'
-
-    this.makeRequest({ method, bucketName, query }, '', [204], '', false, cb)
   }
 
   /**
@@ -1313,13 +1149,7 @@ Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNot
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-Client.prototype.setBucketLifecycle = promisify(Client.prototype.setBucketLifecycle)
-Client.prototype.getBucketLifecycle = promisify(Client.prototype.getBucketLifecycle)
-Client.prototype.removeBucketLifecycle = promisify(Client.prototype.removeBucketLifecycle)
 Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
-Client.prototype.setBucketEncryption = promisify(Client.prototype.setBucketEncryption)
-Client.prototype.getBucketEncryption = promisify(Client.prototype.getBucketEncryption)
-Client.prototype.removeBucketEncryption = promisify(Client.prototype.removeBucketEncryption)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // refactored API use promise internally
@@ -1355,3 +1185,9 @@ Client.prototype.removeObjectTagging = callbackify(Client.prototype.removeObject
 Client.prototype.getBucketVersioning = callbackify(Client.prototype.getBucketVersioning)
 Client.prototype.setBucketVersioning = callbackify(Client.prototype.setBucketVersioning)
 Client.prototype.selectObjectContent = callbackify(Client.prototype.selectObjectContent)
+Client.prototype.setBucketLifecycle = callbackify(Client.prototype.setBucketLifecycle)
+Client.prototype.getBucketLifecycle = callbackify(Client.prototype.getBucketLifecycle)
+Client.prototype.removeBucketLifecycle = callbackify(Client.prototype.removeBucketLifecycle)
+Client.prototype.setBucketEncryption = callbackify(Client.prototype.setBucketEncryption)
+Client.prototype.getBucketEncryption = callbackify(Client.prototype.getBucketEncryption)
+Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBucketEncryption)

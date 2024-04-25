@@ -26,12 +26,12 @@ const s3Client = new Minio.Client({
 })
 
 //Apply default encryption.
-s3Client.setBucketEncryption('my-bucket', function (error) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log('Success')
-})
+try {
+  await s3Client.setBucketEncryption('test-bucket')
+  console.log('Successfully set bucket default encryption with AES256 Algorithm')
+} catch (err) {
+  console.error(err)
+}
 
 //Set Encryption Rule. Only one rule is allowed.
 
@@ -50,12 +50,7 @@ const encryptionConfig = {
   ],
 }
 
-s3Client.setBucketEncryption('my-bucket', encryptionConfig, function (error) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log('Success')
-})
+await s3Client.setBucketEncryption('test-bucket', encryptionConfig)
 
 /**
  * KMS ID based SSE Encryption
@@ -96,9 +91,4 @@ const kmsIdEncryptionConfig = {
   ],
 }
 
-s3Client.setBucketEncryption('my-bucket', kmsIdEncryptionConfig, function (error) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log('Success')
-})
+await s3Client.setBucketEncryption('test-bucket', kmsIdEncryptionConfig)

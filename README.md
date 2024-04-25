@@ -204,14 +204,17 @@ The complete API Reference is available here:
 - [set-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
 - [get-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-tagging.mjs)
 - [remove-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
-- [set-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.js)
-- [get-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.js)
-- [remove-bucket-lifecycle.js](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.js)
+- [set-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.mjs)
+- [get-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.mjs)
+- [remove-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.mjs)
 - [get-object-lock-config.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-lock-config.mjs)
 - [set-object-lock-config.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-lock-config.mjs)
 - [set-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-replication.mjs)
 - [get-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-replication.mjs)
 - [remove-bucket-replication.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-replication.mjs)
+- [set-bucket-encryption.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-encryption.mjs)
+- [get-bucket-encryption.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-encryption.mjs)
+- [remove-bucket-encryption.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-encryption.mjs)
 
 #### File Object Operations
 
