@@ -1483,7 +1483,8 @@ export class TypedClient {
 
   async listBuckets(): Promise<BucketItemFromList[]> {
     const method = 'GET'
-    const httpRes = await this.makeRequestAsync({ method }, '', [200], this.region ?? '')
+    const regionConf = this.region || DEFAULT_REGION
+    const httpRes = await this.makeRequestAsync({ method }, '', [200], regionConf)
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseListBucket(xmlResult)
   }
