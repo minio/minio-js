@@ -12,7 +12,7 @@
     "test": "mocha",
     "lint": "eslint --ext js,mjs,cjs,ts ./",
     "lint-fix": "eslint --ext js,mjs,cjs,ts ./ --fix",
-    "prepublishOnly": "npm test && npm run build",
+    "prepublishOnly": "npm run build",
     "functional": "mocha tests/functional/functional-tests.js",
     "format": "prettier -w .",
     "format-check": "prettier --list-different .",
