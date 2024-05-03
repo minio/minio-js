@@ -50,7 +50,6 @@ import type {
   SelectProgress,
   SourceSelectionCriteria,
   Tag,
-  VersionIdentificator,
 } from './internal/type.ts'
 import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
@@ -167,15 +166,6 @@ export class Client extends TypedClient {
 
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-
-  getObjectRetention(
-    bucketName: string,
-    objectName: string,
-    options: VersionIdentificator,
-    callback: ResultCallback<Retention>,
-  ): void
-  getObjectRetention(bucketName: string, objectName: string, options: VersionIdentificator): Promise<Retention>
-
   composeObject(
     destObjConfig: CopyDestinationOptions,
     sourceObjList: CopySourceOptions[],

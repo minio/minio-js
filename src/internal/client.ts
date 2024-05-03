@@ -61,6 +61,7 @@ import type {
   BucketVersioningConfiguration,
   EncryptionConfig,
   GetObjectLegalHoldOptions,
+  GetObjectRetentionOpts,
   IncompleteUploadedBucketItem,
   IRequest,
   ItemBucketMetadata,
@@ -69,6 +70,7 @@ import type {
   ObjectLockConfigParam,
   ObjectLockInfo,
   ObjectMetaData,
+  ObjectRetentionInfo,
   PutObjectLegalHoldOptions,
   PutTaggingParams,
   RemoveTaggingParams,
@@ -2399,5 +2401,32 @@ export class TypedClient {
     const query = 'encryption'
 
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [204])
+  }
+
+  async getObjectRetention(
+    bucketName: string,
+    objectName: string,
+    getOpts?: GetObjectRetentionOpts | undefined,
+  ): Promise<ObjectRetentionInfo | null | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (getOpts && !isObject(getOpts)) {
+      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
+    } else if (getOpts?.versionId && !isString(getOpts.versionId)) {
+      throw new errors.InvalidArgumentError('versionId should be of type "string"')
+    }
+
+    const method = 'GET'
+    let query = 'retention'
+    if (getOpts?.versionId) {
+      query += `&versionId=${getOpts.versionId}`
+    }
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseObjectRetentionConfig(body)
   }
 }

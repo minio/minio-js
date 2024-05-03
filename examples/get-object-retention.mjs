@@ -30,11 +30,5 @@ const objectName = 'my-object'
 
 const versionId = 'my-versionId'
 
-const objRetPromise = s3Client.getObjectRetention(bucketName, objectName, { versionId: versionId })
-objRetPromise
-  .then((data) => {
-    console.log('Success', data)
-  })
-  .catch((e) => {
-    console.log(' Error', e)
-  })
+const retentionInfo = await s3Client.getObjectRetention(bucketName, objectName, { versionId: versionId })
+console.log(retentionInfo)

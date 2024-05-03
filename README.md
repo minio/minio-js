@@ -230,15 +230,15 @@ The complete API Reference is available here:
 - [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 - [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 - [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
-- [get-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.js)
-- [put-object-retention.js](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.js)
+- [get-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.mjs)
+- [put-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.mjs)
 - [put-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object-tagging.js)
 - [get-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-tagging.mjs)
 - [remove-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
-- [set-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.mjs)
-- [get-object-legal-hold.js](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
+- [set-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.mjs)
+- [get-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
 - [compose-object.js](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
-- [select-object-content.js](https://github.com/minio/minio-js/blob/master/examples/select-object-content.mjs)
+- [select-object-content.mjs](https://github.com/minio/minio-js/blob/master/examples/select-object-content.mjs)
 
 #### Presigned Operations
 

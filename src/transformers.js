@@ -120,10 +120,6 @@ export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
 }
 
-export function objectRetentionTransformer() {
-  return getConcater(xmlParsers.parseObjectRetentionConfig)
-}
-
 export function objectLegalHoldTransformer() {
   return getConcater(xmlParsers.parseObjectLegalHoldConfig)
 }

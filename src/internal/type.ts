@@ -382,3 +382,12 @@ export type EncryptionRule = {
 export type EncryptionConfig = {
   Rule: EncryptionRule[]
 }
+
+export type GetObjectRetentionOpts = {
+  versionId: string
+}
+
+export type ObjectRetentionInfo = {
+  mode: RETENTION_MODES
+  retainUntilDate: string
+}

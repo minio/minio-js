@@ -1331,28 +1331,32 @@ await minioClient.putObjectRetention(bucketName, objectName, {
 
 <a name="getObjectRetention"></a>
 
-### getObjectRetention(bucketName, objectName [, getOpts] [, callback])
+### getObjectRetention(bucketName, objectName [, getOpts])
 
 Get retention config of an object
 
 **Parameters**
 
-| Param                | Type       | Description                                                                                                                      |
-| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
-| `objectName`         | _string_   | Name of the object.                                                                                                              |
-| `getOpts`            | _object_   | Options for retention like : `{ versionId:"my-versionId" }` Default is `{}` (Optional)                                           |
-| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                            |
+| ------------ | -------- | -------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                    |
+| `objectName` | _string_ | Name of the object.                                                                    |
+| `getOpts`    | _object_ | Options for retention like : `{ versionId:"my-versionId" }` Default is `{}` (Optional) |
 
-**Example**
+**Example 1**
 
 ```js
-minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: 'my-versionId' }, function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
+const retentionInfo = await minioClient.getObjectRetention('bucketname', 'objectname')
+console.log(retentionInfo)
+```
+
+**Example 2**
+
+```js
+const retInfoForVersionId = await minioClient.getObjectRetention('bucketname', 'objectname', {
+  versionId: 'my-versionId',
 })
+console.log(retInfoForVersionId)
 ```
 
 <a name="setObjectTagging"></a>

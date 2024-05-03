@@ -548,3 +548,12 @@ export function parseLifecycleConfig(xml: string) {
 export function parseBucketEncryptionConfig(xml: string) {
   return parseXml(xml)
 }
+
+export function parseObjectRetentionConfig(xml: string) {
+  const xmlObj = parseXml(xml)
+  const retentionConfig = xmlObj.Retention
+  return {
+    mode: retentionConfig.Mode,
+    retainUntilDate: retentionConfig.RetainUntilDate,
+  }
+}
