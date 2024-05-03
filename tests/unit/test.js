@@ -1157,109 +1157,105 @@ describe('Client', function () {
 
   describe('Object retention APIs', () => {
     describe('getObjectRetention(bucket, objectName, getRetentionOpts,callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getObjectRetention(null, '', '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention(null, '', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.getObjectRetention('', '', '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('', '', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on invalid  object name', (done) => {
+      it('should fail on invalid  object name', async () => {
         try {
-          client.getObjectRetention('my-bucket', null, '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('my-bucket', null, '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on invalid  versionId', (done) => {
+      it('should fail on invalid  versionId', async () => {
         try {
-          client.getObjectRetention('my-bucket', 'objectname', { versionId: 123 }, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('my-bucket', null, '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
-      it('should fail on null bucket', (done) => {
-        client.putObjectRetention(null, '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on null bucket', async () => {
+        try {
+          await client.putObjectRetention(null, '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
-        client.putObjectRetention('', '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on empty bucket', async () => {
+        try {
+          await client.putObjectRetention('', '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on null object', (done) => {
-        client.putObjectRetention('my-bucket', null, {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on null object', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', null, {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
-        client.putObjectRetention('my-bucket', '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on empty object', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid mode ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid mode ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid governanceBypass ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid governanceBypass ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid (null) retainUntilDate ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid (null) retainUntilDate ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid versionId ', (done) => {
-        client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid versionId ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
   })
