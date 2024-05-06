@@ -2406,7 +2406,7 @@ export class TypedClient {
   async getObjectRetention(
     bucketName: string,
     objectName: string,
-    getOpts?: GetObjectRetentionOpts | undefined,
+    getOpts?: GetObjectRetentionOpts,
   ): Promise<ObjectRetentionInfo | null | undefined> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
