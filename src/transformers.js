@@ -127,7 +127,3 @@ export function objectLegalHoldTransformer() {
 export function uploadPartTransformer() {
   return getConcater(xmlParsers.uploadPartParser)
 }
-
-export function removeObjectsTransformer() {
-  return getConcater(xmlParsers.removeObjectsParser)
-}

@@ -161,9 +161,6 @@ export class Client extends TypedClient {
     conditions: CopyConditions,
   ): Promise<BucketItemCopy>
 
-  removeObjects(bucketName: string, objectsList: string[], callback: NoResultCallback): void
-  removeObjects(bucketName: string, objectsList: string[]): Promise<void>
-
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
   composeObject(

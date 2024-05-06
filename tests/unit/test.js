@@ -727,63 +727,68 @@ describe('Client', function () {
     })
 
     describe('#removeObject(bucket, object, callback)', () => {
-      it('should fail on null bucket', (done) => {
-        client.removeObject(null, 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty bucket', (done) => {
-        client.removeObject('', 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty bucket', (done) => {
-        client.removeObject('  \n  \t  ', 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on null object', (done) => {
-        client.removeObject('hello', null, function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty object', (done) => {
-        client.removeObject('hello', '', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      // Versioning related options as removeOpts
-      it('should fail on empty (null) removeOpts object', (done) => {
-        client.removeObject('hello', 'testRemoveOpts', null, function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on null bucket', async () => {
+        try {
+          await client.removeObject(null, 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on empty (string) removeOpts', (done) => {
-        client.removeObject('hello', 'testRemoveOpts', '', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on empty bucket', async () => {
+        try {
+          await client.removeObject('', 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail invalid bucket name', async () => {
+        try {
+          await client.removeObject('  \n  \t  ', 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on null object', async () => {
+        try {
+          await client.removeObject('hello', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on empty object', async () => {
+        try {
+          await client.removeObject('hello', '')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      // Versioning related options as removeOpts
+      it('should fail on empty (null) removeOpts object', async () => {
+        try {
+          await client.removeObject('hello', 'testRemoveOpts', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on empty (string) removeOpts', async () => {
+        try {
+          await client.removeObject('hello', '', '')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
 
