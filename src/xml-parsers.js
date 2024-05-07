@@ -299,16 +299,6 @@ export function parseListObjectsV2WithMetadata(xml) {
   return result
 }
 
-export function parseObjectRetentionConfig(xml) {
-  const xmlObj = parseXml(xml)
-  const retentionConfig = xmlObj.Retention
-
-  return {
-    mode: retentionConfig.Mode,
-    retainUntilDate: retentionConfig.RetainUntilDate,
-  }
-}
-
 export function parseObjectLegalHoldConfig(xml) {
   const xmlObj = parseXml(xml)
   return xmlObj.LegalHold

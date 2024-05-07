@@ -879,44 +879,6 @@ export class Client extends TypedClient {
     return listener
   }
 
-  getObjectRetention(bucketName, objectName, getOpts, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isObject(getOpts)) {
-      throw new errors.InvalidArgumentError('callback should be of type "object"')
-    } else if (getOpts.versionId && !isString(getOpts.versionId)) {
-      throw new errors.InvalidArgumentError('VersionID should be of type "string"')
-    }
-    if (cb && !isFunction(cb)) {
-      throw new errors.InvalidArgumentError('callback should be of type "function"')
-    }
-    const method = 'GET'
-    let query = 'retention'
-    if (getOpts.versionId) {
-      query += `&versionId=${getOpts.versionId}`
-    }
-
-    this.makeRequest({ method, bucketName, objectName, query }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-
-      let retentionConfig = Buffer.from('')
-      pipesetup(response, transformers.objectRetentionTransformer())
-        .on('data', (data) => {
-          retentionConfig = data
-        })
-        .on('error', cb)
-        .on('end', () => {
-          cb(null, retentionConfig)
-        })
-    })
-  }
-
   /**
    * Internal method to upload a part during compose object.
    * @param partConfig __object__ contains the following.
@@ -1149,7 +1111,6 @@ Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNot
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
 Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
-Client.prototype.getObjectRetention = promisify(Client.prototype.getObjectRetention)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // refactored API use promise internally
@@ -1191,3 +1152,4 @@ Client.prototype.removeBucketLifecycle = callbackify(Client.prototype.removeBuck
 Client.prototype.setBucketEncryption = callbackify(Client.prototype.setBucketEncryption)
 Client.prototype.getBucketEncryption = callbackify(Client.prototype.getBucketEncryption)
 Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBucketEncryption)
+Client.prototype.getObjectRetention = callbackify(Client.prototype.getObjectRetention)

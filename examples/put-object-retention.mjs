@@ -27,14 +27,15 @@ const s3Client = new Minio.Client({
 
 const bucketName = 'my-bucket'
 const objectName = 'my-object'
+const versionId = 'my-versionId'
+const mode = 'COMPLIANCE'
 
 const expirationDate = new Date()
-expirationDate.setDate(expirationDate.getDate() + 1)
+expirationDate.setDate(expirationDate.getDate() + 2)
 expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
-const versionId = 'my-versionId'
 
 await s3Client.putObjectRetention(bucketName, objectName, {
-  mode: 'GOVERNANCE',
+  mode: mode,
   retainUntilDate: expirationDate.toISOString(),
   versionId: versionId,
 })
