@@ -85,40 +85,6 @@ export class Client extends TypedClient {
     }
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
-
-  // Remove the partially uploaded object.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `callback(err)` _function_: callback function is called with non `null` value in case of error
-  removeIncompleteUpload(bucketName, objectName, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.IsValidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var removeUploadId
-    async.during(
-      (cb) => {
-        this.findUploadId(bucketName, objectName).then((uploadId) => {
-          removeUploadId = uploadId
-          cb(null, uploadId)
-        }, cb)
-      },
-      (cb) => {
-        var method = 'DELETE'
-        var query = `uploadId=${removeUploadId}`
-        this.makeRequest({ method, bucketName, objectName, query }, '', [204], '', false, (e) => cb(e))
-      },
-      cb,
-    )
-  }
-
   // Copy the object.
   //
   // __Arguments__
@@ -1022,7 +988,6 @@ Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostP
 Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNotification)
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
-Client.prototype.removeIncompleteUpload = promisify(Client.prototype.removeIncompleteUpload)
 Client.prototype.composeObject = promisify(Client.prototype.composeObject)
 
 // refactored API use promise internally
@@ -1066,3 +1031,4 @@ Client.prototype.getBucketEncryption = callbackify(Client.prototype.getBucketEnc
 Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBucketEncryption)
 Client.prototype.getObjectRetention = callbackify(Client.prototype.getObjectRetention)
 Client.prototype.removeObjects = callbackify(Client.prototype.removeObjects)
+Client.prototype.removeIncompleteUpload = callbackify(Client.prototype.removeIncompleteUpload)

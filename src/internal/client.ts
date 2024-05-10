@@ -2453,4 +2453,17 @@ export class TypedClient {
     const batchResults = await Promise.all(batches.map(runDeleteObjects))
     return batchResults.flat()
   }
+
+  async removeIncompleteUpload(bucketName: string, objectName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.IsValidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    const removeUploadId = await this.findUploadId(bucketName, objectName)
+    const method = 'DELETE'
+    const query = `uploadId=${removeUploadId}`
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query }, '', [204])
+  }
 }
