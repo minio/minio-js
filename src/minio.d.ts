@@ -147,20 +147,6 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  copyObject(
-    bucketName: string,
-    objectName: string,
-    sourceObject: string,
-    conditions: CopyConditions,
-    callback: ResultCallback<BucketItemCopy>,
-  ): void
-  copyObject(
-    bucketName: string,
-    objectName: string,
-    sourceObject: string,
-    conditions: CopyConditions,
-  ): Promise<BucketItemCopy>
-
   removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
   removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
   composeObject(

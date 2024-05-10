@@ -25,33 +25,6 @@ const fxpWithoutNumParser = new XMLParser({
   },
 })
 
-// parse XML response for copy object
-export function parseCopyObject(xml) {
-  var result = {
-    etag: '',
-    lastModified: '',
-  }
-
-  var xmlobj = parseXml(xml)
-  if (!xmlobj.CopyObjectResult) {
-    throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
-  }
-  xmlobj = xmlobj.CopyObjectResult
-  if (xmlobj.ETag) {
-    result.etag = xmlobj.ETag.replace(/^"/g, '')
-      .replace(/"$/g, '')
-      .replace(/^&quot;/g, '')
-      .replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '')
-      .replace(/&#34;$/g, '')
-  }
-  if (xmlobj.LastModified) {
-    result.lastModified = new Date(xmlobj.LastModified)
-  }
-
-  return result
-}
-
 // parse XML response for bucket notification
 export function parseBucketNotification(xml) {
   var result = {

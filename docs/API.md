@@ -1089,32 +1089,25 @@ minioClient.fPutObject('mybucket', '40mbfile', file, metaData, function (err, ob
 
 <a name="copyObject"></a>
 
-### copyObject(bucketName, objectName, sourceObject, conditions[, callback])
+### copyObject(targetBucketName, targetObjectName, sourceBucketNameAndObjectName [,conditions])
 
 Copy a source object into a new object in the specified bucket.
 
 **Parameters**
 
-| Param                                 | Type             | Description                                                                                                                                                                                    |
-| ------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                          | _string_         | Name of the bucket.                                                                                                                                                                            |
-| `objectName`                          | _string_         | Name of the object.                                                                                                                                                                            |
-| `sourceObject`                        | _string_         | Path of the file to be copied.                                                                                                                                                                 |
-| `conditions`                          | _CopyConditions_ | Conditions to be satisfied before allowing object copy.                                                                                                                                        |
-| `callback(err, {etag, lastModified})` | _function_       | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
+| Param                           | Type             | Description                                             |
+| ------------------------------- | ---------------- | ------------------------------------------------------- |
+| `targetBucketName`              | _string_         | Name of the bucket.                                     |
+| `targetObjectName`              | _string_         | Name of the object.                                     |
+| `sourceBucketNameAndObjectName` | _string_         | Path of the file to be copied.                          |
+| `conditions`                    | _CopyConditions_ | Conditions to be satisfied before allowing object copy. |
 
 **Example**
 
 ```js
 const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
-minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function (e, data) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Successfully copied the object:')
-  console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
-})
+await minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds)
 ```
 
 <a name="statObject"></a>

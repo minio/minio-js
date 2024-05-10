@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname,
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-target-bucketname, my-target-objectname,
 // my-src-bucketname and my-src-objectname are dummy values, please replace
 // them with original values.
 
@@ -29,16 +29,4 @@ const s3Client = new Minio.Client({
 const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 
-s3Client.copyObject(
-  'my-bucketname',
-  'my-objectname',
-  '/my-src-bucketname/my-src-objectname',
-  conds,
-  function (e, data) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Successfully copied the object:')
-    console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
-  },
-)
+await s3Client.copyObject('my-target-bucketname', 'my-target-objectname', '/my-src-bucketname/my-src-objectname', conds)
