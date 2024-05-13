@@ -1158,18 +1158,17 @@ console.log(stat)
 
 <a name="removeObject"></a>
 
-### removeObject(bucketName, objectName [, removeOpts] [, callback])
+### removeObject(bucketName, objectName [, removeOpts])
 
 Removes an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                   |
-| --------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                           |
-| `objectName`    | _string_   | Name of the object.                                                                                                           |
-| `removeOpts`    | _object_   | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional) |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.        |
+| Param        | Type     | Description                                                                                                                   |
+| ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                           |
+| `objectName` | _string_ | Name of the object.                                                                                                           |
+| `removeOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional) |
 
 **Example 1**
 
@@ -1206,17 +1205,16 @@ Remove an object version locked with retention mode `GOVERNANCE` using the `gove
 
 <a name="removeObjects"></a>
 
-### removeObjects(bucketName, objectsList[, callback])
+### removeObjects(bucketName, objectsList)
 
 Remove all objects in the objectsList.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                                                                                                                                |
-| --------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                                                                                                                        |
-| `objectsList`   | _object_   | list of objects in the bucket to be removed. any one of the formats: 1. List of Object names as array of strings which are object keys: `['objectname1','objectname2']` 2. List of Object name and VersionId as an object: [{name:"my-obj-name",versionId:"my-versionId"}] |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error.                                                                                                                                                                                                        |
+| Param         | Type     | Description                                                                                                                                                                                                                                                                |
+| ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`  | _string_ | Name of the bucket.                                                                                                                                                                                                                                                        |
+| `objectsList` | _object_ | list of objects in the bucket to be removed. any one of the formats: 1. List of Object names as array of strings which are object keys: `['objectname1','objectname2']` 2. List of Object name and VersionId as an object: [{name:"my-obj-name",versionId:"my-versionId"}] |
 
 **Example**
 
@@ -1234,13 +1232,8 @@ objectsStream.on('error', function (e) {
   console.log(e)
 })
 
-objectsStream.on('end', function () {
-  s3Client.removeObjects('my-bucketname', objectsList, function (e) {
-    if (e) {
-      return console.log('Unable to remove Objects ', e)
-    }
-    console.log('Removed the objects successfully')
-  })
+objectsStream.on('end', async () => {
+  await s3Client.removeObjects(bucket, objectsList)
 })
 ```
 
@@ -1261,13 +1254,8 @@ objectsStream.on('data', function (obj) {
 objectsStream.on('error', function (e) {
   return console.log(e)
 })
-objectsStream.on('end', function () {
-  s3Client.removeObjects(bucket, objectsList, function (e) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Success')
-  })
+objectsStream.on('end', async () => {
+  await s3Client.removeObjects(bucket, objectsList)
 })
 ```
 

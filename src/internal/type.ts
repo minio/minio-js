@@ -391,3 +391,28 @@ export type ObjectRetentionInfo = {
   mode: RETENTION_MODES
   retainUntilDate: string
 }
+
+export type RemoveObjectsEntry = {
+  name: string
+  versionId?: string
+}
+export type ObjectName = string
+
+export type RemoveObjectsParam = ObjectName[] | RemoveObjectsEntry[]
+
+export type RemoveObjectsRequestEntry = {
+  Key: string
+  VersionId?: string
+}
+
+export type RemoveObjectsResponse =
+  | null
+  | undefined
+  | {
+      Error?: {
+        Code?: string
+        Message?: string
+        Key?: string
+        VersionId?: string
+      }
+    }

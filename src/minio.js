@@ -19,7 +19,6 @@ import * as Stream from 'node:stream'
 import async from 'async'
 import _ from 'lodash'
 import * as querystring from 'query-string'
-import { TextEncoder } from 'web-encoding'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
@@ -47,7 +46,6 @@ import {
   partsRequired,
   pipesetup,
   sanitizeETag,
-  toMd5,
   uriEscape,
   uriResourceEscape,
 } from './internal/helper.ts'
@@ -535,91 +533,6 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // Remove all the objects residing in the objectsList.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectsList` _array_: array of objects of one of the following:
-  // *         List of Object names as array of strings which are object keys:  ['objectname1','objectname2']
-  // *         List of Object name and versionId as an object:  [{name:"objectname",versionId:"my-version-id"}]
-
-  removeObjects(bucketName, objectsList, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!Array.isArray(objectsList)) {
-      throw new errors.InvalidArgumentError('objectsList should be a list')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const maxEntries = 1000
-    const query = 'delete'
-    const method = 'POST'
-
-    let result = objectsList.reduce(
-      (result, entry) => {
-        result.list.push(entry)
-        if (result.list.length === maxEntries) {
-          result.listOfList.push(result.list)
-          result.list = []
-        }
-        return result
-      },
-      { listOfList: [], list: [] },
-    )
-
-    if (result.list.length > 0) {
-      result.listOfList.push(result.list)
-    }
-
-    const encoder = new TextEncoder()
-    const batchResults = []
-
-    async.eachSeries(
-      result.listOfList,
-      (list, batchCb) => {
-        var objects = []
-        list.forEach(function (value) {
-          if (isObject(value)) {
-            objects.push({ Key: value.name, VersionId: value.versionId })
-          } else {
-            objects.push({ Key: value })
-          }
-        })
-        let deleteObjects = { Delete: { Quiet: true, Object: objects } }
-        const builder = new xml2js.Builder({ headless: true })
-        let payload = builder.buildObject(deleteObjects)
-        payload = Buffer.from(encoder.encode(payload))
-        const headers = {}
-
-        headers['Content-MD5'] = toMd5(payload)
-
-        let removeObjectsResult
-        this.makeRequest({ method, bucketName, query, headers }, payload, [200], '', true, (e, response) => {
-          if (e) {
-            return batchCb(e)
-          }
-          pipesetup(response, transformers.removeObjectsTransformer())
-            .on('data', (data) => {
-              removeObjectsResult = data
-            })
-            .on('error', (e) => {
-              return batchCb(e, null)
-            })
-            .on('end', () => {
-              batchResults.push(removeObjectsResult)
-              return batchCb(null, removeObjectsResult)
-            })
-        })
-      },
-      () => {
-        cb(null, _.flatten(batchResults))
-      },
-    )
-  }
-
   // Generate a generic presigned URL which can be
   // used for HTTP methods GET, PUT, HEAD and DELETE
   //
@@ -1101,7 +1014,6 @@ export class Client extends TypedClient {
 
 // Promisify various public-facing APIs on the Client module.
 Client.prototype.copyObject = promisify(Client.prototype.copyObject)
-Client.prototype.removeObjects = promisify(Client.prototype.removeObjects)
 
 Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
@@ -1153,3 +1065,4 @@ Client.prototype.setBucketEncryption = callbackify(Client.prototype.setBucketEnc
 Client.prototype.getBucketEncryption = callbackify(Client.prototype.getBucketEncryption)
 Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBucketEncryption)
 Client.prototype.getObjectRetention = callbackify(Client.prototype.getObjectRetention)
+Client.prototype.removeObjects = callbackify(Client.prototype.removeObjects)

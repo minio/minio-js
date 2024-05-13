@@ -21,8 +21,6 @@ import * as Minio from 'minio'
 
 const s3Client = new Minio.Client({
   endPoint: 's3.amazonaws.com',
-  port: 9000,
-  useSSL: false,
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
@@ -48,13 +46,9 @@ function removeObjects(bucketName, prefix, recursive, includeVersion) {
     return console.log(e)
   })
 
-  objectsStream.on('end', function () {
-    s3Client.removeObjects(bucketName, objectsList, function (e) {
-      if (e) {
-        return console.log(e)
-      }
-      console.log('Success')
-    })
+  objectsStream.on('end', async () => {
+    const delRes = await s3Client.removeObjects(bucketName, objectsList)
+    console.log(delRes)
   })
 }
 
@@ -62,18 +56,13 @@ removeObjects(bucketName, prefix, recursive, true) // Versioned objects of a buc
 removeObjects(bucketName, prefix, recursive, false) // Normal objects of a bucket to be deleted.
 
 // Delete Multiple objects and respective versions.
-function removeObjectsMultipleVersions() {
+async function removeObjectsMultipleVersions() {
   const deleteList = [
     { versionId: '03ed08e1-34ff-4465-91ed-ba50c1e80f39', name: 'prefix-1/out.json.gz' },
     { versionId: '35517ae1-18cb-4a21-9551-867f53a10cfe', name: 'dir1/dir2/test.pdf' },
     { versionId: '3053f564-9aea-4a59-88f0-7f25d6320a2c', name: 'dir1/dir2/test.pdf' },
   ]
 
-  s3Client.removeObjects('my-bucket', deleteList, function (e) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Successfully deleted..')
-  })
+  await s3Client.removeObjects('my-bucket', deleteList)
 }
 removeObjectsMultipleVersions()

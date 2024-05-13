@@ -73,6 +73,9 @@ import type {
   ObjectRetentionInfo,
   PutObjectLegalHoldOptions,
   PutTaggingParams,
+  RemoveObjectsParam,
+  RemoveObjectsRequestEntry,
+  RemoveObjectsResponse,
   RemoveTaggingParams,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -90,13 +93,13 @@ import type {
   VersionIdentificator,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
+import * as xmlParsers from './xml-parser.ts'
 import {
   parseCompleteMultipart,
   parseInitiateMultipart,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
 } from './xml-parser.ts'
-import * as xmlParsers from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -1111,19 +1114,7 @@ export class TypedClient {
     }
   }
 
-  /**
-   * Remove the specified object.
-   * @deprecated use new promise style API
-   */
-  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  /**
-   * @deprecated use new promise style API
-   */
-  // @ts-ignore
-  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
-
-  async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
+  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
@@ -1131,22 +1122,22 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    if (!isObject(removeOpts)) {
+    if (removeOpts && !isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
 
     const method = 'DELETE'
 
     const headers: RequestHeaders = {}
-    if (removeOpts.governanceBypass) {
+    if (removeOpts?.governanceBypass) {
       headers['X-Amz-Bypass-Governance-Retention'] = true
     }
-    if (removeOpts.forceDelete) {
+    if (removeOpts?.forceDelete) {
       headers['x-minio-force-delete'] = true
     }
 
     const queryParams: Record<string, string> = {}
-    if (removeOpts.versionId) {
+    if (removeOpts?.versionId) {
       queryParams.versionId = `${removeOpts.versionId}`
     }
     const query = qs.stringify(queryParams)
@@ -2428,5 +2419,38 @@ export class TypedClient {
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
     const body = await readAsString(res)
     return xmlParsers.parseObjectRetentionConfig(body)
+  }
+
+  async removeObjects(bucketName: string, objectsList: RemoveObjectsParam): Promise<RemoveObjectsResponse[]> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!Array.isArray(objectsList)) {
+      throw new errors.InvalidArgumentError('objectsList should be a list')
+    }
+
+    const runDeleteObjects = async (batch: RemoveObjectsParam): Promise<RemoveObjectsResponse[]> => {
+      const delObjects: RemoveObjectsRequestEntry[] = batch.map((value) => {
+        return isObject(value) ? { Key: value.name, VersionId: value.versionId } : { Key: value }
+      })
+
+      const remObjects = { Delete: { Quiet: true, Object: delObjects } }
+      const payload = Buffer.from(new xml2js.Builder({ headless: true }).buildObject(remObjects))
+      const headers: RequestHeaders = { 'Content-MD5': toMd5(payload) }
+
+      const res = await this.makeRequestAsync({ method: 'POST', bucketName, query: 'delete', headers }, payload)
+      const body = await readAsString(res)
+      return xmlParsers.removeObjectsParser(body)
+    }
+
+    const maxEntries = 1000 // max entries accepted in server for DeleteMultipleObjects API.
+    // Client side batching
+    const batches = []
+    for (let i = 0; i < objectsList.length; i += maxEntries) {
+      batches.push(objectsList.slice(i, i + maxEntries))
+    }
+
+    const batchResults = await Promise.all(batches.map(runDeleteObjects))
+    return batchResults.flat()
   }
 }
