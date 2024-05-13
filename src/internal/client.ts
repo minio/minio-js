@@ -892,10 +892,9 @@ export class TypedClient {
       headers['x-amz-bucket-object-lock-enabled'] = true
     }
 
-    if (!region) {
-      region = DEFAULT_REGION
-    }
-    const finalRegion = region // type narrow
+    // For custom region clients  default to custom region specified in client constructor
+    const finalRegion = this.region || region || DEFAULT_REGION
+
     const requestOpt: RequestOption = { method, bucketName, headers }
 
     try {

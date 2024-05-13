@@ -24,6 +24,11 @@ const s3Client = new Minio.Client({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
+
+// Create a bucket name my-bucketname-nr.
+await s3Client.makeBucket('my-bucketname-nr')
+console.log('Success')
+
 // Create a bucket name my-bucketname.
 await s3Client.makeBucket('my-bucketname', 'us-west-1')
 
