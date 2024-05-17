@@ -1261,27 +1261,21 @@ objectsStream.on('end', async () => {
 
 <a name="removeIncompleteUpload"></a>
 
-### removeIncompleteUpload(bucketName, objectName[, callback])
+### removeIncompleteUpload(bucketName, objectName)
 
 Removes a partially uploaded object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                            |
-| --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                    |
-| `objectName`    | _string_   | Name of the object.                                                                                                    |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `objectName` | _string_ | Name of the object. |
 
 **Example**
 
 ```js
-minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function (err) {
-  if (err) {
-    return console.log('Unable to remove incomplete object', err)
-  }
-  console.log('Incomplete object removed successfully.')
-})
+await minioClient.removeIncompleteUpload('mybucket', 'photo.jpg')
 ```
 
 <a name="putObjectRetention"></a>

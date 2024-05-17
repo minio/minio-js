@@ -793,40 +793,46 @@ describe('Client', function () {
     })
 
     describe('#removeIncompleteUpload(bucket, object, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.removeIncompleteUpload(null, 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload(null, 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeIncompleteUpload('', 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('', 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeIncompleteUpload('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('  \n  \t  ', 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on null object', (done) => {
+
+      it('should fail on null object', async () => {
         try {
-          client.removeIncompleteUpload('hello', null, function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('hello', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
+      it('should fail on empty object', async () => {
         try {
-          client.removeIncompleteUpload('hello', '', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('hello', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })
