@@ -8,7 +8,13 @@ import * as errors from '../errors.ts'
 import { SelectResults } from '../helpers.ts'
 import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
-import type { BucketItemFromList, BucketItemWithMetadata, ObjectLockInfo, ReplicationConfig } from './type.ts'
+import type {
+  BucketItemFromList,
+  BucketItemWithMetadata,
+  CopyObjectResultV1,
+  ObjectLockInfo,
+  ReplicationConfig,
+} from './type.ts'
 import { RETENTION_VALIDITY_UNITS } from './type.ts'
 
 // parse XML response for bucket region
@@ -565,4 +571,31 @@ export function removeObjectsParser(xml: string) {
     return toArray(xmlObj.DeleteResult.Error)
   }
   return []
+}
+
+// parse XML response for copy object
+export function parseCopyObject(xml: string): CopyObjectResultV1 {
+  const result: CopyObjectResultV1 = {
+    etag: '',
+    lastModified: '',
+  }
+
+  let xmlobj = parseXml(xml)
+  if (!xmlobj.CopyObjectResult) {
+    throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
+  }
+  xmlobj = xmlobj.CopyObjectResult
+  if (xmlobj.ETag) {
+    result.etag = xmlobj.ETag.replace(/^"/g, '')
+      .replace(/"$/g, '')
+      .replace(/^&quot;/g, '')
+      .replace(/&quot;$/g, '')
+      .replace(/^&#34;/g, '')
+      .replace(/&#34;$/g, '')
+  }
+  if (xmlobj.LastModified) {
+    result.lastModified = new Date(xmlobj.LastModified)
+  }
+
+  return result
 }

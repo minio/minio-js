@@ -22,16 +22,13 @@ import * as querystring from 'query-string'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
-import { CopyDestinationOptions, CopySourceOptions } from './helpers.ts'
+import { CopyDestinationOptions } from './helpers.ts'
 import { callbackify } from './internal/callbackify.js'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import {
   calculateEvenSplits,
-  extractMetadata,
   getScope,
-  getSourceVersionId,
-  getVersionId,
   isBoolean,
   isFunction,
   isNumber,
@@ -47,7 +44,6 @@ import {
   pipesetup,
   sanitizeETag,
   uriEscape,
-  uriResourceEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
@@ -84,136 +80,6 @@ export class Client extends TypedClient {
       throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
     }
     this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
-  }
-  // Copy the object.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `srcObject` _string_: path of the source object to be copied
-  // * `conditions` _CopyConditions_: copy conditions that needs to be satisfied (optional, default `null`)
-  // * `callback(err, {etag, lastModified})` _function_: non null `err` indicates error, `etag` _string_ and `listModifed` _Date_ are respectively the etag and the last modified date of the newly copied object
-  copyObjectV1(arg1, arg2, arg3, arg4, arg5) {
-    var bucketName = arg1
-    var objectName = arg2
-    var srcObject = arg3
-    var conditions, cb
-    if (typeof arg4 == 'function' && arg5 === undefined) {
-      conditions = null
-      cb = arg4
-    } else {
-      conditions = arg4
-      cb = arg5
-    }
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (!isString(srcObject)) {
-      throw new TypeError('srcObject should be of type "string"')
-    }
-    if (srcObject === '') {
-      throw new errors.InvalidPrefixError(`Empty source prefix`)
-    }
-
-    if (conditions !== null && !(conditions instanceof CopyConditions)) {
-      throw new TypeError('conditions should be of type "CopyConditions"')
-    }
-
-    var headers = {}
-    headers['x-amz-copy-source'] = uriResourceEscape(srcObject)
-
-    if (conditions !== null) {
-      if (conditions.modified !== '') {
-        headers['x-amz-copy-source-if-modified-since'] = conditions.modified
-      }
-      if (conditions.unmodified !== '') {
-        headers['x-amz-copy-source-if-unmodified-since'] = conditions.unmodified
-      }
-      if (conditions.matchETag !== '') {
-        headers['x-amz-copy-source-if-match'] = conditions.matchETag
-      }
-      if (conditions.matchEtagExcept !== '') {
-        headers['x-amz-copy-source-if-none-match'] = conditions.matchETagExcept
-      }
-    }
-
-    var method = 'PUT'
-    this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      var transformer = transformers.getCopyObjectTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (data) => cb(null, data))
-    })
-  }
-
-  /**
-   * Internal Method to perform copy of an object.
-   * @param sourceConfig __object__   instance of CopySourceOptions @link ./helpers/CopySourceOptions
-   * @param destConfig  __object__   instance of CopyDestinationOptions @link ./helpers/CopyDestinationOptions
-   * @param cb __function__ called with null if there is an error
-   * @returns Promise if no callack is passed.
-   */
-  copyObjectV2(sourceConfig, destConfig, cb) {
-    if (!(sourceConfig instanceof CopySourceOptions)) {
-      throw new errors.InvalidArgumentError('sourceConfig should of type CopySourceOptions ')
-    }
-    if (!(destConfig instanceof CopyDestinationOptions)) {
-      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
-    }
-    if (!destConfig.validate()) {
-      return false
-    }
-    if (!destConfig.validate()) {
-      return false
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-
-    const headers = Object.assign({}, sourceConfig.getHeaders(), destConfig.getHeaders())
-
-    const bucketName = destConfig.Bucket
-    const objectName = destConfig.Object
-
-    const method = 'PUT'
-    this.makeRequest({ method, bucketName, objectName, headers }, '', [200], '', true, (e, response) => {
-      if (e) {
-        return cb(e)
-      }
-      const transformer = transformers.getCopyObjectTransformer()
-      pipesetup(response, transformer)
-        .on('error', (e) => cb(e))
-        .on('data', (data) => {
-          const resHeaders = response.headers
-
-          const copyObjResponse = {
-            Bucket: destConfig.Bucket,
-            Key: destConfig.Object,
-            LastModified: data.LastModified,
-            MetaData: extractMetadata(resHeaders),
-            VersionId: getVersionId(resHeaders),
-            SourceVersionId: getSourceVersionId(resHeaders),
-            Etag: sanitizeETag(resHeaders.etag),
-            Size: +resHeaders['content-length'],
-          }
-
-          return cb(null, copyObjResponse)
-        })
-    })
-  }
-
-  // Backward compatibility for Copy Object API.
-  copyObject(...allArgs) {
-    if (allArgs[0] instanceof CopySourceOptions && allArgs[1] instanceof CopyDestinationOptions) {
-      return this.copyObjectV2(...arguments)
-    }
-    return this.copyObjectV1(...arguments)
   }
 
   // list a batch of objects
@@ -978,9 +844,6 @@ export class Client extends TypedClient {
   }
 }
 
-// Promisify various public-facing APIs on the Client module.
-Client.prototype.copyObject = promisify(Client.prototype.copyObject)
-
 Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
 Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
 Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
@@ -1032,3 +895,4 @@ Client.prototype.removeBucketEncryption = callbackify(Client.prototype.removeBuc
 Client.prototype.getObjectRetention = callbackify(Client.prototype.getObjectRetention)
 Client.prototype.removeObjects = callbackify(Client.prototype.removeObjects)
 Client.prototype.removeIncompleteUpload = callbackify(Client.prototype.removeIncompleteUpload)
+Client.prototype.copyObject = callbackify(Client.prototype.copyObject)

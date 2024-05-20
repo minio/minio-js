@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
+import type { IncomingHttpHeaders } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import * as path from 'node:path'
@@ -15,13 +16,22 @@ import xml2js from 'xml2js'
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import type { SelectResults } from '../helpers.ts'
-import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
+import {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  DEFAULT_REGION,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
+import { CopyConditions } from './copy-conditions.ts'
 import { Extensions } from './extensions.ts'
 import {
   extractMetadata,
   getContentLength,
+  getSourceVersionId,
   getVersionId,
   hashBinary,
   insertContentType,
@@ -59,6 +69,9 @@ import type {
   BucketItemStat,
   BucketStream,
   BucketVersioningConfiguration,
+  CopyObjectParams,
+  CopyObjectResult,
+  CopyObjectResultV2,
   EncryptionConfig,
   GetObjectLegalHoldOptions,
   GetObjectRetentionOpts,
@@ -2464,5 +2477,127 @@ export class TypedClient {
     const method = 'DELETE'
     const query = `uploadId=${removeUploadId}`
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, query }, '', [204])
+  }
+
+  private async copyObjectV1(
+    targetBucketName: string,
+    targetObjectName: string,
+    sourceBucketNameAndObjectName: string,
+    conditions?: null | CopyConditions,
+  ) {
+    if (typeof conditions == 'function') {
+      conditions = null
+    }
+
+    if (!isValidBucketName(targetBucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + targetBucketName)
+    }
+    if (!isValidObjectName(targetObjectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${targetObjectName}`)
+    }
+    if (!isString(sourceBucketNameAndObjectName)) {
+      throw new TypeError('sourceBucketNameAndObjectName should be of type "string"')
+    }
+    if (sourceBucketNameAndObjectName === '') {
+      throw new errors.InvalidPrefixError(`Empty source prefix`)
+    }
+
+    if (conditions != null && !(conditions instanceof CopyConditions)) {
+      throw new TypeError('conditions should be of type "CopyConditions"')
+    }
+
+    const headers: RequestHeaders = {}
+    headers['x-amz-copy-source'] = uriResourceEscape(sourceBucketNameAndObjectName)
+
+    if (conditions) {
+      if (conditions.modified !== '') {
+        headers['x-amz-copy-source-if-modified-since'] = conditions.modified
+      }
+      if (conditions.unmodified !== '') {
+        headers['x-amz-copy-source-if-unmodified-since'] = conditions.unmodified
+      }
+      if (conditions.matchETag !== '') {
+        headers['x-amz-copy-source-if-match'] = conditions.matchETag
+      }
+      if (conditions.matchETagExcept !== '') {
+        headers['x-amz-copy-source-if-none-match'] = conditions.matchETagExcept
+      }
+    }
+
+    const method = 'PUT'
+
+    const res = await this.makeRequestAsync({
+      method,
+      bucketName: targetBucketName,
+      objectName: targetObjectName,
+      headers,
+    })
+    const body = await readAsString(res)
+    return xmlParsers.parseCopyObject(body)
+  }
+
+  private async copyObjectV2(
+    sourceConfig: CopySourceOptions,
+    destConfig: CopyDestinationOptions,
+  ): Promise<CopyObjectResultV2> {
+    if (!(sourceConfig instanceof CopySourceOptions)) {
+      throw new errors.InvalidArgumentError('sourceConfig should of type CopySourceOptions ')
+    }
+    if (!(destConfig instanceof CopyDestinationOptions)) {
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+    if (!destConfig.validate()) {
+      return Promise.reject()
+    }
+    if (!destConfig.validate()) {
+      return Promise.reject()
+    }
+
+    const headers = Object.assign({}, sourceConfig.getHeaders(), destConfig.getHeaders())
+
+    const bucketName = destConfig.Bucket
+    const objectName = destConfig.Object
+
+    const method = 'PUT'
+
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, headers })
+    const body = await readAsString(res)
+    const copyRes = xmlParsers.parseCopyObject(body)
+    const resHeaders: IncomingHttpHeaders = res.headers
+
+    const sizeHeaderValue = resHeaders && resHeaders['content-length']
+    const size = typeof sizeHeaderValue === 'number' ? sizeHeaderValue : undefined
+
+    return {
+      Bucket: destConfig.Bucket,
+      Key: destConfig.Object,
+      LastModified: copyRes.lastModified,
+      MetaData: extractMetadata(resHeaders as ResponseHeader),
+      VersionId: getVersionId(resHeaders as ResponseHeader),
+      SourceVersionId: getSourceVersionId(resHeaders as ResponseHeader),
+      Etag: sanitizeETag(resHeaders.etag),
+      Size: size,
+    }
+  }
+
+  async copyObject(source: CopySourceOptions, dest: CopyDestinationOptions): Promise<CopyObjectResult>
+  async copyObject(
+    targetBucketName: string,
+    targetObjectName: string,
+    sourceBucketNameAndObjectName: string,
+    conditions?: CopyConditions,
+  ): Promise<CopyObjectResult>
+  async copyObject(...allArgs: CopyObjectParams): Promise<CopyObjectResult> {
+    if (typeof allArgs[0] === 'string') {
+      const [targetBucketName, targetObjectName, sourceBucketNameAndObjectName, conditions] = allArgs as [
+        string,
+        string,
+        string,
+        CopyConditions?,
+      ]
+      return await this.copyObjectV1(targetBucketName, targetObjectName, sourceBucketNameAndObjectName, conditions)
+    }
+    const [source, dest] = allArgs as [CopySourceOptions, CopyDestinationOptions]
+    return await this.copyObjectV2(source, dest)
   }
 }

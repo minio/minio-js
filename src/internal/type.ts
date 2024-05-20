@@ -1,6 +1,9 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
 
+import type { CopyDestinationOptions, CopySourceOptions } from '../helpers.ts'
+import type { CopyConditions } from './copy-conditions.ts'
+
 export type VersionIdentificator = {
   versionId?: string
 }
@@ -416,3 +419,21 @@ export type RemoveObjectsResponse =
         VersionId?: string
       }
     }
+
+export type CopyObjectResultV1 = {
+  etag: string
+  lastModified: string | Date
+}
+export type CopyObjectResultV2 = {
+  Bucket?: string
+  Key?: string
+  LastModified: string | Date
+  MetaData?: ResponseHeader
+  VersionId?: string | null
+  SourceVersionId?: string | null
+  Etag?: string
+  Size?: number
+}
+
+export type CopyObjectResult = CopyObjectResultV1 | CopyObjectResultV2
+export type CopyObjectParams = [CopySourceOptions, CopyDestinationOptions] | [string, string, string, CopyConditions?]
