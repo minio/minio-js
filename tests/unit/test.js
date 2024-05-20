@@ -1622,30 +1622,32 @@ describe('Client', function () {
 
   describe('Compose Object APIs', () => {
     describe('composeObject(destObjConfig, sourceObjectList,cb)', () => {
-      it('should fail on null destination config', (done) => {
+      it('should fail on null destination config', async () => {
         try {
-          client.composeObject(null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-
-      it('should fail on no array source config', (done) => {
+      it('should fail on no array source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, 'non-array', function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, 'non-array')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on null source config', (done) => {
+      it('should fail on null source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })

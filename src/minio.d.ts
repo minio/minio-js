@@ -1,13 +1,7 @@
 // imported from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/93cfb0ec069731dcdfc31464788613f7cddb8192/types/minio/index.d.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type {
-  CopyDestinationOptions,
-  CopySourceOptions,
-  LEGAL_HOLD_STATUS,
-  RETENTION_MODES,
-  RETENTION_VALIDITY_UNITS,
-} from './helpers.ts'
+import type { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './helpers.ts'
 import type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
@@ -146,15 +140,6 @@ export class Client extends TypedClient {
   listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  removeIncompleteUpload(bucketName: string, objectName: string, callback: NoResultCallback): void
-  removeIncompleteUpload(bucketName: string, objectName: string): Promise<void>
-  composeObject(
-    destObjConfig: CopyDestinationOptions,
-    sourceObjList: CopySourceOptions[],
-    callback: ResultCallback<SourceObjectStats>,
-  ): void
-  composeObject(destObjConfig: CopyDestinationOptions, sourceObjList: CopySourceOptions[]): Promise<SourceObjectStats>
 
   // Presigned operations
   presignedUrl(httpMethod: string, bucketName: string, objectName: string, callback: ResultCallback<string>): void

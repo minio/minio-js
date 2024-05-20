@@ -1483,7 +1483,7 @@ const legalholdStatus = await minioClient.setObjectLegalHold('bucketName', 'obje
 
 <a name="composeObject"></a>
 
-### composeObject(destObjConfig, sourceObjectList [, callback])
+### composeObject(destObjConfig, sourceObjectList)
 
 Compose an object from parts
 
@@ -1493,7 +1493,6 @@ Compose an object from parts
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `destObjConfig`    | _object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                  |
 | `sourceObjectList` | _object[]_ | Array of object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
-| `callback(err)`    | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                               |
 
 **Example 1**
 
@@ -1527,14 +1526,7 @@ const destOption = new minio.CopyDestinationOptions({
 })
 
 //using Promise style.
-const composePromise = minioClient.composeObject(destOption, sourceList)
-composePromise
-  .then((result) => {
-    console.log('Success...')
-  })
-  .catch((e) => {
-    console.log('error', e)
-  })
+await minioClient.composeObject(destOption, sourceList)
 ```
 
 <a name="selectObjectContent"></a>

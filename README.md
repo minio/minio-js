@@ -237,7 +237,7 @@ The complete API Reference is available here:
 - [remove-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
 - [set-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.mjs)
 - [get-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
-- [compose-object.js](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
+- [compose-object.mjs](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
 - [select-object-content.mjs](https://github.com/minio/minio-js/blob/master/examples/select-object-content.mjs)
 
 #### Presigned Operations

@@ -114,11 +114,3 @@ export function getListObjectsV2WithMetadataTransformer() {
 export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
 }
-
-export function objectLegalHoldTransformer() {
-  return getConcater(xmlParsers.parseObjectLegalHoldConfig)
-}
-
-export function uploadPartTransformer() {
-  return getConcater(xmlParsers.uploadPartParser)
-}
