@@ -23,13 +23,13 @@ import * as Minio from 'minio'
 import splitFile from 'split-file'
 
 const s3Client = new Minio.Client({
-  endPoint: 'localhost',
-  accessKey: 'minio',
-  secretKey: 'minio123',
-  useSSL: false,
-  port: 22000,
-  //partSize: 5 * 1024 * 1024
+  endPoint: 's3.amazonaws.com',
+  accessKey: 'YOUR-ACCESSKEYID',
+  secretKey: 'YOUR-SECRETACCESSKEY',
 })
+
+const bucketName = 'my-bucketname'
+const composedObjName = 'my-objectname'
 
 const oneMB = 1024 * 1024
 
@@ -37,11 +37,9 @@ const oneMB = 1024 * 1024
 const sampleRunComposeObject = async () => {
   const tmpDir = os.tmpdir()
 
-  const bucketName = 'source-bucket'
   // generate 100 MB buffer and write to a file.
   const local100mbFileToBeSplitAndComposed = Buffer.alloc(100 * oneMB, 0)
 
-  const composedObjName = '_100-mb-file-to-test-compose'
   const tmpSubDir = `${tmpDir}/compose`
   const fileToSplit = `${tmpSubDir}/${composedObjName}`
   const partObjNameList = []
@@ -87,33 +85,12 @@ const sampleRunComposeObject = async () => {
       console.log(result)
       console.log('Composed to a single file: ', composedObjName)
     } catch (err) {
-      console.log('Composed to a single file: ', composedObjName)
-
-      /** Begin Clean up ***/
-      // To verify that the parts are uploaded properly, comment the below code blocks and verify
-      const sourcePartObjList = partObjNameList.map((partObjName) => {
+      console.log('Error in compose object : ', err.message)
+    } finally {
+      console.log('Remove source parts: ')
+      partObjNameList.map((partObjName) => {
         return s3Client.removeObject(bucketName, partObjName)
       })
-
-      Promise.all(sourcePartObjList)
-        .then(() => {
-          console.log('Removed source parts: ')
-
-          // Uncomment to remove the composed object itself. commented for verification.
-          /*
-    s3Client.removeObject(bucketName, composedObjName).then(()=>{
-      console.log("Clean up: Removed the composed Object ")
-    }).catch(()=>{
-      console.log("Error removing composed object", er)
-    })
-    */
-        })
-        .catch((er) => {
-          console.log('Error removing parts used in composing', er)
-        })
-
-      /** End Clean up **/
-
       // Clean up generated parts locally
       fs.rmSync(tmpSubDir, { recursive: true, force: true })
       console.log('Clean up temp parts directory : ')

@@ -25,7 +25,8 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const bucketName = 'source-bucket'
+const bucketName = 'my-bucketname'
+const objectName = 'my-objectname'
 
 const sourceList = [
   new Minio.CopySourceOptions({
@@ -51,7 +52,7 @@ const sourceList = [
 
 const destOption = new Minio.CopyDestinationOptions({
   Bucket: bucketName,
-  Object: 'object-name',
+  Object: objectName,
   /** Other possible options */
   /* Encryption:{
         type:Helpers.ENCRYPTION_TYPES.KMS,
