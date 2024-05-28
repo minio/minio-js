@@ -2092,7 +2092,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  async getBucketVersioning(bucketName: string): Promise<void> {
+  async getBucketVersioning(bucketName: string): Promise<BucketVersioningConfiguration> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
