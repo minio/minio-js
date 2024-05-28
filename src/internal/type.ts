@@ -257,11 +257,6 @@ export type ObjectLockConfigParam = {
 export type VersioningEnabled = 'Enabled'
 export type VersioningSuspended = 'Suspended'
 
-export type BucketVersioningConfiguration = {
-  Status: VersioningEnabled | VersioningSuspended
-  // TODO add ExcludedPrefixes, ExcludeFolders which are  part of MinIO's extension, as an enhancement.
-}
-
 export type TaggingOpts = {
   versionId: string
 }
@@ -437,3 +432,14 @@ export type CopyObjectResultV2 = {
 
 export type CopyObjectResult = CopyObjectResultV1 | CopyObjectResultV2
 export type CopyObjectParams = [CopySourceOptions, CopyDestinationOptions] | [string, string, string, CopyConditions?]
+
+export type ExcludedPrefix = {
+  Prefix: string
+}
+export type BucketVersioningConfiguration = {
+  Status: VersioningEnabled | VersioningSuspended
+  /* Below are minio only extensions */
+  MFADelete?: string
+  ExcludedPrefixes?: ExcludedPrefix[]
+  ExcludeFolders?: boolean
+}
