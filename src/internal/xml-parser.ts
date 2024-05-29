@@ -129,13 +129,24 @@ export function parseListObjectsV2WithMetadata(xml: string) {
       const lastModified = new Date(content.LastModified)
       const etag = sanitizeETag(content.ETag)
       const size = content.Size
+      
+      let tags = {}
+      if(content.UserTags != null){
+        content.UserTags.split('&').forEach(tag => {
+            const [key,value] = tag.split('=')
+            tags[key] = value;
+        })
+      }else {
+        tags = null
+     }
+      
       let metadata
       if (content.UserMetadata != null) {
         metadata = toArray(content.UserMetadata)[0]
       } else {
         metadata = null
       }
-      result.objects.push({ name, lastModified, etag, size, metadata })
+      result.objects.push({ name, lastModified, etag, size, metadata,tags })
     })
   }
 
