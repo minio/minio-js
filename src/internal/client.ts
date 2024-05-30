@@ -2175,7 +2175,7 @@ export class TypedClient {
     await this.makeRequestAsync(requestOptions, '', [200, 204])
   }
 
-  async setBucketTagging(bucketName: string, tags: Tag): Promise<void> {
+  async setBucketTagging(bucketName: string, tags: Tags): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
