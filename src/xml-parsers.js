@@ -271,23 +271,3 @@ export function parseListObjectsV2WithMetadata(xml) {
   }
   return result
 }
-
-export function parseObjectLegalHoldConfig(xml) {
-  const xmlObj = parseXml(xml)
-  return xmlObj.LegalHold
-}
-
-export function uploadPartParser(xml) {
-  const xmlObj = parseXml(xml)
-  const respEl = xmlObj.CopyPartResult
-  return respEl
-}
-
-export function removeObjectsParser(xml) {
-  const xmlObj = parseXml(xml)
-  if (xmlObj.DeleteResult && xmlObj.DeleteResult.Error) {
-    // return errors as array always. as the response is object in case of single object passed in removeObjects
-    return toArray(xmlObj.DeleteResult.Error)
-  }
-  return []
-}

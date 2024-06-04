@@ -599,3 +599,8 @@ export function parseCopyObject(xml: string): CopyObjectResultV1 {
 
   return result
 }
+export function uploadPartParser(xml: string) {
+  const xmlObj = parseXml(xml)
+  const respEl = xmlObj.CopyPartResult
+  return respEl
+}

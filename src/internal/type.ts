@@ -443,3 +443,12 @@ export type BucketVersioningConfiguration = {
   ExcludedPrefixes?: ExcludedPrefix[]
   ExcludeFolders?: boolean
 }
+
+export type UploadPartConfig = {
+  bucketName: string
+  objectName: string
+  uploadID: string
+  partNumber: number
+  headers: RequestHeaders
+  sourceObj: string
+}

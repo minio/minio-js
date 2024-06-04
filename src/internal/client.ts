@@ -29,6 +29,7 @@ import { fsp, streamPromise } from './async.ts'
 import { CopyConditions } from './copy-conditions.ts'
 import { Extensions } from './extensions.ts'
 import {
+  calculateEvenSplits,
   extractMetadata,
   getContentLength,
   getSourceVersionId,
@@ -50,6 +51,8 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
+  PART_CONSTRAINTS,
+  partsRequired,
   prependXAMZMeta,
   readableStream,
   sanitizeETag,
@@ -103,16 +106,18 @@ import type {
   Tags,
   Transport,
   UploadedObjectInfo,
+  UploadPartConfig,
   VersionIdentificator,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
-import * as xmlParsers from './xml-parser.ts'
 import {
   parseCompleteMultipart,
   parseInitiateMultipart,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
+  uploadPartParser,
 } from './xml-parser.ts'
+import * as xmlParsers from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -2347,6 +2352,7 @@ export class TypedClient {
     const body = await readAsString(res)
     return xmlParsers.parseLifecycleConfig(body)
   }
+
   async setBucketEncryption(bucketName: string, encryptionConfig?: EncryptionConfig): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -2599,5 +2605,200 @@ export class TypedClient {
     }
     const [source, dest] = allArgs as [CopySourceOptions, CopyDestinationOptions]
     return await this.copyObjectV2(source, dest)
+  }
+
+  async uploadPart(partConfig: {
+    bucketName: string
+    objectName: string
+    uploadID: string
+    partNumber: number
+    headers: RequestHeaders
+  }) {
+    const { bucketName, objectName, uploadID, partNumber, headers } = partConfig
+
+    const method = 'PUT'
+    const query = `uploadId=${uploadID}&partNumber=${partNumber}`
+    const requestOptions = { method, bucketName, objectName: objectName, query, headers }
+
+    const res = await this.makeRequestAsync(requestOptions)
+    const body = await readAsString(res)
+    const partRes = uploadPartParser(body)
+
+    return {
+      etag: sanitizeETag(partRes.ETag),
+      key: objectName,
+      part: partNumber,
+    }
+  }
+
+  async composeObject(
+    destObjConfig: CopyDestinationOptions,
+    sourceObjList: CopySourceOptions[],
+  ): Promise<boolean | { etag: string; versionId: string | null } | Promise<void> | CopyObjectResult> {
+    const sourceFilesLength = sourceObjList.length
+
+    if (!Array.isArray(sourceObjList)) {
+      throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
+    }
+    if (!(destObjConfig instanceof CopyDestinationOptions)) {
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+
+    if (sourceFilesLength < 1 || sourceFilesLength > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+      throw new errors.InvalidArgumentError(
+        `"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`,
+      )
+    }
+
+    for (let i = 0; i < sourceFilesLength; i++) {
+      const sObj = sourceObjList[i] as CopySourceOptions
+      if (!sObj.validate()) {
+        return false
+      }
+    }
+
+    if (!(destObjConfig as CopyDestinationOptions).validate()) {
+      return false
+    }
+
+    const getStatOptions = (srcConfig: CopySourceOptions) => {
+      let statOpts = {}
+      if (!_.isEmpty(srcConfig.VersionID)) {
+        statOpts = {
+          versionId: srcConfig.VersionID,
+        }
+      }
+      return statOpts
+    }
+    const srcObjectSizes: number[] = []
+    let totalSize = 0
+    let totalParts = 0
+
+    const sourceObjStats = sourceObjList.map((srcItem) =>
+      this.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem)),
+    )
+
+    const srcObjectInfos = await Promise.all(sourceObjStats)
+
+    const validatedStats = srcObjectInfos.map((resItemStat, index) => {
+      const srcConfig: CopySourceOptions | undefined = sourceObjList[index]
+
+      let srcCopySize = resItemStat.size
+      // Check if a segment is specified, and if so, is the
+      // segment within object bounds?
+      if (srcConfig && srcConfig.MatchRange) {
+        // Since range is specified,
+        //    0 <= src.srcStart <= src.srcEnd
+        // so only invalid case to check is:
+        const srcStart = srcConfig.Start
+        const srcEnd = srcConfig.End
+        if (srcEnd >= srcCopySize || srcStart < 0) {
+          throw new errors.InvalidArgumentError(
+            `CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`,
+          )
+        }
+        srcCopySize = srcEnd - srcStart + 1
+      }
+
+      // Only the last source may be less than `absMinPartSize`
+      if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength - 1) {
+        throw new errors.InvalidArgumentError(
+          `CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`,
+        )
+      }
+
+      // Is data to copy too large?
+      totalSize += srcCopySize
+      if (totalSize > PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE) {
+        throw new errors.InvalidArgumentError(`Cannot compose an object of size ${totalSize} (> 5TiB)`)
+      }
+
+      // record source size
+      srcObjectSizes[index] = srcCopySize
+
+      // calculate parts needed for current source
+      totalParts += partsRequired(srcCopySize)
+      // Do we need more parts than we are allowed?
+      if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+        throw new errors.InvalidArgumentError(
+          `Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`,
+        )
+      }
+
+      return resItemStat
+    })
+
+    if ((totalParts === 1 && totalSize <= PART_CONSTRAINTS.MAX_PART_SIZE) || totalSize === 0) {
+      return await this.copyObject(sourceObjList[0] as CopySourceOptions, destObjConfig) // use copyObjectV2
+    }
+
+    // preserve etag to avoid modification of object while copying.
+    for (let i = 0; i < sourceFilesLength; i++) {
+      ;(sourceObjList[i] as CopySourceOptions).MatchETag = (validatedStats[i] as BucketItemStat).etag
+    }
+
+    const splitPartSizeList = validatedStats.map((resItemStat, idx) => {
+      return calculateEvenSplits(srcObjectSizes[idx] as number, sourceObjList[idx] as CopySourceOptions)
+    })
+
+    const getUploadPartConfigList = (uploadId: string) => {
+      const uploadPartConfigList: UploadPartConfig[] = []
+
+      splitPartSizeList.forEach((splitSize, splitIndex: number) => {
+        if (splitSize) {
+          const { startIndex: startIdx, endIndex: endIdx, objInfo: objConfig } = splitSize
+
+          const partIndex = splitIndex + 1 // part index starts from 1.
+          const totalUploads = Array.from(startIdx)
+
+          const headers = (sourceObjList[splitIndex] as CopySourceOptions).getHeaders()
+
+          totalUploads.forEach((splitStart, upldCtrIdx) => {
+            const splitEnd = endIdx[upldCtrIdx]
+
+            const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
+            headers['x-amz-copy-source'] = `${sourceObj}`
+            headers['x-amz-copy-source-range'] = `bytes=${splitStart}-${splitEnd}`
+
+            const uploadPartConfig = {
+              bucketName: destObjConfig.Bucket,
+              objectName: destObjConfig.Object,
+              uploadID: uploadId,
+              partNumber: partIndex,
+              headers: headers,
+              sourceObj: sourceObj,
+            }
+
+            uploadPartConfigList.push(uploadPartConfig)
+          })
+        }
+      })
+
+      return uploadPartConfigList
+    }
+
+    const uploadAllParts = async (uploadList: UploadPartConfig[]) => {
+      const partUploads = uploadList.map(async (item) => {
+        return this.uploadPart(item)
+      })
+      // Process results here if needed
+      return await Promise.all(partUploads)
+    }
+
+    const performUploadParts = async (uploadId: string) => {
+      const uploadList = getUploadPartConfigList(uploadId)
+      const partsRes = await uploadAllParts(uploadList)
+      return partsRes.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
+    }
+
+    const newUploadHeaders = destObjConfig.getHeaders()
+
+    const uploadId = await this.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders)
+    try {
+      const partsDone = await performUploadParts(uploadId)
+      return await this.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone)
+    } catch (err) {
+      return await this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId)
+    }
   }
 }
