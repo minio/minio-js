@@ -843,18 +843,17 @@ s3Client.removeBucketEncryption('my-bucketname', function (err) {
 
 <a name="getObject"></a>
 
-### getObject(bucketName, objectName, getOpts, metaData)
+### getObject(bucketName, objectName, getOpts)
 
 Downloads an object as a stream.
 
 **Parameters**
 
-| Param        | Type     | Description                                                                                 |
-| ------------ | -------- | ------------------------------------------------------------------------------------------- |
-| `bucketName` | _string_ | Name of the bucket.                                                                         |
-| `objectName` | _string_ | Name of the object.                                                                         |
-| `getOpts`    | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
-| `metaData`   | _object_ | Metadata to be sent with the request (e.g. sse headers). Default is `{}`. (optional)        |
+| Param        | Type     | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `bucketName` | _string_ | Name of the bucket.                                    |
+| `objectName` | _string_ | Name of the object.                                    |
+| `getOpts`    | _object_ | Options to get the object. Default is `{}`. (optional) |
 
 **Return Value**
 
@@ -902,16 +901,11 @@ Get a Server Side Encrypted object.
 
 ```js
 let size = 0
-const dataStream = await minioClient.getObject(
-  'mybucket',
-  'photo.jpg',
-  { versionId: 'my-versionId' },
-  {
-    'X-Amz-Server-Side-Encryption-Customer-Algorithm': 'AES256',
-    'X-Amz-Server-Side-Encryption-Customer-Key': 'YOUR_KEY',
-    'X-Amz-Server-Side-Encryption-Customer-Key-MD5': 'YOUR_MD5',
-  },
-)
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', {
+  SSECustomerAlgorithm: 'AES256',
+  SSECustomerKey: 'YOUR_KEY',
+  SSECustomerKeyMD5: 'YOUR_MD5',
+})
 dataStream.on('data', function (chunk) {
   size += chunk.length
 })
@@ -925,7 +919,7 @@ dataStream.on('error', function (err) {
 
 <a name="getPartialObject"></a>
 
-### getPartialObject(bucketName, objectName, offset, length, getOpts, metaData[, callback])
+### getPartialObject(bucketName, objectName, offset, length, getOpts[, callback])
 
 Downloads the specified range bytes of an object as a stream.
 
@@ -937,8 +931,7 @@ Downloads the specified range bytes of an object as a stream.
 | `objectName`            | _string_   | Name of the object.                                                                                                                       |
 | `offset`                | _number_   | `offset` of the object from where the stream will start.                                                                                  |
 | `length`                | _number_   | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).         |
-| `getOpts`               | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)                                               |
-| `metaData`              | _object_   | Metadata to be sent with the request (e.g. sse headers). Default is `{}`. (optional)                                                      |
+| `getOpts`               | _object_   | Options to get the object. Default is `{}`. (optional)                                                                                    |
 | `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 **Return Value**
@@ -988,18 +981,11 @@ To get a Server Side Encrypted object.
 ```js
 const versionedObjSize = 0
 // reads 30 bytes from the offset 10.
-const dataStream = await minioClient.getPartialObject(
-  'mybucket',
-  'photo.jpg',
-  10,
-  30,
-  { versionId: 'my-versionId' },
-  {
-    'X-Amz-Server-Side-Encryption-Customer-Algorithm': 'AES256',
-    'X-Amz-Server-Side-Encryption-Customer-Key': 'YOUR_KEY',
-    'X-Amz-Server-Side-Encryption-Customer-Key-MD5': 'YOUR_MD5',
-  },
-)
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, {
+  SSECustomerAlgorithm: 'AES256',
+  SSECustomerKey: 'YOUR_KEY',
+  SSECustomerKeyMD5: 'YOUR_MD5',
+})
 dataStream.on('data', function (chunk) {
   versionedObjSize += chunk.length
 })
@@ -1013,7 +999,7 @@ dataStream.on('error', function (err) {
 
 <a name="fGetObject"></a>
 
-### fGetObject(bucketName, objectName, filePath, getOpts, metaData[, callback])
+### fGetObject(bucketName, objectName, filePath, getOpts[, callback])
 
 Downloads and saves the object as a file in the local filesystem.
 
@@ -1024,8 +1010,7 @@ Downloads and saves the object as a file in the local filesystem.
 | `bucketName`    | _string_   | Name of the bucket.                                                                                |
 | `objectName`    | _string_   | Name of the object.                                                                                |
 | `filePath`      | _string_   | Path on the local filesystem to which the object data will be written.                             |
-| `getOpts`       | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)        |
-| `metaData`      | _object_   | Metadata to be sent with the request (e.g. sse headers). Default is `{}`. (optional)               |
+| `getOpts`       | _object_   | Options to get the object. Default is `{}`. (optional)                                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 **Return Value**
@@ -1066,11 +1051,10 @@ minioClient.fGetObject(
   bucketName,
   objNameValue,
   './download/MyImage.jpg',
-  { versionId: 'my-versionId' },
   {
-    'X-Amz-Server-Side-Encryption-Customer-Algorithm': 'AES256',
-    'X-Amz-Server-Side-Encryption-Customer-Key': 'YOUR_KEY',
-    'X-Amz-Server-Side-Encryption-Customer-Key-MD5': 'YOUR_MD5',
+    SSECustomerAlgorithm: 'AES256',
+    SSECustomerKey: 'YOUR_KEY',
+    SSECustomerKeyMD5: 'YOUR_MD5',
   },
   function (e) {
     if (e) {

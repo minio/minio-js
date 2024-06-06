@@ -60,6 +60,7 @@ import type {
   BucketStream,
   BucketVersioningConfiguration,
   GetObjectLegalHoldOptions,
+  GetObjectOpts,
   IncompleteUploadedBucketItem,
   IRequest,
   ItemBucketMetadata,
@@ -84,7 +85,6 @@ import type {
   Tags,
   Transport,
   UploadedObjectInfo,
-  VersionIdentificator,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import {
@@ -949,19 +949,14 @@ export class TypedClient {
   /**
    * Callback is called with readable stream of the object content.
    */
-  async getObject(
-    bucketName: string,
-    objectName: string,
-    getOpts: VersionIdentificator = {},
-    metaData: ItemBucketMetadata = {},
-  ): Promise<stream.Readable> {
+  async getObject(bucketName: string, objectName: string, getOpts: GetObjectOpts = {}): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    return this.getPartialObject(bucketName, objectName, 0, 0, getOpts, metaData)
+    return this.getPartialObject(bucketName, objectName, 0, 0, getOpts)
   }
 
   /**
@@ -971,15 +966,13 @@ export class TypedClient {
    * @param offset
    * @param length - length of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset)
    * @param getOpts
-   * @param metaData - Optional metadata to be sent with the request
    */
   async getPartialObject(
     bucketName: string,
     objectName: string,
     offset: number,
     length = 0,
-    getOpts: VersionIdentificator = {},
-    metaData: ItemBucketMetadata = {},
+    getOpts: GetObjectOpts = {},
   ): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -992,9 +985,6 @@ export class TypedClient {
     }
     if (!isNumber(length)) {
       throw new TypeError('length should be of type "number"')
-    }
-    if (!isObject(metaData)) {
-      throw new TypeError('metaData should be of type "object"')
     }
 
     let range = ''
@@ -1010,8 +1000,16 @@ export class TypedClient {
       }
     }
 
+    const sseHeaders: Record<string, string> = {
+      ...(getOpts.SSECustomerAlgorithm && {
+        'X-Amz-Server-Side-Encryption-Customer-Algorithm': getOpts.SSECustomerAlgorithm,
+      }),
+      ...(getOpts.SSECustomerKey && { 'X-Amz-Server-Side-Encryption-Customer-Key': getOpts.SSECustomerKey }),
+      ...(getOpts.SSECustomerKeyMD5 && { 'X-Amz-Server-Side-Encryption-Customer-Key-MD5': getOpts.SSECustomerKeyMD5 }),
+    }
+
     const headers: RequestHeaders = {
-      ...prependXAMZMeta(metaData),
+      ...prependXAMZMeta(sseHeaders),
       ...(range !== '' && { range }),
     }
 
@@ -1033,14 +1031,12 @@ export class TypedClient {
    * @param objectName - name of the object
    * @param filePath - path to which the object data will be written to
    * @param getOpts - Optional object get option
-   * @param metaData - Optional metadata to be sent with the request
    */
   async fGetObject(
     bucketName: string,
     objectName: string,
     filePath: string,
-    getOpts: VersionIdentificator = {},
-    metaData: ItemBucketMetadata = {},
+    getOpts: GetObjectOpts = {},
   ): Promise<void> {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
@@ -1078,7 +1074,7 @@ export class TypedClient {
         }
       }
 
-      const downloadStream = await this.getPartialObject(bucketName, objectName, offset, 0, getOpts, metaData)
+      const downloadStream = await this.getPartialObject(bucketName, objectName, offset, 0, getOpts)
 
       await streamPromise.pipeline(downloadStream, partFileStream)
       const stats = await fsp.stat(partFile)
@@ -1899,7 +1895,7 @@ export class TypedClient {
   /**
    *  Get the tags associated with a bucket OR an object
    */
-  async getObjectTagging(bucketName: string, objectName: string, getOpts: VersionIdentificator = {}): Promise<Tag[]> {
+  async getObjectTagging(bucketName: string, objectName: string, getOpts: GetObjectOpts = {}): Promise<Tag[]> {
     const method = 'GET'
     let query = 'tagging'
 

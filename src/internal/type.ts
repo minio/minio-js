@@ -5,6 +5,12 @@ export type VersionIdentificator = {
   versionId?: string
 }
 
+export type GetObjectOpts = VersionIdentificator & {
+  SSECustomerAlgorithm?: string
+  SSECustomerKey?: string
+  SSECustomerKeyMD5?: string
+}
+
 export type Binary = string | Buffer
 
 // nodejs IncomingHttpHeaders is Record<string, string | string[]>, but it's actually this:
