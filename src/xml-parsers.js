@@ -25,33 +25,6 @@ const fxpWithoutNumParser = new XMLParser({
   },
 })
 
-// parse XML response for copy object
-export function parseCopyObject(xml) {
-  var result = {
-    etag: '',
-    lastModified: '',
-  }
-
-  var xmlobj = parseXml(xml)
-  if (!xmlobj.CopyObjectResult) {
-    throw new errors.InvalidXMLError('Missing tag: "CopyObjectResult"')
-  }
-  xmlobj = xmlobj.CopyObjectResult
-  if (xmlobj.ETag) {
-    result.etag = xmlobj.ETag.replace(/^"/g, '')
-      .replace(/"$/g, '')
-      .replace(/^&quot;/g, '')
-      .replace(/&quot;$/g, '')
-      .replace(/^&#34;/g, '')
-      .replace(/&#34;$/g, '')
-  }
-  if (xmlobj.LastModified) {
-    result.lastModified = new Date(xmlobj.LastModified)
-  }
-
-  return result
-}
-
 // parse XML response for bucket notification
 export function parseBucketNotification(xml) {
   var result = {
@@ -297,39 +270,4 @@ export function parseListObjectsV2WithMetadata(xml) {
     })
   }
   return result
-}
-
-export function parseObjectRetentionConfig(xml) {
-  const xmlObj = parseXml(xml)
-  const retentionConfig = xmlObj.Retention
-
-  return {
-    mode: retentionConfig.Mode,
-    retainUntilDate: retentionConfig.RetainUntilDate,
-  }
-}
-
-export function parseBucketEncryptionConfig(xml) {
-  let encConfig = parseXml(xml)
-  return encConfig
-}
-
-export function parseObjectLegalHoldConfig(xml) {
-  const xmlObj = parseXml(xml)
-  return xmlObj.LegalHold
-}
-
-export function uploadPartParser(xml) {
-  const xmlObj = parseXml(xml)
-  const respEl = xmlObj.CopyPartResult
-  return respEl
-}
-
-export function removeObjectsParser(xml) {
-  const xmlObj = parseXml(xml)
-  if (xmlObj.DeleteResult && xmlObj.DeleteResult.Error) {
-    // return errors as array always. as the response is object in case of single object passed in removeObjects
-    return toArray(xmlObj.DeleteResult.Error)
-  }
-  return []
 }

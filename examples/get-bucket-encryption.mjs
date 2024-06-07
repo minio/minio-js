@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname,
-// my-src-bucketname and my-src-objectname are dummy values, please replace
-// them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// dummy values, please replace them with original values.
 
 import * as Minio from 'minio'
 
@@ -26,19 +25,4 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const conds = new Minio.CopyConditions()
-conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
-
-s3Client.copyObject(
-  'my-bucketname',
-  'my-objectname',
-  '/my-src-bucketname/my-src-objectname',
-  conds,
-  function (e, data) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Successfully copied the object:')
-    console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
-  },
-)
+await s3Client.getBucketEncryption('test-bucket')

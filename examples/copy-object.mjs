@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
-// dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-target-bucketname, my-target-objectname,
+// my-src-bucketname and my-src-objectname are dummy values, please replace
+// them with original values.
 
 import * as Minio from 'minio'
 
@@ -25,16 +26,7 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const bucketName = 'my-bucket'
-const objectName = 'my-object'
+const conds = new Minio.CopyConditions()
+conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
 
-const expirationDate = new Date()
-expirationDate.setDate(expirationDate.getDate() + 1)
-expirationDate.setUTCHours(0, 0, 0, 0) //Should be start of the day.(midnight)
-const versionId = 'my-versionId'
-
-await s3Client.putObjectRetention(bucketName, objectName, {
-  mode: 'GOVERNANCE',
-  retainUntilDate: expirationDate.toISOString(),
-  versionId: versionId,
-})
+await s3Client.copyObject('my-target-bucketname', 'my-target-objectname', '/my-src-bucketname/my-src-objectname', conds)

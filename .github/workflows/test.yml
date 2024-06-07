@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        node_version: [ 20.x, 18.x, 16.x, 14.x, 12.x, ]
+        node_version: [ 20.x, 18.x, 16.x ]
         os: [ ubuntu-latest, windows-latest ]
 
     env:
@@ -33,7 +33,6 @@ jobs:
           chmod +x /tmp/minio
           /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
 
-
       - run: Invoke-WebRequest -Uri https://dl.minio.io/server/minio/release/windows-amd64/minio.exe -OutFile $HOME/minio.exe
         if: ${{ matrix.os == 'windows-latest' }}
 
@@ -43,9 +42,9 @@ jobs:
         run: |
           $HOME/minio.exe -C $HOME/tmp/minio-config server $HOME/tmp/data{1...4} &
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node_version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
           cache: 'npm'

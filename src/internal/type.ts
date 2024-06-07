@@ -1,6 +1,9 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
 
+import type { CopyDestinationOptions, CopySourceOptions } from '../helpers.ts'
+import type { CopyConditions } from './copy-conditions.ts'
+
 export type VersionIdentificator = {
   versionId?: string
 }
@@ -260,11 +263,6 @@ export type ObjectLockConfigParam = {
 export type VersioningEnabled = 'Enabled'
 export type VersioningSuspended = 'Suspended'
 
-export type BucketVersioningConfiguration = {
-  Status: VersioningEnabled | VersioningSuspended
-  // TODO add ExcludedPrefixes, ExcludeFolders which are  part of MinIO's extension, as an enhancement.
-}
-
 export type TaggingOpts = {
   versionId: string
 }
@@ -322,7 +320,6 @@ export type SelectOptions = {
   requestProgress?: SelectProgress
   scanRange?: ScanRange
 }
-
 export type Expiration = {
   Date: string
   Days: number
@@ -376,3 +373,88 @@ export type LifecycleConfig = {
 }
 
 export type LifeCycleConfigParam = LifecycleConfig | null | undefined | ''
+
+export type ApplySSEByDefault = {
+  KmsMasterKeyID?: string
+  SSEAlgorithm: string
+}
+
+export type EncryptionRule = {
+  ApplyServerSideEncryptionByDefault?: ApplySSEByDefault
+}
+
+export type EncryptionConfig = {
+  Rule: EncryptionRule[]
+}
+
+export type GetObjectRetentionOpts = {
+  versionId: string
+}
+
+export type ObjectRetentionInfo = {
+  mode: RETENTION_MODES
+  retainUntilDate: string
+}
+
+export type RemoveObjectsEntry = {
+  name: string
+  versionId?: string
+}
+export type ObjectName = string
+
+export type RemoveObjectsParam = ObjectName[] | RemoveObjectsEntry[]
+
+export type RemoveObjectsRequestEntry = {
+  Key: string
+  VersionId?: string
+}
+
+export type RemoveObjectsResponse =
+  | null
+  | undefined
+  | {
+      Error?: {
+        Code?: string
+        Message?: string
+        Key?: string
+        VersionId?: string
+      }
+    }
+
+export type CopyObjectResultV1 = {
+  etag: string
+  lastModified: string | Date
+}
+export type CopyObjectResultV2 = {
+  Bucket?: string
+  Key?: string
+  LastModified: string | Date
+  MetaData?: ResponseHeader
+  VersionId?: string | null
+  SourceVersionId?: string | null
+  Etag?: string
+  Size?: number
+}
+
+export type CopyObjectResult = CopyObjectResultV1 | CopyObjectResultV2
+export type CopyObjectParams = [CopySourceOptions, CopyDestinationOptions] | [string, string, string, CopyConditions?]
+
+export type ExcludedPrefix = {
+  Prefix: string
+}
+export type BucketVersioningConfiguration = {
+  Status: VersioningEnabled | VersioningSuspended
+  /* Below are minio only extensions */
+  MFADelete?: string
+  ExcludedPrefixes?: ExcludedPrefix[]
+  ExcludeFolders?: boolean
+}
+
+export type UploadPartConfig = {
+  bucketName: string
+  objectName: string
+  uploadID: string
+  partNumber: number
+  headers: RequestHeaders
+  sourceObj: string
+}

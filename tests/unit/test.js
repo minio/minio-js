@@ -727,101 +727,112 @@ describe('Client', function () {
     })
 
     describe('#removeObject(bucket, object, callback)', () => {
-      it('should fail on null bucket', (done) => {
-        client.removeObject(null, 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty bucket', (done) => {
-        client.removeObject('', 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty bucket', (done) => {
-        client.removeObject('  \n  \t  ', 'hello', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on null object', (done) => {
-        client.removeObject('hello', null, function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      it('should fail on empty object', (done) => {
-        client.removeObject('hello', '', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
-      })
-      // Versioning related options as removeOpts
-      it('should fail on empty (null) removeOpts object', (done) => {
-        client.removeObject('hello', 'testRemoveOpts', null, function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on null bucket', async () => {
+        try {
+          await client.removeObject(null, 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on empty (string) removeOpts', (done) => {
-        client.removeObject('hello', 'testRemoveOpts', '', function (err) {
-          if (err) {
-            return done()
-          }
-          done(new Error('callback should receive error'))
-        })
+      it('should fail on empty bucket', async () => {
+        try {
+          await client.removeObject('', 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail invalid bucket name', async () => {
+        try {
+          await client.removeObject('  \n  \t  ', 'hello')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on null object', async () => {
+        try {
+          await client.removeObject('hello', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on empty object', async () => {
+        try {
+          await client.removeObject('hello', '')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      // Versioning related options as removeOpts
+      it('should fail on empty (null) removeOpts object', async () => {
+        try {
+          await client.removeObject('hello', 'testRemoveOpts', null)
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
+      })
+
+      it('should fail on empty (string) removeOpts', async () => {
+        try {
+          await client.removeObject('hello', '', '')
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('#removeIncompleteUpload(bucket, object, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.removeIncompleteUpload(null, 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload(null, 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeIncompleteUpload('', 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('', 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeIncompleteUpload('  \n  \t  ', 'hello', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('  \n  \t  ', 'hello')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on null object', (done) => {
+
+      it('should fail on null object', async () => {
         try {
-          client.removeIncompleteUpload('hello', null, function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('hello', null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
+      it('should fail on empty object', async () => {
         try {
-          client.removeIncompleteUpload('hello', '', function () {})
-        } catch (e) {
-          done()
+          await client.removeIncompleteUpload('hello', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })
@@ -1157,187 +1168,188 @@ describe('Client', function () {
 
   describe('Object retention APIs', () => {
     describe('getObjectRetention(bucket, objectName, getRetentionOpts,callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getObjectRetention(null, '', '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention(null, '', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.getObjectRetention('', '', '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('', '', '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on invalid  object name', (done) => {
+      it('should fail on invalid  object name', async () => {
         try {
-          client.getObjectRetention('my-bucket', null, '', function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('my-bucket', null, '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on invalid  versionId', (done) => {
+      it('should fail on invalid  versionId', async () => {
         try {
-          client.getObjectRetention('my-bucket', 'objectname', { versionId: 123 }, function () {})
-        } catch (e) {
-          done()
+          await client.getObjectRetention('my-bucket', null, '')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
-      it('should fail on null bucket', (done) => {
-        client.putObjectRetention(null, '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on null bucket', async () => {
+        try {
+          await client.putObjectRetention(null, '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
-        client.putObjectRetention('', '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on empty bucket', async () => {
+        try {
+          await client.putObjectRetention('', '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on null object', (done) => {
-        client.putObjectRetention('my-bucket', null, {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on null object', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', null, {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty object', (done) => {
-        client.putObjectRetention('my-bucket', '', {}, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on empty object', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', '', {})
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid mode ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid mode ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid governanceBypass ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid governanceBypass ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid (null) retainUntilDate ', (done) => {
-        client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid (null) retainUntilDate ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
-      it('should fail on passing invalid versionId ', (done) => {
-        client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' }, function (err) {
-          if (err) {
-            done()
-          } else {
-            done(new Error('expecting error'))
-          }
-        })
+      it('should fail on passing invalid versionId ', async () => {
+        try {
+          await client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' })
+        } catch (err) {
+          return
+        }
+        throw new Error('callback should receive error')
       })
     })
   })
 
   describe('Bucket Encryption APIs', () => {
     describe('setBucketEncryption(bucket, encryptionConfig, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.setBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.setBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.setBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.setBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on multiple rules', (done) => {
+      it('should fail on multiple rules', async () => {
         try {
-          client.setBucketEncryption(
-            'my-bucket',
-            {
-              // Default Rule
-              Rule: [
-                {
-                  ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: 'AES256',
-                  },
+          await client.setBucketEncryption('my-bucket', {
+            // Default Rule
+            Rule: [
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm: 'AES256',
                 },
-                {
-                  ApplyServerSideEncryptionByDefault: {
-                    SSEAlgorithm: 'AES256',
-                  },
+              },
+              {
+                ApplyServerSideEncryptionByDefault: {
+                  SSEAlgorithm: 'AES256',
                 },
-              ],
-            },
-            function () {},
-          )
-        } catch (e) {
-          done()
+              },
+            ],
+          })
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('getBucketEncryption(bucket, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on null bucket', async () => {
         try {
-          client.getBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+
+      it('should fail on empty bucket', async () => {
         try {
-          client.getBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
 
     describe('removeBucketEncryption(bucket, callback)', () => {
-      it('should fail on null bucket', (done) => {
+      it('should fail on empty bucket', async () => {
         try {
-          client.removeBucketEncryption(null, function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption('')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should fail on empty bucket', (done) => {
+
+      it('should fail on null bucket', async () => {
         try {
-          client.removeBucketEncryption('', function () {})
-        } catch (e) {
-          done()
+          await client.getBucketEncryption(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })
@@ -1610,30 +1622,32 @@ describe('Client', function () {
 
   describe('Compose Object APIs', () => {
     describe('composeObject(destObjConfig, sourceObjectList,cb)', () => {
-      it('should fail on null destination config', (done) => {
+      it('should fail on null destination config', async () => {
         try {
-          client.composeObject(null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-
-      it('should fail on no array source config', (done) => {
+      it('should fail on no array source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, 'non-array', function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, 'non-array')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on null source config', (done) => {
+      it('should fail on null source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })

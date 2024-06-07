@@ -749,94 +749,69 @@ await minioClient.getObjectLockConfig('my-bucketname')
 
 <a name="setBucketEncryption"></a>
 
-### setBucketEncryption(bucketName [,encryptionConfig, callback])
+### setBucketEncryption(bucketName [,encryptionConfig])
 
 Set encryption configuration on a Bucket
 
 **Parameters**
 
-| Param              | Type       | Description                                                                                                                                                                                        |
-| ------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`       | _string_   | Name of the bucket.                                                                                                                                                                                |
-| `encryptionConfig` | _object_   | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
-| `callback(err)`    | _function_ | Callback is called with `err` in case of error.                                                                                                                                                    |
+| Param              | Type     | Description                                                                                                                                                                                        |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`       | _string_ | Name of the bucket.                                                                                                                                                                                |
+| `encryptionConfig` | _object_ | Encryption Configuration can be either omitted or `{}` or a valid and supported encryption config. by default: `{Rule:[{ApplyServerSideEncryptionByDefault:{SSEAlgorithm:"AES256"}}]}` is applied. |
 
 **Example **
 Set Encryption configuration on a Bucket
 
 ```js
-s3Client.setBucketEncryption('my-bucketname', function (err, lockConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(lockConfig)
-})
+await s3Client.setBucketEncryption('my-bucketname')
 ```
 
 **Example 1**
 Set Encryption configuration on a Bucket with an Algorithm
 
 ```js
-s3Client.setBucketEncryption(
-  'my-bucketname',
-  { Rule: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }] },
-  function (err, lockConfig) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log('Success')
-  },
-)
+await s3Client.setBucketEncryption('my-bucketname', {
+  Rule: [{ ApplyServerSideEncryptionByDefault: { SSEAlgorithm: 'AES256' } }],
+})
 ```
 
 <a name="getBucketEncryption"></a>
 
-### getBucketEncryption(bucketName [, callback])
+### getBucketEncryption(bucketName)
 
 Get encryption configuration of a Bucket
 
 **Parameters**
 
-| Param                      | Type       | Description                                                                               |
-| -------------------------- | ---------- | ----------------------------------------------------------------------------------------- |
-| `bucketName`               | _string_   | Name of the bucket.                                                                       |
-| `callback(err, encConfig)` | _function_ | Callback is called with `err` in case of error. else it is called with lock configuration |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example **
 Get Encryption configuration of a Bucket
 
 ```js
-s3Client.getBucketEncryption('my-bucketname', function (err, encConfig) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(encConfig)
-})
+await s3Client.getBucketEncryption('my-bucketname')
 ```
 
 <a name="removeBucketEncryption"></a>
 
-### removeBucketEncryption(bucketName [, callback])
+### removeBucketEncryption(bucketName)
 
 Remove encryption configuration of a Bucket
 
 **Parameters**
 
-| Param           | Type       | Description                                     |
-| --------------- | ---------- | ----------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                             |
-| `callback(err)` | _function_ | Callback is called with `err` in case of error. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
 
 **Example **
 Remove Encryption configuration of a Bucket
 
 ```js
-s3Client.removeBucketEncryption('my-bucketname', function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
-})
+await s3Client.removeBucketEncryption('my-bucketname')
 ```
 
 ## 3. Object operations
@@ -1180,32 +1155,25 @@ minioClient.fPutObject('mybucket', '40mbfile', file, metaData, function (err, ob
 
 <a name="copyObject"></a>
 
-### copyObject(bucketName, objectName, sourceObject, conditions[, callback])
+### copyObject(targetBucketName, targetObjectName, sourceBucketNameAndObjectName [,conditions])
 
 Copy a source object into a new object in the specified bucket.
 
 **Parameters**
 
-| Param                                 | Type             | Description                                                                                                                                                                                    |
-| ------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                          | _string_         | Name of the bucket.                                                                                                                                                                            |
-| `objectName`                          | _string_         | Name of the object.                                                                                                                                                                            |
-| `sourceObject`                        | _string_         | Path of the file to be copied.                                                                                                                                                                 |
-| `conditions`                          | _CopyConditions_ | Conditions to be satisfied before allowing object copy.                                                                                                                                        |
-| `callback(err, {etag, lastModified})` | _function_       | Non-null `err` indicates error, `etag` _string_ and lastModified _Date_ are the etag and the last modified date of the object newly copied. If no callback is passed, a `Promise` is returned. |
+| Param                           | Type             | Description                                             |
+| ------------------------------- | ---------------- | ------------------------------------------------------- |
+| `targetBucketName`              | _string_         | Name of the bucket.                                     |
+| `targetObjectName`              | _string_         | Name of the object.                                     |
+| `sourceBucketNameAndObjectName` | _string_         | Path of the file to be copied.                          |
+| `conditions`                    | _CopyConditions_ | Conditions to be satisfied before allowing object copy. |
 
 **Example**
 
 ```js
 const conds = new Minio.CopyConditions()
 conds.setMatchETag('bd891862ea3e22c93ed53a098218791d')
-minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds, function (e, data) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Successfully copied the object:')
-  console.log('etag = ' + data.etag + ', lastModified = ' + data.lastModified)
-})
+await minioClient.copyObject('mybucket', 'newobject', '/mybucket/srcobject', conds)
 ```
 
 <a name="statObject"></a>
@@ -1249,18 +1217,17 @@ console.log(stat)
 
 <a name="removeObject"></a>
 
-### removeObject(bucketName, objectName [, removeOpts] [, callback])
+### removeObject(bucketName, objectName [, removeOpts])
 
 Removes an object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                   |
-| --------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                           |
-| `objectName`    | _string_   | Name of the object.                                                                                                           |
-| `removeOpts`    | _object_   | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional) |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.        |
+| Param        | Type     | Description                                                                                                                   |
+| ------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                                                           |
+| `objectName` | _string_ | Name of the object.                                                                                                           |
+| `removeOpts` | _object_ | Version of the object in the form `{versionId:"my-versionId", governanceBypass: true or false }`. Default is `{}`. (Optional) |
 
 **Example 1**
 
@@ -1297,17 +1264,16 @@ Remove an object version locked with retention mode `GOVERNANCE` using the `gove
 
 <a name="removeObjects"></a>
 
-### removeObjects(bucketName, objectsList[, callback])
+### removeObjects(bucketName, objectsList)
 
 Remove all objects in the objectsList.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                                                                                                                                                                                |
-| --------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                                                                                                                                                                        |
-| `objectsList`   | _object_   | list of objects in the bucket to be removed. any one of the formats: 1. List of Object names as array of strings which are object keys: `['objectname1','objectname2']` 2. List of Object name and VersionId as an object: [{name:"my-obj-name",versionId:"my-versionId"}] |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error.                                                                                                                                                                                                        |
+| Param         | Type     | Description                                                                                                                                                                                                                                                                |
+| ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bucketName`  | _string_ | Name of the bucket.                                                                                                                                                                                                                                                        |
+| `objectsList` | _object_ | list of objects in the bucket to be removed. any one of the formats: 1. List of Object names as array of strings which are object keys: `['objectname1','objectname2']` 2. List of Object name and VersionId as an object: [{name:"my-obj-name",versionId:"my-versionId"}] |
 
 **Example**
 
@@ -1325,13 +1291,8 @@ objectsStream.on('error', function (e) {
   console.log(e)
 })
 
-objectsStream.on('end', function () {
-  s3Client.removeObjects('my-bucketname', objectsList, function (e) {
-    if (e) {
-      return console.log('Unable to remove Objects ', e)
-    }
-    console.log('Removed the objects successfully')
-  })
+objectsStream.on('end', async () => {
+  await s3Client.removeObjects(bucket, objectsList)
 })
 ```
 
@@ -1352,39 +1313,28 @@ objectsStream.on('data', function (obj) {
 objectsStream.on('error', function (e) {
   return console.log(e)
 })
-objectsStream.on('end', function () {
-  s3Client.removeObjects(bucket, objectsList, function (e) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Success')
-  })
+objectsStream.on('end', async () => {
+  await s3Client.removeObjects(bucket, objectsList)
 })
 ```
 
 <a name="removeIncompleteUpload"></a>
 
-### removeIncompleteUpload(bucketName, objectName[, callback])
+### removeIncompleteUpload(bucketName, objectName)
 
 Removes a partially uploaded object.
 
 **Parameters**
 
-| Param           | Type       | Description                                                                                                            |
-| --------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`    | _string_   | Name of the bucket.                                                                                                    |
-| `objectName`    | _string_   | Name of the object.                                                                                                    |
-| `callback(err)` | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description         |
+| ------------ | -------- | ------------------- |
+| `bucketName` | _string_ | Name of the bucket. |
+| `objectName` | _string_ | Name of the object. |
 
 **Example**
 
 ```js
-minioClient.removeIncompleteUpload('mybucket', 'photo.jpg', function (err) {
-  if (err) {
-    return console.log('Unable to remove incomplete object', err)
-  }
-  console.log('Incomplete object removed successfully.')
-})
+await minioClient.removeIncompleteUpload('mybucket', 'photo.jpg')
 ```
 
 <a name="putObjectRetention"></a>
@@ -1422,28 +1372,32 @@ await minioClient.putObjectRetention(bucketName, objectName, {
 
 <a name="getObjectRetention"></a>
 
-### getObjectRetention(bucketName, objectName [, getOpts] [, callback])
+### getObjectRetention(bucketName, objectName [, getOpts])
 
 Get retention config of an object
 
 **Parameters**
 
-| Param                | Type       | Description                                                                                                                      |
-| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`         | _string_   | Name of the bucket.                                                                                                              |
-| `objectName`         | _string_   | Name of the object.                                                                                                              |
-| `getOpts`            | _object_   | Options for retention like : `{ versionId:"my-versionId" }` Default is `{}` (Optional)                                           |
-| `callback(err, res)` | _function_ | Callback is called with `err` in case of error. `res` is the response object. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                                                            |
+| ------------ | -------- | -------------------------------------------------------------------------------------- |
+| `bucketName` | _string_ | Name of the bucket.                                                                    |
+| `objectName` | _string_ | Name of the object.                                                                    |
+| `getOpts`    | _object_ | Options for retention like : `{ versionId:"my-versionId" }` Default is `{}` (Optional) |
 
-**Example**
+**Example 1**
 
 ```js
-minioClient.getObjectRetention('bucketname', 'bucketname', { versionId: 'my-versionId' }, function (err, res) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log(res)
+const retentionInfo = await minioClient.getObjectRetention('bucketname', 'objectname')
+console.log(retentionInfo)
+```
+
+**Example 2**
+
+```js
+const retInfoForVersionId = await minioClient.getObjectRetention('bucketname', 'objectname', {
+  versionId: 'my-versionId',
 })
+console.log(retInfoForVersionId)
 ```
 
 <a name="setObjectTagging"></a>
@@ -1595,7 +1549,7 @@ const legalholdStatus = await minioClient.setObjectLegalHold('bucketName', 'obje
 
 <a name="composeObject"></a>
 
-### composeObject(destObjConfig, sourceObjectList [, callback])
+### composeObject(destObjConfig, sourceObjectList)
 
 Compose an object from parts
 
@@ -1605,7 +1559,6 @@ Compose an object from parts
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `destObjConfig`    | _object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                  |
 | `sourceObjectList` | _object[]_ | Array of object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
-| `callback(err)`    | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                               |
 
 **Example 1**
 
@@ -1639,14 +1592,7 @@ const destOption = new minio.CopyDestinationOptions({
 })
 
 //using Promise style.
-const composePromise = minioClient.composeObject(destOption, sourceList)
-composePromise
-  .then((result) => {
-    console.log('Success...')
-  })
-  .catch((e) => {
-    console.log('error', e)
-  })
+await minioClient.composeObject(destOption, sourceList)
 ```
 
 <a name="selectObjectContent"></a>

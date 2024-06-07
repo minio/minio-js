@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto'
 import * as fs from 'node:fs'
+import type { IncomingHttpHeaders } from 'node:http'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import * as path from 'node:path'
@@ -15,13 +16,23 @@ import xml2js from 'xml2js'
 import { CredentialProvider } from '../CredentialProvider.ts'
 import * as errors from '../errors.ts'
 import type { SelectResults } from '../helpers.ts'
-import { DEFAULT_REGION, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from '../helpers.ts'
+import {
+  CopyDestinationOptions,
+  CopySourceOptions,
+  DEFAULT_REGION,
+  LEGAL_HOLD_STATUS,
+  RETENTION_MODES,
+  RETENTION_VALIDITY_UNITS,
+} from '../helpers.ts'
 import { signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
+import { CopyConditions } from './copy-conditions.ts'
 import { Extensions } from './extensions.ts'
 import {
+  calculateEvenSplits,
   extractMetadata,
   getContentLength,
+  getSourceVersionId,
   getVersionId,
   hashBinary,
   insertContentType,
@@ -40,6 +51,8 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
+  PART_CONSTRAINTS,
+  partsRequired,
   prependXAMZMeta,
   readableStream,
   sanitizeETag,
@@ -59,8 +72,13 @@ import type {
   BucketItemStat,
   BucketStream,
   BucketVersioningConfiguration,
+  CopyObjectParams,
+  CopyObjectResult,
+  CopyObjectResultV2,
+  EncryptionConfig,
   GetObjectLegalHoldOptions,
   GetObjectOpts,
+  GetObjectRetentionOpts,
   IncompleteUploadedBucketItem,
   IRequest,
   ItemBucketMetadata,
@@ -69,8 +87,12 @@ import type {
   ObjectLockConfigParam,
   ObjectLockInfo,
   ObjectMetaData,
+  ObjectRetentionInfo,
   PutObjectLegalHoldOptions,
   PutTaggingParams,
+  RemoveObjectsParam,
+  RemoveObjectsRequestEntry,
+  RemoveObjectsResponse,
   RemoveTaggingParams,
   ReplicationConfig,
   ReplicationConfigOpts,
@@ -85,6 +107,7 @@ import type {
   Tags,
   Transport,
   UploadedObjectInfo,
+  UploadPartConfig,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import {
@@ -92,6 +115,7 @@ import {
   parseInitiateMultipart,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
+  uploadPartParser,
 } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -886,10 +910,9 @@ export class TypedClient {
       headers['x-amz-bucket-object-lock-enabled'] = true
     }
 
-    if (!region) {
-      region = DEFAULT_REGION
-    }
-    const finalRegion = region // type narrow
+    // For custom region clients  default to custom region specified in client constructor
+    const finalRegion = this.region || region || DEFAULT_REGION
+
     const requestOpt: RequestOption = { method, bucketName, headers }
 
     try {
@@ -1117,19 +1140,7 @@ export class TypedClient {
     }
   }
 
-  /**
-   * Remove the specified object.
-   * @deprecated use new promise style API
-   */
-  removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions, callback: NoResultCallback): void
-  /**
-   * @deprecated use new promise style API
-   */
-  // @ts-ignore
-  removeObject(bucketName: string, objectName: string, callback: NoResultCallback): void
-  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void>
-
-  async removeObject(bucketName: string, objectName: string, removeOpts: RemoveOptions = {}): Promise<void> {
+  async removeObject(bucketName: string, objectName: string, removeOpts?: RemoveOptions): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
     }
@@ -1137,22 +1148,22 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    if (!isObject(removeOpts)) {
+    if (removeOpts && !isObject(removeOpts)) {
       throw new errors.InvalidArgumentError('removeOpts should be of type "object"')
     }
 
     const method = 'DELETE'
 
     const headers: RequestHeaders = {}
-    if (removeOpts.governanceBypass) {
+    if (removeOpts?.governanceBypass) {
       headers['X-Amz-Bypass-Governance-Retention'] = true
     }
-    if (removeOpts.forceDelete) {
+    if (removeOpts?.forceDelete) {
       headers['x-minio-force-delete'] = true
     }
 
     const queryParams: Record<string, string> = {}
-    if (removeOpts.versionId) {
+    if (removeOpts?.versionId) {
       queryParams.versionId = `${removeOpts.versionId}`
     }
     const query = qs.stringify(queryParams)
@@ -1491,7 +1502,8 @@ export class TypedClient {
 
   async listBuckets(): Promise<BucketItemFromList[]> {
     const method = 'GET'
-    const httpRes = await this.makeRequestAsync({ method }, '', [200], this.region ?? '')
+    const regionConf = this.region || DEFAULT_REGION
+    const httpRes = await this.makeRequestAsync({ method }, '', [200], regionConf)
     const xmlResult = await readAsString(httpRes)
     return xmlParsers.parseListBucket(xmlResult)
   }
@@ -2094,7 +2106,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  async getBucketVersioning(bucketName: string): Promise<void> {
+  async getBucketVersioning(bucketName: string): Promise<BucketVersioningConfiguration> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2177,7 +2189,7 @@ export class TypedClient {
     await this.makeRequestAsync(requestOptions, '', [200, 204])
   }
 
-  async setBucketTagging(bucketName: string, tags: Tag): Promise<void> {
+  async setBucketTagging(bucketName: string, tags: Tags): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2348,5 +2360,454 @@ export class TypedClient {
     const res = await this.makeRequestAsync({ method, bucketName, query })
     const body = await readAsString(res)
     return xmlParsers.parseLifecycleConfig(body)
+  }
+
+  async setBucketEncryption(bucketName: string, encryptionConfig?: EncryptionConfig): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
+      throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
+    }
+
+    let encryptionObj = encryptionConfig
+    if (_.isEmpty(encryptionConfig)) {
+      encryptionObj = {
+        // Default MinIO Server Supported Rule
+        Rule: [
+          {
+            ApplyServerSideEncryptionByDefault: {
+              SSEAlgorithm: 'AES256',
+            },
+          },
+        ],
+      }
+    }
+
+    const method = 'PUT'
+    const query = 'encryption'
+    const builder = new xml2js.Builder({
+      rootName: 'ServerSideEncryptionConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(encryptionObj)
+
+    const headers: RequestHeaders = {}
+    headers['Content-MD5'] = toMd5(payload)
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
+  }
+
+  async getBucketEncryption(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'encryption'
+
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseBucketEncryptionConfig(body)
+  }
+
+  async removeBucketEncryption(bucketName: string) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'DELETE'
+    const query = 'encryption'
+
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [204])
+  }
+
+  async getObjectRetention(
+    bucketName: string,
+    objectName: string,
+    getOpts?: GetObjectRetentionOpts,
+  ): Promise<ObjectRetentionInfo | null | undefined> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (getOpts && !isObject(getOpts)) {
+      throw new errors.InvalidArgumentError('getOpts should be of type "object"')
+    } else if (getOpts?.versionId && !isString(getOpts.versionId)) {
+      throw new errors.InvalidArgumentError('versionId should be of type "string"')
+    }
+
+    const method = 'GET'
+    let query = 'retention'
+    if (getOpts?.versionId) {
+      query += `&versionId=${getOpts.versionId}`
+    }
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, query })
+    const body = await readAsString(res)
+    return xmlParsers.parseObjectRetentionConfig(body)
+  }
+
+  async removeObjects(bucketName: string, objectsList: RemoveObjectsParam): Promise<RemoveObjectsResponse[]> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!Array.isArray(objectsList)) {
+      throw new errors.InvalidArgumentError('objectsList should be a list')
+    }
+
+    const runDeleteObjects = async (batch: RemoveObjectsParam): Promise<RemoveObjectsResponse[]> => {
+      const delObjects: RemoveObjectsRequestEntry[] = batch.map((value) => {
+        return isObject(value) ? { Key: value.name, VersionId: value.versionId } : { Key: value }
+      })
+
+      const remObjects = { Delete: { Quiet: true, Object: delObjects } }
+      const payload = Buffer.from(new xml2js.Builder({ headless: true }).buildObject(remObjects))
+      const headers: RequestHeaders = { 'Content-MD5': toMd5(payload) }
+
+      const res = await this.makeRequestAsync({ method: 'POST', bucketName, query: 'delete', headers }, payload)
+      const body = await readAsString(res)
+      return xmlParsers.removeObjectsParser(body)
+    }
+
+    const maxEntries = 1000 // max entries accepted in server for DeleteMultipleObjects API.
+    // Client side batching
+    const batches = []
+    for (let i = 0; i < objectsList.length; i += maxEntries) {
+      batches.push(objectsList.slice(i, i + maxEntries))
+    }
+
+    const batchResults = await Promise.all(batches.map(runDeleteObjects))
+    return batchResults.flat()
+  }
+
+  async removeIncompleteUpload(bucketName: string, objectName: string): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.IsValidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    const removeUploadId = await this.findUploadId(bucketName, objectName)
+    const method = 'DELETE'
+    const query = `uploadId=${removeUploadId}`
+    await this.makeRequestAsyncOmit({ method, bucketName, objectName, query }, '', [204])
+  }
+
+  private async copyObjectV1(
+    targetBucketName: string,
+    targetObjectName: string,
+    sourceBucketNameAndObjectName: string,
+    conditions?: null | CopyConditions,
+  ) {
+    if (typeof conditions == 'function') {
+      conditions = null
+    }
+
+    if (!isValidBucketName(targetBucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + targetBucketName)
+    }
+    if (!isValidObjectName(targetObjectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${targetObjectName}`)
+    }
+    if (!isString(sourceBucketNameAndObjectName)) {
+      throw new TypeError('sourceBucketNameAndObjectName should be of type "string"')
+    }
+    if (sourceBucketNameAndObjectName === '') {
+      throw new errors.InvalidPrefixError(`Empty source prefix`)
+    }
+
+    if (conditions != null && !(conditions instanceof CopyConditions)) {
+      throw new TypeError('conditions should be of type "CopyConditions"')
+    }
+
+    const headers: RequestHeaders = {}
+    headers['x-amz-copy-source'] = uriResourceEscape(sourceBucketNameAndObjectName)
+
+    if (conditions) {
+      if (conditions.modified !== '') {
+        headers['x-amz-copy-source-if-modified-since'] = conditions.modified
+      }
+      if (conditions.unmodified !== '') {
+        headers['x-amz-copy-source-if-unmodified-since'] = conditions.unmodified
+      }
+      if (conditions.matchETag !== '') {
+        headers['x-amz-copy-source-if-match'] = conditions.matchETag
+      }
+      if (conditions.matchETagExcept !== '') {
+        headers['x-amz-copy-source-if-none-match'] = conditions.matchETagExcept
+      }
+    }
+
+    const method = 'PUT'
+
+    const res = await this.makeRequestAsync({
+      method,
+      bucketName: targetBucketName,
+      objectName: targetObjectName,
+      headers,
+    })
+    const body = await readAsString(res)
+    return xmlParsers.parseCopyObject(body)
+  }
+
+  private async copyObjectV2(
+    sourceConfig: CopySourceOptions,
+    destConfig: CopyDestinationOptions,
+  ): Promise<CopyObjectResultV2> {
+    if (!(sourceConfig instanceof CopySourceOptions)) {
+      throw new errors.InvalidArgumentError('sourceConfig should of type CopySourceOptions ')
+    }
+    if (!(destConfig instanceof CopyDestinationOptions)) {
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+    if (!destConfig.validate()) {
+      return Promise.reject()
+    }
+    if (!destConfig.validate()) {
+      return Promise.reject()
+    }
+
+    const headers = Object.assign({}, sourceConfig.getHeaders(), destConfig.getHeaders())
+
+    const bucketName = destConfig.Bucket
+    const objectName = destConfig.Object
+
+    const method = 'PUT'
+
+    const res = await this.makeRequestAsync({ method, bucketName, objectName, headers })
+    const body = await readAsString(res)
+    const copyRes = xmlParsers.parseCopyObject(body)
+    const resHeaders: IncomingHttpHeaders = res.headers
+
+    const sizeHeaderValue = resHeaders && resHeaders['content-length']
+    const size = typeof sizeHeaderValue === 'number' ? sizeHeaderValue : undefined
+
+    return {
+      Bucket: destConfig.Bucket,
+      Key: destConfig.Object,
+      LastModified: copyRes.lastModified,
+      MetaData: extractMetadata(resHeaders as ResponseHeader),
+      VersionId: getVersionId(resHeaders as ResponseHeader),
+      SourceVersionId: getSourceVersionId(resHeaders as ResponseHeader),
+      Etag: sanitizeETag(resHeaders.etag),
+      Size: size,
+    }
+  }
+
+  async copyObject(source: CopySourceOptions, dest: CopyDestinationOptions): Promise<CopyObjectResult>
+  async copyObject(
+    targetBucketName: string,
+    targetObjectName: string,
+    sourceBucketNameAndObjectName: string,
+    conditions?: CopyConditions,
+  ): Promise<CopyObjectResult>
+  async copyObject(...allArgs: CopyObjectParams): Promise<CopyObjectResult> {
+    if (typeof allArgs[0] === 'string') {
+      const [targetBucketName, targetObjectName, sourceBucketNameAndObjectName, conditions] = allArgs as [
+        string,
+        string,
+        string,
+        CopyConditions?,
+      ]
+      return await this.copyObjectV1(targetBucketName, targetObjectName, sourceBucketNameAndObjectName, conditions)
+    }
+    const [source, dest] = allArgs as [CopySourceOptions, CopyDestinationOptions]
+    return await this.copyObjectV2(source, dest)
+  }
+
+  async uploadPart(partConfig: {
+    bucketName: string
+    objectName: string
+    uploadID: string
+    partNumber: number
+    headers: RequestHeaders
+  }) {
+    const { bucketName, objectName, uploadID, partNumber, headers } = partConfig
+
+    const method = 'PUT'
+    const query = `uploadId=${uploadID}&partNumber=${partNumber}`
+    const requestOptions = { method, bucketName, objectName: objectName, query, headers }
+
+    const res = await this.makeRequestAsync(requestOptions)
+    const body = await readAsString(res)
+    const partRes = uploadPartParser(body)
+
+    return {
+      etag: sanitizeETag(partRes.ETag),
+      key: objectName,
+      part: partNumber,
+    }
+  }
+
+  async composeObject(
+    destObjConfig: CopyDestinationOptions,
+    sourceObjList: CopySourceOptions[],
+  ): Promise<boolean | { etag: string; versionId: string | null } | Promise<void> | CopyObjectResult> {
+    const sourceFilesLength = sourceObjList.length
+
+    if (!Array.isArray(sourceObjList)) {
+      throw new errors.InvalidArgumentError('sourceConfig should an array of CopySourceOptions ')
+    }
+    if (!(destObjConfig instanceof CopyDestinationOptions)) {
+      throw new errors.InvalidArgumentError('destConfig should of type CopyDestinationOptions ')
+    }
+
+    if (sourceFilesLength < 1 || sourceFilesLength > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+      throw new errors.InvalidArgumentError(
+        `"There must be as least one and up to ${PART_CONSTRAINTS.MAX_PARTS_COUNT} source objects.`,
+      )
+    }
+
+    for (let i = 0; i < sourceFilesLength; i++) {
+      const sObj = sourceObjList[i] as CopySourceOptions
+      if (!sObj.validate()) {
+        return false
+      }
+    }
+
+    if (!(destObjConfig as CopyDestinationOptions).validate()) {
+      return false
+    }
+
+    const getStatOptions = (srcConfig: CopySourceOptions) => {
+      let statOpts = {}
+      if (!_.isEmpty(srcConfig.VersionID)) {
+        statOpts = {
+          versionId: srcConfig.VersionID,
+        }
+      }
+      return statOpts
+    }
+    const srcObjectSizes: number[] = []
+    let totalSize = 0
+    let totalParts = 0
+
+    const sourceObjStats = sourceObjList.map((srcItem) =>
+      this.statObject(srcItem.Bucket, srcItem.Object, getStatOptions(srcItem)),
+    )
+
+    const srcObjectInfos = await Promise.all(sourceObjStats)
+
+    const validatedStats = srcObjectInfos.map((resItemStat, index) => {
+      const srcConfig: CopySourceOptions | undefined = sourceObjList[index]
+
+      let srcCopySize = resItemStat.size
+      // Check if a segment is specified, and if so, is the
+      // segment within object bounds?
+      if (srcConfig && srcConfig.MatchRange) {
+        // Since range is specified,
+        //    0 <= src.srcStart <= src.srcEnd
+        // so only invalid case to check is:
+        const srcStart = srcConfig.Start
+        const srcEnd = srcConfig.End
+        if (srcEnd >= srcCopySize || srcStart < 0) {
+          throw new errors.InvalidArgumentError(
+            `CopySrcOptions ${index} has invalid segment-to-copy [${srcStart}, ${srcEnd}] (size is ${srcCopySize})`,
+          )
+        }
+        srcCopySize = srcEnd - srcStart + 1
+      }
+
+      // Only the last source may be less than `absMinPartSize`
+      if (srcCopySize < PART_CONSTRAINTS.ABS_MIN_PART_SIZE && index < sourceFilesLength - 1) {
+        throw new errors.InvalidArgumentError(
+          `CopySrcOptions ${index} is too small (${srcCopySize}) and it is not the last part.`,
+        )
+      }
+
+      // Is data to copy too large?
+      totalSize += srcCopySize
+      if (totalSize > PART_CONSTRAINTS.MAX_MULTIPART_PUT_OBJECT_SIZE) {
+        throw new errors.InvalidArgumentError(`Cannot compose an object of size ${totalSize} (> 5TiB)`)
+      }
+
+      // record source size
+      srcObjectSizes[index] = srcCopySize
+
+      // calculate parts needed for current source
+      totalParts += partsRequired(srcCopySize)
+      // Do we need more parts than we are allowed?
+      if (totalParts > PART_CONSTRAINTS.MAX_PARTS_COUNT) {
+        throw new errors.InvalidArgumentError(
+          `Your proposed compose object requires more than ${PART_CONSTRAINTS.MAX_PARTS_COUNT} parts`,
+        )
+      }
+
+      return resItemStat
+    })
+
+    if ((totalParts === 1 && totalSize <= PART_CONSTRAINTS.MAX_PART_SIZE) || totalSize === 0) {
+      return await this.copyObject(sourceObjList[0] as CopySourceOptions, destObjConfig) // use copyObjectV2
+    }
+
+    // preserve etag to avoid modification of object while copying.
+    for (let i = 0; i < sourceFilesLength; i++) {
+      ;(sourceObjList[i] as CopySourceOptions).MatchETag = (validatedStats[i] as BucketItemStat).etag
+    }
+
+    const splitPartSizeList = validatedStats.map((resItemStat, idx) => {
+      return calculateEvenSplits(srcObjectSizes[idx] as number, sourceObjList[idx] as CopySourceOptions)
+    })
+
+    const getUploadPartConfigList = (uploadId: string) => {
+      const uploadPartConfigList: UploadPartConfig[] = []
+
+      splitPartSizeList.forEach((splitSize, splitIndex: number) => {
+        if (splitSize) {
+          const { startIndex: startIdx, endIndex: endIdx, objInfo: objConfig } = splitSize
+
+          const partIndex = splitIndex + 1 // part index starts from 1.
+          const totalUploads = Array.from(startIdx)
+
+          const headers = (sourceObjList[splitIndex] as CopySourceOptions).getHeaders()
+
+          totalUploads.forEach((splitStart, upldCtrIdx) => {
+            const splitEnd = endIdx[upldCtrIdx]
+
+            const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
+            headers['x-amz-copy-source'] = `${sourceObj}`
+            headers['x-amz-copy-source-range'] = `bytes=${splitStart}-${splitEnd}`
+
+            const uploadPartConfig = {
+              bucketName: destObjConfig.Bucket,
+              objectName: destObjConfig.Object,
+              uploadID: uploadId,
+              partNumber: partIndex,
+              headers: headers,
+              sourceObj: sourceObj,
+            }
+
+            uploadPartConfigList.push(uploadPartConfig)
+          })
+        }
+      })
+
+      return uploadPartConfigList
+    }
+
+    const uploadAllParts = async (uploadList: UploadPartConfig[]) => {
+      const partUploads = uploadList.map(async (item) => {
+        return this.uploadPart(item)
+      })
+      // Process results here if needed
+      return await Promise.all(partUploads)
+    }
+
+    const performUploadParts = async (uploadId: string) => {
+      const uploadList = getUploadPartConfigList(uploadId)
+      const partsRes = await uploadAllParts(uploadList)
+      return partsRes.map((partCopy) => ({ etag: partCopy.etag, part: partCopy.part }))
+    }
+
+    const newUploadHeaders = destObjConfig.getHeaders()
+
+    const uploadId = await this.initiateNewMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, newUploadHeaders)
+    try {
+      const partsDone = await performUploadParts(uploadId)
+      return await this.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone)
+    } catch (err) {
+      return await this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId)
+    }
   }
 }

@@ -95,11 +95,6 @@ export function getHashSummer(enableSHA256) {
 // Following functions return a stream object that parses XML
 // and emits suitable Javascript objects.
 
-// Parses CopyObject response.
-export function getCopyObjectTransformer() {
-  return getConcater(xmlParsers.parseCopyObject)
-}
-
 // Parses listObjects response.
 export function getListObjectsTransformer() {
   return getConcater(xmlParsers.parseListObjects)
@@ -118,23 +113,4 @@ export function getListObjectsV2WithMetadataTransformer() {
 // Parses GET/SET BucketNotification response
 export function getBucketNotificationTransformer() {
   return getConcater(xmlParsers.parseBucketNotification)
-}
-
-export function objectRetentionTransformer() {
-  return getConcater(xmlParsers.parseObjectRetentionConfig)
-}
-export function bucketEncryptionTransformer() {
-  return getConcater(xmlParsers.parseBucketEncryptionConfig)
-}
-
-export function objectLegalHoldTransformer() {
-  return getConcater(xmlParsers.parseObjectLegalHoldConfig)
-}
-
-export function uploadPartTransformer() {
-  return getConcater(xmlParsers.uploadPartParser)
-}
-
-export function removeObjectsTransformer() {
-  return getConcater(xmlParsers.removeObjectsParser)
 }

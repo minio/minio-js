@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2024 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname, my-objectname  are
 // dummy values, please replace them with original values.
-
 import * as Minio from 'minio'
 
 const s3Client = new Minio.Client({
@@ -25,9 +24,11 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.getBucketEncryption('my-bucket', function (error, enConfig) {
-  if (error) {
-    return console.log(error)
-  }
-  console.log(enConfig)
-})
+// Note: It is a no-op in MinIO
+// Can be used/tested with AWS S3.
+try {
+  await s3Client.removeIncompleteUpload('my-bucketname', 'my-objectname')
+  console.log('Success')
+} catch (e) {
+  console.log(e.message)
+}
