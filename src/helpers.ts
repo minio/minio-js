@@ -21,6 +21,8 @@ export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDIT
 
 export const DEFAULT_REGION = 'us-east-1'
 
+export const PRESIGN_EXPIRY_DAYS_MAX = 24 * 60 * 60 * 7 // 7 days in seconds
+
 export interface ICopySourceOptions {
   Bucket: string
   Object: string
