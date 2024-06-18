@@ -321,10 +321,10 @@ export type SelectOptions = {
   scanRange?: ScanRange
 }
 export type Expiration = {
-  Date: string
+  Date?: string
   Days: number
-  DeleteMarker: boolean
-  DeleteAll: boolean
+  DeleteMarker?: boolean
+  DeleteAll?: boolean
 }
 
 export type RuleFilterAnd = {
