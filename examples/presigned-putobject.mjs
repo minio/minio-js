@@ -26,28 +26,5 @@ const s3Client = new Minio.Client({
   useSSL: true, // Default is true.
 })
 
-// Presigned get object URL for my-objectname at my-bucketname, it expires in 7 days by default.
-const requestDate = new Date()
-
-requestDate.setHours(0, 0, 0, 0)
-s3Client.presignedGetObject('my-bucketname', 'my-objectname', 1000, {}, requestDate, function (e, presignedUrl) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log(presignedUrl)
-})
-
-// Versioning support
-s3Client.presignedGetObject(
-  'my-bucketname',
-  'my-objectname',
-  1000,
-  { versionId: '10fa9946-3f64-4137-a58f-888065c0732e' },
-  requestDate,
-  function (e, presignedUrl) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log(presignedUrl)
-  },
-)
+const presignedUrl = await s3Client.presignedPutObject('my-bucketname', 'my-objectname', 1000)
+console.log(presignedUrl)

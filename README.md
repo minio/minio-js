@@ -168,6 +168,7 @@ The complete API Reference is available here:
 
 ### Presigned Operations
 
+- [`presignedUrl`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedUrl)
 - [`presignedGetObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedGetObject)
 - [`presignedPutObject`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPutObject)
 - [`presignedPostPolicy`](https://min.io/docs/minio/linux/developers/javascript/API.html#presignedPostPolicy)
@@ -242,9 +243,9 @@ The complete API Reference is available here:
 
 #### Presigned Operations
 
-- [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
-- [presigned-putobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
-- [presigned-postpolicy.js](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
+- [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
+- [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
+- [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
 
 #### Bucket Notification Operations
 

@@ -16,7 +16,6 @@
 
 import * as Stream from 'node:stream'
 
-import * as querystring from 'query-string'
 import xml2js from 'xml2js'
 
 import * as errors from './errors.ts'
@@ -24,24 +23,19 @@ import { callbackify } from './internal/callbackify.js'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import {
-  getScope,
   isBoolean,
   isFunction,
   isNumber,
   isObject,
   isString,
   isValidBucketName,
-  isValidDate,
-  isValidObjectName,
   isValidPrefix,
-  makeDateLong,
   pipesetup,
   uriEscape,
 } from './internal/helper.ts'
 import { PostPolicy } from './internal/post-policy.ts'
 import { NotificationConfig, NotificationPoller } from './notification.ts'
 import { promisify } from './promisify.js'
-import { postPresignSignatureV4, presignSignatureV4 } from './signing.ts'
 import * as transformers from './transformers.js'
 
 export * from './errors.ts'
@@ -50,30 +44,10 @@ export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 
 export class Client extends TypedClient {
-  // Set application specific information.
-  //
-  // Generates User-Agent in the following style.
-  //
-  //       MinIO (OS; ARCH) LIB/VER APP/VER
   //
   // __Arguments__
   // * `appName` _string_ - Application name.
   // * `appVersion` _string_ - Application version.
-  setAppInfo(appName, appVersion) {
-    if (!isString(appName)) {
-      throw new TypeError(`Invalid appName: ${appName}`)
-    }
-    if (appName.trim() === '') {
-      throw new errors.InvalidArgumentError('Input appName cannot be empty.')
-    }
-    if (!isString(appVersion)) {
-      throw new TypeError(`Invalid appVersion: ${appVersion}`)
-    }
-    if (appVersion.trim() === '') {
-      throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
-    }
-    this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
-  }
 
   // list a batch of objects
   listObjectsQuery(bucketName, prefix, marker, listQueryOpts = {}) {
@@ -358,195 +332,6 @@ export class Client extends TypedClient {
     return readStream
   }
 
-  // Generate a generic presigned URL which can be
-  // used for HTTP methods GET, PUT, HEAD and DELETE
-  //
-  // __Arguments__
-  // * `method` _string_: name of the HTTP method
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `reqParams` _object_: request parameters (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
-  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
-  presignedUrl(method, bucketName, objectName, expires, reqParams, requestDate, cb) {
-    if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned ' + method + ' url cannot be generated for anonymous requests')
-    }
-    if (isFunction(requestDate)) {
-      cb = requestDate
-      requestDate = new Date()
-    }
-    if (isFunction(reqParams)) {
-      cb = reqParams
-      reqParams = {}
-      requestDate = new Date()
-    }
-    if (isFunction(expires)) {
-      cb = expires
-      reqParams = {}
-      expires = 24 * 60 * 60 * 7 // 7 days in seconds
-      requestDate = new Date()
-    }
-    if (!isNumber(expires)) {
-      throw new TypeError('expires should be of type "number"')
-    }
-    if (!isObject(reqParams)) {
-      throw new TypeError('reqParams should be of type "object"')
-    }
-    if (!isValidDate(requestDate)) {
-      throw new TypeError('requestDate should be of type "Date" and valid')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('callback should be of type "function"')
-    }
-    var query = querystring.stringify(reqParams)
-    this.getBucketRegion(bucketName, (e, region) => {
-      if (e) {
-        return cb(e)
-      }
-      // This statement is added to ensure that we send error through
-      // callback on presign failure.
-      var url
-      var reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query })
-
-      this.checkAndRefreshCreds()
-      try {
-        url = presignSignatureV4(
-          reqOptions,
-          this.accessKey,
-          this.secretKey,
-          this.sessionToken,
-          region,
-          requestDate,
-          expires,
-        )
-      } catch (pe) {
-        return cb(pe)
-      }
-      cb(null, url)
-    })
-  }
-
-  // Generate a presigned URL for GET
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  // * `respHeaders` _object_: response headers to override or request params for query (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}
-  // * `requestDate` _Date_: A date object, the url will be issued at (optional)
-  presignedGetObject(bucketName, objectName, expires, respHeaders, requestDate, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-
-    if (isFunction(respHeaders)) {
-      cb = respHeaders
-      respHeaders = {}
-      requestDate = new Date()
-    }
-
-    var validRespHeaders = [
-      'response-content-type',
-      'response-content-language',
-      'response-expires',
-      'response-cache-control',
-      'response-content-disposition',
-      'response-content-encoding',
-    ]
-    validRespHeaders.forEach((header) => {
-      if (respHeaders !== undefined && respHeaders[header] !== undefined && !isString(respHeaders[header])) {
-        throw new TypeError(`response header ${header} should be of type "string"`)
-      }
-    })
-    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate, cb)
-  }
-
-  // Generate a presigned URL for PUT. Using this URL, the browser can upload to S3 only with the specified object name.
-  //
-  // __Arguments__
-  // * `bucketName` _string_: name of the bucket
-  // * `objectName` _string_: name of the object
-  // * `expiry` _number_: expiry in seconds (optional, default 7 days)
-  presignedPutObject(bucketName, objectName, expires, cb) {
-    if (!isValidBucketName(bucketName)) {
-      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
-    }
-    if (!isValidObjectName(objectName)) {
-      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    return this.presignedUrl('PUT', bucketName, objectName, expires, cb)
-  }
-
-  // return PostPolicy object
-  newPostPolicy() {
-    return new PostPolicy()
-  }
-
-  // presignedPostPolicy can be used in situations where we want more control on the upload than what
-  // presignedPutObject() provides. i.e Using presignedPostPolicy we will be able to put policy restrictions
-  // on the object's `name` `bucket` `expiry` `Content-Type` `Content-Disposition` `metaData`
-  presignedPostPolicy(postPolicy, cb) {
-    if (this.anonymous) {
-      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
-    }
-    if (!isObject(postPolicy)) {
-      throw new TypeError('postPolicy should be of type "object"')
-    }
-    if (!isFunction(cb)) {
-      throw new TypeError('cb should be of type "function"')
-    }
-    this.getBucketRegion(postPolicy.formData.bucket, (e, region) => {
-      if (e) {
-        return cb(e)
-      }
-      var date = new Date()
-      var dateStr = makeDateLong(date)
-
-      this.checkAndRefreshCreds()
-
-      if (!postPolicy.policy.expiration) {
-        // 'expiration' is mandatory field for S3.
-        // Set default expiration date of 7 days.
-        var expires = new Date()
-        expires.setSeconds(24 * 60 * 60 * 7)
-        postPolicy.setExpires(expires)
-      }
-
-      postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
-      postPolicy.formData['x-amz-date'] = dateStr
-
-      postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
-      postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
-
-      postPolicy.policy.conditions.push(['eq', '$x-amz-credential', this.accessKey + '/' + getScope(region, date)])
-      postPolicy.formData['x-amz-credential'] = this.accessKey + '/' + getScope(region, date)
-
-      if (this.sessionToken) {
-        postPolicy.policy.conditions.push(['eq', '$x-amz-security-token', this.sessionToken])
-        postPolicy.formData['x-amz-security-token'] = this.sessionToken
-      }
-
-      var policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
-
-      postPolicy.formData.policy = policyBase64
-
-      var signature = postPresignSignatureV4(region, date, this.secretKey, policyBase64)
-
-      postPolicy.formData['x-amz-signature'] = signature
-      var opts = {}
-      opts.region = region
-      opts.bucketName = postPolicy.formData.bucket
-      var reqOptions = this.getRequestOptions(opts)
-      var portStr = this.port == 80 || this.port === 443 ? '' : `:${this.port.toString()}`
-      var urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
-      cb(null, { postURL: urlStr, formData: postPolicy.formData })
-    })
-  }
-
   // Remove all the notification configurations in the S3 provider
   setBucketNotification(bucketName, config, cb) {
     if (!isValidBucketName(bucketName)) {
@@ -618,10 +403,6 @@ export class Client extends TypedClient {
   }
 }
 
-Client.prototype.presignedUrl = promisify(Client.prototype.presignedUrl)
-Client.prototype.presignedGetObject = promisify(Client.prototype.presignedGetObject)
-Client.prototype.presignedPutObject = promisify(Client.prototype.presignedPutObject)
-Client.prototype.presignedPostPolicy = promisify(Client.prototype.presignedPostPolicy)
 Client.prototype.getBucketNotification = promisify(Client.prototype.getBucketNotification)
 Client.prototype.setBucketNotification = promisify(Client.prototype.setBucketNotification)
 Client.prototype.removeAllBucketNotification = promisify(Client.prototype.removeAllBucketNotification)
@@ -670,3 +451,7 @@ Client.prototype.removeObjects = callbackify(Client.prototype.removeObjects)
 Client.prototype.removeIncompleteUpload = callbackify(Client.prototype.removeIncompleteUpload)
 Client.prototype.copyObject = callbackify(Client.prototype.copyObject)
 Client.prototype.composeObject = callbackify(Client.prototype.composeObject)
+Client.prototype.presignedUrl = callbackify(Client.prototype.presignedUrl)
+Client.prototype.presignedGetObject = callbackify(Client.prototype.presignedGetObject)
+Client.prototype.presignedPutObject = callbackify(Client.prototype.presignedPutObject)
+Client.prototype.presignedPostPolicy = callbackify(Client.prototype.presignedPostPolicy)

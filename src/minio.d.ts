@@ -141,73 +141,6 @@ export class Client extends TypedClient {
 
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
-  // Presigned operations
-  presignedUrl(httpMethod: string, bucketName: string, objectName: string, callback: ResultCallback<string>): void
-  presignedUrl(
-    httpMethod: string,
-    bucketName: string,
-    objectName: string,
-    expiry: number,
-    callback: ResultCallback<string>,
-  ): void
-  presignedUrl(
-    httpMethod: string,
-    bucketName: string,
-    objectName: string,
-    expiry: number,
-    reqParams: { [key: string]: any },
-    callback: ResultCallback<string>,
-  ): void
-  presignedUrl(
-    httpMethod: string,
-    bucketName: string,
-    objectName: string,
-    expiry: number,
-    reqParams: { [key: string]: any },
-    requestDate: Date,
-    callback: ResultCallback<string>,
-  ): void
-  presignedUrl(
-    httpMethod: string,
-    bucketName: string,
-    objectName: string,
-    expiry?: number,
-    reqParams?: { [key: string]: any },
-    requestDate?: Date,
-  ): Promise<string>
-
-  presignedGetObject(bucketName: string, objectName: string, callback: ResultCallback<string>): void
-  presignedGetObject(bucketName: string, objectName: string, expiry: number, callback: ResultCallback<string>): void
-  presignedGetObject(
-    bucketName: string,
-    objectName: string,
-    expiry: number,
-    respHeaders: { [key: string]: any },
-    callback: ResultCallback<string>,
-  ): void
-  presignedGetObject(
-    bucketName: string,
-    objectName: string,
-    expiry: number,
-    respHeaders: { [key: string]: any },
-    requestDate: Date,
-    callback: ResultCallback<string>,
-  ): void
-  presignedGetObject(
-    bucketName: string,
-    objectName: string,
-    expiry?: number,
-    respHeaders?: { [key: string]: any },
-    requestDate?: Date,
-  ): Promise<string>
-
-  presignedPutObject(bucketName: string, objectName: string, callback: ResultCallback<string>): void
-  presignedPutObject(bucketName: string, objectName: string, expiry: number, callback: ResultCallback<string>): void
-  presignedPutObject(bucketName: string, objectName: string, expiry?: number): Promise<string>
-
-  presignedPostPolicy(policy: PostPolicy, callback: ResultCallback<PostPolicyResult>): void
-  presignedPostPolicy(policy: PostPolicy): Promise<PostPolicyResult>
-
   // Bucket Policy & Notification operations
   getBucketNotification(bucketName: string, callback: ResultCallback<NotificationConfig>): void
   getBucketNotification(bucketName: string): Promise<NotificationConfig>
@@ -228,7 +161,4 @@ export class Client extends TypedClient {
     suffix: string,
     events: NotificationEvent[],
   ): NotificationPoller
-
-  // Other
-  newPostPolicy(): PostPolicy
 }

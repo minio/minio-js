@@ -382,75 +382,84 @@ describe('Client', function () {
   })
   describe('Presigned URL', () => {
     describe('presigned-get', () => {
-      it('should not generate presigned url with no access key', (done) => {
+      it('should not generate presigned url with no access key', async () => {
         try {
-          var client = new Minio.Client({
+          const client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedGetObject('bucket', 'object', 1000, function () {})
-        } catch (e) {
-          done()
+          await client.presignedGetObject('bucket', 'object', 1000)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should not generate presigned url with wrong expires param', (done) => {
+      it('should not generate presigned url with wrong expires param', async () => {
         try {
-          client.presignedGetObject('bucket', 'object', '0', function () {})
-        } catch (e) {
-          done()
+          await client.presignedGetObject('bucket', 'object', '0')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('presigned-put', () => {
-      it('should not generate presigned url with no access key', (done) => {
+      it('should not generate presigned url with no access key', async () => {
         try {
-          var client = new Minio.Client({
+          const client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedPutObject('bucket', 'object', 1000, function () {})
-        } catch (e) {
-          done()
+          await client.presignedPutObject('bucket', 'object', 1000)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should not generate presigned url with wrong expires param', (done) => {
+      it('should not generate presigned url with wrong expires param', async () => {
         try {
-          client.presignedPutObject('bucket', 'object', '0', function () {})
-        } catch (e) {
-          done()
+          const client = new Minio.Client({
+            endPoint: 'localhost',
+            port: 9000,
+            useSSL: false,
+          })
+          await client.presignedPutObject('bucket', 'object', '0')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('presigned-post-policy', () => {
       it('should not generate content type for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setContentType()
         }, /content-type cannot be null/)
       })
       it('should not generate content disposition for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setContentDisposition()
         }, /content-disposition cannot be null/)
       })
       it('should not generate user defined metadata for string value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData('123')
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for null value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData(null)
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData()
         }, /metadata should be of type "object"/)
       })

@@ -21,10 +21,12 @@ import {
   CopySourceOptions,
   DEFAULT_REGION,
   LEGAL_HOLD_STATUS,
+  PRESIGN_EXPIRY_DAYS_MAX,
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from '../helpers.ts'
-import { signV4 } from '../signing.ts'
+import type { PostPolicyResult } from '../minio'
+import { postPresignSignatureV4, presignSignatureV4, signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
 import { CopyConditions } from './copy-conditions.ts'
 import { Extensions } from './extensions.ts'
@@ -32,6 +34,7 @@ import {
   calculateEvenSplits,
   extractMetadata,
   getContentLength,
+  getScope,
   getSourceVersionId,
   getVersionId,
   hashBinary,
@@ -40,6 +43,7 @@ import {
   isBoolean,
   isDefined,
   isEmpty,
+  isFunction,
   isNumber,
   isObject,
   isReadableStream,
@@ -62,6 +66,7 @@ import {
   uriResourceEscape,
 } from './helper.ts'
 import { joinHostPort } from './join-host-port.ts'
+import { PostPolicy } from './post-policy.ts'
 import { request } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
@@ -88,6 +93,7 @@ import type {
   ObjectLockInfo,
   ObjectMetaData,
   ObjectRetentionInfo,
+  PreSignRequestParams,
   PutObjectLegalHoldOptions,
   PutTaggingParams,
   RemoveObjectsParam,
@@ -110,6 +116,7 @@ import type {
   UploadPartConfig,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
+import * as xmlParsers from './xml-parser.ts'
 import {
   parseCompleteMultipart,
   parseInitiateMultipart,
@@ -117,7 +124,6 @@ import {
   parseSelectObjectContentResponse,
   uploadPartParser,
 } from './xml-parser.ts'
-import * as xmlParsers from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -342,7 +348,6 @@ export class TypedClient {
     this.reqOptions = {}
     this.clientExtensions = new Extensions(this)
   }
-
   /**
    * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
    */
@@ -383,6 +388,27 @@ export class TypedClient {
       return this.s3AccelerateEndpoint
     }
     return false
+  }
+
+  /**
+   *   Set application specific information.
+   *   Generates User-Agent in the following style.
+   *   MinIO (OS; ARCH) LIB/VER APP/VER
+   */
+  setAppInfo(appName: string, appVersion: string) {
+    if (!isString(appName)) {
+      throw new TypeError(`Invalid appName: ${appName}`)
+    }
+    if (appName.trim() === '') {
+      throw new errors.InvalidArgumentError('Input appName cannot be empty.')
+    }
+    if (!isString(appVersion)) {
+      throw new TypeError(`Invalid appVersion: ${appVersion}`)
+    }
+    if (appVersion.trim() === '') {
+      throw new errors.InvalidArgumentError('Input appVersion cannot be empty.')
+    }
+    this.userAgent = `${this.userAgent} ${appName}/${appVersion}`
   }
 
   /**
@@ -2808,6 +2834,184 @@ export class TypedClient {
       return await this.completeMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId, partsDone)
     } catch (err) {
       return await this.abortMultipartUpload(destObjConfig.Bucket, destObjConfig.Object, uploadId)
+    }
+  }
+
+  async presignedUrl(
+    method: string,
+    bucketName: string,
+    objectName: string,
+    expires?: number | PreSignRequestParams | undefined,
+    reqParams?: PreSignRequestParams | Date,
+    requestDate?: Date,
+  ): Promise<string> {
+    if (this.anonymous) {
+      throw new errors.AnonymousRequestError(`Presigned ${method} url cannot be generated for anonymous requests`)
+    }
+
+    // Handle optional parameters and defaults
+    if (requestDate === undefined && isFunction(reqParams)) {
+      requestDate = new Date()
+    }
+    if (reqParams === undefined && isFunction(expires)) {
+      reqParams = {}
+      requestDate = new Date()
+    }
+    if (expires && typeof expires === 'function') {
+      expires = PRESIGN_EXPIRY_DAYS_MAX
+      reqParams = {}
+      requestDate = new Date()
+    }
+    if (!requestDate) {
+      requestDate = new Date()
+    }
+
+    // Type assertions
+    if (expires && typeof expires !== 'number') {
+      throw new TypeError('expires should be of type "number"')
+    }
+    if (reqParams && typeof reqParams !== 'object') {
+      throw new TypeError('reqParams should be of type "object"')
+    }
+    if ((requestDate && !(requestDate instanceof Date)) || (requestDate && isNaN(requestDate?.getTime()))) {
+      throw new TypeError('requestDate should be of type "Date" and valid')
+    }
+
+    const query = reqParams ? qs.stringify(reqParams) : undefined
+
+    try {
+      const region = await this.getBucketRegionAsync(bucketName)
+      await this.checkAndRefreshCreds()
+      const reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query })
+
+      return presignSignatureV4(
+        reqOptions,
+        this.accessKey,
+        this.secretKey,
+        this.sessionToken,
+        region,
+        requestDate,
+        expires,
+      )
+    } catch (err) {
+      throw new errors.InvalidArgumentError(`Unable to get bucket region for  ${bucketName}.`)
+    }
+  }
+
+  async presignedGetObject(
+    bucketName: string,
+    objectName: string,
+    expires?: number,
+    respHeaders?: PreSignRequestParams | Date,
+    requestDate?: Date,
+  ): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (expires && isFunction(expires)) {
+      expires = PRESIGN_EXPIRY_DAYS_MAX
+      respHeaders = {}
+      requestDate = new Date()
+    }
+    if (!expires) {
+      expires = PRESIGN_EXPIRY_DAYS_MAX
+    }
+    if (isFunction(respHeaders)) {
+      respHeaders = {}
+      requestDate = new Date()
+    }
+
+    const validRespHeaders = [
+      'response-content-type',
+      'response-content-language',
+      'response-expires',
+      'response-cache-control',
+      'response-content-disposition',
+      'response-content-encoding',
+    ]
+    validRespHeaders.forEach((header) => {
+      // @ts-ignore
+      if (respHeaders !== undefined && respHeaders[header] !== undefined && !isString(respHeaders[header])) {
+        throw new TypeError(`response header ${header} should be of type "string"`)
+      }
+    })
+    return this.presignedUrl('GET', bucketName, objectName, expires, respHeaders, requestDate)
+  }
+
+  async presignedPutObject(bucketName: string, objectName: string, expires?: number): Promise<string> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isValidObjectName(objectName)) {
+      throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
+    }
+    if (expires && isFunction(expires)) {
+      expires = PRESIGN_EXPIRY_DAYS_MAX
+    }
+
+    return this.presignedUrl('PUT', bucketName, objectName, expires)
+  }
+
+  newPostPolicy(): PostPolicy {
+    return new PostPolicy()
+  }
+
+  async presignedPostPolicy(postPolicy: PostPolicy): Promise<PostPolicyResult> {
+    if (this.anonymous) {
+      throw new errors.AnonymousRequestError('Presigned POST policy cannot be generated for anonymous requests')
+    }
+    if (!isObject(postPolicy)) {
+      throw new TypeError('postPolicy should be of type "object"')
+    }
+    const bucketName = postPolicy.formData.bucket as string
+    try {
+      const region = await this.getBucketRegionAsync(bucketName)
+
+      const date = new Date()
+      const dateStr = makeDateLong(date)
+      await this.checkAndRefreshCreds()
+
+      if (!postPolicy.policy.expiration) {
+        // 'expiration' is mandatory field for S3.
+        // Set default expiration date of 7 days.
+        const expires = new Date()
+        expires.setSeconds(24 * 60 * 60 * 7)
+        postPolicy.setExpires(expires)
+      }
+
+      postPolicy.policy.conditions.push(['eq', '$x-amz-date', dateStr])
+      postPolicy.formData['x-amz-date'] = dateStr
+
+      postPolicy.policy.conditions.push(['eq', '$x-amz-algorithm', 'AWS4-HMAC-SHA256'])
+      postPolicy.formData['x-amz-algorithm'] = 'AWS4-HMAC-SHA256'
+
+      postPolicy.policy.conditions.push(['eq', '$x-amz-credential', this.accessKey + '/' + getScope(region, date)])
+      postPolicy.formData['x-amz-credential'] = this.accessKey + '/' + getScope(region, date)
+
+      if (this.sessionToken) {
+        postPolicy.policy.conditions.push(['eq', '$x-amz-security-token', this.sessionToken])
+        postPolicy.formData['x-amz-security-token'] = this.sessionToken
+      }
+
+      const policyBase64 = Buffer.from(JSON.stringify(postPolicy.policy)).toString('base64')
+
+      postPolicy.formData.policy = policyBase64
+
+      postPolicy.formData['x-amz-signature'] = postPresignSignatureV4(region, date, this.secretKey, policyBase64)
+      const opts = {
+        region: region,
+        bucketName: bucketName,
+        method: 'POST',
+      }
+      const reqOptions = this.getRequestOptions(opts)
+      const portStr = this.port == 80 || this.port === 443 ? '' : `:${this.port.toString()}`
+      const urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
+      return { postURL: urlStr, formData: postPolicy.formData }
+    } catch (er) {
+      throw new errors.InvalidArgumentError(`Unable to get bucket region for  ${bucketName}.`)
     }
   }
 }
