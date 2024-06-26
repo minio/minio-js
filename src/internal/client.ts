@@ -2955,7 +2955,7 @@ export class TypedClient {
         // 'expiration' is mandatory field for S3.
         // Set default expiration date of 7 days.
         const expires = new Date()
-        expires.setSeconds(24 * 60 * 60 * 7)
+        expires.setSeconds(PRESIGN_EXPIRY_DAYS_MAX)
         postPolicy.setExpires(expires)
       }
 
