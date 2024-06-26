@@ -388,7 +388,7 @@ describe('Client', function () {
         accessKey: 'accesskey',
         secretKey: 'secretkey',
         useSSL: false,
-        region: 'us-east-1'
+        region: 'us-east-1',
       })
 
       it('should use the default expiry if omitted', async () => {
@@ -399,8 +399,10 @@ describe('Client', function () {
         const url = await client.presignedUrl('get', 'bucket', 'object', 3600)
         return expect(url).to.contain('X-Amz-Expires=3600')
       })
-      it('should reject an invalid expiry time', async() => {
-        await expect(client.presignedUrl('get', 'bucket', 'object', 'invalid')).to.eventually.be.rejectedWith("expires should be of type \"number\"")
+      it('should reject an invalid expiry time', async () => {
+        await expect(client.presignedUrl('get', 'bucket', 'object', 'invalid')).to.eventually.be.rejectedWith(
+          'expires should be of type "number"',
+        )
       })
       it('should handle a callback function', (done) => {
         client.presignedUrl('get', 'bucket', 'object', (error, result) => {
