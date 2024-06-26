@@ -2848,6 +2848,12 @@ export class TypedClient {
       throw new errors.AnonymousRequestError(`Presigned ${method} url cannot be generated for anonymous requests`)
     }
 
+    if (!expires) {
+      expires = PRESIGN_EXPIRY_DAYS_MAX
+    }
+    if (!reqParams) {
+      reqParams = {}
+    }
     if (!requestDate) {
       requestDate = new Date()
     }
