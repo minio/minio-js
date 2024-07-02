@@ -43,7 +43,6 @@ import {
   isBoolean,
   isDefined,
   isEmpty,
-  isFunction,
   isNumber,
   isObject,
   isReadableStream,
@@ -2849,18 +2848,11 @@ export class TypedClient {
       throw new errors.AnonymousRequestError(`Presigned ${method} url cannot be generated for anonymous requests`)
     }
 
-    // Handle optional parameters and defaults
-    if (requestDate === undefined && isFunction(reqParams)) {
-      requestDate = new Date()
-    }
-    if (reqParams === undefined && isFunction(expires)) {
-      reqParams = {}
-      requestDate = new Date()
-    }
-    if (expires && typeof expires === 'function') {
+    if (!expires) {
       expires = PRESIGN_EXPIRY_DAYS_MAX
+    }
+    if (!reqParams) {
       reqParams = {}
-      requestDate = new Date()
     }
     if (!requestDate) {
       requestDate = new Date()
@@ -2911,18 +2903,6 @@ export class TypedClient {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (expires && isFunction(expires)) {
-      expires = PRESIGN_EXPIRY_DAYS_MAX
-      respHeaders = {}
-      requestDate = new Date()
-    }
-    if (!expires) {
-      expires = PRESIGN_EXPIRY_DAYS_MAX
-    }
-    if (isFunction(respHeaders)) {
-      respHeaders = {}
-      requestDate = new Date()
-    }
 
     const validRespHeaders = [
       'response-content-type',
@@ -2947,9 +2927,6 @@ export class TypedClient {
     }
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
-    }
-    if (expires && isFunction(expires)) {
-      expires = PRESIGN_EXPIRY_DAYS_MAX
     }
 
     return this.presignedUrl('PUT', bucketName, objectName, expires)
@@ -2978,7 +2955,7 @@ export class TypedClient {
         // 'expiration' is mandatory field for S3.
         // Set default expiration date of 7 days.
         const expires = new Date()
-        expires.setSeconds(24 * 60 * 60 * 7)
+        expires.setSeconds(PRESIGN_EXPIRY_DAYS_MAX)
         postPolicy.setExpires(expires)
       }
 
