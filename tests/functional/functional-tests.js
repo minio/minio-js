@@ -3620,6 +3620,65 @@ describe('functional tests', function () {
       )
     })
   })
+  describe('listObjectsV2WithMetadata with tags and metadata', function () {
+    const bucketName = 'minio-js-test-tags-' + uuid.v4()
+    const fdObjectName = 'datafile-100-kB'
+    const fdObject = dataDir ? fs.readFileSync(dataDir + '/' + fdObjectName) : Buffer.alloc(100 * 1024, 0)
+    const objectName = 'objectwithtags'
+    const tags = { key1: 'value1', key2: 'value2' }
+    const metadata = { 'X-Amz-Meta-Test': 'test-value' }
+
+    before(() => {
+      return client.makeBucket(bucketName, '').then((res) => {
+        return client.putObject(bucketName, objectName, fdObject, fdObject.length, metadata).then((res) => {
+          return client.setObjectTagging(bucketName, objectName, tags)
+        })
+      })
+    })
+    after(() => client.removeObject(bucketName, objectName).then((_) => client.removeBucket(bucketName)))
+
+    step(
+      `extensions.listObjectsV2WithMetadata(bucketName, prefix, recursive)_bucketName:${bucketName}, prefix:"", recursive:true`,
+      function (done) {
+        const listStream = client.extensions.listObjectsV2WithMetadata(bucketName, '', true)
+        let listedObject = null
+
+        listStream.on('data', function (obj) {
+          listedObject = obj
+        })
+
+        listStream.on('end', function () {
+          if (!listedObject) {
+            return done(new Error('No objects were listed'))
+          }
+
+          if (listedObject.name !== objectName) {
+            return done(new Error(`Expected object name: ${objectName}, received: ${listedObject.name}`))
+          }
+
+          if (!_.isEqual(listedObject.tags, tags)) {
+            return done(
+              new Error(`Expected tags: ${JSON.stringify(tags)}, received: ${JSON.stringify(listedObject.tags)}`),
+            )
+          }
+
+          if (!_.isEqual(listedObject.metadata['X-Amz-Meta-Test'], metadata['X-Amz-Meta-Test'])) {
+            return done(
+              new Error(
+                `Expected metadata: ${JSON.stringify(metadata)}, received: ${JSON.stringify(listedObject.metadata)}`,
+              ),
+            )
+          }
+
+          done()
+        })
+
+        listStream.on('error', function (e) {
+          done(e)
+        })
+      },
+    )
+  })
   describe('Object Name special characters test with a Prefix', () => {
     // Isolate the bucket/object for easy debugging and tracking.
     const bucketNameForSpCharObjects = 'minio-js-test-obj-spnpre-' + uuid.v4()
