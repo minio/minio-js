@@ -1745,6 +1745,7 @@ export class TypedClient {
             headers: {
               'Content-Length': chunk.length,
               'Content-MD5': md5.toString('base64'),
+              ...headers,
             },
             bucketName,
             objectName,

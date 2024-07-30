@@ -142,6 +142,15 @@ describe('functional tests', function () {
     'X-Amz-Meta-Testing': 1234,
     randomstuff: 5678,
   }
+  const buffer = crypto.getRandomValues(new Uint8Array(16))
+  const encryptionKey = Array.from(buffer, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  const keyToBase64 = Buffer.from(encryptionKey).toString('base64')
+  const keyHashedToMD5 = String(crypto.createHash('md5').update(encryptionKey).digest('base64'))
+  var encryptionMetaData = {
+    'X-Amz-Server-Side-Encryption-Customer-Algorithm': 'AES256',
+    'X-Amz-Server-Side-Encryption-Customer-Key': keyToBase64,
+    'X-Amz-Server-Side-Encryption-Customer-Key-MD5': keyHashedToMD5,
+  }
 
   var tmpDir = os.tmpdir()
 
@@ -3992,6 +4001,78 @@ describe('functional tests', function () {
         } else {
           done()
         }
+      },
+    )
+  })
+  describe('Put Object Response test with multipart + encryption headers on an Un versioned bucket:', () => {
+    const bucketToTestMultipart = 'minio-js-test-put-multiuv-' + uuid.v4()
+
+    before(() => client.makeBucket(bucketToTestMultipart, ''))
+    after(() => client.removeBucket(bucketToTestMultipart))
+
+    // Non multipart Test
+    step(
+      `putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}, stream:100KB`,
+      (done) => {
+        const stream = readableStream(_100kb)
+        client.putObject(bucketToTestMultipart, _100kbObjectName, stream, encryptionMetaData, (e, res) => {
+          if (e) {
+            done(e)
+          }
+          if (res.versionId === null && res.etag) {
+            done()
+          } else {
+            done(
+              new Error(
+                `Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(
+                  res,
+                )}`,
+              ),
+            )
+          }
+        })
+      },
+    )
+    step(
+      `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_100kbObjectName}`,
+      (done) => {
+        client
+          .removeObject(bucketToTestMultipart, _100kbObjectName)
+          .then(() => done())
+          .catch(done)
+      },
+    )
+
+    // Multipart Test
+    step(
+      `putObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}, stream:65MB`,
+      (done) => {
+        const stream = readableStream(_65mb)
+        client.putObject(bucketToTestMultipart, _65mbObjectName, stream, encryptionMetaData, (e, res) => {
+          if (e) {
+            done(e)
+          }
+          if (res.versionId === null && res.etag) {
+            done()
+          } else {
+            done(
+              new Error(
+                `Incorrect response format, expected: {versionId:null, etag:"some-etag-hash"} received:${JSON.stringify(
+                  res,
+                )}`,
+              ),
+            )
+          }
+        })
+      },
+    )
+    step(
+      `removeObject(bucketName, objectName, stream)_bucketName:${bucketToTestMultipart}, _objectName:${_65mbObjectName}`,
+      (done) => {
+        client
+          .removeObject(bucketToTestMultipart, _65mbObjectName)
+          .then(() => done())
+          .catch(done)
       },
     )
   })
