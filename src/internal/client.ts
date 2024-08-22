@@ -25,7 +25,7 @@ import {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from '../helpers.ts'
-import type { PostPolicyResult } from '../minio'
+import type { PostPolicyResult } from '../minio.ts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
 import { CopyConditions } from './copy-conditions.ts'
