@@ -2886,7 +2886,11 @@ export class TypedClient {
         expires,
       )
     } catch (err) {
-      throw new errors.InvalidArgumentError(`Unable to get bucket region for  ${bucketName}.`)
+      if (err instanceof errors.InvalidBucketNameError) {
+        throw new errors.InvalidArgumentError(`Unable to get bucket region for ${bucketName}.`)
+      }
+
+      throw err
     }
   }
 
@@ -2987,8 +2991,12 @@ export class TypedClient {
       const portStr = this.port == 80 || this.port === 443 ? '' : `:${this.port.toString()}`
       const urlStr = `${reqOptions.protocol}//${reqOptions.host}${portStr}${reqOptions.path}`
       return { postURL: urlStr, formData: postPolicy.formData }
-    } catch (er) {
-      throw new errors.InvalidArgumentError(`Unable to get bucket region for  ${bucketName}.`)
+    } catch (err) {
+      if (err instanceof errors.InvalidBucketNameError) {
+        throw new errors.InvalidArgumentError(`Unable to get bucket region for ${bucketName}.`)
+      }
+
+      throw err
     }
   }
 }
