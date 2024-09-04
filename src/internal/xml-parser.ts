@@ -213,13 +213,31 @@ export function parseListParts(xml: string): {
   return result
 }
 
-export function parseListBucket(xml: string) {
+export function parseListBucket(xml: string): BucketItemFromList[] {
   let result: BucketItemFromList[] = []
-  const parsedXmlRes = parseXml(xml)
+  const listBucketResultParser = new XMLParser({
+    parseTagValue: true, // Enable parsing of values
+    numberParseOptions: {
+      leadingZeros: false, // Disable number parsing for values with leading zeros
+      hex: false, // Disable hex number parsing - Invalid bucket name
+      skipLike: /^[0-9]+$/, // Skip number parsing if the value consists entirely of digits
+    },
+    tagValueProcessor: (tagName, tagValue = '') => {
+      // Ensure that the Name tag is always treated as a string
+      if (tagName === 'Name') {
+        return tagValue.toString()
+      }
+      return tagValue
+    },
+    ignoreAttributes: false, // Ensure that all attributes are parsed
+  })
+
+  const parsedXmlRes = listBucketResultParser.parse(xml)
 
   if (!parsedXmlRes.ListAllMyBucketsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
   }
+
   const { ListAllMyBucketsResult: { Buckets = {} } = {} } = parsedXmlRes
 
   if (Buckets.Bucket) {
@@ -227,9 +245,10 @@ export function parseListBucket(xml: string) {
       const { Name: bucketName, CreationDate } = bucket
       const creationDate = new Date(CreationDate)
 
-      return { name: bucketName, creationDate: creationDate }
+      return { name: bucketName, creationDate }
     })
   }
+
   return result
 }
 
