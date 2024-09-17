@@ -1579,7 +1579,7 @@ export class TypedClient {
     // Inserts correct `content-type` attribute based on metaData and filePath
     metaData = insertContentType(metaData, filePath)
     const stat = await fsp.lstat(filePath)
-    await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
+    return await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
   }
 
   /**

@@ -160,7 +160,7 @@ mc ls play/europetrip/
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 
 #### 完整示例 : 操作文件对象
-* [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
+* [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
 * [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
