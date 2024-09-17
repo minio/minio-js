@@ -219,7 +219,7 @@ The complete API Reference is available here:
 
 #### File Object Operations
 
-- [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
+- [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
 - [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### Object Operations
