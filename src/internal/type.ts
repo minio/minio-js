@@ -91,6 +91,10 @@ export interface ItemBucketMetadata {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
+export interface ItemBucketTags {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any
+}
 
 export interface BucketItemFromList {
   name: string
@@ -120,6 +124,7 @@ export type BucketItem =
 
 export type BucketItemWithMetadata = BucketItem & {
   metadata?: ItemBucketMetadata | ItemBucketMetadataList
+  tags?: ItemBucketTags
 }
 
 export interface BucketStream<T> extends ReadableStream {
