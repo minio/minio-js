@@ -789,6 +789,14 @@ export class TypedClient {
       const res = await this.makeRequestAsync({ method, bucketName, query, pathStyle }, '', [200], DEFAULT_REGION)
       return extractRegionAsync(res)
     } catch (e) {
+      // make alignment with mc cli
+      if (e instanceof errors.S3Error) {
+        const errCode = e.code
+        const errRegion = e.region
+        if (errCode === 'AccessDenied' && !errRegion) {
+          return DEFAULT_REGION
+        }
+      }
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       if (!(e.name === 'AuthorizationHeaderMalformed')) {
