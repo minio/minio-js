@@ -296,7 +296,7 @@ const stream = minioClient.listObjects('mybucket', '', true)
 stream.on('data', function (obj) {
   data.push(obj)
 })
-stream.on('end', function (obj) {
+stream.on('end', function () {
   console.log(data)
 })
 stream.on('error', function (err) {
@@ -313,7 +313,7 @@ const stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: t
 stream.on('data', function (obj) {
   data.push(obj)
 })
-stream.on('end', function (obj) {
+stream.on('end', function () {
   console.log(data)
 })
 stream.on('error', function (err) {
