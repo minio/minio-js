@@ -121,7 +121,6 @@ import {
   parseInitiateMultipart,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
-  uploadPartParser,
 } from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
@@ -2649,25 +2648,24 @@ export class TypedClient {
     return await this.copyObjectV2(source, dest)
   }
 
-  async uploadPart(partConfig: {
-    bucketName: string
-    objectName: string
-    uploadID: string
-    partNumber: number
-    headers: RequestHeaders
-  }) {
+  async uploadPart(
+    partConfig: {
+      bucketName: string
+      objectName: string
+      uploadID: string
+      partNumber: number
+      headers: RequestHeaders
+    },
+    payload?: Binary,
+  ) {
     const { bucketName, objectName, uploadID, partNumber, headers } = partConfig
 
     const method = 'PUT'
     const query = `uploadId=${uploadID}&partNumber=${partNumber}`
     const requestOptions = { method, bucketName, objectName: objectName, query, headers }
-
-    const res = await this.makeRequestAsync(requestOptions)
-    const body = await readAsString(res)
-    const partRes = uploadPartParser(body)
-
+    const res = await this.makeRequestAsync(requestOptions, payload)
     return {
-      etag: sanitizeETag(partRes.ETag),
+      etag: sanitizeETag(res.headers.etag),
       key: objectName,
       part: partNumber,
     }
