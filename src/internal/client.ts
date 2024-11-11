@@ -1716,7 +1716,7 @@ export class TypedClient {
       uploadId = previousUploadId
       const oldTags = await this.listParts(bucketName, objectName, previousUploadId)
       oldTags.forEach((e) => {
-        oldTags[e.part] = e
+        oldParts[e.part] = e
       })
     }
 
