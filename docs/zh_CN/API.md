@@ -66,6 +66,8 @@ __参数__
 |`sessionToken`    | _string_  |Set this value to provide x-amz-security-token (AWS S3 specific). (Optional) - To be translated|
 |`partSize`    | _number_  |Set this value to override default part size of 64MB for multipart uploads. (Optional) - To be translated|
 | `pathStyle`    | _bool_   | 对于非 AWS 的 Endpoint，设置该值以覆盖默认访问方式 (path)。默认值为 true。（可选） |
+| `transportAgent` | [Agent](https://nodejs.org/api/http.html#class-httpagent) | 设置此值以提供自定义HTTP代理来处理超时、TLS处理和低级套接字配置。(Optional) |
+| `customEndpointHost`    | _bool_   | 将endPoint视作请求最终到达s3服务的自定义域名，不会额外处理域名。默认值为 false。（可选） |
 
 __示例__
 

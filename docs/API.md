@@ -67,19 +67,20 @@ const s3Client = new Minio.Client({
 
 **Parameters**
 
-| Param            | Type                                                      | Description                                                                                                                        |
-| ---------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `endPoint`       | _string_                                                  | endPoint is a host name or an IP address.                                                                                          |
-| `port`           | _number_                                                  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.                                    |
-| `useSSL`         | _bool_                                                    | If set to true, https is used instead of http. Default is true.                                                                    |
-| `accessKey`      | _string_                                                  | accessKey is like user-id that uniquely identifies your account.                                                                   |
-| `secretKey`      | _string_                                                  | secretKey is the password to your account.                                                                                         |
-| `sessionToken`   | _string_                                                  | Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)                                                       |
-| `region`         | _string_                                                  | Set this value to override region cache. (Optional)                                                                                |
-| `transport`      | _string_                                                  | Set this value to pass in a custom transport. (Optional)                                                                           |
-| `partSize`       | _number_                                                  | Set this value to override default part size of 64MB for multipart uploads. (Optional)                                             |
-| `pathStyle`      | _bool_                                                    | Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional)                       |
-| `transportAgent` | [Agent](https://nodejs.org/api/http.html#class-httpagent) | Set this value to provide a custom HTTP(s) agent to handle timeouts, TLS handling, and low-level socket configurations. (Optional) |
+| Param                | Type                                                      | Description                                                                                                                                                |
+| -------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `endPoint`           | _string_                                                  | endPoint is a host name or an IP address.                                                                                                                  |
+| `port`               | _number_                                                  | TCP/IP port number. This input is optional. Default value set to 80 for HTTP and 443 for HTTPs.                                                            |
+| `useSSL`             | _bool_                                                    | If set to true, https is used instead of http. Default is true.                                                                                            |
+| `accessKey`          | _string_                                                  | accessKey is like user-id that uniquely identifies your account.                                                                                           |
+| `secretKey`          | _string_                                                  | secretKey is the password to your account.                                                                                                                 |
+| `sessionToken`       | _string_                                                  | Set this value to provide x-amz-security-token (AWS S3 specific). (Optional)                                                                               |
+| `region`             | _string_                                                  | Set this value to override region cache. (Optional)                                                                                                        |
+| `transport`          | _string_                                                  | Set this value to pass in a custom transport. (Optional)                                                                                                   |
+| `partSize`           | _number_                                                  | Set this value to override default part size of 64MB for multipart uploads. (Optional)                                                                     |
+| `pathStyle`          | _bool_                                                    | Set this value to override default access behavior (path) for non AWS endpoints. Default is true. (Optional)                                               |
+| `transportAgent`     | [Agent](https://nodejs.org/api/http.html#class-httpagent) | Set this value to provide a custom HTTP(s) agent to handle timeouts, TLS handling, and low-level socket configurations. (Optional)                         |
+| `customEndpointHost` | _bool_                                                    | Consider endPoint as a custom domain name that ultimately reaches the S3 service for the request, without any additional domain name processing.(Optional) |
 
 **Example**
 
