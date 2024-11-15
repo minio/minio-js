@@ -163,6 +163,7 @@ export interface ClientOptions {
   credentialsProvider?: CredentialProvider
   s3AccelerateEndpoint?: string
   transportAgent?: http.Agent
+  customEndpointHost?: boolean
 }
 
 export type RequestOption = Partial<IRequest> & {
@@ -212,6 +213,7 @@ export class TypedClient {
   public enableSHA256: boolean
   protected s3AccelerateEndpoint?: string
   protected reqOptions: Record<string, unknown>
+  protected customEndpointHost = false
 
   protected transportAgent: http.Agent
   private readonly clientExtensions: Extensions
@@ -246,6 +248,9 @@ export class TypedClient {
       if (!isString(params.region)) {
         throw new errors.InvalidArgumentError(`Invalid region : ${params.region}`)
       }
+    }
+    if (params.customEndpointHost) {
+      this.customEndpointHost = true
     }
 
     const host = params.endPoint.toLowerCase()
@@ -470,7 +475,8 @@ export class TypedClient {
       //
       //  var host = 'bucketName.example.com'
       //
-      if (bucketName) {
+      // Sometime, we need to support custom endpoint host, so we need to check if customEndpointHost is set.
+      if (bucketName && !this.customEndpointHost) {
         host = `${bucketName}.${host}`
       }
       if (objectName) {
