@@ -141,13 +141,16 @@ export function probeContentType(path: string) {
  * is input port valid.
  */
 export function isValidPort(port: unknown): port is number {
-  // verify if port is a number.
-  if (!isNumber(port)) {
+  // Convert string port to number if needed
+  const portNum = typeof port === 'string' ? parseInt(port, 10) : port
+
+  // verify if port is a valid number
+  if (!isNumber(portNum) || isNaN(portNum)) {
     return false
   }
 
   // port `0` is valid and special case
-  return 0 <= port && port <= 65535
+  return 0 <= portNum && portNum <= 65535
 }
 
 export function isValidBucketName(bucket: unknown) {
