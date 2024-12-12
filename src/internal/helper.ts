@@ -376,6 +376,8 @@ export function isSupportedHeader(key: string) {
     'content-disposition',
     'content-language',
     'x-amz-website-redirect-location',
+    'if-none-match',
+    'if-match',
   ]
   return supported_headers.includes(key.toLowerCase())
 }
