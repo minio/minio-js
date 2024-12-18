@@ -88,6 +88,9 @@ import type {
   ItemBucketMetadata,
   LifecycleConfig,
   LifeCycleConfigParam,
+  ListObjectQueryOpts,
+  ListObjectQueryRes,
+  ObjectInfo,
   ObjectLockConfigParam,
   ObjectLockInfo,
   ObjectMetaData,
@@ -115,13 +118,14 @@ import type {
   UploadPartConfig,
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
-import * as xmlParsers from './xml-parser.ts'
 import {
   parseCompleteMultipart,
   parseInitiateMultipart,
+  parseListObjects,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
 } from './xml-parser.ts'
+import * as xmlParsers from './xml-parser.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -3004,5 +3008,132 @@ export class TypedClient {
 
       throw err
     }
+  }
+  // list a batch of objects
+  async listObjectsQuery(bucketName: string, prefix?: string, marker?: string, listQueryOpts?: ListObjectQueryOpts) {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(marker)) {
+      throw new TypeError('marker should be of type "string"')
+    }
+
+    if (listQueryOpts && !isObject(listQueryOpts)) {
+      throw new TypeError('listQueryOpts should be of type "object"')
+    }
+    let { Delimiter, MaxKeys, IncludeVersion } = listQueryOpts as ListObjectQueryOpts
+
+    if (!isString(Delimiter)) {
+      throw new TypeError('Delimiter should be of type "string"')
+    }
+    if (!isNumber(MaxKeys)) {
+      throw new TypeError('MaxKeys should be of type "number"')
+    }
+
+    const queries = []
+    // escape every value in query string, except maxKeys
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(Delimiter)}`)
+    queries.push(`encoding-type=url`)
+
+    if (IncludeVersion) {
+      queries.push(`versions`)
+    }
+
+    if (marker) {
+      marker = uriEscape(marker)
+      if (IncludeVersion) {
+        queries.push(`key-marker=${marker}`)
+      } else {
+        queries.push(`marker=${marker}`)
+      }
+    }
+
+    // no need to escape maxKeys
+    if (MaxKeys) {
+      if (MaxKeys >= 1000) {
+        MaxKeys = 1000
+      }
+      queries.push(`max-keys=${MaxKeys}`)
+    }
+    queries.sort()
+    let query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+
+    const method = 'GET'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    const listQryList = parseListObjects(body)
+    return listQryList
+  }
+
+  listObjects(
+    bucketName: string,
+    prefix?: string,
+    recursive?: boolean,
+    listOpts?: ListObjectQueryOpts | undefined,
+  ): BucketStream<ObjectInfo> {
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isBoolean(recursive)) {
+      throw new TypeError('recursive should be of type "boolean"')
+    }
+    if (listOpts && !isObject(listOpts)) {
+      throw new TypeError('listOpts should be of type "object"')
+    }
+    let marker: string | undefined = ''
+    const listQueryOpts = {
+      Delimiter: recursive ? '' : '/', // if recursive is false set delimiter to '/'
+      MaxKeys: 1000,
+      IncludeVersion: listOpts?.IncludeVersion,
+    }
+    let objects: ObjectInfo[] = []
+    let ended = false
+    const readStream: stream.Readable = new stream.Readable({ objectMode: true })
+    readStream._read = async () => {
+      // push one object per _read()
+      if (objects.length) {
+        readStream.push(objects.shift())
+        return
+      }
+      if (ended) {
+        return readStream.push(null)
+      }
+
+      try {
+        const result: ListObjectQueryRes = await this.listObjectsQuery(bucketName, prefix, marker, listQueryOpts)
+        if (result.isTruncated) {
+          marker = result.nextMarker || result.versionIdMarker
+        } else {
+          ended = true
+        }
+        if (result.objects) {
+          objects = result.objects
+        }
+        // @ts-ignore
+        readStream._read()
+      } catch (err) {
+        readStream.emit('error', err)
+      }
+    }
+    return readStream
   }
 }

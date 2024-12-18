@@ -367,7 +367,7 @@ export type LifecycleRule = {
   Prefix?: string
   Status?: string
   Expiration?: Expiration
-  RuleFilter?: RuleFilter
+  Filter?: RuleFilter
   NoncurrentVersionExpiration?: NoncurrentVersionExpiration
   NoncurrentVersionTransition?: NoncurrentVersionTransition
   Transition?: Transition
@@ -465,3 +465,78 @@ export type UploadPartConfig = {
 }
 
 export type PreSignRequestParams = { [key: string]: string }
+
+/** List object api types **/
+
+// Common types
+export type CommonPrefix = {
+  Prefix: string
+}
+
+export type Owner = {
+  ID: string
+  DisplayName: string
+}
+
+export type Metadata = {
+  Items: MetadataItem[]
+}
+
+export type ObjectInfo = {
+  key?: string
+  name?: string
+  lastModified?: Date // time string of format "2006-01-02T15:04:05.000Z"
+  etag?: string
+  owner?: Owner
+  storageClass?: string
+  userMetadata?: Metadata
+  userTags?: string
+  prefix?: string
+  size?: number
+}
+
+export type ListObjectQueryRes = {
+  isTruncated?: boolean
+  nextMarker?: string
+  versionIdMarker?: string
+  objects?: ObjectInfo[]
+}
+
+export type ListObjectQueryOpts = {
+  Delimiter?: string
+  MaxKeys?: number
+  IncludeVersion?: boolean
+}
+/** List object api types **/
+
+export type ObjectVersionEntry = {
+  IsLatest?: string
+  VersionId?: string
+}
+
+export type ObjectRowEntry = ObjectVersionEntry & {
+  Key: string
+  LastModified?: Date | undefined
+  ETag?: string
+  Size?: string
+  Owner?: Owner
+  StorageClass?: string
+}
+
+export interface ListBucketResultV1 {
+  Name?: string
+  Prefix?: string
+  ContinuationToken?: string
+  KeyCount?: string
+  Marker?: string
+  MaxKeys?: string
+  Delimiter?: string
+  IsTruncated?: boolean
+  Contents?: ObjectRowEntry[]
+  NextKeyMarker?: string
+  CommonPrefixes?: CommonPrefix[]
+  Version?: ObjectRowEntry[]
+  DeleteMarker?: ObjectRowEntry[]
+  VersionIdMarker?: string
+  NextVersionIdMarker?: string
+}

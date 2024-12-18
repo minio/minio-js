@@ -137,8 +137,6 @@ export interface SourceObjectStats {
 
 // Exports from library
 export class Client extends TypedClient {
-  listObjects(bucketName: string, prefix?: string, recursive?: boolean): BucketStream<BucketItem>
-
   listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
 
   // Bucket Policy & Notification operations
