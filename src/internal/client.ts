@@ -155,8 +155,8 @@ const requestOptionProperties = [
 
 export interface ClientOptions {
   endPoint: string
-  accessKey: string
-  secretKey: string
+  accessKey?: string
+  secretKey?: string
   useSSL?: boolean
   port?: number
   region?: Region
@@ -322,6 +322,7 @@ export class TypedClient {
     this.anonymous = !this.accessKey || !this.secretKey
 
     if (params.credentialsProvider) {
+      this.anonymous = false
       this.credentialsProvider = params.credentialsProvider
     }
 
