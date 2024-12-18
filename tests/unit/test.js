@@ -32,8 +32,8 @@ import {
   partsRequired,
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
+import { parseListObjects } from '../../src/internal/xml-parser.ts'
 import * as Minio from '../../src/minio.js'
-import { parseListObjects } from '../../src/xml-parsers.js'
 
 const Package = { version: 'development' }
 
