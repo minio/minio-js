@@ -333,8 +333,8 @@ export type ListMultipartResult = {
   uploads: {
     key: string
     uploadId: UploadID
-    initiator: unknown
-    owner: unknown
+    initiator?: { id: string; displayName: string }
+    owner?: { id: string; displayName: string }
     storageClass: unknown
     initiated: Date
   }[]
@@ -381,13 +381,19 @@ export function parseListMultipart(xml: string): ListMultipartResult {
 
   if (xmlobj.Upload) {
     toArray(xmlobj.Upload).forEach((upload) => {
-      const key = upload.Key
-      const uploadId = upload.UploadId
-      const initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
-      const owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
-      const storageClass = upload.StorageClass
-      const initiated = new Date(upload.Initiated)
-      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
+      const uploadItem: ListMultipartResult['uploads'][number] = {
+        key: upload.Key,
+        uploadId: upload.UploadId,
+        storageClass: upload.StorageClass,
+        initiated: new Date(upload.Initiated),
+      }
+      if (upload.Initiator) {
+        uploadItem.initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      }
+      if (upload.Owner) {
+        uploadItem.owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
+      }
+      result.uploads.push(uploadItem)
     })
   }
   return result
