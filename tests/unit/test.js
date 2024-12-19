@@ -32,7 +32,7 @@ import {
   partsRequired,
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
-import { parseListObjects } from '../../src/internal/xml-parser.ts'
+import { parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
 import * as Minio from '../../src/minio.js'
 
 const Package = { version: 'development' }
@@ -2301,6 +2301,39 @@ describe('xml-parser', () => {
 
         assert.equal(objects[0].size, 151306240)
         assert.equal(objects[1].size, undefined)
+      })
+    })
+  })
+
+  describe('#listMultipart()', () => {
+    describe('should handle missing owner and initiator', () => {
+      // example response from GCS
+      const xml = `
+        <?xml version='1.0' encoding='UTF-8'?>
+        <ListMultipartUploadsResult
+          xmlns='http://s3.amazonaws.com/doc/2006-03-01/'>
+          <Bucket>some-bucket</Bucket>
+          <KeyMarker></KeyMarker>
+          <UploadIdMarker></UploadIdMarker>
+          <NextKeyMarker></NextKeyMarker>
+          <Prefix>some-file.pdf</Prefix>
+          <Delimiter>/</Delimiter>
+          <NextUploadIdMarker></NextUploadIdMarker>
+          <MaxUploads>1000</MaxUploads>
+          <IsTruncated>false</IsTruncated>
+          <Upload>
+            <Key>some-file.pdf</Key>
+            <UploadId>ABPnzm4aGoV3sjevTkVeaWV6lvBFtdjcZegTJg8MUfTue1t6lgRIy6_JEoM0km3CNE218x00</UploadId>
+            <StorageClass>STANDARD</StorageClass>
+            <Initiated>2024-12-17T08:16:52.396303Z</Initiated>
+          </Upload>
+        </ListMultipartUploadsResult>
+      `
+
+      it('should parse list incomplete', () => {
+        const { uploads } = parseListMultipart(xml)
+        assert.equal(uploads.length, 1)
+        assert.equal(uploads[0].key, 'some-file.pdf')
       })
     })
   })
