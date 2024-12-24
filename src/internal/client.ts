@@ -166,7 +166,7 @@ export interface ClientOptions {
   sessionToken?: string
   partSize?: number
   pathStyle?: boolean
-  pathPrefix?: string
+  pathSuffix?: string
   credentialsProvider?: CredentialProvider
   s3AccelerateEndpoint?: string
   transportAgent?: http.Agent
@@ -222,7 +222,7 @@ export class TypedClient {
 
   protected transportAgent: http.Agent
   private readonly clientExtensions: Extensions
-  protected pathPrefix: string;
+  protected pathSuffix: string;
 
   constructor(params: ClientOptions) {
     // @ts-expect-error deprecated property
@@ -353,7 +353,7 @@ export class TypedClient {
 
     this.s3AccelerateEndpoint = params.s3AccelerateEndpoint || undefined
     this.reqOptions = {}
-    this.pathPrefix = params.pathPrefix || '/'
+    this.pathSuffix = params.pathSuffix || '/'
     this.clientExtensions = new Extensions(this)
   }
   /**
@@ -452,7 +452,7 @@ export class TypedClient {
       virtualHostStyle = isVirtualHostStyle(this.host, this.protocol, bucketName, this.pathStyle)
     }
 
-    let path = this.pathPrefix
+    let path = this.pathSuffix
     let host = this.host
 
     let port: undefined | number
@@ -484,17 +484,17 @@ export class TypedClient {
         host = `${bucketName}.${host}`
       }
       if (objectName) {
-        path = `${this.pathPrefix}/${objectName}`
+        path = `${this.pathSuffix}/${objectName}`
       }
     } else {
       // For all S3 compatible storage services we will fallback to
       // path style requests, where `bucketName` is part of the URI
       // path.
       if (bucketName) {
-        path = `${this.pathPrefix}/${bucketName}`
+        path = `${this.pathSuffix}/${bucketName}`
       }
       if (objectName) {
-        path = `${this.pathPrefix}/${bucketName}/${objectName}`
+        path = `${this.pathSuffix}/${bucketName}/${objectName}`
       }
     }
 
