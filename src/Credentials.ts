@@ -13,7 +13,7 @@ export class Credentials {
     this.accessKey = accessKey
   }
 
-  getAccessKey() {
+  getAccessKey() : string {
     return this.accessKey
   }
 
@@ -21,7 +21,7 @@ export class Credentials {
     this.secretKey = secretKey
   }
 
-  getSecretKey() {
+  getSecretKey(): string {
     return this.secretKey
   }
 
@@ -29,7 +29,7 @@ export class Credentials {
     this.sessionToken = sessionToken
   }
 
-  getSessionToken() {
+  getSessionToken(): string| undefined {
     return this.sessionToken
   }
 

@@ -94,7 +94,7 @@ export class CopySourceOptions {
     this.Encryption = Encryption
   }
 
-  validate() {
+  validate():boolean {
     if (!isValidBucketName(this.Bucket)) {
       throw new errors.InvalidBucketNameError('Invalid Source bucket name: ' + this.Bucket)
     }
@@ -141,7 +141,7 @@ export class CopySourceOptions {
 /**
  * @deprecated use nodejs fs module
  */
-export function removeDirAndFiles(dirPath: string, removeSelf = true) {
+export function removeDirAndFiles(dirPath: string, removeSelf = true):void {
   if (removeSelf) {
     return fs.rmSync(dirPath, { recursive: true, force: true })
   }
@@ -257,7 +257,7 @@ export class CopyDestinationOptions {
     return headerOptions
   }
 
-  validate() {
+  validate():boolean {
     if (!isValidBucketName(this.Bucket)) {
       throw new errors.InvalidBucketNameError('Invalid Destination bucket name: ' + this.Bucket)
     }
@@ -311,7 +311,7 @@ export class SelectResults {
     this.stats = stats
   }
 
-  getStats() {
+  getStats():unknown {
     return this.stats
   }
 
@@ -319,7 +319,7 @@ export class SelectResults {
     this.progress = progress
   }
 
-  getProgress() {
+  getProgress():unknown {
     return this.progress
   }
 
@@ -327,7 +327,7 @@ export class SelectResults {
     this.response = response
   }
 
-  getResponse() {
+  getResponse():unknown {
     return this.response
   }
 

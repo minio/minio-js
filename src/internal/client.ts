@@ -357,7 +357,7 @@ export class TypedClient {
   /**
    * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
    */
-  get extensions() {
+  get extensions():Extensions {
     return this.clientExtensions
   }
 
@@ -889,17 +889,6 @@ export class TypedClient {
     )
   }
 
-  /**
-   * @deprecated use `getBucketRegionAsync` instead
-   */
-  getBucketRegion(bucketName: string, cb: (err: unknown, region: string) => void) {
-    return this.getBucketRegionAsync(bucketName).then(
-      (result) => cb(null, result),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      (err) => cb(err),
-    )
-  }
 
   // Bucket operations
 
@@ -1551,7 +1540,7 @@ export class TypedClient {
   /**
    * Calculate part size given the object size. Part size will be atleast this.partSize
    */
-  calculatePartSize(size: number) {
+  calculatePartSize(size: number) : number {
     if (!isNumber(size)) {
       throw new TypeError('size should be of type "number"')
     }
@@ -1576,7 +1565,7 @@ export class TypedClient {
   /**
    * Uploads the object using contents from a file
    */
-  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) {
+  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) : Promise<UploadedObjectInfo> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2439,7 +2428,7 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  async getBucketEncryption(bucketName: string) {
+  async getBucketEncryption(bucketName: string) :Promise<any> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -2665,7 +2654,7 @@ export class TypedClient {
       headers: RequestHeaders
     },
     payload?: Binary,
-  ) {
+  ): Promise<{ etag: string; key: string; part: string; }> {
     const { bucketName, objectName, uploadID, partNumber, headers } = partConfig
 
     const method = 'PUT'
@@ -3014,7 +3003,7 @@ export class TypedClient {
     }
   }
   // list a batch of objects
-  async listObjectsQuery(bucketName: string, prefix?: string, marker?: string, listQueryOpts?: ListObjectQueryOpts) {
+  async listObjectsQuery(bucketName: string, prefix?: string, marker?: string, listQueryOpts?: ListObjectQueryOpts) :Promise<ReturnType<typeof parseListObjects>>  {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }

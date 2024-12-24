@@ -114,7 +114,7 @@ export class NotificationConfig {
   }
 }
 
-export const buildARN = (partition: string, service: string, region: string, accountId: string, resource: string) => {
+export const buildARN = (partition: string, service: string, region: string, accountId: string, resource: string):string => {
   return 'arn:' + partition + ':' + service + ':' + region + ':' + accountId + ':' + resource
 }
 export const ObjectCreatedAll = 's3:ObjectCreated:*'

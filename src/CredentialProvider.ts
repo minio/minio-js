@@ -27,7 +27,7 @@ export class CredentialProvider {
     this.credentials.setAccessKey(accessKey)
   }
 
-  getAccessKey() {
+  getAccessKey():string {
     return this.credentials.getAccessKey()
   }
 
@@ -35,7 +35,7 @@ export class CredentialProvider {
     this.credentials.setSecretKey(secretKey)
   }
 
-  getSecretKey() {
+  getSecretKey():string {
     return this.credentials.getSecretKey()
   }
 
@@ -43,7 +43,7 @@ export class CredentialProvider {
     this.credentials.setSessionToken(sessionToken)
   }
 
-  getSessionToken() {
+  getSessionToken():string | undefined {
     return this.credentials.getSessionToken()
   }
 }

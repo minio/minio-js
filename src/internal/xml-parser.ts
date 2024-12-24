@@ -655,7 +655,12 @@ const formatObjInfo = (content: ObjectRowEntry, opts: { IsDeleteMarker?: boolean
 }
 
 // parse XML response for list objects in a bucket
-export function parseListObjects(xml: string) {
+export function parseListObjects(xml: string):{
+    objects: ObjectInfo[];
+    isTruncated?: boolean;
+    nextMarker?: string;
+    versionIdMarker?: string;
+} {
   const result: { objects: ObjectInfo[]; isTruncated?: boolean; nextMarker?: string; versionIdMarker?: string } = {
     objects: [],
     isTruncated: false,
