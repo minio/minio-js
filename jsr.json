@@ -2,7 +2,7 @@
         "name": "@sugar/minio-js-with-startpath",
         "version": "8.0.8",
         "license": "MIT",
-        "exports": "./src/minio.js",
-        "types": "./src/minio.d.ts",
+        "exports": "./src/minio.ts"
+        
 
 }
