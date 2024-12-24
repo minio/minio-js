@@ -127,6 +127,7 @@ import {
   parseSelectObjectContentResponse,
 } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
+import process from "node:process";
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 

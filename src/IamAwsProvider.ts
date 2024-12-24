@@ -8,6 +8,7 @@ import { Credentials } from './Credentials.ts'
 import { parseXml } from './internal/helper.ts'
 import { request } from './internal/request.ts'
 import { readAsString } from './internal/response.ts'
+import process from "node:process";
 
 interface AssumeRoleResponse {
   AssumeRoleWithWebIdentityResponse: {
