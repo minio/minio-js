@@ -24,16 +24,6 @@
       "types": "./types/esm/minio.d.ts",
       "default": "./dist/esm/minio.mjs"
     },
-    "./dist/main/internal/*": null,
-    "./dist/main/*": {
-      "require": "./dist/main/*",
-      "default": null
-    },
-    "./dist/esm/internal/*": null,
-    "./dist/esm/*": {
-      "import": "./dist/esm/*",
-      "default": null
-    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -96,7 +86,7 @@
     "stream-json": "^1.8.0",
     "through2": "^4.0.2",
     "web-encoding": "^1.1.5",
-    "xml2js": "^0.5.0 || ^0.6.2"
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",

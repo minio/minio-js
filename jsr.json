@@ -1,0 +1,12 @@
+{
+        "name": "@sugar/minio-js-with-startpath",
+        "version": "8.0.4",
+        "license": "MIT",
+        "exports": "./dist/esm/minio.mjs",
+        "publish": {
+                "include": [
+                        "dist/esm/**"
+                ]
+        },
+        "types": "./types/esm/minio.d.ts"
+}
