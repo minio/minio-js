@@ -55,7 +55,7 @@ export class IamAwsProvider extends CredentialProvider {
     this._credentials = null
   }
 
-  async getCredentials(): Promise<Credentials> {
+  override async getCredentials(): Promise<Credentials> {
     if (!this._credentials || this.isAboutToExpire()) {
       this._credentials = await this.fetchCredentials()
     }

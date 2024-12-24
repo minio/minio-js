@@ -1,5 +1,6 @@
 import type * as http from 'node:http'
 import type stream from 'node:stream'
+import { Buffer } from "node:buffer"
 
 import crc32 from 'buffer-crc32'
 import { XMLParser } from 'fast-xml-parser'

@@ -5,6 +5,7 @@ import * as http from 'node:http'
 import * as https from 'node:https'
 import * as path from 'node:path'
 import * as stream from 'node:stream'
+import { Buffer } from "node:buffer"
 
 import * as async from 'async'
 import BlockStream2 from 'block-stream2'

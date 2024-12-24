@@ -1,5 +1,6 @@
 import type * as http from 'node:http'
 import type { Readable as ReadableStream } from 'node:stream'
+import { Buffer } from "node:buffer"
 
 import type { CopyDestinationOptions, CopySourceOptions } from '../helpers.ts'
 import type { CopyConditions } from './copy-conditions.ts'

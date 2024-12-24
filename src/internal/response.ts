@@ -1,5 +1,6 @@
 import type http from 'node:http'
 import type stream from 'node:stream'
+import { Buffer } from "node:buffer"
 
 export async function readAsBuffer(res: stream.Readable): Promise<Buffer> {
   return new Promise((resolve, reject) => {
