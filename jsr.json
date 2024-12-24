@@ -2,6 +2,6 @@
         "name": "@sugar/minio-js-with-startpath",
         "version": "8.0.7",
         "license": "MIT",
-        "exports": "src/minio.js"
+        "exports": "./src/minio.js"
 
 }
