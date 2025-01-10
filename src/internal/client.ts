@@ -1112,7 +1112,8 @@ export class TypedClient {
     const downloadToTmpFile = async (): Promise<string> => {
       let partFileStream: stream.Writable
       const objStat = await this.statObject(bucketName, objectName, getOpts)
-      const partFile = `${filePath}.${objStat.etag}.part.minio`
+      const encodedEtag = Buffer.from(objStat.etag).toString('base64')
+      const partFile = `${filePath}.${encodedEtag}.part.minio`
 
       await fsp.mkdir(path.dirname(filePath), { recursive: true })
 
