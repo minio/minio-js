@@ -4079,11 +4079,13 @@ describe('functional tests', function () {
     let isSplitSuccess = false
     step(`Create a local file of 100 MB and split `, (done) => {
       try {
-        fs.mkdir(tmpSubDir, { recursive: true }, function (err) {
-          if (err) {
-            done(err)
-          }
-        })
+        if (!fs.existsSync(tmpSubDir)) {
+          fs.mkdirSync(tmpSubDir, { recursive: true }, function (err) {
+            if (err) {
+              done(err)
+            }
+          })
+        }
         fs.writeFileSync(fileToSplit, _100mbFileToBeSplitAndComposed)
         // 100 MB split into 26 MB part size.
         splitFile
