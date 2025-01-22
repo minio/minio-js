@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        node_version: [ 20.x, 18.x, 16.x ]
+        node_version: [22.x, 20.x, 18.x, 16.x ]
         os: [ ubuntu-latest, windows-latest ]
 
     env:
