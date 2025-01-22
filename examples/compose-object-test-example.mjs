@@ -78,6 +78,9 @@ const sampleRunComposeObject = async () => {
     const destObjConfig = new Minio.CopyDestinationOptions({
       Bucket: bucketName,
       Object: composedObjName,
+      Headers: {
+        'Content-Type': 'application/octet-stream', //example to set headers
+      },
     })
 
     try {

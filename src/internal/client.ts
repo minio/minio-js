@@ -124,6 +124,7 @@ import {
   parseListObjects,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
+  uploadPartParser,
 } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
 
@@ -2670,8 +2671,10 @@ export class TypedClient {
     const query = `uploadId=${uploadID}&partNumber=${partNumber}`
     const requestOptions = { method, bucketName, objectName: objectName, query, headers }
     const res = await this.makeRequestAsync(requestOptions, payload)
+    const body = await readAsString(res)
+    const partRes = uploadPartParser(body)
     return {
-      etag: sanitizeETag(res.headers.etag),
+      etag: sanitizeETag(partRes.ETag),
       key: objectName,
       part: partNumber,
     }
