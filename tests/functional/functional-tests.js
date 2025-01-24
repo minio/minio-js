@@ -4066,19 +4066,26 @@ describe('functional tests', function () {
      * 7. Remove bucket. (Clean up)
      */
 
-    var _100mbFileToBeSplitAndComposed = Buffer.alloc(100 * 1024 * 1024, 0)
-    let composeObjectTestBucket = 'minio-js-test-compose-obj-' + uuid.v4()
+    const _100mbFileToBeSplitAndComposed = Buffer.alloc(100 * 1024 * 1024, 0)
+    const composeObjectTestBucket = 'minio-js-test-compose-obj-' + uuid.v4()
     before(() => client.makeBucket(composeObjectTestBucket, ''))
     after(() => client.removeBucket(composeObjectTestBucket))
 
     const composedObjName = '_100-mb-file-to-test-compose'
     const tmpSubDir = `${tmpDir}/compose`
-    var fileToSplit = `${tmpSubDir}/${composedObjName}`
+    const fileToSplit = `${tmpSubDir}/${composedObjName}`
     let partFilesNamesWithPath = []
     let partObjNameList = []
     let isSplitSuccess = false
     step(`Create a local file of 100 MB and split `, (done) => {
       try {
+        if (!fs.existsSync(tmpSubDir)) {
+          fs.mkdirSync(tmpSubDir, { recursive: true }, function (err) {
+            if (err) {
+              done(err)
+            }
+          })
+        }
         fs.writeFileSync(fileToSplit, _100mbFileToBeSplitAndComposed)
         // 100 MB split into 26 MB part size.
         splitFile
@@ -4088,11 +4095,11 @@ describe('functional tests', function () {
             isSplitSuccess = true
             done()
           })
-          .catch(() => {
-            done()
+          .catch((err) => {
+            done(err)
           })
       } catch (err) {
-        done()
+        done(err)
       }
     })
 
@@ -4130,12 +4137,15 @@ describe('functional tests', function () {
             Object: composedObjName,
           })
 
-          client.composeObject(destObjConfig, sourcePartObjList).then((e) => {
-            if (e) {
-              return done(e)
-            }
-            done()
-          })
+          client
+            .composeObject(destObjConfig, sourcePartObjList)
+            .then((e) => {
+              if (!e) {
+                return done(e)
+              }
+              done()
+            })
+            .catch(done)
         } else {
           done()
         }
@@ -4195,7 +4205,7 @@ describe('functional tests', function () {
 
     step('Clean up temp directory part files', (done) => {
       if (isSplitSuccess) {
-        fs.rmdirSync(tmpSubDir)
+        fs.rmSync(tmpSubDir, { recursive: true, force: true })
       }
       done()
     })
