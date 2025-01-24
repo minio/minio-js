@@ -904,7 +904,7 @@ export class TypedClient {
    * Creates the bucket `bucketName`.
    *
    */
-  async makeBucket(bucketName: string, region: Region = '', makeOpts: MakeBucketOpt = {}): Promise<void> {
+  async makeBucket(bucketName: string, region: Region = '', makeOpts?: MakeBucketOpt): Promise<void> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -917,7 +917,7 @@ export class TypedClient {
     if (!isString(region)) {
       throw new TypeError('region should be of type "string"')
     }
-    if (!isObject(makeOpts)) {
+    if (makeOpts && !isObject(makeOpts)) {
       throw new TypeError('makeOpts should be of type "object"')
     }
 
@@ -943,7 +943,7 @@ export class TypedClient {
     const method = 'PUT'
     const headers: RequestHeaders = {}
 
-    if (makeOpts.ObjectLocking) {
+    if (makeOpts && makeOpts.ObjectLocking) {
       headers['x-amz-bucket-object-lock-enabled'] = true
     }
 
@@ -1009,7 +1009,7 @@ export class TypedClient {
   /**
    * Callback is called with readable stream of the object content.
    */
-  async getObject(bucketName: string, objectName: string, getOpts: GetObjectOpts = {}): Promise<stream.Readable> {
+  async getObject(bucketName: string, objectName: string, getOpts?: GetObjectOpts): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1032,7 +1032,7 @@ export class TypedClient {
     objectName: string,
     offset: number,
     length = 0,
-    getOpts: GetObjectOpts = {},
+    getOpts?: GetObjectOpts,
   ): Promise<stream.Readable> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1060,17 +1060,26 @@ export class TypedClient {
       }
     }
 
-    const sseHeaders: Record<string, string> = {
-      ...(getOpts.SSECustomerAlgorithm && {
-        'X-Amz-Server-Side-Encryption-Customer-Algorithm': getOpts.SSECustomerAlgorithm,
-      }),
-      ...(getOpts.SSECustomerKey && { 'X-Amz-Server-Side-Encryption-Customer-Key': getOpts.SSECustomerKey }),
-      ...(getOpts.SSECustomerKeyMD5 && { 'X-Amz-Server-Side-Encryption-Customer-Key-MD5': getOpts.SSECustomerKeyMD5 }),
+    let query = ''
+    let headers: RequestHeaders = {
+      ...(range !== '' && { range }),
     }
 
-    const headers: RequestHeaders = {
-      ...prependXAMZMeta(sseHeaders),
-      ...(range !== '' && { range }),
+    if (getOpts) {
+      const sseHeaders: Record<string, string> = {
+        ...(getOpts.SSECustomerAlgorithm && {
+          'X-Amz-Server-Side-Encryption-Customer-Algorithm': getOpts.SSECustomerAlgorithm,
+        }),
+        ...(getOpts.SSECustomerKey && { 'X-Amz-Server-Side-Encryption-Customer-Key': getOpts.SSECustomerKey }),
+        ...(getOpts.SSECustomerKeyMD5 && {
+          'X-Amz-Server-Side-Encryption-Customer-Key-MD5': getOpts.SSECustomerKeyMD5,
+        }),
+      }
+      query = qs.stringify(getOpts)
+      headers = {
+        ...prependXAMZMeta(sseHeaders),
+        ...headers,
+      }
     }
 
     const expectedStatusCodes = [200]
@@ -1079,7 +1088,6 @@ export class TypedClient {
     }
     const method = 'GET'
 
-    const query = qs.stringify(getOpts)
     return await this.makeRequestAsync({ method, bucketName, objectName, headers, query }, '', expectedStatusCodes)
   }
 
@@ -1092,12 +1100,7 @@ export class TypedClient {
    * @param filePath - path to which the object data will be written to
    * @param getOpts - Optional object get option
    */
-  async fGetObject(
-    bucketName: string,
-    objectName: string,
-    filePath: string,
-    getOpts: GetObjectOpts = {},
-  ): Promise<void> {
+  async fGetObject(bucketName: string, objectName: string, filePath: string, getOpts?: GetObjectOpts): Promise<void> {
     // Input validation.
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
@@ -1153,7 +1156,8 @@ export class TypedClient {
   /**
    * Stat information of the object.
    */
-  async statObject(bucketName: string, objectName: string, statOpts: StatObjectOpts = {}): Promise<BucketItemStat> {
+  async statObject(bucketName: string, objectName: string, statOpts?: StatObjectOpts): Promise<BucketItemStat> {
+    const statOptDef = statOpts || {}
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1161,11 +1165,11 @@ export class TypedClient {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
 
-    if (!isObject(statOpts)) {
+    if (!isObject(statOptDef)) {
       throw new errors.InvalidArgumentError('statOpts should be of type "object"')
     }
 
-    const query = qs.stringify(statOpts)
+    const query = qs.stringify(statOptDef)
     const method = 'HEAD'
     const res = await this.makeRequestAsyncOmit({ method, bucketName, objectName, query })
 
@@ -1574,7 +1578,7 @@ export class TypedClient {
   /**
    * Uploads the object using contents from a file
    */
-  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData: ObjectMetaData = {}) {
+  async fPutObject(bucketName: string, objectName: string, filePath: string, metaData?: ObjectMetaData) {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
@@ -1585,12 +1589,12 @@ export class TypedClient {
     if (!isString(filePath)) {
       throw new TypeError('filePath should be of type "string"')
     }
-    if (!isObject(metaData)) {
+    if (metaData && !isObject(metaData)) {
       throw new TypeError('metaData should be of type "object"')
     }
 
     // Inserts correct `content-type` attribute based on metaData and filePath
-    metaData = insertContentType(metaData, filePath)
+    metaData = insertContentType(metaData || {}, filePath)
     const stat = await fsp.lstat(filePath)
     return await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
   }
@@ -1945,7 +1949,7 @@ export class TypedClient {
   /**
    *  Get the tags associated with a bucket OR an object
    */
-  async getObjectTagging(bucketName: string, objectName: string, getOpts: GetObjectOpts = {}): Promise<Tag[]> {
+  async getObjectTagging(bucketName: string, objectName: string, getOpts?: GetObjectOpts): Promise<Tag[]> {
     const method = 'GET'
     let query = 'tagging'
 
@@ -1955,7 +1959,7 @@ export class TypedClient {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
     }
-    if (!isObject(getOpts)) {
+    if (getOpts && !isObject(getOpts)) {
       throw new errors.InvalidArgumentError('getOpts should be of type "object"')
     }
 
