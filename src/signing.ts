@@ -17,6 +17,7 @@
 import * as crypto from 'node:crypto'
 
 import * as errors from './errors.ts'
+import { PRESIGN_EXPIRY_DAYS_MAX } from './helpers.ts'
 import { getScope, isNumber, isObject, isString, makeDateLong, makeDateShort, uriEscape } from './internal/helper.ts'
 import type { ICanonicalRequest, IRequest, RequestHeaders } from './internal/type.ts'
 
@@ -258,7 +259,7 @@ export function presignSignatureV4(
   sessionToken: string | undefined,
   region: string,
   requestDate: Date,
-  expires: number,
+  expires: number | undefined,
 ) {
   if (!isObject(request)) {
     throw new TypeError('request should be of type "object"')
@@ -280,13 +281,13 @@ export function presignSignatureV4(
     throw new errors.SecretKeyRequiredError('secretKey is required for presigning')
   }
 
-  if (!isNumber(expires)) {
+  if (expires && !isNumber(expires)) {
     throw new TypeError('expires should be of type "number"')
   }
-  if (expires < 1) {
+  if (expires && expires < 1) {
     throw new errors.ExpiresParamError('expires param cannot be less than 1 seconds')
   }
-  if (expires > 604800) {
+  if (expires && expires > PRESIGN_EXPIRY_DAYS_MAX) {
     throw new errors.ExpiresParamError('expires param cannot be greater than 7 days')
   }
 

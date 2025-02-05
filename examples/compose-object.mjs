@@ -25,7 +25,8 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const bucketName = 'source-bucket'
+const bucketName = 'my-bucketname'
+const objectName = 'my-objectname'
 
 const sourceList = [
   new Minio.CopySourceOptions({
@@ -51,7 +52,7 @@ const sourceList = [
 
 const destOption = new Minio.CopyDestinationOptions({
   Bucket: bucketName,
-  Object: '100MB.zip',
+  Object: objectName,
   /** Other possible options */
   /* Encryption:{
         type:Helpers.ENCRYPTION_TYPES.KMS,
@@ -67,11 +68,4 @@ const destOption = new Minio.CopyDestinationOptions({
   */
 })
 
-const composePromise = s3Client.composeObject(destOption, sourceList)
-composePromise
-  .then((result) => {
-    console.log('ComposeObject Success...', result)
-  })
-  .catch((e) => {
-    console.log('composeObject Promise Error', e)
-  })
+await s3Client.composeObject(destOption, sourceList)

@@ -160,7 +160,7 @@ mc ls play/europetrip/
 * [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
 
 #### 完整示例 : 操作文件对象
-* [fput-object.js](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
+* [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
 * [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
@@ -173,9 +173,9 @@ mc ls play/europetrip/
 * [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 
 #### 完整示例 : Presigned操作
-* [presigned-getobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
-* [presigned-putobject.js](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
-* [presigned-postpolicy.js](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
+* [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
+* [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
+* [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
 
 #### 完整示例 : 存储桶通知
 * [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)

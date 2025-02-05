@@ -1,6 +1,6 @@
 {
   "name": "minio",
-  "version": "8.0.1",
+  "version": "8.0.5",
   "description": "S3 Compatible Cloud Storage client",
   "main": "./dist/main/minio.js",
   "module": "./dist/esm/minio.mjs",
@@ -88,7 +88,7 @@
     "browser-or-node": "^2.1.1",
     "buffer-crc32": "^1.0.0",
     "eventemitter3": "^5.0.1",
-    "fast-xml-parser": "^4.2.2",
+    "fast-xml-parser": "^4.4.1",
     "ipaddr.js": "^2.0.1",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
@@ -96,7 +96,7 @@
     "stream-json": "^1.8.0",
     "through2": "^4.0.2",
     "web-encoding": "^1.1.5",
-    "xml2js": "^0.5.0"
+    "xml2js": "^0.5.0 || ^0.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.21.8",

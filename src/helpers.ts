@@ -21,6 +21,8 @@ export { ENCRYPTION_TYPES, LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDIT
 
 export const DEFAULT_REGION = 'us-east-1'
 
+export const PRESIGN_EXPIRY_DAYS_MAX = 24 * 60 * 60 * 7 // 7 days in seconds
+
 export interface ICopySourceOptions {
   Bucket: string
   Object: string
@@ -175,6 +177,10 @@ export interface ICopyDestinationOptions {
   RetainUntilDate?: string
   Mode?: RETENTION_MODES
   MetadataDirective?: 'COPY' | 'REPLACE'
+  /**
+   * Extra headers for the target object
+   */
+  Headers?: Record<string, string>
 }
 
 export class CopyDestinationOptions {
@@ -187,6 +193,7 @@ export class CopyDestinationOptions {
   private readonly RetainUntilDate?: string
   private readonly Mode?: RETENTION_MODES
   private readonly MetadataDirective?: string
+  private readonly Headers?: Record<string, string>
 
   constructor({
     Bucket,
@@ -198,6 +205,7 @@ export class CopyDestinationOptions {
     RetainUntilDate,
     Mode,
     MetadataDirective,
+    Headers,
   }: ICopyDestinationOptions) {
     this.Bucket = Bucket
     this.Object = Object
@@ -208,6 +216,7 @@ export class CopyDestinationOptions {
     this.Mode = Mode // retention mode
     this.RetainUntilDate = RetainUntilDate
     this.MetadataDirective = MetadataDirective
+    this.Headers = Headers
   }
 
   getHeaders(): RequestHeaders {
@@ -252,6 +261,12 @@ export class CopyDestinationOptions {
         headerOptions[key] = value
       }
     }
+    if (this.Headers) {
+      for (const [key, value] of Object.entries(this.Headers)) {
+        headerOptions[key] = value
+      }
+    }
+
     return headerOptions
   }
 

@@ -6,13 +6,17 @@ import { XMLParser } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
 import { SelectResults } from '../helpers.ts'
-import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, toArray } from './helper.ts'
+import { isObject, parseXml, readableStream, sanitizeETag, sanitizeObjectKey, sanitizeSize, toArray } from './helper.ts'
 import { readAsString } from './response.ts'
 import type {
   BucketItemFromList,
   BucketItemWithMetadata,
+  CommonPrefix,
   CopyObjectResultV1,
+  ListBucketResultV1,
+  ObjectInfo,
   ObjectLockInfo,
+  ObjectRowEntry,
   ReplicationConfig,
   Tags,
 } from './type.ts'
@@ -25,6 +29,13 @@ export function parseBucketRegion(xml: string): string {
 }
 
 const fxp = new XMLParser()
+
+const fxpWithoutNumParser = new XMLParser({
+  // @ts-ignore
+  numberParseOptions: {
+    skipLike: /./,
+  },
+})
 
 // Parse XML and return information as Javascript types
 // parse error XML response
@@ -159,23 +170,6 @@ export function parseListObjectsV2WithMetadata(xml: string) {
   return result
 }
 
-export type Multipart = {
-  uploads: Array<{
-    key: string
-    uploadId: string
-    initiator: unknown
-    owner: unknown
-    storageClass: unknown
-    initiated: unknown
-  }>
-  prefixes: {
-    prefix: string
-  }[]
-  isTruncated: boolean
-  nextKeyMarker: undefined
-  nextUploadIdMarker: undefined
-}
-
 export type UploadedPart = {
   part: number
   lastModified?: Date
@@ -225,13 +219,31 @@ export function parseListParts(xml: string): {
   return result
 }
 
-export function parseListBucket(xml: string) {
+export function parseListBucket(xml: string): BucketItemFromList[] {
   let result: BucketItemFromList[] = []
-  const parsedXmlRes = parseXml(xml)
+  const listBucketResultParser = new XMLParser({
+    parseTagValue: true, // Enable parsing of values
+    numberParseOptions: {
+      leadingZeros: false, // Disable number parsing for values with leading zeros
+      hex: false, // Disable hex number parsing - Invalid bucket name
+      skipLike: /^[0-9]+$/, // Skip number parsing if the value consists entirely of digits
+    },
+    tagValueProcessor: (tagName, tagValue = '') => {
+      // Ensure that the Name tag is always treated as a string
+      if (tagName === 'Name') {
+        return tagValue.toString()
+      }
+      return tagValue
+    },
+    ignoreAttributes: false, // Ensure that all attributes are parsed
+  })
+
+  const parsedXmlRes = listBucketResultParser.parse(xml)
 
   if (!parsedXmlRes.ListAllMyBucketsResult) {
     throw new errors.InvalidXMLError('Missing tag: "ListAllMyBucketsResult"')
   }
+
   const { ListAllMyBucketsResult: { Buckets = {} } = {} } = parsedXmlRes
 
   if (Buckets.Bucket) {
@@ -239,9 +251,10 @@ export function parseListBucket(xml: string) {
       const { Name: bucketName, CreationDate } = bucket
       const creationDate = new Date(CreationDate)
 
-      return { name: bucketName, creationDate: creationDate }
+      return { name: bucketName, creationDate }
     })
   }
+
   return result
 }
 
@@ -320,8 +333,8 @@ export type ListMultipartResult = {
   uploads: {
     key: string
     uploadId: UploadID
-    initiator: unknown
-    owner: unknown
+    initiator?: { id: string; displayName: string }
+    owner?: { id: string; displayName: string }
     storageClass: unknown
     initiated: Date
   }[]
@@ -368,13 +381,19 @@ export function parseListMultipart(xml: string): ListMultipartResult {
 
   if (xmlobj.Upload) {
     toArray(xmlobj.Upload).forEach((upload) => {
-      const key = upload.Key
-      const uploadId = upload.UploadId
-      const initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
-      const owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
-      const storageClass = upload.StorageClass
-      const initiated = new Date(upload.Initiated)
-      result.uploads.push({ key, uploadId, initiator, owner, storageClass, initiated })
+      const uploadItem: ListMultipartResult['uploads'][number] = {
+        key: upload.Key,
+        uploadId: upload.UploadId,
+        storageClass: upload.StorageClass,
+        initiated: new Date(upload.Initiated),
+      }
+      if (upload.Initiator) {
+        uploadItem.initiator = { id: upload.Initiator.ID, displayName: upload.Initiator.DisplayName }
+      }
+      if (upload.Owner) {
+        uploadItem.owner = { id: upload.Owner.ID, displayName: upload.Owner.DisplayName }
+      }
+      result.uploads.push(uploadItem)
     })
   }
   return result
@@ -610,4 +629,114 @@ export function parseCopyObject(xml: string): CopyObjectResultV1 {
   }
 
   return result
+}
+
+const formatObjInfo = (content: ObjectRowEntry, opts: { IsDeleteMarker?: boolean } = {}) => {
+  const { Key, LastModified, ETag, Size, VersionId, IsLatest } = content
+
+  if (!isObject(opts)) {
+    opts = {}
+  }
+
+  const name = sanitizeObjectKey(toArray(Key)[0] || '')
+  const lastModified = LastModified ? new Date(toArray(LastModified)[0] || '') : undefined
+  const etag = sanitizeETag(toArray(ETag)[0] || '')
+  const size = sanitizeSize(Size || '')
+
+  return {
+    name,
+    lastModified,
+    etag,
+    size,
+    versionId: VersionId,
+    isLatest: IsLatest,
+    isDeleteMarker: opts.IsDeleteMarker ? opts.IsDeleteMarker : false,
+  }
+}
+
+// parse XML response for list objects in a bucket
+export function parseListObjects(xml: string) {
+  const result: { objects: ObjectInfo[]; isTruncated?: boolean; nextMarker?: string; versionIdMarker?: string } = {
+    objects: [],
+    isTruncated: false,
+    nextMarker: undefined,
+    versionIdMarker: undefined,
+  }
+  let isTruncated = false
+  let nextMarker, nextVersionKeyMarker
+  const xmlobj = fxpWithoutNumParser.parse(xml)
+
+  const parseCommonPrefixesEntity = (commonPrefixEntry: CommonPrefix[]) => {
+    if (commonPrefixEntry) {
+      toArray(commonPrefixEntry).forEach((commonPrefix) => {
+        result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0] || ''), size: 0 })
+      })
+    }
+  }
+
+  const listBucketResult: ListBucketResultV1 = xmlobj.ListBucketResult
+  const listVersionsResult: ListBucketResultV1 = xmlobj.ListVersionsResult
+
+  if (listBucketResult) {
+    if (listBucketResult.IsTruncated) {
+      isTruncated = listBucketResult.IsTruncated
+    }
+    if (listBucketResult.Contents) {
+      toArray(listBucketResult.Contents).forEach((content) => {
+        const name = sanitizeObjectKey(toArray(content.Key)[0] || '')
+        const lastModified = new Date(toArray(content.LastModified)[0] || '')
+        const etag = sanitizeETag(toArray(content.ETag)[0] || '')
+        const size = sanitizeSize(content.Size || '')
+        result.objects.push({ name, lastModified, etag, size })
+      })
+    }
+
+    if (listBucketResult.Marker) {
+      nextMarker = listBucketResult.Marker
+    } else if (isTruncated && result.objects.length > 0) {
+      nextMarker = result.objects[result.objects.length - 1]?.name
+    }
+    if (listBucketResult.CommonPrefixes) {
+      parseCommonPrefixesEntity(listBucketResult.CommonPrefixes)
+    }
+  }
+
+  if (listVersionsResult) {
+    if (listVersionsResult.IsTruncated) {
+      isTruncated = listVersionsResult.IsTruncated
+    }
+
+    if (listVersionsResult.Version) {
+      toArray(listVersionsResult.Version).forEach((content) => {
+        result.objects.push(formatObjInfo(content))
+      })
+    }
+    if (listVersionsResult.DeleteMarker) {
+      toArray(listVersionsResult.DeleteMarker).forEach((content) => {
+        result.objects.push(formatObjInfo(content, { IsDeleteMarker: true }))
+      })
+    }
+
+    if (listVersionsResult.NextKeyMarker) {
+      nextVersionKeyMarker = listVersionsResult.NextKeyMarker
+    }
+    if (listVersionsResult.NextVersionIdMarker) {
+      result.versionIdMarker = listVersionsResult.NextVersionIdMarker
+    }
+    if (listVersionsResult.CommonPrefixes) {
+      parseCommonPrefixesEntity(listVersionsResult.CommonPrefixes)
+    }
+  }
+
+  result.isTruncated = isTruncated
+  if (isTruncated) {
+    result.nextMarker = nextVersionKeyMarker || nextMarker
+  }
+  return result
+}
+
+export function uploadPartParser(xml: string) {
+  const xmlObj = parseXml(xml)
+  const respEl = xmlObj.CopyPartResult
+  return respEl
 }

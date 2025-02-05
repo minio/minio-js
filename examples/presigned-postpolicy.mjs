@@ -47,16 +47,12 @@ policy.setUserMetaData({
   key: 'value',
 })
 
-s3Client.presignedPostPolicy(policy, function (e, data) {
-  if (e) {
-    return console.log(e)
-  }
-  const curl = []
-  curl.push(`curl ${data.postURL}`)
-  for (const [key, value] of Object.entries(data.formData)) {
-    curl.push(`-F ${key}=${value}`)
-  }
-  // Print curl command to upload files.
-  curl.push('-F file=@<FILE>')
-  console.log(curl.join(' '))
-})
+const { postURL, formData } = await s3Client.presignedPostPolicy(policy)
+const curl = []
+curl.push(`curl ${postURL}`)
+for (const [key, value] of Object.entries(formData)) {
+  curl.push(`-F ${key}=${value}`)
+}
+// Print curl command to upload files.
+curl.push('-F file=@<FILE>')
+console.log(curl.join(' '))

@@ -32,8 +32,8 @@ import {
   partsRequired,
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
+import { parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
 import * as Minio from '../../src/minio.js'
-import { parseListObjects } from '../../src/xml-parsers.js'
 
 const Package = { version: 'development' }
 
@@ -381,76 +381,115 @@ describe('Client', function () {
     })
   })
   describe('Presigned URL', () => {
+    describe('presignedUrl', () => {
+      const client = new Minio.Client({
+        endPoint: 'localhost',
+        port: 9000,
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
+        useSSL: false,
+        region: 'us-east-1',
+      })
+
+      it('should use the default expiry if omitted', async () => {
+        const url = await client.presignedUrl('get', 'bucket', 'object')
+        return expect(url).to.contain('X-Amz-Expires=604800')
+      })
+      it('should set the expiry time', async () => {
+        const url = await client.presignedUrl('get', 'bucket', 'object', 3600)
+        return expect(url).to.contain('X-Amz-Expires=3600')
+      })
+      it('should reject an invalid expiry time', async () => {
+        await expect(client.presignedUrl('get', 'bucket', 'object', 'invalid')).to.eventually.be.rejectedWith(
+          'expires should be of type "number"',
+        )
+      })
+      it('should handle a callback function', (done) => {
+        client.presignedUrl('get', 'bucket', 'object', (error, result) => {
+          expect(result).to.contain('X-Amz-Expires=604800')
+          done()
+        })
+      })
+    })
     describe('presigned-get', () => {
-      it('should not generate presigned url with no access key', (done) => {
+      it('should not generate presigned url with no access key', async () => {
         try {
-          var client = new Minio.Client({
+          const client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedGetObject('bucket', 'object', 1000, function () {})
-        } catch (e) {
-          done()
+          await client.presignedGetObject('bucket', 'object', 1000)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should not generate presigned url with wrong expires param', (done) => {
+      it('should not generate presigned url with wrong expires param', async () => {
         try {
-          client.presignedGetObject('bucket', 'object', '0', function () {})
-        } catch (e) {
-          done()
+          await client.presignedGetObject('bucket', 'object', '0')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('presigned-put', () => {
-      it('should not generate presigned url with no access key', (done) => {
+      it('should not generate presigned url with no access key', async () => {
         try {
-          var client = new Minio.Client({
+          const client = new Minio.Client({
             endPoint: 'localhost',
             port: 9000,
             useSSL: false,
           })
-          client.presignedPutObject('bucket', 'object', 1000, function () {})
-        } catch (e) {
-          done()
+          await client.presignedPutObject('bucket', 'object', 1000)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-      it('should not generate presigned url with wrong expires param', (done) => {
+      it('should not generate presigned url with wrong expires param', async () => {
         try {
-          client.presignedPutObject('bucket', 'object', '0', function () {})
-        } catch (e) {
-          done()
+          const client = new Minio.Client({
+            endPoint: 'localhost',
+            port: 9000,
+            useSSL: false,
+          })
+          await client.presignedPutObject('bucket', 'object', '0')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
     describe('presigned-post-policy', () => {
       it('should not generate content type for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setContentType()
         }, /content-type cannot be null/)
       })
       it('should not generate content disposition for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setContentDisposition()
         }, /content-disposition cannot be null/)
       })
       it('should not generate user defined metadata for string value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData('123')
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for null value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData(null)
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for undefined value', () => {
         assert.throws(() => {
-          var policy = client.newPostPolicy()
+          const policy = client.newPostPolicy()
           policy.setUserMetaData()
         }, /metadata should be of type "object"/)
       })
@@ -1622,30 +1661,32 @@ describe('Client', function () {
 
   describe('Compose Object APIs', () => {
     describe('composeObject(destObjConfig, sourceObjectList,cb)', () => {
-      it('should fail on null destination config', (done) => {
+      it('should fail on null destination config', async () => {
         try {
-          client.composeObject(null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
-
-      it('should fail on no array source config', (done) => {
+      it('should fail on no array source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, 'non-array', function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, 'non-array')
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
 
-      it('should fail on null source config', (done) => {
+      it('should fail on null source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          client.composeObject(destOptions, null, function () {})
-        } catch (e) {
-          done()
+          await client.composeObject(destOptions, null)
+        } catch (err) {
+          return
         }
+        throw new Error('callback should receive error')
       })
     })
   })
@@ -2260,6 +2301,39 @@ describe('xml-parser', () => {
 
         assert.equal(objects[0].size, 151306240)
         assert.equal(objects[1].size, undefined)
+      })
+    })
+  })
+
+  describe('#listMultipart()', () => {
+    describe('should handle missing owner and initiator', () => {
+      // example response from GCS
+      const xml = `
+        <?xml version='1.0' encoding='UTF-8'?>
+        <ListMultipartUploadsResult
+          xmlns='http://s3.amazonaws.com/doc/2006-03-01/'>
+          <Bucket>some-bucket</Bucket>
+          <KeyMarker></KeyMarker>
+          <UploadIdMarker></UploadIdMarker>
+          <NextKeyMarker></NextKeyMarker>
+          <Prefix>some-file.pdf</Prefix>
+          <Delimiter>/</Delimiter>
+          <NextUploadIdMarker></NextUploadIdMarker>
+          <MaxUploads>1000</MaxUploads>
+          <IsTruncated>false</IsTruncated>
+          <Upload>
+            <Key>some-file.pdf</Key>
+            <UploadId>ABPnzm4aGoV3sjevTkVeaWV6lvBFtdjcZegTJg8MUfTue1t6lgRIy6_JEoM0km3CNE218x00</UploadId>
+            <StorageClass>STANDARD</StorageClass>
+            <Initiated>2024-12-17T08:16:52.396303Z</Initiated>
+          </Upload>
+        </ListMultipartUploadsResult>
+      `
+
+      it('should parse list incomplete', () => {
+        const { uploads } = parseListMultipart(xml)
+        assert.equal(uploads.length, 1)
+        assert.equal(uploads[0].key, 'some-file.pdf')
       })
     })
   })

@@ -296,7 +296,7 @@ const stream = minioClient.listObjects('mybucket', '', true)
 stream.on('data', function (obj) {
   data.push(obj)
 })
-stream.on('end', function (obj) {
+stream.on('end', function () {
   console.log(data)
 })
 stream.on('error', function (err) {
@@ -313,7 +313,7 @@ const stream = minioClient.listObjects('mybucket', '', true, { IncludeVersion: t
 stream.on('data', function (obj) {
   data.push(obj)
 })
-stream.on('end', function (obj) {
+stream.on('end', function () {
   console.log(data)
 })
 stream.on('error', function (err) {
@@ -824,11 +824,11 @@ Downloads an object as a stream.
 
 **Parameters**
 
-| Param        | Type     | Description                                                                                 |
-| ------------ | -------- | ------------------------------------------------------------------------------------------- |
-| `bucketName` | _string_ | Name of the bucket.                                                                         |
-| `objectName` | _string_ | Name of the object.                                                                         |
-| `getOpts`    | _object_ | Version of the object in the form `{versionId:"my-versionId"}`. Default is `{}`. (optional) |
+| Param        | Type     | Description                                            |
+| ------------ | -------- | ------------------------------------------------------ |
+| `bucketName` | _string_ | Name of the bucket.                                    |
+| `objectName` | _string_ | Name of the object.                                    |
+| `getOpts`    | _object_ | Options to get the object. Default is `{}`. (optional) |
 
 **Return Value**
 
@@ -870,6 +870,28 @@ dataStream.on('error', function (err) {
 })
 ```
 
+**Example**
+
+Get a Server Side Encrypted object.
+
+```js
+let size = 0
+const dataStream = await minioClient.getObject('mybucket', 'photo.jpg', {
+  SSECustomerAlgorithm: 'AES256',
+  SSECustomerKey: 'YOUR_KEY',
+  SSECustomerKeyMD5: 'YOUR_MD5',
+})
+dataStream.on('data', function (chunk) {
+  size += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + size)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
+})
+```
+
 <a name="getPartialObject"></a>
 
 ### getPartialObject(bucketName, objectName, offset, length, getOpts[, callback])
@@ -884,7 +906,7 @@ Downloads the specified range bytes of an object as a stream.
 | `objectName`            | _string_   | Name of the object.                                                                                                                       |
 | `offset`                | _number_   | `offset` of the object from where the stream will start.                                                                                  |
 | `length`                | _number_   | `length` of the object that will be read in the stream (optional, if not specified we read the rest of the file from the offset).         |
-| `getOpts`               | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)                                               |
+| `getOpts`               | _object_   | Options to get the object. Default is `{}`. (optional)                                                                                    |
 | `callback(err, stream)` | _function_ | Callback is called with `err` in case of error. `stream` is the object content stream. If no callback is passed, a `Promise` is returned. |
 
 **Return Value**
@@ -928,6 +950,28 @@ dataStream.on('error', function (err) {
 })
 ```
 
+**Example**
+To get a Server Side Encrypted object.
+
+```js
+const versionedObjSize = 0
+// reads 30 bytes from the offset 10.
+const dataStream = await minioClient.getPartialObject('mybucket', 'photo.jpg', 10, 30, {
+  SSECustomerAlgorithm: 'AES256',
+  SSECustomerKey: 'YOUR_KEY',
+  SSECustomerKeyMD5: 'YOUR_MD5',
+})
+dataStream.on('data', function (chunk) {
+  versionedObjSize += chunk.length
+})
+dataStream.on('end', function () {
+  console.log('End. Total size = ' + versionedObjSize)
+})
+dataStream.on('error', function (err) {
+  console.log(err)
+})
+```
+
 <a name="fGetObject"></a>
 
 ### fGetObject(bucketName, objectName, filePath, getOpts[, callback])
@@ -941,7 +985,7 @@ Downloads and saves the object as a file in the local filesystem.
 | `bucketName`    | _string_   | Name of the bucket.                                                                                |
 | `objectName`    | _string_   | Name of the object.                                                                                |
 | `filePath`      | _string_   | Path on the local filesystem to which the object data will be written.                             |
-| `getOpts`       | _object_   | Version of the object in the form `{versionId:'my-versionId'}`. Default is `{}`. (optional)        |
+| `getOpts`       | _object_   | Options to get the object. Default is `{}`. (optional)                                             |
 | `callback(err)` | _function_ | Callback is called with `err` in case of error. If no callback is passed, a `Promise` is returned. |
 
 **Return Value**
@@ -972,6 +1016,28 @@ minioClient.fGetObject(bucketName, objNameValue, './download/MyImage.jpg', { ver
   }
   console.log('success')
 })
+```
+
+**Example**
+To Stream a Server Side Encrypted object into a file.
+
+```js
+minioClient.fGetObject(
+  bucketName,
+  objNameValue,
+  './download/MyImage.jpg',
+  {
+    SSECustomerAlgorithm: 'AES256',
+    SSECustomerKey: 'YOUR_KEY',
+    SSECustomerKeyMD5: 'YOUR_MD5',
+  },
+  function (e) {
+    if (e) {
+      return console.log(e)
+    }
+    console.log('success')
+  },
+)
 ```
 
 <a name="putObject"></a>
@@ -1483,7 +1549,7 @@ const legalholdStatus = await minioClient.setObjectLegalHold('bucketName', 'obje
 
 <a name="composeObject"></a>
 
-### composeObject(destObjConfig, sourceObjectList [, callback])
+### composeObject(destObjConfig, sourceObjectList)
 
 Compose an object from parts
 
@@ -1493,7 +1559,6 @@ Compose an object from parts
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `destObjConfig`    | _object_   | Destination Object configuration of the type [CopyDestinationOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js)                                                  |
 | `sourceObjectList` | _object[]_ | Array of object(parts) source to compose into an object. Each part configuration should be of type [CopySourceOptions](https://github.com/minio/minio-js/blob/master/src/helpers.js) |
-| `callback(err)`    | _function_ | Callback function is called with non `null` value in case of error. If no callback is passed, a `Promise` is returned.                                                               |
 
 **Example 1**
 
@@ -1527,14 +1592,7 @@ const destOption = new minio.CopyDestinationOptions({
 })
 
 //using Promise style.
-const composePromise = minioClient.composeObject(destOption, sourceList)
-composePromise
-  .then((result) => {
-    console.log('Success...')
-  })
-  .catch((e) => {
-    console.log('error', e)
-  })
+await minioClient.composeObject(destOption, sourceList)
 ```
 
 <a name="selectObjectContent"></a>
@@ -1576,30 +1634,27 @@ Presigned URLs are generated for temporary download/upload access to private obj
 
 <a name="presignedUrl"></a>
 
-### presignedUrl(httpMethod, bucketName, objectName[, expiry, reqParams, requestDate, cb])
+### presignedUrl(httpMethod, bucketName, objectName[, expiry, reqParams, requestDate])
 
 Generates a presigned URL for the provided HTTP method, 'httpMethod'. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
 **Parameters**
 
-| Param                         | Type       | Description                                                                                                                                                                                                           |
-| ----------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                   |
-| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                   |
-| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days. (optional)                                                                                                                                                           |
-| `reqParams`                   | _object_   | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"}                                                                                                                                 |
-| `requestDate`                 | _Date_     | A date object, the url will be issued at. Default value is now. (optional)                                                                                                                                            |
-| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+| Param         | Type     | Description                                                                           |
+| ------------- | -------- | ------------------------------------------------------------------------------------- |
+| `bucketName`  | _string_ | Name of the bucket.                                                                   |
+| `objectName`  | _string_ | Name of the object.                                                                   |
+| `expiry`      | _number_ | Expiry time in seconds. Default value is 7 days. (optional)                           |
+| `reqParams`   | _object_ | request parameters. (optional) e.g {versionId:"10fa9946-3f64-4137-a58f-888065c0732e"} |
+| `requestDate` | _Date_   | A date object, the url will be issued at. Default value is now. (optional)            |
 
 **Example1**
 
 ```js
 // presigned url for 'getObject' method.
 // expires in a day.
-minioClient.presignedUrl('GET', 'mybucket', 'hello.txt', 24 * 60 * 60, function (err, presignedUrl) {
-  if (err) return console.log(err)
-  console.log(presignedUrl)
-})
+const presignedUrl = await minioClient.presignedUrl('GET', 'mybucket', 'hello.txt', 24 * 60 * 60)
+console.log(presignedUrl)
 ```
 
 **Example2**
@@ -1608,100 +1663,73 @@ minioClient.presignedUrl('GET', 'mybucket', 'hello.txt', 24 * 60 * 60, function 
 // presigned url for 'listObject' method.
 // Lists objects in 'myBucket' with prefix 'data'.
 // Lists max 1000 of them.
-minioClient.presignedUrl(
-  'GET',
-  'mybucket',
-  '',
-  1000,
-  { prefix: 'data', 'max-keys': 1000 },
-  function (err, presignedUrl) {
-    if (err) return console.log(err)
-    console.log(presignedUrl)
-  },
-)
+await minioClient.presignedUrl('GET', 'mybucket', '', 1000, { prefix: 'data', 'max-keys': 1000 })
 ```
 
 **Example 3**
 
 ```js
 // Get Object with versionid
-minioClient.presignedUrl(
-  'GET',
-  'mybucket',
-  '',
-  1000,
-  { versionId: '10fa9946-3f64-4137-a58f-888065c0732e' },
-  function (err, presignedUrl) {
-    if (err) return console.log(err)
-    console.log(presignedUrl)
-  },
-)
+await minioClient.presignedUrl('GET', 'mybucket', '', 1000, { versionId: '10fa9946-3f64-4137-a58f-888065c0732e' })
 ```
 
 <a name="presignedGetObject"></a>
 
-### presignedGetObject(bucketName, objectName[, expiry, respHeaders, requestDate, cb])
+### presignedGetObject(bucketName, objectName[, expiry, respHeaders, requestDate])
 
 Generates a presigned URL for HTTP GET operations. Browsers/Mobile clients may point to this URL to directly download objects even if the bucket is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
 **Parameters**
 
-| Param                         | Type       | Description                                                                                                                                                                                                           |
-| ----------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                   |
-| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                   |
-| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days. (optional)                                                                                                                                                           |
-| `respHeaders`                 | _object_   | response headers to override (optional)                                                                                                                                                                               |
-| `requestDate`                 | _Date_     | A date object, the url will be issued at. Default value is now. (optional)                                                                                                                                            |
-| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be downloaded using GET request. If no callback is passed, a `Promise` is returned. |
+| Param         | Type     | Description                                                                |
+| ------------- | -------- | -------------------------------------------------------------------------- |
+| `bucketName`  | _string_ | Name of the bucket.                                                        |
+| `objectName`  | _string_ | Name of the object.                                                        |
+| `expiry`      | _number_ | Expiry time in seconds. Default value is 7 days. (optional)                |
+| `respHeaders` | _object_ | response headers to override (optional)                                    |
+| `requestDate` | _Date_   | A date object, the url will be issued at. Default value is now. (optional) |
 
 **Example**
 
 ```js
 // expires in a day.
-minioClient.presignedGetObject('mybucket', 'hello.txt', 24 * 60 * 60, function (err, presignedUrl) {
-  if (err) return console.log(err)
-  console.log(presignedUrl)
-})
+const presignedUrl = await minioClient.presignedGetObject('mybucket', 'hello.txt', 24 * 60 * 60)
+console.log(presignedUrl)
 ```
 
 <a name="presignedPutObject"></a>
 
-### presignedPutObject(bucketName, objectName, expiry[, callback])
+### presignedPutObject(bucketName, objectName [,expiry])
 
 Generates a presigned URL for HTTP PUT operations. Browsers/Mobile clients may point to this URL to upload objects directly to a bucket even if it is private. This presigned URL can have an associated expiration time in seconds after which the URL is no longer valid. The default value is 7 days.
 
 **Parameters**
 
-| Param                         | Type       | Description                                                                                                                                                                                                         |
-| ----------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bucketName`                  | _string_   | Name of the bucket.                                                                                                                                                                                                 |
-| `objectName`                  | _string_   | Name of the object.                                                                                                                                                                                                 |
-| `expiry`                      | _number_   | Expiry time in seconds. Default value is 7 days.                                                                                                                                                                    |
-| `callback(err, presignedUrl)` | _function_ | Callback function is called with non `null` err value in case of error. `presignedUrl` will be the URL using which the object can be uploaded using PUT request. If no callback is passed, a `Promise` is returned. |
+| Param        | Type     | Description                                      |
+| ------------ | -------- | ------------------------------------------------ |
+| `bucketName` | _string_ | Name of the bucket.                              |
+| `objectName` | _string_ | Name of the object.                              |
+| `expiry`     | _number_ | Expiry time in seconds. Default value is 7 days. |
 
 **Example**
 
 ```js
 // expires in a day.
-minioClient.presignedPutObject('mybucket', 'hello.txt', 24 * 60 * 60, function (err, presignedUrl) {
-  if (err) return console.log(err)
-  console.log(presignedUrl)
-})
+const presignedUrl = await minioClient.presignedPutObject('mybucket', 'hello.txt', 24 * 60 * 60)
+console.log(presignedUrl)
 ```
 
 <a name="presignedPostPolicy"></a>
 
-### presignedPostPolicy(policy[, callback])
+### presignedPostPolicy(policy)
 
 Allows setting policy conditions to a presigned URL for POST operations. Policies such as bucket name to receive object uploads, key name prefixes, expiry policy may be set.
 
 **Parameters**
 
-| Param                                | Type       | Description                                                                                                                                                                                                                                                                                     |
-| ------------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `policy`                             | _object_   | Policy object created by minioClient.newPostPolicy()                                                                                                                                                                                                                                            |
-| `callback(err, {postURL, formData})` | _function_ | Callback function is called with non `null` err value in case of error. `postURL` will be the URL using which the object can be uploaded using POST request. `formData` is the object having key/value pairs for the Form data of POST body. If no callback is passed, a `Promise` is returned. |
+| Param    | Type     | Description                                          |
+| -------- | -------- | ---------------------------------------------------- |
+| `policy` | _object_ | Policy object created by minioClient.newPostPolicy() |
 
 Create policy:
 
@@ -1748,23 +1776,20 @@ policy.setUserMetaData({
 POST your content from the browser using `superagent`:
 
 ```js
-minioClient.presignedPostPolicy(policy, function (err, data) {
-  if (err) return console.log(err)
+const { postURL, formData } = await minioClient.presignedPostPolicy(policy)
+const req = superagent.post(postURL)
+_.each(formData, function (value, key) {
+  req.field(key, value)
+})
 
-  const req = superagent.post(data.postURL)
-  _.each(data.formData, function (value, key) {
-    req.field(key, value)
-  })
+// file contents.
+req.attach('file', '/path/to/hello.txt', 'hello.txt')
 
-  // file contents.
-  req.attach('file', '/path/to/hello.txt', 'hello.txt')
-
-  req.end(function (err, res) {
-    if (err) {
-      return console.log(err.toString())
-    }
-    console.log('Upload successful.')
-  })
+req.end(function (err, res) {
+  if (err) {
+    return console.log(err.toString())
+  }
+  console.log('Upload successful.')
 })
 ```
 
