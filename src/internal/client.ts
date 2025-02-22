@@ -95,6 +95,7 @@ import type {
   ObjectLockInfo,
   ObjectMetaData,
   ObjectRetentionInfo,
+  PreSignOriginParams,
   PreSignRequestParams,
   PutObjectLegalHoldOptions,
   PutTaggingParams,
@@ -2862,6 +2863,7 @@ export class TypedClient {
     expires?: number | PreSignRequestParams | undefined,
     reqParams?: PreSignRequestParams | Date,
     requestDate?: Date,
+    origin?: PreSignOriginParams,
   ): Promise<string> {
     if (this.anonymous) {
       throw new errors.AnonymousRequestError(`Presigned ${method} url cannot be generated for anonymous requests`)
@@ -2894,6 +2896,15 @@ export class TypedClient {
       const region = await this.getBucketRegionAsync(bucketName)
       await this.checkAndRefreshCreds()
       const reqOptions = this.getRequestOptions({ method, region, bucketName, objectName, query })
+
+      if (origin?.protocol) {
+        reqOptions.protocol = origin.protocol
+      }
+
+      if (origin?.host) {
+        reqOptions.host = origin.host
+        reqOptions.headers.host = origin.host
+      }
 
       return presignSignatureV4(
         reqOptions,

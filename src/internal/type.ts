@@ -466,6 +466,11 @@ export type UploadPartConfig = {
 
 export type PreSignRequestParams = { [key: string]: string }
 
+export type PreSignOriginParams = {
+  protocol: string
+  host: string
+}
+
 /** List object api types **/
 
 // Common types
