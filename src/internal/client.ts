@@ -1658,7 +1658,7 @@ export class TypedClient {
     }
 
     const partSize = this.calculatePartSize(size)
-    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= partSize) {
+    if (typeof stream === 'string' || stream.readableLength === 0 || Buffer.isBuffer(stream) || size <= partSize) {
       const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
       return this.uploadBuffer(bucketName, objectName, headers, buf)
     }
