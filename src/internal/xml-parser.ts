@@ -56,9 +56,10 @@ export function parseError(xml: string, headerInfo: Record<string, unknown>) {
 }
 
 // Generates an Error object depending on http statusCode and XML body
-export async function parseResponseError(response: http.IncomingMessage) {
+export async function parseResponseError(response: http.IncomingMessage): Promise<Record<string, string>> {
   const statusCode = response.statusCode
-  let code: string, message: string
+  let code = '',
+    message = ''
   if (statusCode === 301) {
     code = 'MovedPermanently'
     message = 'Moved Permanently'
@@ -77,9 +78,17 @@ export async function parseResponseError(response: http.IncomingMessage) {
   } else if (statusCode === 501) {
     code = 'MethodNotAllowed'
     message = 'Method Not Allowed'
+  } else if (statusCode === 503) {
+    code = 'SlowDown'
+    message = 'Please reduce your request rate.'
   } else {
-    code = 'UnknownError'
-    message = `${statusCode}`
+    const hErrCode = response.headers['x-minio-error-code'] as string
+    const hErrDesc = response.headers['x-minio-error-desc'] as string
+
+    if (hErrCode && hErrDesc) {
+      code = hErrCode
+      message = hErrDesc
+    }
   }
   const headerInfo: Record<string, string | undefined | null> = {}
   // A value created by S3 compatible server that uniquely identifies the request.

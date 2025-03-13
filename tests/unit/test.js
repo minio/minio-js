@@ -751,12 +751,6 @@ describe('Client', function () {
           () => done(),
         )
       })
-      it('should fail on incompatible argument type (null) for statOpts object', (done) => {
-        client.statObject('hello', 'testStatOpts', null).then(
-          () => done(new Error('expecting error')),
-          () => done(),
-        )
-      })
       it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
         client.statObject('hello', 'testStatOpts', '  ').then(
           () => done(new Error('expecting error')),

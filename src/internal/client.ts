@@ -66,7 +66,7 @@ import {
 } from './helper.ts'
 import { joinHostPort } from './join-host-port.ts'
 import { PostPolicy } from './post-policy.ts'
-import { request } from './request.ts'
+import { requestWithRetry } from './request.ts'
 import { drainResponse, readAsBuffer, readAsString } from './response.ts'
 import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
@@ -723,7 +723,7 @@ export class TypedClient {
       reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
-    const response = await request(this.transport, reqOptions, body)
+    const response = await requestWithRetry(this.transport, reqOptions, body)
     if (!response.statusCode) {
       throw new Error("BUG: response doesn't have a statusCode")
     }
