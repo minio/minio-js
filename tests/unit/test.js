@@ -253,7 +253,7 @@ describe('CopyConditions', () => {
 
 describe('Client', function () {
   var nockRequests = []
-  this.timeout(300000) // 5 minutes
+  this.timeout(5000) // 5 minutes
   beforeEach(() => {
     Nock.cleanAll()
     nockRequests = []

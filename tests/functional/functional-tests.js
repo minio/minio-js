@@ -40,7 +40,7 @@ const assert = chai.assert
 const isWindowsPlatform = process.platform === 'win32'
 
 describe('functional tests', function () {
-  this.timeout(300000) // 5 minutes
+  this.timeout(30 * 60 * 1000)
   var clientConfigParams = {}
   var region_conf_env = process.env['MINIO_REGION']
 

@@ -65,24 +65,34 @@ export async function requestWithRetry(
   maxRetries: number = MAX_RETRIES,
 ): Promise<http.IncomingMessage> {
   let attempt = 0
+  let isRetryable = false
   while (attempt <= maxRetries) {
     try {
       const response = await request(transport, opt, body)
       // Check if the HTTP status code is retryable
       if (isHttpRetryable(response.statusCode as number)) {
+        isRetryable = true
         throw new Error(`Retryable HTTP status: ${response.statusCode}`) // trigger retry attempt with calculated delay
       }
+
       return response // Success, return the raw response
     } catch (err) {
-      attempt++
+      if (isRetryable) {
+        attempt++
+        isRetryable = false
 
-      if (attempt > maxRetries) {
-        throw new Error(`Request failed after ${maxRetries} retries: ${err}`)
+        if (attempt > maxRetries) {
+          throw new Error(`Request failed after ${maxRetries} retries: ${err}`)
+        }
+        const delay = getExpBackOffDelay(attempt)
+        // eslint-disable-next-line no-console
+        console.warn(
+          `${new Date().toLocaleString()} Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`,
+        )
+        await sleep(delay)
+      } else {
+        throw err // re-throw if any request, syntax errors
       }
-      const delay = getExpBackOffDelay(attempt)
-      // eslint-disable-next-line no-console
-      // console.warn( `${new Date().toLocaleString()} Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`,)
-      await sleep(delay)
     }
   }
 
