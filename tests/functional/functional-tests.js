@@ -325,6 +325,23 @@ describe('functional tests', function () {
           .catch(done)
       },
     )
+
+    step(
+      `putObject(bucketName, objectName, 0byte)_bucketName:${bucketName}, objectName:${_MultiPath100kbObjectBufferName}, 0bytefile`,
+      (done) => {
+        client
+          .putObject(bucketName, '0bytefile', '')
+          .then(() => done())
+          .catch(done)
+      },
+    )
+
+    step(`removeObject(0byte, objectName)_bucketName:${bucketName}, objectName:0bytefile`, (done) => {
+      client
+        .removeObject(bucketName, '0bytefile')
+        .then(() => done())
+        .catch(done)
+    })
   })
   describe('tests for putObject copyObject getObject getPartialObject statObject removeObject', function () {
     var tmpFileUpload = `${tmpDir}/${_100kbObjectName}`

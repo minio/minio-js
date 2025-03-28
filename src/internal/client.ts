@@ -1596,7 +1596,7 @@ export class TypedClient {
 
     // Inserts correct `content-type` attribute based on metaData and filePath
     metaData = insertContentType(metaData || {}, filePath)
-    const stat = await fsp.lstat(filePath)
+    const stat = await fsp.stat(filePath)
     return await this.putObject(bucketName, objectName, fs.createReadStream(filePath), stat.size, metaData)
   }
 
@@ -1656,9 +1656,12 @@ export class TypedClient {
       // Backward compatibility
       size = this.maxObjectSize
     }
+    if (size === 0) {
+      return this.uploadBuffer(bucketName, objectName, headers, Buffer.from(''))
+    }
 
     const partSize = this.calculatePartSize(size)
-    if (typeof stream === 'string' || stream.readableLength === 0 || Buffer.isBuffer(stream) || size <= partSize) {
+    if (typeof stream === 'string' || Buffer.isBuffer(stream) || size <= partSize) {
       const buf = isReadableStream(stream) ? await readAsBuffer(stream) : Buffer.from(stream)
       return this.uploadBuffer(bucketName, objectName, headers, buf)
     }
