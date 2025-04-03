@@ -18,6 +18,7 @@ import type {
   ObjectLockInfo,
   ObjectRowEntry,
   ReplicationConfig,
+  Tag,
   Tags,
 } from './type.ts'
 import { RETENTION_VALIDITY_UNITS } from './type.ts'
@@ -299,14 +300,14 @@ export function parseObjectLegalHoldConfig(xml: string) {
 
 export function parseTagging(xml: string) {
   const xmlObj = parseXml(xml)
-  let result = []
+  let result: Tag[] = []
   if (xmlObj.Tagging && xmlObj.Tagging.TagSet && xmlObj.Tagging.TagSet.Tag) {
-    const tagResult = xmlObj.Tagging.TagSet.Tag
+    const tagResult: Tag = xmlObj.Tagging.TagSet.Tag
     // if it is a single tag convert into an array so that the return value is always an array.
-    if (isObject(tagResult)) {
-      result.push(tagResult)
+    if (Array.isArray(tagResult)) {
+      result = [...tagResult]
     } else {
-      result = tagResult
+      result.push(tagResult)
     }
   }
   return result
