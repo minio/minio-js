@@ -233,7 +233,12 @@ export function isString(arg: unknown): arg is string {
 export function isObject(arg: unknown): arg is object {
   return typeof arg === 'object' && arg !== null
 }
-
+/**
+ * check if typeof arg is plain object
+ */
+export function isPlainObject(arg: unknown): arg is Record<string, unknown> {
+  return Object.prototype.toString.call(arg) === '[object Object]'
+}
 /**
  * check if object is readable stream
  */

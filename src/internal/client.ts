@@ -45,6 +45,7 @@ import {
   isEmpty,
   isNumber,
   isObject,
+  isPlainObject,
   isReadableStream,
   isString,
   isValidBucketName,
@@ -2239,7 +2240,7 @@ export class TypedClient {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (!isObject(tags)) {
+    if (!isPlainObject(tags)) {
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
     if (Object.keys(tags).length > 10) {
@@ -2264,7 +2265,7 @@ export class TypedClient {
       throw new errors.InvalidBucketNameError('Invalid object name: ' + objectName)
     }
 
-    if (!isObject(tags)) {
+    if (!isPlainObject(tags)) {
       throw new errors.InvalidArgumentError('tags should be of type "object"')
     }
     if (Object.keys(tags).length > 10) {

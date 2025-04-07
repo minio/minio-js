@@ -2459,7 +2459,11 @@ describe('functional tests', function () {
             return done(err)
           }
           if (Array.isArray(tagList)) {
-            done()
+            const hasNestedArray = tagList.length !== tagList.flat(Infinity).length
+            if (hasNestedArray) {
+              return done(new Error('TagList is not flat'))
+            }
+            return done()
           }
         })
       })
@@ -2519,8 +2523,78 @@ describe('functional tests', function () {
             return done(err)
           }
           if (Array.isArray(tagList)) {
-            done()
+            const hasNestedArray = tagList.length !== tagList.flat(Infinity).length
+            if (hasNestedArray) {
+              return done(new Error('TagList is not flat'))
+            }
+            return done()
           }
+          return done()
+        })
+      })
+
+      step(`removeObjectTagging on an object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
+        client.removeObjectTagging(tagsBucketName, tagObjName, (err) => {
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
+          done()
+        })
+      })
+      step(`removeObject object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
+        client.removeObject(tagsBucketName, tagObjName, () => {
+          done()
+        })
+      })
+    })
+
+    describe('set, get and remove multiple Tags on an object', function () {
+      step(
+        `putObject(bucketName, objectName, stream)_bucketName:${tagsBucketName}, objectName:${tagObjName}, stream:100Kib_`,
+        (done) => {
+          client
+            .putObject(tagsBucketName, tagObjName, tagObject)
+            .then(() => done())
+            .catch(done)
+        },
+      )
+
+      step(`setObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
+        client.setObjectTagging(
+          tagsBucketName,
+          tagObjName,
+          { 'test-tag-key-obj': 'test-tag-value-obj', 'test-tag-key-obj1': 'test-tag-value-obj1' },
+          (err) => {
+            if (err && err.code === 'NotImplemented') {
+              return done()
+            }
+            if (err) {
+              return done(err)
+            }
+            done()
+          },
+        )
+      })
+
+      step(`getObjectTagging  object_bucketName:${tagsBucketName}, objectName:${tagObjName},`, (done) => {
+        client.getObjectTagging(tagsBucketName, tagObjName, (err, tagList) => {
+          if (err && err.code === 'NotImplemented') {
+            return done()
+          }
+          if (err) {
+            return done(err)
+          }
+          if (Array.isArray(tagList)) {
+            const hasNestedArray = tagList.length !== tagList.flat(Infinity).length
+            if (hasNestedArray) {
+              return done(new Error('TagList is not flat'))
+            }
+            return done()
+          }
+          return done()
         })
       })
 
@@ -2616,7 +2690,11 @@ describe('functional tests', function () {
               return done(err)
             }
             if (Array.isArray(tagList)) {
-              done()
+              const hasNestedArray = tagList.length !== tagList.flat(Infinity).length
+              if (hasNestedArray) {
+                return done(new Error('TagList is not flat'))
+              }
+              return done()
             }
           })
         } else {
