@@ -666,14 +666,21 @@ const formatObjInfo = (content: ObjectRowEntry, opts: { IsDeleteMarker?: boolean
 
 // parse XML response for list objects in a bucket
 export function parseListObjects(xml: string) {
-  const result: { objects: ObjectInfo[]; isTruncated?: boolean; nextMarker?: string; versionIdMarker?: string } = {
+  const result: {
+    objects: ObjectInfo[]
+    isTruncated?: boolean
+    nextMarker?: string
+    versionIdMarker?: string
+    keyMarker?: string
+  } = {
     objects: [],
     isTruncated: false,
     nextMarker: undefined,
     versionIdMarker: undefined,
+    keyMarker: undefined,
   }
   let isTruncated = false
-  let nextMarker, nextVersionKeyMarker
+  let nextMarker
   const xmlobj = fxpWithoutNumParser.parse(xml)
 
   const parseCommonPrefixesEntity = (commonPrefixEntry: CommonPrefix[]) => {
@@ -703,6 +710,9 @@ export function parseListObjects(xml: string) {
 
     if (listBucketResult.Marker) {
       nextMarker = listBucketResult.Marker
+    }
+    if (listBucketResult.NextMarker) {
+      nextMarker = listBucketResult.NextMarker
     } else if (isTruncated && result.objects.length > 0) {
       nextMarker = result.objects[result.objects.length - 1]?.name
     }
@@ -728,7 +738,7 @@ export function parseListObjects(xml: string) {
     }
 
     if (listVersionsResult.NextKeyMarker) {
-      nextVersionKeyMarker = listVersionsResult.NextKeyMarker
+      result.keyMarker = listVersionsResult.NextKeyMarker
     }
     if (listVersionsResult.NextVersionIdMarker) {
       result.versionIdMarker = listVersionsResult.NextVersionIdMarker
@@ -740,7 +750,7 @@ export function parseListObjects(xml: string) {
 
   result.isTruncated = isTruncated
   if (isTruncated) {
-    result.nextMarker = nextVersionKeyMarker || nextMarker
+    result.nextMarker = nextMarker
   }
   return result
 }

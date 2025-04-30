@@ -3030,14 +3030,14 @@ export class TypedClient {
     if (!isString(prefix)) {
       throw new TypeError('prefix should be of type "string"')
     }
-    if (!isString(marker)) {
+    if (marker && !isString(marker)) {
       throw new TypeError('marker should be of type "string"')
     }
 
     if (listQueryOpts && !isObject(listQueryOpts)) {
       throw new TypeError('listQueryOpts should be of type "object"')
     }
-    let { Delimiter, MaxKeys, IncludeVersion } = listQueryOpts as ListObjectQueryOpts
+    let { Delimiter, MaxKeys, IncludeVersion, versionIdMarker, keyMarker } = listQueryOpts as ListObjectQueryOpts
 
     if (!isString(Delimiter)) {
       throw new TypeError('Delimiter should be of type "string"')
@@ -3056,13 +3056,17 @@ export class TypedClient {
       queries.push(`versions`)
     }
 
-    if (marker) {
-      marker = uriEscape(marker)
-      if (IncludeVersion) {
-        queries.push(`key-marker=${marker}`)
-      } else {
-        queries.push(`marker=${marker}`)
+    if (IncludeVersion) {
+      // v1 version listing..
+      if (keyMarker) {
+        queries.push(`key-marker=${keyMarker}`)
       }
+      if (versionIdMarker) {
+        queries.push(`version-id-marker=${versionIdMarker}`)
+      }
+    } else if (marker) {
+      marker = uriEscape(marker)
+      queries.push(`marker=${marker}`)
     }
 
     // no need to escape maxKeys
@@ -3113,11 +3117,8 @@ export class TypedClient {
       throw new TypeError('listOpts should be of type "object"')
     }
     let marker: string | undefined = ''
-    const listQueryOpts = {
-      Delimiter: recursive ? '' : '/', // if recursive is false set delimiter to '/'
-      MaxKeys: 1000,
-      IncludeVersion: listOpts?.IncludeVersion,
-    }
+    let keyMarker: string | undefined = ''
+    let versionIdMarker: string | undefined = ''
     let objects: ObjectInfo[] = []
     let ended = false
     const readStream: stream.Readable = new stream.Readable({ objectMode: true })
@@ -3132,9 +3133,24 @@ export class TypedClient {
       }
 
       try {
+        const listQueryOpts = {
+          Delimiter: recursive ? '' : '/', // if recursive is false set delimiter to '/'
+          MaxKeys: 1000,
+          IncludeVersion: listOpts?.IncludeVersion,
+          // version listing specific options
+          keyMarker: keyMarker,
+          versionIdMarker: versionIdMarker,
+        }
+
         const result: ListObjectQueryRes = await this.listObjectsQuery(bucketName, prefix, marker, listQueryOpts)
         if (result.isTruncated) {
-          marker = result.nextMarker || result.versionIdMarker
+          marker = result.nextMarker || undefined
+          if (result.keyMarker) {
+            keyMarker = result.keyMarker
+          }
+          if (result.versionIdMarker) {
+            versionIdMarker = result.versionIdMarker
+          }
         } else {
           ended = true
         }
