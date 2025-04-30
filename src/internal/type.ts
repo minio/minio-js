@@ -498,14 +498,19 @@ export type ObjectInfo = {
 export type ListObjectQueryRes = {
   isTruncated?: boolean
   nextMarker?: string
-  versionIdMarker?: string
   objects?: ObjectInfo[]
+  // version listing
+  keyMarker?: string
+  versionIdMarker?: string
 }
 
 export type ListObjectQueryOpts = {
   Delimiter?: string
   MaxKeys?: number
   IncludeVersion?: boolean
+  // version listing
+  keyMarker?: string
+  versionIdMarker?: string
 }
 /** List object api types **/
 
@@ -539,4 +544,5 @@ export interface ListBucketResultV1 {
   DeleteMarker?: ObjectRowEntry[]
   VersionIdMarker?: string
   NextVersionIdMarker?: string
+  NextMarker?: string
 }
