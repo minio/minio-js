@@ -752,9 +752,8 @@ export class TypedClient {
    *
    * @param bucketName
    *
-   * @internal
    */
-  protected async getBucketRegionAsync(bucketName: string): Promise<string> {
+  async getBucketRegionAsync(bucketName: string): Promise<string> {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError(`Invalid bucket name : ${bucketName}`)
     }
