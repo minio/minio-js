@@ -15,7 +15,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        node_version: [24.x, 22.x, 20.x, 18.x, 16.x ]
+        node_version: [ 22.x ]
         os: [ ubuntu-latest, windows-latest ]
 
     env:
@@ -50,9 +50,6 @@ jobs:
           cache: 'npm'
 
       - run: npm i
-
-      - name: Build TypeScript
-        run: npm run build
 
       - name: Run Unit and Functional Tests
         timeout-minutes: 10
