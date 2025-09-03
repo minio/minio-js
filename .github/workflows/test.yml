@@ -51,6 +51,9 @@ jobs:
 
       - run: npm i
 
+      - name: Build TypeScript
+        run: npm run build
+
       - name: Run Unit and Functional Tests
         timeout-minutes: 10
         env:
