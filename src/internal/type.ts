@@ -22,43 +22,42 @@ export type ResponseHeader = Record<string, string>
 export type ObjectMetaData = Record<string, string | number>
 
 export type RequestHeaders = Record<string, string | boolean | number | undefined>
+export type EnabledOrDisabledStatus = 'Enabled' | 'Disabled'
+
+export const ENCRYPTION_TYPES = {
+  SSEC: 'SSE-C',
+  KMS: 'KMS',
+} as const
+
+export type ENCRYPTION_TYPES = (typeof ENCRYPTION_TYPES)[keyof typeof ENCRYPTION_TYPES]
 
 export type Encryption =
   | {
-      type: ENCRYPTION_TYPES.SSEC
+      type: typeof ENCRYPTION_TYPES.SSEC
     }
   | {
-      type: ENCRYPTION_TYPES.KMS
+      type: typeof ENCRYPTION_TYPES.KMS
       SSEAlgorithm?: string
       KMSMasterKeyID?: string
     }
 
-export type EnabledOrDisabledStatus = 'Enabled' | 'Disabled'
-export enum ENCRYPTION_TYPES {
-  /**
-   * SSEC represents server-side-encryption with customer provided keys
-   */
-  SSEC = 'SSE-C',
-  /**
-   * KMS represents server-side-encryption with managed keys
-   */
-  KMS = 'KMS',
-}
+export const RETENTION_MODES = {
+  GOVERNANCE: 'GOVERNANCE',
+  COMPLIANCE: 'COMPLIANCE',
+} as const
+export type RETENTION_MODES = (typeof RETENTION_MODES)[keyof typeof RETENTION_MODES]
 
-export enum RETENTION_MODES {
-  GOVERNANCE = 'GOVERNANCE',
-  COMPLIANCE = 'COMPLIANCE',
-}
+export const RETENTION_VALIDITY_UNITS = {
+  DAYS: 'Days',
+  YEARS: 'Years',
+} as const
+export type RETENTION_VALIDITY_UNITS = (typeof RETENTION_VALIDITY_UNITS)[keyof typeof RETENTION_VALIDITY_UNITS]
 
-export enum RETENTION_VALIDITY_UNITS {
-  DAYS = 'Days',
-  YEARS = 'Years',
-}
-
-export enum LEGAL_HOLD_STATUS {
-  ENABLED = 'ON',
-  DISABLED = 'OFF',
-}
+export const LEGAL_HOLD_STATUS = {
+  ENABLED: 'ON',
+  DISABLED: 'OFF',
+} as const
+export type LEGAL_HOLD_STATUS = (typeof LEGAL_HOLD_STATUS)[keyof typeof LEGAL_HOLD_STATUS]
 
 export type Transport = Pick<typeof http, 'request'>
 

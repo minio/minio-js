@@ -24,7 +24,11 @@ import type { BucketItemWithMetadata, BucketStream } from './type.ts'
 import { parseListObjectsV2WithMetadata } from './xml-parser.ts'
 
 export class Extensions {
-  constructor(private readonly client: TypedClient) {}
+  private readonly client: TypedClient
+
+  constructor(client: TypedClient) {
+    this.client = client
+  }
 
   /**
    * List the objects in the bucket using S3 ListObjects V2 With Metadata
