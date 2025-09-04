@@ -4,7 +4,7 @@
 
 MinIO JavaScript Client SDK提供简单的API来访问任何Amazon S3兼容的对象存储服务。
 
-本快速入门指南将向您展示如何安装客户端SDK并执行示例JavaScript程序。有关API和示例的完整列表，请参阅[JavaScript客户端API参考](https://min.io/docs/minio/linux/developers/javascript/API.html/javascript-client-api-reference)文档。
+本快速入门指南将向您展示如何安装客户端SDK并执行示例JavaScript程序。有关API和示例的完整列表，请参阅[JavaScript客户端API参考](https://docs.min.io/enterprise/aistor-object-store/developers/minio-drivers/#javascript)文档。
 
 本文假设你已经安装了[nodejs](http://nodejs.org/) 。
 
