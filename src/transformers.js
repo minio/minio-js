@@ -52,7 +52,12 @@ export function getConcater(parser, emitError) {
       }
       if (bufs.length) {
         if (parser) {
-          this.push(parser(Buffer.concat(bufs).toString()))
+          try {
+            this.push(parser(Buffer.concat(bufs).toString()))
+          } catch (e) {
+            cb(e)
+            return
+          }
         } else {
           this.push(Buffer.concat(bufs))
         }
