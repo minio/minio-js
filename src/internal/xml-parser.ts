@@ -22,6 +22,7 @@ import type {
   Tags,
 } from './type.ts'
 import { RETENTION_VALIDITY_UNITS } from './type.ts'
+import { Logger } from './logger.ts'
 
 // parse XML response for bucket region
 export function parseBucketRegion(xml: string): string {
@@ -459,7 +460,7 @@ function extractHeaderValue(stream: stream.Readable) {
   return Buffer.from(stream.read(bodyLen)).toString()
 }
 
-export function parseSelectObjectContentResponse(res: Buffer) {
+export function parseSelectObjectContentResponse(res: Buffer, logger: Logger) {
   const selectResults = new SelectResults({}) // will be returned
 
   const responseStream = readableStream(res) // convert byte array to a readable responseStream
@@ -577,9 +578,9 @@ export function parseSelectObjectContentResponse(res: Buffer) {
           default: {
             // Continuation message: Not sure if it is supported. did not find a reference or any message in response.
             // It does not have a payload.
-            const warningMessage = `Un implemented event detected  ${messageType}.`
+            const warningMessage = `Unimplemented event detected  ${messageType}.`
             // eslint-disable-next-line no-console
-            console.warn(warningMessage)
+            logger.warn(warningMessage)
           }
         }
       }

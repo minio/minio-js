@@ -128,6 +128,7 @@ import {
   uploadPartParser,
 } from './xml-parser.ts'
 import * as xmlParsers from './xml-parser.ts'
+import { Logger } from './logger.ts'
 
 const xml = new xml2js.Builder({ renderOpts: { pretty: false }, headless: true })
 
@@ -163,6 +164,7 @@ export interface ClientOptions {
   port?: number
   region?: Region
   transport?: Transport
+  logger?: Logger
   sessionToken?: string
   partSize?: number
   pathStyle?: boolean
@@ -198,6 +200,7 @@ type Part = {
 
 export class TypedClient {
   protected transport: Transport
+  protected logger: Logger
   protected host: string
   protected port: number
   protected protocol: string
@@ -293,6 +296,12 @@ export class TypedClient {
       }
 
       transportAgent = params.transportAgent
+    }
+
+    if (params.logger) {
+      this.logger = params.logger;
+    } else {
+      this.logger = console;
     }
 
     // User Agent should always following the below style.
@@ -724,7 +733,7 @@ export class TypedClient {
       reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
-    const response = await requestWithRetry(this.transport, reqOptions, body)
+    const response = await requestWithRetry(this.transport, reqOptions, body, undefined, this.logger)
     if (!response.statusCode) {
       throw new Error("BUG: response doesn't have a statusCode")
     }
@@ -2357,7 +2366,7 @@ export class TypedClient {
 
     const res = await this.makeRequestAsync({ method, bucketName, objectName, query }, payload)
     const body = await readAsBuffer(res)
-    return parseSelectObjectContentResponse(body)
+    return parseSelectObjectContentResponse(body, this.logger)
   }
 
   private async applyBucketLifecycle(bucketName: string, policyConfig: LifeCycleConfigParam): Promise<void> {

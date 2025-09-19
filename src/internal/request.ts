@@ -5,6 +5,7 @@ import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 
 import type { Transport } from './type.ts'
+import { Logger } from './logger.ts'
 
 const pipelineAsync = promisify(pipeline)
 
@@ -63,6 +64,7 @@ export async function requestWithRetry(
   opt: https.RequestOptions,
   body: Buffer | string | stream.Readable | null = null,
   maxRetries: number = MAX_RETRIES,
+  logger: Logger,
 ): Promise<http.IncomingMessage> {
   let attempt = 0
   let isRetryable = false
@@ -85,8 +87,7 @@ export async function requestWithRetry(
           throw new Error(`Request failed after ${maxRetries} retries: ${err}`)
         }
         const delay = getExpBackOffDelay(attempt)
-        // eslint-disable-next-line no-console
-        console.warn(
+        logger.warn(
           `${new Date().toLocaleString()} Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`,
         )
         await sleep(delay)
