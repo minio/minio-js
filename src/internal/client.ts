@@ -155,6 +155,29 @@ const requestOptionProperties = [
   'sessionIdContext',
 ] as const
 
+export interface RetryOptions {
+  /**
+   * If this set to true, it will take precedence over all other retry options.
+   * @default false
+   */
+  disableRetry?: boolean
+  /**
+   * The maximum amount of retries for a request.
+   * @default 1
+   */
+  maximumRetryCount?: number
+  /**
+   * The minimum duration (in milliseconds) for the exponential backoff algorithm.
+   * @default 100
+   */
+  baseDelayMs?: number
+  /**
+   * The maximum duration (in milliseconds) for the exponential backoff algorithm.
+   * @default 60000
+   */
+  maximumDelayMs?: number
+}
+
 export interface ClientOptions {
   endPoint: string
   accessKey?: string
@@ -169,6 +192,7 @@ export interface ClientOptions {
   credentialsProvider?: CredentialProvider
   s3AccelerateEndpoint?: string
   transportAgent?: http.Agent
+  retryOptions?: RetryOptions
 }
 
 export type RequestOption = Partial<IRequest> & {
@@ -212,6 +236,7 @@ export class TypedClient {
   protected credentialsProvider?: CredentialProvider
   partSize: number = 64 * 1024 * 1024
   protected overRidePartSize?: boolean
+  protected retryOptions: RetryOptions
 
   protected maximumPartSize = 5 * 1024 * 1024 * 1024
   protected maxObjectSize = 5 * 1024 * 1024 * 1024 * 1024
@@ -352,6 +377,20 @@ export class TypedClient {
     this.s3AccelerateEndpoint = params.s3AccelerateEndpoint || undefined
     this.reqOptions = {}
     this.clientExtensions = new Extensions(this)
+
+    if (params.retryOptions) {
+      if (!isObject(params.retryOptions)) {
+        throw new errors.InvalidArgumentError(
+          `Invalid retryOptions type: ${params.retryOptions}, expected to be type "object"`,
+        )
+      }
+
+      this.retryOptions = params.retryOptions
+    } else {
+      this.retryOptions = {
+        disableRetry: false,
+      }
+    }
   }
   /**
    * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
@@ -724,7 +763,14 @@ export class TypedClient {
       reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
-    const response = await requestWithRetry(this.transport, reqOptions, body)
+    const response = await requestWithRetry(
+      this.transport,
+      reqOptions,
+      body,
+      this.retryOptions.disableRetry === true ? 0 : this.retryOptions.maximumRetryCount,
+      this.retryOptions.baseDelayMs,
+      this.retryOptions.maximumDelayMs,
+    )
     if (!response.statusCode) {
       throw new Error("BUG: response doesn't have a statusCode")
     }
