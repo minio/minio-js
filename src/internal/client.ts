@@ -2726,8 +2726,9 @@ export class TypedClient {
     const res = await this.makeRequestAsync(requestOptions, payload)
     const body = await readAsString(res)
     const partRes = uploadPartParser(body)
+    const partEtagVal = sanitizeETag(res.headers.etag) || sanitizeETag(partRes.ETag)
     return {
-      etag: sanitizeETag(partRes.ETag),
+      etag: partEtagVal,
       key: objectName,
       part: partNumber,
     }
