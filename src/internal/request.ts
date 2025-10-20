@@ -29,9 +29,9 @@ export async function request(
   })
 }
 
-const MAX_RETRIES = 10
-const EXP_BACK_OFF_BASE_DELAY = 1000 // Base delay for exponential backoff
-const ADDITIONAL_DELAY_FACTOR = 1.0 // to avoid synchronized retries
+const MAX_RETRIES = 1
+const BASE_DELAY_MS = 100 // Base delay for exponential backoff
+const MAX_DELAY_MS = 60000 // Max delay for exponential backoff
 
 // Retryable error codes for HTTP ( ref: minio-go)
 export const retryHttpCodes: Record<string, boolean> = {
@@ -53,10 +53,10 @@ const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const getExpBackOffDelay = (retryCount: number) => {
-  const backOffBy = EXP_BACK_OFF_BASE_DELAY * 2 ** retryCount
-  const additionalDelay = Math.random() * backOffBy * ADDITIONAL_DELAY_FACTOR
-  return backOffBy + additionalDelay
+const getExpBackOffDelay = (retryCount: number, baseDelayMs: number, maximumDelayMs: number) => {
+  const backOffBy = baseDelayMs * (1 << retryCount)
+  const additionalDelay = Math.random() * backOffBy
+  return Math.min(backOffBy + additionalDelay, maximumDelayMs)
 }
 
 export async function requestWithRetry(
@@ -64,6 +64,8 @@ export async function requestWithRetry(
   opt: https.RequestOptions,
   body: Buffer | string | stream.Readable | null = null,
   maxRetries: number = MAX_RETRIES,
+  baseDelayMs: number = BASE_DELAY_MS,
+  maximumDelayMs: number = MAX_DELAY_MS,
   logger: Logger,
 ): Promise<http.IncomingMessage> {
   let attempt = 0
@@ -78,7 +80,7 @@ export async function requestWithRetry(
       }
 
       return response // Success, return the raw response
-    } catch (err) {
+    } catch (err: unknown) {
       if (isRetryable) {
         attempt++
         isRetryable = false
@@ -86,7 +88,7 @@ export async function requestWithRetry(
         if (attempt > maxRetries) {
           throw new Error(`Request failed after ${maxRetries} retries: ${err}`)
         }
-        const delay = getExpBackOffDelay(attempt)
+        const delay = getExpBackOffDelay(attempt, baseDelayMs, maximumDelayMs)
         logger.warn(
           `${new Date().toLocaleString()} Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`,
         )

@@ -42,6 +42,7 @@ export * from './errors.ts'
 export * from './helpers.ts'
 export * from './notification.ts'
 export { CopyConditions, PostPolicy }
+export { IamAwsProvider } from './IamAwsProvider.ts'
 
 export class Client extends TypedClient {
   //

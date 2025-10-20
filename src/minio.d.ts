@@ -53,6 +53,7 @@ export type { Region } from './internal/s3-endpoints.ts'
 export type * from './notification.ts'
 export * from './notification.ts'
 export { CopyConditions, PostPolicy }
+export { IamAwsProvider } from './IamAwsProvider.ts'
 export type { MakeBucketOpt } from './internal/client.ts'
 export type {
   BucketItem,
