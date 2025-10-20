@@ -579,7 +579,6 @@ export function parseSelectObjectContentResponse(res: Buffer, logger: Logger) {
             // Continuation message: Not sure if it is supported. did not find a reference or any message in response.
             // It does not have a payload.
             const warningMessage = `Unimplemented event detected  ${messageType}.`
-            // eslint-disable-next-line no-console
             logger.warn(warningMessage)
           }
         }
