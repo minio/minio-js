@@ -324,9 +324,9 @@ export class TypedClient {
     }
 
     if (params.logger) {
-      this.logger = params.logger;
+      this.logger = params.logger
     } else {
-      this.logger = console;
+      this.logger = console
     }
 
     // User Agent should always following the below style.
