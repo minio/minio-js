@@ -1789,7 +1789,7 @@ export class TypedClient {
         chunkier.on('end', resolve).on('error', reject)
       }),
       (async () => {
-        let partNumber = 1
+        let partNumber = 0
 
         for await (const chunk of chunkier) {
           const md5 = crypto.createHash('md5').update(chunk).digest()
