@@ -106,34 +106,11 @@ function getSignedHeaders(headers: RequestHeaders): string[] {
   if (!isObject(headers)) {
     throw new TypeError('request should be of type "object"')
   }
-  // Excerpts from @lsegal - https://github.com/aws/aws-sdk-js/issues/659#issuecomment-120477258
-  //
-  //  User-Agent:
-  //
-  //      This is ignored from signing because signing this causes problems with generating pre-signed URLs
-  //      (that are executed by other agents) or when customers pass requests through proxies, which may
-  //      modify the user-agent.
-  //
-  //  Content-Length:
-  //
-  //      This is ignored from signing because generating a pre-signed URL should not provide a content-length
-  //      constraint, specifically when vending a S3 pre-signed PUT URL. The corollary to this is that when
-  //      sending regular requests (non-pre-signed), the signature contains a checksum of the body, which
-  //      implicitly validates the payload length (since changing the number of bytes would change the checksum)
-  //      and therefore this header is not valuable in the signature.
-  //
-  //  Content-Type:
-  //
-  //      Signing this header causes quite a number of problems in browser environments, where browsers
-  //      like to modify and normalize the content-type header in different ways. There is more information
-  //      on this in https://github.com/aws/aws-sdk-js/issues/244. Avoiding this field simplifies logic
-  //      and reduces the possibility of future bugs
-  //
-  //  Authorization:
-  //
-  //      Is skipped for obvious reasons
 
-  const ignoredHeaders = ['authorization', 'content-length', 'content-type', 'user-agent']
+  // https://github.com/aws/aws-sdk-js-v3/blob/86a26c6e93a79415385443cece377d4761dba770/packages/s3-request-presigner/src/presigner.ts#L80
+  // https://github.com/awslabs/aws-sdk-rust/blob/98d89ab5a93ef71d260c8399c4e9be58175d7269/sdk/aws-sigv4/src/http_request/canonical_request.rs#L982
+
+  const ignoredHeaders = ['authorization', 'content-type', 'user-agent']
   return Object.keys(headers)
     .filter((header) => !ignoredHeaders.includes(header))
     .sort()
