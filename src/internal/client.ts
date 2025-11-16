@@ -153,6 +153,7 @@ const requestOptionProperties = [
   'secureProtocol',
   'servername',
   'sessionIdContext',
+  'headers',
 ] as const
 
 export interface RetryOptions {
@@ -480,6 +481,11 @@ export class TypedClient {
       protocol: this.protocol,
       // If custom transportAgent was supplied earlier, we'll inject it here
       agent: this.transportAgent,
+    }
+    if (this.reqOptions.headers) {
+      for (const [k, v] of Object.entries(this.reqOptions.headers)) {
+        reqOptions.headers[k.toLowerCase()] = v
+      }
     }
 
     // Verify if virtual host supported.
