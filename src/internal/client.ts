@@ -153,6 +153,7 @@ const requestOptionProperties = [
   'secureProtocol',
   'servername',
   'sessionIdContext',
+  'headers',
 ] as const
 
 export interface RetryOptions {
@@ -193,7 +194,6 @@ export interface ClientOptions {
   s3AccelerateEndpoint?: string
   transportAgent?: http.Agent
   retryOptions?: RetryOptions
-  headers?: RequestHeaders;
 }
 
 export type RequestOption = Partial<IRequest> & {
@@ -247,8 +247,6 @@ export class TypedClient {
 
   protected transportAgent: http.Agent
   private readonly clientExtensions: Extensions
-
-  protected headers?: RequestHeaders
 
   constructor(params: ClientOptions) {
     // @ts-expect-error deprecated property
@@ -394,10 +392,6 @@ export class TypedClient {
         disableRetry: false,
       }
     }
-
-    if(params.headers){
-      this.headers = params.headers
-    }
   }
   /**
    * Minio extensions that aren't necessary present for Amazon S3 compatible storage servers
@@ -488,8 +482,10 @@ export class TypedClient {
       // If custom transportAgent was supplied earlier, we'll inject it here
       agent: this.transportAgent,
     }
-    if(this.headers) {
-      reqOptions.headers = {...this.headers}
+    if (this.reqOptions.headers) {
+      for (const [k, v] of Object.entries(this.reqOptions.headers)) {
+        reqOptions.headers[k.toLowerCase()] = v
+      }
     }
 
     // Verify if virtual host supported.
