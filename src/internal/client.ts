@@ -2881,11 +2881,12 @@ export class TypedClient {
     }
 
     const uploadAllParts = async (uploadList: UploadPartConfig[]) => {
-      const partUploads = uploadList.map(async (item) => {
-        return this.uploadPart(item)
-      })
+      const partUploads: Awaited<ReturnType<typeof this.uploadPart>>[] = []
+      for (const item of uploadList) {
+        partUploads.push(await this.uploadPart(item))
+      }
       // Process results here if needed
-      return await Promise.all(partUploads)
+      return partUploads
     }
 
     const performUploadParts = async (uploadId: string) => {
