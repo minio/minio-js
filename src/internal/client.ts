@@ -2737,6 +2737,7 @@ export class TypedClient {
   async composeObject(
     destObjConfig: CopyDestinationOptions,
     sourceObjList: CopySourceOptions[],
+    { maxConcurrency = 10 } = {},
   ): Promise<boolean | { etag: string; versionId: string | null } | Promise<void> | CopyObjectResult> {
     const sourceFilesLength = sourceObjList.length
 
@@ -2882,9 +2883,14 @@ export class TypedClient {
 
     const uploadAllParts = async (uploadList: UploadPartConfig[]) => {
       const partUploads: Awaited<ReturnType<typeof this.uploadPart>>[] = []
-      for (const item of uploadList) {
-        partUploads.push(await this.uploadPart(item))
+
+      // Process upload parts in batches to avoid too many concurrent requests
+      for (const batch of _.chunk(uploadList, maxConcurrency)) {
+        const batchResults = await Promise.all(batch.map((item) => this.uploadPart(item)))
+
+        partUploads.push(...batchResults)
       }
+
       // Process results here if needed
       return partUploads
     }
