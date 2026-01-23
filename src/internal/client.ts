@@ -29,6 +29,7 @@ import { CopyConditions } from './copy-conditions.ts'
 import { Extensions } from './extensions.ts'
 import {
   calculateEvenSplits,
+  chunk,
   extractMetadata,
   getContentLength,
   getScope,
@@ -38,11 +39,9 @@ import {
   insertContentType,
   isAmazonEndpoint,
   isBoolean,
-  isDefined,
   isBrowser,
-  querystringify,
-  chunk,
-  mapValues,
+  isDefined,
+  isEmpty,
   isNumber,
   isObject,
   isPlainObject,
@@ -55,13 +54,13 @@ import {
   isValidPrefix,
   isVirtualHostStyle,
   makeDateLong,
+  mapValues,
   PART_CONSTRAINTS,
   partsRequired,
   pick,
   pickBy,
-  mapKeys,
-  isEmpty,
   prependXAMZMeta,
+  querystringify,
   readableStream,
   sanitizeETag,
   toMd5,
@@ -749,7 +748,6 @@ export class TypedClient {
 
     await this.checkAndRefreshCreds()
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     region = region || (await this.getBucketRegionAsync(options.bucketName!))
 
     const reqOptions = this.getRequestOptions({ ...options, region })
@@ -784,7 +782,7 @@ export class TypedClient {
       // But we will do cache invalidation for all errors so that,
       // in future, if AWS S3 decides to send a different status code or
       // XML error code we will still work fine.
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       delete this.regionMap[options.bucketName!]
 
       const err = await xmlParsers.parseResponseError(response)
@@ -852,7 +850,7 @@ export class TypedClient {
           return DEFAULT_REGION
         }
       }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore
       if (!(e.name === 'AuthorizationHeaderMalformed')) {
         throw e
@@ -890,7 +888,6 @@ export class TypedClient {
     if (returnResponse) {
       prom = this.makeRequestAsync(options, payload, expectedCodes, region)
     } else {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error compatible for old behaviour
       prom = this.makeRequestAsyncOmit(options, payload, expectedCodes, region)
     }
@@ -898,7 +895,6 @@ export class TypedClient {
     prom.then(
       (result) => cb(null, result),
       (err) => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         cb(err)
       },
@@ -931,7 +927,7 @@ export class TypedClient {
 
     executor().then(
       (result) => cb(null, result),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore
       (err) => cb(err),
     )
@@ -943,7 +939,7 @@ export class TypedClient {
   getBucketRegion(bucketName: string, cb: (err: unknown, region: string) => void) {
     return this.getBucketRegionAsync(bucketName).then(
       (result) => cb(null, result),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
       // @ts-ignore
       (err) => cb(err),
     )
@@ -1304,18 +1300,16 @@ export class TypedClient {
       }
       this.listIncompleteUploadsQuery(bucket, prefix, keyMarker, uploadIdMarker, delimiter).then(
         (result) => {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           result.prefixes.forEach((prefix) => uploads.push(prefix))
           async.eachSeries(
             result.uploads,
             (upload, cb) => {
               // for each incomplete upload add the sizes of its uploaded parts
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
               // @ts-ignore
               this.listParts(bucket, upload.key, upload.uploadId).then(
                 (parts: Part[]) => {
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-ignore
                   upload.size = parts.reduce((acc, item) => acc + item.size, 0)
                   uploads.push(upload)
@@ -1336,7 +1330,6 @@ export class TypedClient {
                 ended = true
               }
 
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               readStream._read()
             },
@@ -1527,7 +1520,6 @@ export class TypedClient {
     }
 
     return {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       etag: result.etag as string,
       versionId: getVersionId(res.headers as ResponseHeader),
@@ -1786,7 +1778,6 @@ export class TypedClient {
 
     const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_, o] = await Promise.all([
       new Promise((resolve, reject) => {
         body.pipe(chunkier).on('error', reject)

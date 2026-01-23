@@ -3724,8 +3724,8 @@ describe('functional tests', function () {
     const metadata = { 'X-Amz-Meta-Test': 'test-value' }
 
     before(() => {
-      return client.makeBucket(bucketName, '').then((res) => {
-        return client.putObject(bucketName, objectName, fdObject, fdObject.length, metadata).then((res) => {
+      return client.makeBucket(bucketName, '').then((_res) => {
+        return client.putObject(bucketName, objectName, fdObject, fdObject.length, metadata).then((_res) => {
           return client.setObjectTagging(bucketName, objectName, tags)
         })
       })

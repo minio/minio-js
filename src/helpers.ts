@@ -3,7 +3,6 @@ import * as path from 'node:path'
 
 import * as errors from './errors.ts'
 import {
-  querystringify,
   getEncryptionHeaders,
   isEmpty,
   isEmptyObject,
@@ -12,6 +11,7 @@ import {
   isString,
   isValidBucketName,
   isValidObjectName,
+  querystringify,
 } from './internal/helper.ts'
 import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'

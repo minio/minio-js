@@ -2,7 +2,6 @@
 //
 // https://github.com/babel/babel/issues/8962#issuecomment-443135379
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires,import/no-commonjs
 const register = require('@babel/register')
 
 register({

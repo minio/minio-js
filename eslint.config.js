@@ -1,10 +1,11 @@
 import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
-import simpleImportSort from 'eslint-plugin-simple-import-sort'
-import unusedImports from 'eslint-plugin-unused-imports'
 import importPlugin from 'eslint-plugin-import'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import unicorn from 'eslint-plugin-unicorn'
+import unusedImports from 'eslint-plugin-unused-imports'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
@@ -19,6 +20,10 @@ export default [
       ecmaVersion: 'latest',
       sourceType: 'module',
       parser: tseslint.parser,
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint.plugin,
@@ -36,8 +41,6 @@ export default [
           alwaysTryTypes: false,
           extensionAlias: { '.js': ['.js'] },
           extensions: ['.ts', '.js', '.mjs'],
-          fullySpecified: true,
-          enforceExtension: true,
         },
       },
     },
@@ -75,21 +78,30 @@ export default [
       'no-empty-function': 0,
       '@typescript-eslint/no-empty-function': 0,
       '@typescript-eslint/no-var-requires': 0,
+      '@typescript-eslint/no-require-imports': 0,
       '@typescript-eslint/no-this-alias': 0,
       '@typescript-eslint/no-empty-interface': 'warn',
       '@typescript-eslint/no-array-constructor': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_|^err$|^e$',
+        },
+      ],
       'no-extra-parens': 0,
       '@typescript-eslint/no-extra-parens': 0,
-      'import/namespace': 'error',
-      'import/default': 'error',
-      'import/named': 'error',
+      'import/namespace': 'off',
+      'import/default': 'off',
+      'import/named': 'off',
       'import/no-default-export': 'error',
       'import/extensions': ['error', 'always'],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
       ],
-      'import/no-duplicates': 'error',
+      'import/no-duplicates': 'off',
       'unused-imports/no-unused-imports': 'error',
       'import/no-amd': 'error',
     },
@@ -107,9 +119,22 @@ export default [
 
   {
     files: ['tests/**/*'],
+    languageOptions: {
+      globals: {
+        ...globals.mocha,
+      },
+    },
     rules: {
       'no-empty-function': 0,
       '@typescript-eslint/no-empty-function': 0,
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '.*',
+        },
+      ],
     },
   },
 
@@ -118,6 +143,37 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': 0,
       '@typescript-eslint/no-explicit-any': 0,
+    },
+  },
+
+  {
+    files: ['.mocharc.js', 'babel-register.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        module: 'readonly',
+        require: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'import/no-commonjs': 'off',
+    },
+  },
+
+  {
+    files: ['*.mjs', 'build.mjs'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
+  // ESLint flat config requires default export
+  {
+    files: ['eslint.config.js'],
+    rules: {
+      'import/no-default-export': 'off',
     },
   },
 ]

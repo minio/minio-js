@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { exec } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as fsp from 'node:fs/promises'

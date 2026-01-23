@@ -40,14 +40,18 @@ export function hashBinary(buf: Buffer, enableSHA256: boolean) {
 export const isBrowser: boolean = typeof window !== 'undefined' && typeof window.document !== 'undefined'
 
 export const querystringify = (obj: Record<string, unknown> | null | undefined): string => {
-  if (obj == null) return ''
+  if (obj == null) {
+    return ''
+  }
 
   const parts: string[] = []
   const keys = Object.keys(obj).sort()
 
   for (const key of keys) {
     const value = obj[key]
-    if (value === undefined) continue
+    if (value === undefined) {
+      continue
+    }
 
     const encodedKey = uriEscape(key)
 
@@ -93,7 +97,9 @@ export function pickBy<V>(
   obj: Record<string, V> | null | undefined,
   predicate: (value: V, key: string) => boolean,
 ): Record<string, V> {
-  if (obj == null) return {}
+  if (obj == null) {
+    return {}
+  }
   const result: Record<string, V> = {}
   for (const key of Object.keys(obj)) {
     if (predicate(obj[key]!, key)) {
@@ -107,7 +113,9 @@ export const mapValues = <V, R>(
   obj: Record<string, V> | null | undefined,
   fn: (value: V, key: string, object: Record<string, V>) => R,
 ): Record<string, R> => {
-  if (obj == null) return {} as Record<string, R>
+  if (obj == null) {
+    return {} as Record<string, R>
+  }
   const result: Record<string, R> = {}
   for (const key of Object.keys(obj)) {
     result[key] = fn(obj[key]!, key, obj)
@@ -116,10 +124,14 @@ export const mapValues = <V, R>(
 }
 
 export const chunk = <T>(array: readonly T[] | null | undefined, size = 1): T[][] => {
-  if (array == null || array.length === 0) return []
+  if (array == null || array.length === 0) {
+    return []
+  }
 
   const intSize = Math.trunc(size)
-  if (Number.isNaN(intSize) || intSize < 1) return []
+  if (Number.isNaN(intSize) || intSize < 1) {
+    return []
+  }
 
   const result: T[][] = []
   for (let i = 0; i < array.length; i += intSize) {
@@ -142,7 +154,9 @@ export const mapKeys = <T extends Record<string, unknown>>(
 }
 
 export function isEmpty<T>(value: T | null | undefined): value is null | undefined {
-  if (value == null) return true
+  if (value == null) {
+    return true
+  }
   if (Array.isArray(value) || typeof value === 'string' || value instanceof Buffer) {
     return value.length === 0
   }
@@ -360,7 +374,6 @@ export function isPlainObject(arg: unknown): arg is Record<string, unknown> {
  * check if object is readable stream
  */
 export function isReadableStream(arg: unknown): arg is stream.Readable {
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   return isObject(arg) && isFunction((arg as stream.Readable)._read)
 }
 
