@@ -228,8 +228,8 @@ export class CopyDestinationOptions {
       headerOptions['X-Amz-Tagging'] = isObject(userTags)
         ? querystringify(userTags)
         : isString(userTags)
-        ? userTags
-        : ''
+          ? userTags
+          : ''
     }
 
     if (this.Mode) {
