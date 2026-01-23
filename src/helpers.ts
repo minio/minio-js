@@ -1,10 +1,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import * as querystring from 'query-string'
-
 import * as errors from './errors.ts'
 import {
+  querystringify,
   getEncryptionHeaders,
   isEmpty,
   isEmptyObject,
@@ -227,7 +226,7 @@ export class CopyDestinationOptions {
     if (!isEmpty(userTags)) {
       headerOptions['X-Amz-Tagging-Directive'] = replaceDirective
       headerOptions['X-Amz-Tagging'] = isObject(userTags)
-        ? querystring.stringify(userTags)
+        ? querystringify(userTags)
         : isString(userTags)
         ? userTags
         : ''

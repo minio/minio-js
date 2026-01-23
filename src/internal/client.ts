@@ -8,9 +8,6 @@ import * as stream from 'node:stream'
 
 import * as async from 'async'
 import BlockStream2 from 'block-stream2'
-import { isBrowser } from 'browser-or-node'
-import _ from 'lodash'
-import * as qs from 'query-string'
 import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
@@ -42,7 +39,10 @@ import {
   isAmazonEndpoint,
   isBoolean,
   isDefined,
-  isEmpty,
+  isBrowser,
+  querystringify,
+  chunk,
+  mapValues,
   isNumber,
   isObject,
   isPlainObject,
@@ -57,6 +57,10 @@ import {
   makeDateLong,
   PART_CONSTRAINTS,
   partsRequired,
+  pick,
+  pickBy,
+  mapKeys,
+  isEmpty,
   prependXAMZMeta,
   readableStream,
   sanitizeETag,
@@ -413,7 +417,7 @@ export class TypedClient {
     if (!isObject(options)) {
       throw new TypeError('request options should be of type "object"')
     }
-    this.reqOptions = _.pick(options, requestOptionProperties)
+    this.reqOptions = pick(options, requestOptionProperties)
   }
 
   /**
@@ -423,7 +427,7 @@ export class TypedClient {
     if (!isEmpty(this.s3AccelerateEndpoint) && !isEmpty(bucketName) && !isEmpty(objectName)) {
       // http://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html
       // Disable transfer acceleration for non-compliant bucket names.
-      if (bucketName.includes('.')) {
+      if ((bucketName as string).includes('.')) {
         throw new Error(`Transfer Acceleration is not supported for non compliant bucket:${bucketName}`)
       }
       // If transfer acceleration is requested set new host.
@@ -555,7 +559,7 @@ export class TypedClient {
 
     return {
       ...reqOptions,
-      headers: _.mapValues(_.pickBy(reqOptions.headers, isDefined), (v) => v.toString()),
+      headers: mapValues(pickBy(reqOptions.headers, isDefined), (v) => v.toString()),
       host,
       port,
       path,
@@ -1122,7 +1126,7 @@ export class TypedClient {
           'X-Amz-Server-Side-Encryption-Customer-Key-MD5': getOpts.SSECustomerKeyMD5,
         }),
       }
-      query = qs.stringify(getOpts)
+      query = querystringify(getOpts)
       headers = {
         ...prependXAMZMeta(sseHeaders),
         ...headers,
@@ -1216,7 +1220,7 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('statOpts should be of type "object"')
     }
 
-    const query = qs.stringify(statOptDef)
+    const query = querystringify(statOptDef)
     const method = 'HEAD'
     const res = await this.makeRequestAsyncOmit({ method, bucketName, objectName, query })
 
@@ -1255,7 +1259,7 @@ export class TypedClient {
     if (removeOpts?.versionId) {
       queryParams.versionId = `${removeOpts.versionId}`
     }
-    const query = qs.stringify(queryParams)
+    const query = querystringify(queryParams)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
@@ -1808,7 +1812,7 @@ export class TypedClient {
           // now start to upload missing part
           const options: RequestOption = {
             method: 'PUT',
-            query: qs.stringify({ partNumber, uploadId }),
+            query: querystringify({ partNumber, uploadId }),
             headers: {
               'Content-Length': chunk.length,
               'Content-MD5': md5.toString('base64'),
@@ -1856,12 +1860,12 @@ export class TypedClient {
     if (!isObject(replicationConfig)) {
       throw new errors.InvalidArgumentError('replicationConfig should be of type "object"')
     } else {
-      if (_.isEmpty(replicationConfig.role)) {
+      if (isEmpty(replicationConfig.role)) {
         throw new errors.InvalidArgumentError('Role cannot be empty')
       } else if (replicationConfig.role && !isString(replicationConfig.role)) {
         throw new errors.InvalidArgumentError('Invalid value for role', replicationConfig.role)
       }
-      if (_.isEmpty(replicationConfig.rules)) {
+      if (isEmpty(replicationConfig.rules)) {
         throw new errors.InvalidArgumentError('Minimum one replication rule must be specified')
       }
     }
@@ -2145,7 +2149,7 @@ export class TypedClient {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
 
-    if (lockConfigOpts.mode && !retentionModes.includes(lockConfigOpts.mode)) {
+    if (lockConfigOpts.mode !== undefined && !retentionModes.includes(lockConfigOpts.mode)) {
       throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
     }
     if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
@@ -2345,18 +2349,18 @@ export class TypedClient {
     if (!isValidObjectName(objectName)) {
       throw new errors.InvalidObjectNameError(`Invalid object name: ${objectName}`)
     }
-    if (!_.isEmpty(selectOpts)) {
+    if (!isEmpty(selectOpts)) {
       if (!isString(selectOpts.expression)) {
         throw new TypeError('sqlExpression should be of type "string"')
       }
-      if (!_.isEmpty(selectOpts.inputSerialization)) {
+      if (!isEmpty(selectOpts.inputSerialization)) {
         if (!isObject(selectOpts.inputSerialization)) {
           throw new TypeError('inputSerialization should be of type "object"')
         }
       } else {
         throw new TypeError('inputSerialization is required')
       }
-      if (!_.isEmpty(selectOpts.outputSerialization)) {
+      if (!isEmpty(selectOpts.outputSerialization)) {
         if (!isObject(selectOpts.outputSerialization)) {
           throw new TypeError('outputSerialization should be of type "object"')
         }
@@ -2435,7 +2439,7 @@ export class TypedClient {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (_.isEmpty(lifeCycleConfig)) {
+    if (isEmpty(lifeCycleConfig)) {
       await this.removeBucketLifecycle(bucketName)
     } else {
       await this.applyBucketLifecycle(bucketName, lifeCycleConfig)
@@ -2458,12 +2462,12 @@ export class TypedClient {
     if (!isValidBucketName(bucketName)) {
       throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
     }
-    if (!_.isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
+    if (encryptionConfig && !isEmpty(encryptionConfig) && encryptionConfig.Rule.length > 1) {
       throw new errors.InvalidArgumentError('Invalid Rule length. Only one rule is allowed.: ' + encryptionConfig.Rule)
     }
 
     let encryptionObj = encryptionConfig
-    if (_.isEmpty(encryptionConfig)) {
+    if (isEmpty(encryptionConfig)) {
       encryptionObj = {
         // Default MinIO Server Supported Rule
         Rule: [
@@ -2767,7 +2771,7 @@ export class TypedClient {
 
     const getStatOptions = (srcConfig: CopySourceOptions) => {
       let statOpts = {}
-      if (!_.isEmpty(srcConfig.VersionID)) {
+      if (!isEmpty(srcConfig.VersionID)) {
         statOpts = {
           versionId: srcConfig.VersionID,
         }
@@ -2885,7 +2889,7 @@ export class TypedClient {
       const partUploads: Awaited<ReturnType<typeof this.uploadPart>>[] = []
 
       // Process upload parts in batches to avoid too many concurrent requests
-      for (const batch of _.chunk(uploadList, maxConcurrency)) {
+      for (const batch of chunk(uploadList, maxConcurrency)) {
         const batchResults = await Promise.all(batch.map((item) => this.uploadPart(item)))
 
         partUploads.push(...batchResults)
@@ -2945,7 +2949,7 @@ export class TypedClient {
       throw new TypeError('requestDate should be of type "Date" and valid')
     }
 
-    const query = reqParams ? qs.stringify(reqParams) : undefined
+    const query = reqParams && !(reqParams instanceof Date) ? querystringify(reqParams) : undefined
 
     try {
       const region = await this.getBucketRegionAsync(bucketName)

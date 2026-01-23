@@ -19,7 +19,6 @@ import * as stream from 'node:stream'
 
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
-import _ from 'lodash'
 import * as mime from 'mime-types'
 
 import { fsp, fstat } from './async.ts'
@@ -36,6 +35,124 @@ export function hashBinary(buf: Buffer, enableSHA256: boolean) {
   const md5sum = crypto.createHash('md5').update(buf).digest('base64')
 
   return { md5sum, sha256sum }
+}
+
+export const isBrowser: boolean = typeof window !== 'undefined' && typeof window.document !== 'undefined'
+
+export const querystringify = (obj: Record<string, unknown> | null | undefined): string => {
+  if (obj == null) return ''
+
+  const parts: string[] = []
+  const keys = Object.keys(obj).sort()
+
+  for (const key of keys) {
+    const value = obj[key]
+    if (value === undefined) continue
+
+    const encodedKey = uriEscape(key)
+
+    if (value === null) {
+      parts.push(encodedKey)
+      continue
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item != null) {
+          parts.push(`${encodedKey}=${uriEscape(String(item))}`)
+        }
+      }
+      continue
+    }
+
+    parts.push(`${encodedKey}=${uriEscape(String(value))}`)
+  }
+
+  return parts.join('&')
+}
+
+export const pick = <T extends Record<string, unknown>, K extends keyof T>(obj: T, keys: readonly K[]): Pick<T, K> => {
+  const result = {} as Pick<T, K>
+  for (const key of keys) {
+    if (key in obj) {
+      result[key] = obj[key]
+    }
+  }
+  return result
+}
+
+export function pickBy<V, S extends V>(
+  obj: Record<string, V> | null | undefined,
+  predicate: (value: V, key: string) => value is S,
+): Record<string, S>
+export function pickBy<V>(
+  obj: Record<string, V> | null | undefined,
+  predicate: (value: V, key: string) => boolean,
+): Record<string, V>
+export function pickBy<V>(
+  obj: Record<string, V> | null | undefined,
+  predicate: (value: V, key: string) => boolean,
+): Record<string, V> {
+  if (obj == null) return {}
+  const result: Record<string, V> = {}
+  for (const key of Object.keys(obj)) {
+    if (predicate(obj[key]!, key)) {
+      result[key] = obj[key]!
+    }
+  }
+  return result
+}
+
+export const mapValues = <V, R>(
+  obj: Record<string, V> | null | undefined,
+  fn: (value: V, key: string, object: Record<string, V>) => R,
+): Record<string, R> => {
+  if (obj == null) return {} as Record<string, R>
+  const result: Record<string, R> = {}
+  for (const key of Object.keys(obj)) {
+    result[key] = fn(obj[key]!, key, obj)
+  }
+  return result
+}
+
+export const chunk = <T>(array: readonly T[] | null | undefined, size = 1): T[][] => {
+  if (array == null || array.length === 0) return []
+
+  const intSize = Math.trunc(size)
+  if (Number.isNaN(intSize) || intSize < 1) return []
+
+  const result: T[][] = []
+  for (let i = 0; i < array.length; i += intSize) {
+    result.push(array.slice(i, i + intSize))
+  }
+  return result
+}
+
+export const mapKeys = <T extends Record<string, unknown>>(
+  obj: T,
+  fn: (value: T[keyof T], key: string) => string,
+): Record<string, T[keyof T]> => {
+  const result: Record<string, T[keyof T]> = {}
+  for (const key in obj) {
+    if (Object.hasOwn(obj, key)) {
+      result[fn(obj[key], key)] = obj[key]
+    }
+  }
+  return result
+}
+
+export function isEmpty<T>(value: T | null | undefined): value is null | undefined {
+  if (value == null) return true
+  if (Array.isArray(value) || typeof value === 'string' || value instanceof Buffer) {
+    return value.length === 0
+  }
+  if (value instanceof Map || value instanceof Set) {
+    return value.size === 0
+  }
+  if (typeof value === 'object') {
+    return Object.keys(value).length === 0
+  }
+  return true
 }
 
 // S3 percent-encodes some extra non-standard characters in a URI . So comply with S3.
@@ -254,9 +371,9 @@ export function isBoolean(arg: unknown): arg is boolean {
   return typeof arg === 'boolean'
 }
 
-export function isEmpty(o: unknown): o is null | undefined {
-  return _.isEmpty(o)
-}
+// export function isEmpty(o: unknown): o is null | undefined {
+//   return _.isEmpty(o)
+// }
 
 export function isEmptyObject(o: Record<string, unknown>): boolean {
   return Object.values(o).filter((x) => x !== undefined).length !== 0
@@ -348,7 +465,7 @@ export function prependXAMZMeta(metaData?: ObjectMetaData): RequestHeaders {
     return {}
   }
 
-  return _.mapKeys(metaData, (value, key) => {
+  return mapKeys(metaData, (value, key) => {
     if (isAmzHeader(key) || isSupportedHeader(key) || isStorageClassHeader(key)) {
       return key
     }
@@ -395,8 +512,8 @@ export function isStorageClassHeader(key: string) {
 }
 
 export function extractMetadata(headers: ResponseHeader) {
-  return _.mapKeys(
-    _.pickBy(headers, (value, key) => isSupportedHeader(key) || isStorageClassHeader(key) || isAmzHeader(key)),
+  return mapKeys(
+    pickBy(headers, (value, key) => isSupportedHeader(key) || isStorageClassHeader(key) || isAmzHeader(key)),
     (value, key) => {
       const lower = key.toLowerCase()
       if (lower.startsWith(MetaDataHeaderPrefix)) {
@@ -408,11 +525,11 @@ export function extractMetadata(headers: ResponseHeader) {
   )
 }
 
-export function getVersionId(headers: ResponseHeader = {}) {
+export function getVersionId(headers: ResponseHeader = {}): string | null {
   return headers['x-amz-version-id'] || null
 }
 
-export function getSourceVersionId(headers: ResponseHeader = {}) {
+export function getSourceVersionId(headers: ResponseHeader = {}): string | null {
   return headers['x-amz-copy-source-version-id'] || null
 }
 
@@ -501,8 +618,8 @@ export function getEncryptionHeaders(encConfig: Encryption): RequestHeaders {
       }
     } else if (encType === ENCRYPTION_TYPES.KMS) {
       return {
-        [ENCRYPTION_HEADERS.sseGenericHeader]: encConfig.SSEAlgorithm,
-        [ENCRYPTION_HEADERS.sseKmsKeyID]: encConfig.KMSMasterKeyID,
+        [ENCRYPTION_HEADERS.sseGenericHeader]: encConfig.SSEAlgorithm ?? undefined,
+        [ENCRYPTION_HEADERS.sseKmsKeyID]: encConfig.KMSMasterKeyID ?? undefined,
       }
     }
   }
@@ -549,7 +666,7 @@ export function calculateEvenSplits<T extends { Start?: number }>(
 
   const reminderValue = size % reqParts
 
-  let nextStart = start
+  let nextStart = start ?? 0
 
   for (let i = 0; i < reqParts; i++) {
     let curPartSize = divisorValue
