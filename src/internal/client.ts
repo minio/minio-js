@@ -2143,7 +2143,7 @@ export class TypedClient {
     if (lockConfigOpts.mode !== undefined && !retentionModes.includes(lockConfigOpts.mode)) {
       throw new TypeError(`lockConfigOpts.mode should be one of ${retentionModes}`)
     }
-    if (lockConfigOpts.unit && !validUnits.includes(lockConfigOpts.unit)) {
+    if (lockConfigOpts.unit !== undefined && !validUnits.includes(lockConfigOpts.unit)) {
       throw new TypeError(`lockConfigOpts.unit should be one of ${validUnits}`)
     }
     if (lockConfigOpts.validity && !isNumber(lockConfigOpts.validity)) {
