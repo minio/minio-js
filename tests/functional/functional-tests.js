@@ -23,7 +23,7 @@ import * as stream from 'node:stream'
 import * as url from 'node:url'
 
 import async from 'async'
-import chai from 'chai'
+import { assert } from 'chai'
 import _ from 'lodash'
 import { step } from 'mocha-steps'
 import splitFile from 'split-file'
@@ -34,8 +34,6 @@ import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
 import { getVersionId } from '../../src/internal/helper.ts'
 import * as minio from '../../src/minio.js'
-
-const assert = chai.assert
 
 const isWindowsPlatform = process.platform === 'win32'
 
