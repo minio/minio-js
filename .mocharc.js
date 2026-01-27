@@ -3,5 +3,7 @@ module.exports = {
   exit: true,
   reporter: 'spec',
   ui: 'bdd',
-  require: ['dotenv/config', 'source-map-support/register', './babel-register.js'],
+  require: ['dotenv/config'],
+  'node-option': ['import=tsx'],
+  extension: ['ts', 'js'],
 }
