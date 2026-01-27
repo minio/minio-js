@@ -194,17 +194,14 @@ The complete API Reference is available here:
 - [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
 - [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
 - [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
-- [make-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
+- [make-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/make-bucket.mjs)
 - [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
 - [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
-- [get-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
-- [set-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
-- [set-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
-- [get-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.js)
-- [set-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.js)
-- [set-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.js)
+- [get-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.mjs)
+- [set-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.mjs)
+- [set-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.mjs)
 - [get-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-tagging.mjs)
-- [remove-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.js)
+- [remove-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-tagging.mjs)
 - [set-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-lifecycle.mjs)
 - [get-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-lifecycle.mjs)
 - [remove-bucket-lifecycle.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket-lifecycle.mjs)
@@ -219,33 +216,33 @@ The complete API Reference is available here:
 
 #### File Object Operations
 
-- [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
+- [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.mjs)
 - [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### Object Operations
 
-- [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
+- [put-object.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object.mjs)
 - [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
-- [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
+- [copy-object.mjs](https://github.com/minio/minio-js/blob/master/examples/copy-object.mjs)
 - [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
 - [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
 - [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
 - [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 - [get-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.mjs)
 - [put-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.mjs)
-- [put-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object-tagging.js)
+- [set-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-tagging.mjs)
 - [get-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-tagging.mjs)
-- [remove-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.js)
-- [set-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-legalhold.mjs)
+- [remove-object-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object-tagging.mjs)
+- [set-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/set-object-legal-hold.mjs)
 - [get-object-legal-hold.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-legal-hold.mjs)
-- [compose-object.mjs](https://github.com/minio/minio-js/blob/master/examples/compose-object.js)
+- [compose-object.mjs](https://github.com/minio/minio-js/blob/master/examples/compose-object.mjs)
 - [select-object-content.mjs](https://github.com/minio/minio-js/blob/master/examples/select-object-content.mjs)
 
 #### Presigned Operations
 
-- [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
-- [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
-- [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
+- [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.mjs)
+- [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.mjs)
+- [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.mjs)
 
 #### Bucket Notification Operations
 
