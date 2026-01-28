@@ -40,6 +40,7 @@ const isWindowsPlatform = process.platform === 'win32'
 describe('functional tests', function () {
   this.timeout(30 * 60 * 1000)
   var clientConfigParams = {}
+
   var region_conf_env = process.env['MINIO_REGION']
 
   if (process.env['SERVER_ENDPOINT']) {
@@ -132,8 +133,13 @@ describe('functional tests', function () {
   var _5mbmd5 = crypto.createHash('md5').update(_5mb).digest('hex')
 
   // create new http agent to check requests release sockets
-  var httpAgent = (clientConfigParams.useSSL ? https : http).Agent({ keepAlive: true })
-  client.setRequestOptions({ agent: httpAgent })
+  const httpAgent = new (clientConfigParams.useSSL ? https : http).Agent({
+    keepAlive: true,
+    keepAliveMsecs: 30000,
+    timeout: 120000, // socket timeout
+    scheduling: 'fifo', // Node 22+: predictable socket reuse
+  })
+  client.setRequestOptions({ agent: httpAgent, timeout: 120000 })
   var metaData = {
     'Content-Type': 'text/html',
     'Content-Language': 'en',

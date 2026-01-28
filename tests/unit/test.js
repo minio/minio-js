@@ -20,7 +20,7 @@ import { assert, expect, use } from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 use(chaiAsPromised)
 
-import Nock from 'nock'
+import nock from 'nock'
 
 import { CopyDestinationOptions, CopySourceOptions } from '../../src/helpers.ts'
 import {
@@ -255,7 +255,7 @@ describe('Client', function () {
   var nockRequests = []
   this.timeout(5000) // 5 minutes
   beforeEach(() => {
-    Nock.cleanAll()
+    nock.cleanAll()
     nockRequests = []
   })
   afterEach(() => {

@@ -1798,8 +1798,6 @@ export class TypedClient {
             }
           }
 
-          partNumber++
-
           // now start to upload missing part
           const options: RequestOption = {
             method: 'PUT',
@@ -1822,6 +1820,7 @@ export class TypedClient {
           }
 
           eTags.push({ part: partNumber, etag })
+          partNumber++
         }
 
         return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
