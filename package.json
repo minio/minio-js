@@ -88,7 +88,7 @@
     "browser-or-node": "^2.1.1",
     "buffer-crc32": "^1.0.0",
     "eventemitter3": "^5.0.1",
-    "fast-xml-parser": "^4.4.1",
+    "fast-xml-parser": "^5.3.4",
     "ipaddr.js": "^2.0.1",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
