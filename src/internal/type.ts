@@ -527,6 +527,28 @@ export type ObjectRowEntry = ObjectVersionEntry & {
   StorageClass?: string
 }
 
+export type ListObjectV2Res = {
+  objects: BucketItem[]
+  isTruncated: boolean
+  nextContinuationToken: string
+}
+
+export type NotificationConfigEntry = {
+  Id: string
+  Event: string[]
+  Filter: { Name: string; Value: string }[]
+}
+
+export type TopicConfigEntry = NotificationConfigEntry & { Topic: string }
+export type QueueConfigEntry = NotificationConfigEntry & { Queue: string }
+export type CloudFunctionConfigEntry = NotificationConfigEntry & { CloudFunction: string }
+
+export type NotificationConfigResult = {
+  TopicConfiguration: TopicConfigEntry[]
+  QueueConfiguration: QueueConfigEntry[]
+  CloudFunctionConfiguration: CloudFunctionConfigEntry[]
+}
+
 export interface ListBucketResultV1 {
   Name?: string
   Prefix?: string

@@ -36,7 +36,6 @@ import type {
   ReplicationRuleDestination,
   ReplicationRuleFilter,
   ReplicationRuleStatus,
-  ResultCallback,
   Retention,
   RetentionOptions,
   ScanRange,
@@ -45,7 +44,6 @@ import type {
   SourceSelectionCriteria,
   Tag,
 } from './internal/type.ts'
-import type { NotificationConfig, NotificationEvent, NotificationPoller } from './notification.ts'
 
 export * from './errors.ts'
 export * from './helpers.ts'
@@ -137,27 +135,4 @@ export interface SourceObjectStats {
 }
 
 // Exports from library
-export class Client extends TypedClient {
-  listObjectsV2(bucketName: string, prefix?: string, recursive?: boolean, startAfter?: string): BucketStream<BucketItem>
-
-  // Bucket Policy & Notification operations
-  getBucketNotification(bucketName: string, callback: ResultCallback<NotificationConfig>): void
-  getBucketNotification(bucketName: string): Promise<NotificationConfig>
-
-  setBucketNotification(
-    bucketName: string,
-    bucketNotificationConfig: NotificationConfig,
-    callback: NoResultCallback,
-  ): void
-  setBucketNotification(bucketName: string, bucketNotificationConfig: NotificationConfig): Promise<void>
-
-  removeAllBucketNotification(bucketName: string, callback: NoResultCallback): void
-  removeAllBucketNotification(bucketName: string): Promise<void>
-
-  listenBucketNotification(
-    bucketName: string,
-    prefix: string,
-    suffix: string,
-    events: NotificationEvent[],
-  ): NotificationPoller
-}
+export class Client extends TypedClient {}

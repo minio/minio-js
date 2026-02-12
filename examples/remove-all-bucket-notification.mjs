@@ -25,9 +25,5 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-s3Client.removeAllBucketNotification('my-bucketname', function (e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Success')
-})
+await s3Client.removeAllBucketNotification('my-bucketname')
+console.log('Success')

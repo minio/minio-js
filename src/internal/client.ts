@@ -26,6 +26,8 @@ import {
   RETENTION_VALIDITY_UNITS,
 } from '../helpers.ts'
 import type { PostPolicyResult } from '../minio.ts'
+import type { NotificationEvent } from '../notification.ts'
+import { NotificationConfig, NotificationPoller } from '../notification.ts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from '../signing.ts'
 import { fsp, streamPromise } from './async.ts'
 import { CopyConditions } from './copy-conditions.ts'
@@ -73,6 +75,7 @@ import type { Region } from './s3-endpoints.ts'
 import { getS3Endpoint } from './s3-endpoints.ts'
 import type {
   Binary,
+  BucketItem,
   BucketItemFromList,
   BucketItemStat,
   BucketStream,
@@ -91,6 +94,8 @@ import type {
   LifeCycleConfigParam,
   ListObjectQueryOpts,
   ListObjectQueryRes,
+  ListObjectV2Res,
+  NotificationConfigResult,
   ObjectInfo,
   ObjectLockConfigParam,
   ObjectLockInfo,
@@ -120,9 +125,11 @@ import type {
 } from './type.ts'
 import type { ListMultipartResult, UploadedPart } from './xml-parser.ts'
 import {
+  parseBucketNotification,
   parseCompleteMultipart,
   parseInitiateMultipart,
   parseListObjects,
+  parseListObjectsV2,
   parseObjectLegalHoldConfig,
   parseSelectObjectContentResponse,
   uploadPartParser,
@@ -3217,5 +3224,189 @@ export class TypedClient {
       }
     }
     return readStream
+  }
+
+  async listObjectsV2Query(
+    bucketName: string,
+    prefix: string,
+    continuationToken: string,
+    delimiter: string,
+    maxKeys: number,
+    startAfter: string,
+  ): Promise<ListObjectV2Res> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isString(continuationToken)) {
+      throw new TypeError('continuationToken should be of type "string"')
+    }
+    if (!isString(delimiter)) {
+      throw new TypeError('delimiter should be of type "string"')
+    }
+    if (!isNumber(maxKeys)) {
+      throw new TypeError('maxKeys should be of type "number"')
+    }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
+    }
+
+    const queries = []
+    queries.push(`list-type=2`)
+    queries.push(`encoding-type=url`)
+    queries.push(`prefix=${uriEscape(prefix)}`)
+    queries.push(`delimiter=${uriEscape(delimiter)}`)
+
+    if (continuationToken) {
+      queries.push(`continuation-token=${uriEscape(continuationToken)}`)
+    }
+    if (startAfter) {
+      queries.push(`start-after=${uriEscape(startAfter)}`)
+    }
+    if (maxKeys) {
+      if (maxKeys >= 1000) {
+        maxKeys = 1000
+      }
+      queries.push(`max-keys=${maxKeys}`)
+    }
+    queries.sort()
+    let query = ''
+    if (queries.length > 0) {
+      query = `${queries.join('&')}`
+    }
+
+    const method = 'GET'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return parseListObjectsV2(body)
+  }
+
+  listObjectsV2(
+    bucketName: string,
+    prefix?: string,
+    recursive?: boolean,
+    startAfter?: string,
+  ): BucketStream<BucketItem> {
+    if (prefix === undefined) {
+      prefix = ''
+    }
+    if (recursive === undefined) {
+      recursive = false
+    }
+    if (startAfter === undefined) {
+      startAfter = ''
+    }
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isValidPrefix(prefix)) {
+      throw new errors.InvalidPrefixError(`Invalid prefix : ${prefix}`)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix should be of type "string"')
+    }
+    if (!isBoolean(recursive)) {
+      throw new TypeError('recursive should be of type "boolean"')
+    }
+    if (!isString(startAfter)) {
+      throw new TypeError('startAfter should be of type "string"')
+    }
+
+    const delimiter = recursive ? '' : '/'
+    const prefixStr = prefix
+    const startAfterStr = startAfter
+    let continuationToken = ''
+    let objects: BucketItem[] = []
+    let ended = false
+    const readStream: stream.Readable = new stream.Readable({ objectMode: true })
+    readStream._read = async () => {
+      if (objects.length) {
+        readStream.push(objects.shift())
+        return
+      }
+      if (ended) {
+        return readStream.push(null)
+      }
+
+      try {
+        const result = await this.listObjectsV2Query(
+          bucketName,
+          prefixStr,
+          continuationToken,
+          delimiter,
+          1000,
+          startAfterStr,
+        )
+        if (result.isTruncated) {
+          continuationToken = result.nextContinuationToken
+        } else {
+          ended = true
+        }
+        objects = result.objects
+        // @ts-ignore
+        readStream._read()
+      } catch (err) {
+        readStream.emit('error', err)
+      }
+    }
+    return readStream
+  }
+
+  async setBucketNotification(bucketName: string, config: NotificationConfig): Promise<void> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    if (!isObject(config)) {
+      throw new TypeError('notification config should be of type "Object"')
+    }
+    const method = 'PUT'
+    const query = 'notification'
+    const builder = new xml2js.Builder({
+      rootName: 'NotificationConfiguration',
+      renderOpts: { pretty: false },
+      headless: true,
+    })
+    const payload = builder.buildObject(config)
+    await this.makeRequestAsyncOmit({ method, bucketName, query }, payload)
+  }
+
+  async removeAllBucketNotification(bucketName: string): Promise<void> {
+    await this.setBucketNotification(bucketName, new NotificationConfig())
+  }
+
+  async getBucketNotification(bucketName: string): Promise<NotificationConfigResult> {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError('Invalid bucket name: ' + bucketName)
+    }
+    const method = 'GET'
+    const query = 'notification'
+    const res = await this.makeRequestAsync({ method, bucketName, query })
+    const body = await readAsString(res)
+    return parseBucketNotification(body)
+  }
+
+  listenBucketNotification(
+    bucketName: string,
+    prefix: string,
+    suffix: string,
+    events: NotificationEvent[],
+  ): NotificationPoller {
+    if (!isValidBucketName(bucketName)) {
+      throw new errors.InvalidBucketNameError(`Invalid bucket name: ${bucketName}`)
+    }
+    if (!isString(prefix)) {
+      throw new TypeError('prefix must be of type string')
+    }
+    if (!isString(suffix)) {
+      throw new TypeError('suffix must be of type string')
+    }
+    if (!Array.isArray(events)) {
+      throw new TypeError('events must be of type Array')
+    }
+    const listener = new NotificationPoller(this, bucketName, prefix, suffix, events)
+    listener.start()
+    return listener
   }
 }
