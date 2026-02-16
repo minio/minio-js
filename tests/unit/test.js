@@ -667,32 +667,22 @@ describe('Client', function () {
 
     describe('#removeAllBucketNotification()', () => {
       it('should error on invalid arguments', () => {
-        assert.throws(() => {
-          client.removeAllBucketNotification(
-            'ab',
-            () => {},
-            function () {},
-          )
-        }, /Invalid bucket name/)
+        return expect(client.removeAllBucketNotification('ab')).to.be.rejectedWith('Invalid bucket name')
       })
     })
 
     describe('#setBucketNotification()', () => {
-      it('should error on invalid arguments', () => {
-        assert.throws(() => {
-          client.setBucketNotification('ab', () => {})
-        }, /Invalid bucket name/)
-        assert.throws(() => {
-          client.setBucketNotification('bucket', 49, () => {})
-        }, /notification config should be of type "Object"/)
+      it('should error on invalid arguments', async () => {
+        await expect(client.setBucketNotification('ab')).to.be.rejectedWith('Invalid bucket name')
+        await expect(client.setBucketNotification('bucket', 49)).to.be.rejectedWith(
+          'notification config should be of type "Object"',
+        )
       })
     })
 
     describe('#getBucketNotification()', () => {
       it('should error on invalid arguments', () => {
-        assert.throws(() => {
-          client.getBucketNotification('ab', () => {})
-        }, /Invalid bucket name/)
+        return expect(client.getBucketNotification('ab')).to.be.rejectedWith('Invalid bucket name')
       })
     })
 

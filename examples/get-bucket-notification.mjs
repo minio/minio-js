@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016-2019 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,10 @@
 import * as Minio from 'minio'
 
 const s3Client = new Minio.Client({
-  endPoint: 'localhost',
-  port: 9000,
-  useSSL: false,
+  endPoint: 's3.amazonaws.com',
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-const config = new Minio.NotificationConfig()
-const arn = Minio.buildARN('minio', 'sqs', '', '1', 'webhook')
-const queue = new Minio.QueueConfig(arn)
-
-queue.addFilterSuffix('.jpg')
-queue.addFilterPrefix('myphotos/')
-queue.addEvent(Minio.ObjectCreatedAll)
-
-config.add(queue)
-
-s3Client.setBucketNotification('my-bucketname', config, function (e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Success')
-})
+const bucketNotification = await s3Client.getBucketNotification('my-bucketname')
+console.log(bucketNotification)

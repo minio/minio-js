@@ -11,15 +11,20 @@ import { readAsString } from './response.ts'
 import type {
   BucketItemFromList,
   BucketItemWithMetadata,
+  CloudFunctionConfigEntry,
   CommonPrefix,
   CopyObjectResultV1,
   ListBucketResultV1,
+  ListObjectV2Res,
+  NotificationConfigResult,
   ObjectInfo,
   ObjectLockInfo,
   ObjectRowEntry,
+  QueueConfigEntry,
   ReplicationConfig,
   Tag,
   Tags,
+  TopicConfigEntry,
 } from './type.ts'
 import { RETENTION_VALIDITY_UNITS } from './type.ts'
 
@@ -177,6 +182,109 @@ export function parseListObjectsV2WithMetadata(xml: string) {
       result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
     })
   }
+  return result
+}
+
+export function parseListObjectsV2(xml: string): ListObjectV2Res {
+  const result: ListObjectV2Res = {
+    objects: [],
+    isTruncated: false,
+    nextContinuationToken: '',
+  }
+
+  let xmlobj = parseXml(xml)
+  if (!xmlobj.ListBucketResult) {
+    throw new errors.InvalidXMLError('Missing tag: "ListBucketResult"')
+  }
+  xmlobj = xmlobj.ListBucketResult
+  if (xmlobj.IsTruncated) {
+    result.isTruncated = xmlobj.IsTruncated
+  }
+  if (xmlobj.NextContinuationToken) {
+    result.nextContinuationToken = xmlobj.NextContinuationToken
+  }
+  if (xmlobj.Contents) {
+    toArray(xmlobj.Contents).forEach((content) => {
+      const name = sanitizeObjectKey(toArray(content.Key)[0])
+      const lastModified = new Date(content.LastModified)
+      const etag = sanitizeETag(content.ETag)
+      const size = content.Size
+      result.objects.push({ name, lastModified, etag, size })
+    })
+  }
+  if (xmlobj.CommonPrefixes) {
+    toArray(xmlobj.CommonPrefixes).forEach((commonPrefix) => {
+      result.objects.push({ prefix: sanitizeObjectKey(toArray(commonPrefix.Prefix)[0]), size: 0 })
+    })
+  }
+  return result
+}
+
+export function parseBucketNotification(xml: string): NotificationConfigResult {
+  const result: NotificationConfigResult = {
+    TopicConfiguration: [],
+    QueueConfiguration: [],
+    CloudFunctionConfiguration: [],
+  }
+
+  const genEvents = (events: unknown): string[] => {
+    if (!events) {
+      return []
+    }
+    return toArray(events) as string[]
+  }
+
+  const genFilterRules = (filters: unknown): { Name: string; Value: string }[] => {
+    const rules: { Name: string; Value: string }[] = []
+    if (!filters) {
+      return rules
+    }
+    const filterArr = toArray(filters) as Record<string, unknown>[]
+    if (filterArr[0]?.S3Key) {
+      const s3KeyArr = toArray((filterArr[0] as Record<string, unknown>).S3Key) as Record<string, unknown>[]
+      if (s3KeyArr[0]?.FilterRule) {
+        toArray(s3KeyArr[0].FilterRule).forEach((rule: unknown) => {
+          const r = rule as Record<string, unknown>
+          const Name = toArray(r.Name)[0] as string
+          const Value = toArray(r.Value)[0] as string
+          rules.push({ Name, Value })
+        })
+      }
+    }
+    return rules
+  }
+
+  let xmlobj = parseXml(xml)
+  xmlobj = xmlobj.NotificationConfiguration
+
+  if (xmlobj.TopicConfiguration) {
+    toArray(xmlobj.TopicConfiguration).forEach((config: Record<string, unknown>) => {
+      const Id = toArray(config.Id)[0] as string
+      const Topic = toArray(config.Topic)[0] as string
+      const Event = genEvents(config.Event)
+      const Filter = genFilterRules(config.Filter)
+      result.TopicConfiguration.push({ Id, Topic, Event, Filter } as TopicConfigEntry)
+    })
+  }
+  if (xmlobj.QueueConfiguration) {
+    toArray(xmlobj.QueueConfiguration).forEach((config: Record<string, unknown>) => {
+      const Id = toArray(config.Id)[0] as string
+      const Queue = toArray(config.Queue)[0] as string
+      const Event = genEvents(config.Event)
+      const Filter = genFilterRules(config.Filter)
+      result.QueueConfiguration.push({ Id, Queue, Event, Filter } as QueueConfigEntry)
+    })
+  }
+  if (xmlobj.CloudFunctionConfiguration) {
+    toArray(xmlobj.CloudFunctionConfiguration).forEach((config: Record<string, unknown>) => {
+      const Id = toArray(config.Id)[0] as string
+      const CloudFunction = toArray(config.CloudFunction)[0] as string
+      const Event = genEvents(config.Event)
+      const Filter = genFilterRules(config.Filter)
+      result.CloudFunctionConfiguration.push({ Id, CloudFunction, Event, Filter } as CloudFunctionConfigEntry)
+    })
+  }
+
   return result
 }
 
