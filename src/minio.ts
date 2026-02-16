@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { callbackify } from './internal/callbackify.js'
+import type { LEGAL_HOLD_STATUS, RETENTION_MODES, RETENTION_VALIDITY_UNITS } from './helpers.ts'
+import { callbackify } from './internal/callbackify.ts'
 import { TypedClient } from './internal/client.ts'
 import { CopyConditions } from './internal/copy-conditions.ts'
 import { PostPolicy } from './internal/post-policy.ts'
@@ -24,6 +25,80 @@ export * from './helpers.ts'
 export * from './notification.ts'
 export { CopyConditions, PostPolicy }
 export { IamAwsProvider } from './IamAwsProvider.ts'
+export type { MakeBucketOpt } from './internal/client.ts'
+export type { ClientOptions, NoResultCallback, RemoveOptions } from './internal/client.ts'
+export type { Region } from './internal/s3-endpoints.ts'
+export type {
+  BucketItem,
+  BucketItemCopy,
+  BucketItemFromList,
+  BucketItemStat,
+  BucketItemWithMetadata,
+  BucketStream,
+  EmptyObject,
+  ExistingObjectReplication,
+  GetObjectLegalHoldOptions,
+  IncompleteUploadedBucketItem,
+  InputSerialization,
+  IsoDate,
+  ItemBucketMetadata,
+  ItemBucketMetadataList,
+  LegalHoldStatus,
+  LifecycleConfig,
+  LifecycleRule,
+  MetadataItem,
+  ObjectLockInfo,
+  OutputSerialization,
+  PostPolicyResult,
+  PutObjectLegalHoldOptions,
+  ReplicaModifications,
+  ReplicationConfig,
+  ReplicationConfigOpts,
+  ReplicationRule,
+  ReplicationRuleAnd,
+  ReplicationRuleDestination,
+  ReplicationRuleFilter,
+  ReplicationRuleStatus,
+  Retention,
+  RetentionOptions,
+  ScanRange,
+  SelectOptions,
+  SelectProgress,
+  SourceSelectionCriteria,
+  Tag,
+} from './internal/type.ts'
+
+/**
+ * @deprecated keep for backward compatible, use `RETENTION_MODES` instead
+ */
+export type Mode = RETENTION_MODES
+
+/**
+ * @deprecated keep for backward compatible
+ */
+export type LockUnit = RETENTION_VALIDITY_UNITS
+
+export type VersioningConfig = Record<string | number | symbol, unknown>
+export type TagList = Record<string, string>
+
+export interface LockConfig {
+  mode: RETENTION_MODES
+  unit: RETENTION_VALIDITY_UNITS
+  validity: number
+}
+
+export interface LegalHoldOptions {
+  versionId: string
+  status: LEGAL_HOLD_STATUS
+}
+
+export interface SourceObjectStats {
+  size: number
+  metaData: string
+  lastModicied: Date
+  versionId: string
+  etag: string
+}
 
 export class Client extends TypedClient {}
 

@@ -33,7 +33,7 @@ import {
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
 import { parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
-import * as Minio from '../../src/minio.js'
+import * as Minio from '../../src/minio.ts'
 
 const Package = { version: 'development' }
 
