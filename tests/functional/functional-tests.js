@@ -33,7 +33,7 @@ import * as uuid from 'uuid'
 import { AssumeRoleProvider } from '../../src/AssumeRoleProvider.ts'
 import { CopyDestinationOptions, CopySourceOptions, DEFAULT_REGION } from '../../src/helpers.ts'
 import { getVersionId } from '../../src/internal/helper.ts'
-import * as minio from '../../src/minio.js'
+import * as minio from '../../src/minio.ts'
 
 const assert = chai.assert
 

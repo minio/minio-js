@@ -25,7 +25,6 @@ import {
   RETENTION_MODES,
   RETENTION_VALIDITY_UNITS,
 } from '../helpers.ts'
-import type { PostPolicyResult } from '../minio.ts'
 import type { NotificationEvent } from '../notification.ts'
 import { NotificationConfig, NotificationPoller } from '../notification.ts'
 import { postPresignSignatureV4, presignSignatureV4, signV4 } from '../signing.ts'
@@ -101,6 +100,7 @@ import type {
   ObjectLockInfo,
   ObjectMetaData,
   ObjectRetentionInfo,
+  PostPolicyResult,
   PreSignRequestParams,
   PutObjectLegalHoldOptions,
   PutTaggingParams,

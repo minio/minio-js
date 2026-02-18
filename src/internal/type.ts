@@ -567,3 +567,11 @@ export interface ListBucketResultV1 {
   NextVersionIdMarker?: string
   NextMarker?: string
 }
+
+export interface PostPolicyResult {
+  postURL: string
+  formData: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any
+  }
+}
