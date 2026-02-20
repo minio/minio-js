@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and
-// my-objectname are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
+// and my-objectname are dummy values, please replace them with original values.
 
 import * as Minio from 'minio'
 
@@ -24,10 +24,15 @@ const s3Client = new Minio.Client({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
-// Remove a partially uploaded object name my-objectname.
-s3Client.removeIncompleteUpload('my-bucketname', 'my-objectname', function (e) {
-  if (e) {
-    return console.log(e)
-  }
+
+// Enable S3 transfer accelerate endpoint.
+s3Client.SetS3TransferAccelerate('s3-accelerate.amazonaws.com')
+
+// Upload a buffer
+const buf = Buffer.alloc(10, 'a')
+try {
+  await s3Client.putObject('my-bucketname', 'my-objectname', buf, 'application/octet-stream')
   console.log('Success')
-})
+} catch (e) {
+  console.log(e)
+}

@@ -24,39 +24,34 @@ const s3Client = new Minio.Client({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
-// Remove an object name my-objectname.
-s3Client.removeObject('my-bucketname', 'my-objectname', function (e) {
-  if (e) {
-    return console.log(e)
-  }
-  console.log('Success')
-})
 
-// Remove an object with name 'my-objectname' and a versionId.
-s3Client.removeObject('my-bucketname', 'my-objectname', { versionId: 'my-versionId' }, function (e) {
-  if (e) {
-    return console.log(e)
-  }
+try {
+  await s3Client.removeObject('my-bucketname', 'my-objectname')
   console.log('Success')
-})
+} catch (e) {
+  console.log(e)
+}
 
-// Remove an object with name 'my-objectname' and a versionId with object renetion override with governanceBypass:true.
-s3Client.removeObject(
-  'my-bucketname',
-  'my-objectname',
-  { versionId: 'my-versionId', governanceBypass: true },
-  function (e) {
-    if (e) {
-      return console.log(e)
-    }
-    console.log('Success')
-  },
-)
-
-// force delete object/prefix
-s3Client.removeObject('force-del-test', 'test/', { forceDelete: true }, function (e) {
-  if (e) {
-    return console.log(e)
-  }
+// Remove an object with a specific versionId.
+try {
+  await s3Client.removeObject('my-bucketname', 'my-objectname', { versionId: 'my-versionId' })
   console.log('Success')
-})
+} catch (e) {
+  console.log(e)
+}
+
+// Remove an object with retention governance bypass.
+try {
+  await s3Client.removeObject('my-bucketname', 'my-objectname', { versionId: 'my-versionId', governanceBypass: true })
+  console.log('Success')
+} catch (e) {
+  console.log(e)
+}
+
+// Force delete object/prefix.
+try {
+  await s3Client.removeObject('force-del-test', 'test/', { forceDelete: true })
+  console.log('Success')
+} catch (e) {
+  console.log(e)
+}

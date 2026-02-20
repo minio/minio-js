@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+
 import * as Stream from 'node:stream'
 
 import { assert, expect, use } from 'chai'
@@ -108,26 +110,26 @@ describe('Helpers', () => {
     const expectedSplitsTestCases = [
       {
         size: 0,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: null,
         expectedEnd: null,
       },
       {
         size: 1,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [undefined],
         expectedEnd: [NaN],
       },
-      { size: 1, sourceConfig: new CopySourceOptions({ Start: 0 }), expectedStart: [0], expectedEnd: [0] },
+      { size: 1, sourceConfig: new CopySourceOptions({ Start: 0 } as any), expectedStart: [0], expectedEnd: [0] },
       {
         size: OBJ_SIZES.gb1,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [0, 536870912],
         expectedEnd: [536870911, 1073741823],
       },
       {
         size: OBJ_SIZES.gb5,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [
           0, 536870912, 1073741824, 1610612736, 2147483648, 2684354560, 3221225472, 3758096384, 4294967296, 4831838208,
         ],
@@ -140,7 +142,7 @@ describe('Helpers', () => {
       // 2 part splits
       {
         size: OBJ_SIZES.gb5p1,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [
           0, 536870913, 1073741825, 1610612737, 2147483649, 2684354561, 3221225473, 3758096385, 4294967297, 4831838209,
         ],
@@ -151,7 +153,7 @@ describe('Helpers', () => {
       },
       {
         size: OBJ_SIZES.gb5p1,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [
           0, 536870913, 1073741825, 1610612737, 2147483649, 2684354561, 3221225473, 3758096385, 4294967297, 4831838209,
         ],
@@ -164,7 +166,7 @@ describe('Helpers', () => {
       // 3 part splits
       {
         size: OBJ_SIZES.gb10p1,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [
           0, 536870913, 1073741825, 1610612737, 2147483649, 2684354561, 3221225473, 3758096385, 4294967297, 4831838209,
           5368709121, 5905580033, 6442450945, 6979321857, 7516192769, 8053063681, 8589934593, 9126805505, 9663676417,
@@ -178,7 +180,7 @@ describe('Helpers', () => {
       },
       {
         size: OBJ_SIZES.gb10p2,
-        sourceConfig: new CopySourceOptions({ Start: -1 }),
+        sourceConfig: new CopySourceOptions({ Start: -1 } as any),
         expectedStart: [
           0, 536870913, 1073741826, 1610612738, 2147483650, 2684354562, 3221225474, 3758096386, 4294967298, 4831838210,
           5368709122, 5905580034, 6442450946, 6979321858, 7516192770, 8053063682, 8589934594, 9126805506, 9663676418,
@@ -193,17 +195,17 @@ describe('Helpers', () => {
     ]
 
     expectedSplitsTestCases.forEach((testCase) => {
-      const fnResult = calculateEvenSplits(testCase.size, testCase)
+      const fnResult = calculateEvenSplits(testCase.size, testCase as any)
       const { startIndex, endIndex } = fnResult || {}
 
       if (Array.isArray(startIndex) && Array.isArray(endIndex)) {
         const isExpectedResult =
-          startIndex.length === testCase.expectedStart.length && endIndex.length === testCase.expectedEnd.length
+          startIndex.length === testCase.expectedStart!.length && endIndex.length === testCase.expectedEnd!.length
         assert.equal(isExpectedResult, true)
       } else {
         // null cases.
-        assert.equal(startIndex, expectedSplitsTestCases.expectedStart)
-        assert.equal(endIndex, expectedSplitsTestCases.expectedEnd)
+        assert.equal(startIndex, testCase.expectedStart)
+        assert.equal(endIndex, testCase.expectedEnd)
       }
     })
   })
@@ -223,11 +225,11 @@ describe('CopyConditions', () => {
 
     it('should throw without date', () => {
       assert.throws(() => {
-        cc.setModified()
+        ;(cc as any).setModified()
       }, /date must be of type Date/)
 
       assert.throws(() => {
-        cc.setModified({ hi: 'there' })
+        ;(cc as any).setModified({ hi: 'there' })
       }, /date must be of type Date/)
     })
   })
@@ -241,73 +243,66 @@ describe('CopyConditions', () => {
 
     it('should throw without date', () => {
       assert.throws(() => {
-        cc.setUnmodified()
+        ;(cc as any).setUnmodified()
       }, /date must be of type Date/)
 
       assert.throws(() => {
-        cc.setUnmodified({ hi: 'there' })
+        ;(cc as any).setUnmodified({ hi: 'there' })
       }, /date must be of type Date/)
     })
   })
 })
 
-describe('Client', function () {
-  var nockRequests = []
-  this.timeout(5000) // 5 minutes
+describe('Client', function (this: Mocha.Suite) {
+  this.timeout(5000)
   beforeEach(() => {
     Nock.cleanAll()
-    nockRequests = []
   })
-  afterEach(() => {
-    nockRequests.forEach((element) => {
-      if (!element.request.isDone()) {
-        element.request.done()
-      }
-    })
-  })
-  var client = new Minio.Client({
+  const client = new Minio.Client({
     endPoint: 'localhost',
     port: 9000,
     accessKey: 'accesskey',
     secretKey: 'secretkey',
     useSSL: false,
   })
+
+  const anyClient = client as any
   describe('new client', () => {
     it('should work with https', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
       })
-      assert.equal(client.port, 443)
+      assert.equal((client as any).port, 443)
     })
     it('should override port with http', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
         secretKey: 'secretkey',
         useSSL: false,
       })
-      assert.equal(client.port, 9000)
+      assert.equal((client as any).port, 9000)
     })
     it('should work with http', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
         useSSL: false,
       })
-      assert.equal(client.port, 80)
+      assert.equal((client as any).port, 80)
     })
     it('should override port with https', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         port: 9000,
         accessKey: 'accesskey',
         secretKey: 'secretkey',
       })
-      assert.equal(client.port, 9000)
+      assert.equal((client as any).port, 9000)
     })
     it('should fail with url', (done) => {
       try {
@@ -333,6 +328,7 @@ describe('Client', function () {
     })
     it('should fail with no url', (done) => {
       try {
+        // @ts-expect-error testing invalid input
         new Minio.Client({
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -357,6 +353,7 @@ describe('Client', function () {
       try {
         new Minio.Client({
           endPoint: 'localhost',
+          // @ts-expect-error testing invalid input
           secure: false,
           port: 9000,
           accessKey: 'accesskey',
@@ -370,6 +367,7 @@ describe('Client', function () {
       try {
         new Minio.Client({
           endPoint: 'localhost',
+          // @ts-expect-error testing invalid input
           secure: true,
           port: 9000,
           accessKey: 'accesskey',
@@ -400,12 +398,12 @@ describe('Client', function () {
         return expect(url).to.contain('X-Amz-Expires=3600')
       })
       it('should reject an invalid expiry time', async () => {
-        await expect(client.presignedUrl('get', 'bucket', 'object', 'invalid')).to.eventually.be.rejectedWith(
+        await expect((client as any).presignedUrl('get', 'bucket', 'object', 'invalid')).to.eventually.be.rejectedWith(
           'expires should be of type "number"',
         )
       })
       it('should handle a callback function', (done) => {
-        client.presignedUrl('get', 'bucket', 'object', (error, result) => {
+        ;(client as any).presignedUrl('get', 'bucket', 'object', (error: any, result: any) => {
           expect(result).to.contain('X-Amz-Expires=604800')
           done()
         })
@@ -427,7 +425,7 @@ describe('Client', function () {
       })
       it('should not generate presigned url with wrong expires param', async () => {
         try {
-          await client.presignedGetObject('bucket', 'object', '0')
+          await anyClient.presignedGetObject('bucket', 'object', '0')
         } catch (err) {
           return
         }
@@ -450,12 +448,7 @@ describe('Client', function () {
       })
       it('should not generate presigned url with wrong expires param', async () => {
         try {
-          const client = new Minio.Client({
-            endPoint: 'localhost',
-            port: 9000,
-            useSSL: false,
-          })
-          await client.presignedPutObject('bucket', 'object', '0')
+          await anyClient.presignedPutObject('bucket', 'object', '0')
         } catch (err) {
           return
         }
@@ -466,46 +459,49 @@ describe('Client', function () {
       it('should not generate content type for undefined value', () => {
         assert.throws(() => {
           const policy = client.newPostPolicy()
-          policy.setContentType()
+          ;(policy as any).setContentType()
         }, /content-type cannot be null/)
       })
       it('should not generate content disposition for undefined value', () => {
         assert.throws(() => {
           const policy = client.newPostPolicy()
-          policy.setContentDisposition()
+          ;(policy as any).setContentDisposition()
         }, /content-disposition cannot be null/)
       })
       it('should not generate user defined metadata for string value', () => {
         assert.throws(() => {
           const policy = client.newPostPolicy()
-          policy.setUserMetaData('123')
+          ;(policy as any).setUserMetaData('123')
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for null value', () => {
         assert.throws(() => {
           const policy = client.newPostPolicy()
-          policy.setUserMetaData(null)
+          ;(policy as any).setUserMetaData(null)
         }, /metadata should be of type "object"/)
       })
       it('should not generate user defined metadata for undefined value', () => {
         assert.throws(() => {
           const policy = client.newPostPolicy()
-          policy.setUserMetaData()
+          ;(policy as any).setUserMetaData()
         }, /metadata should be of type "object"/)
       })
     })
   })
   describe('User Agent', () => {
     it('should have a default user agent', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
       })
-      assert.equal(`MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version}`, client.userAgent)
+      assert.equal(
+        `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version}`,
+        (client as any).userAgent,
+      )
     })
     it('should set user agent', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -513,11 +509,11 @@ describe('Client', function () {
       client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
-        client.userAgent,
+        (client as any).userAgent,
       )
     })
     it('should set user agent without comments', () => {
-      var client = new Minio.Client({
+      const client = new Minio.Client({
         endPoint: 'localhost',
         accessKey: 'accesskey',
         secretKey: 'secretkey',
@@ -525,24 +521,24 @@ describe('Client', function () {
       client.setAppInfo('test', '3.2.1')
       assert.equal(
         `MinIO (${process.platform}; ${process.arch}) minio-js/${Package.version} test/3.2.1`,
-        client.userAgent,
+        (client as any).userAgent,
       )
     })
     it('should not set user agent without name', (done) => {
       try {
-        var client = new Minio.Client({
+        const client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
         })
-        client.setAppInfo(null, '3.2.1')
+        ;(client as any).setAppInfo(null, '3.2.1')
       } catch (e) {
         done()
       }
     })
     it('should not set user agent with empty name', (done) => {
       try {
-        var client = new Minio.Client({
+        const client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -554,19 +550,19 @@ describe('Client', function () {
     })
     it('should not set user agent without version', (done) => {
       try {
-        var client = new Minio.Client({
+        const client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
         })
-        client.setAppInfo('test', null)
+        ;(client as any).setAppInfo('test', null)
       } catch (e) {
         done()
       }
     })
     it('should not set user agent with empty version', (done) => {
       try {
-        var client = new Minio.Client({
+        const client = new Minio.Client({
           endPoint: 'localhost',
           accessKey: 'accesskey',
           secretKey: 'secretkey',
@@ -581,7 +577,7 @@ describe('Client', function () {
   describe('object level', () => {
     describe('#getObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.getObject(null, 'hello').then(
+        anyClient.getObject(null, 'hello').then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -599,7 +595,7 @@ describe('Client', function () {
         )
       })
       it('should fail on null object', (done) => {
-        client.getObject('hello', null).then(
+        anyClient.getObject('hello', null).then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -615,52 +611,52 @@ describe('Client', function () {
     describe('#putObject(bucket, object, source, size, contentType, callback)', () => {
       describe('with small objects using single put', () => {
         it('should fail when data is smaller than specified', (done) => {
-          var s = new Stream.Readable()
+          const s = new Stream.Readable()
           s._read = function () {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', s, 12, '', (e) => {
+          anyClient.putObject('bucket', 'object', s, 12, '', (e: unknown) => {
             if (e) {
               done()
             }
           })
         })
         it('should fail when data is larger than specified', (done) => {
-          var s = new Stream.Readable()
+          const s = new Stream.Readable()
           s._read = function () {}
           s.push('hello world')
           s.push(null)
-          client.putObject('bucket', 'object', s, 10, '', (e) => {
+          anyClient.putObject('bucket', 'object', s, 10, '', (e: unknown) => {
             if (e) {
               done()
             }
           })
         })
         it('should fail with invalid bucket name', () => {
-          return expect(client.putObject('ab', 'object')).to.be.rejectedWith('Invalid bucket name')
+          return expect(anyClient.putObject('ab', 'object')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail with invalid object name', () => {
-          return expect(client.putObject('bucket', '')).to.be.rejectedWith('Invalid object name')
+          return expect(anyClient.putObject('bucket', '')).to.be.rejectedWith('Invalid object name')
         })
         it('should error with size > maxObjectSize', () => {
           return expect(
-            client.putObject('bucket', 'object', new Stream.Readable(), client.maxObjectSize + 1),
+            anyClient.putObject('bucket', 'object', new Stream.Readable(), anyClient.maxObjectSize + 1),
           ).to.be.rejectedWith('size should not be more than')
         })
         it('should fail on null bucket', () => {
-          return expect(client.putObject(null, 'hello', null, 1, '')).rejectedWith('Invalid bucket name')
+          return expect(anyClient.putObject(null, 'hello', null, 1, '')).rejectedWith('Invalid bucket name')
         })
         it('should fail on empty bucket', () => {
-          return expect(client.putObject(' \n \t ', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
+          return expect(anyClient.putObject(' \n \t ', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail on empty bucket', () => {
-          return expect(client.putObject('', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
+          return expect(anyClient.putObject('', 'hello', null, 1, '')).to.be.rejectedWith('Invalid bucket name')
         })
         it('should fail on null object', () => {
-          return expect(client.putObject('hello', null, null, 1, '')).to.be.rejectedWith('Invalid object name')
+          return expect(anyClient.putObject('hello', null, null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
         it('should fail on empty object', () => {
-          return expect(client.putObject('hello', '', null, 1, '')).to.be.rejectedWith('Invalid object name')
+          return expect(anyClient.putObject('hello', '', null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
       })
     })
@@ -673,8 +669,8 @@ describe('Client', function () {
 
     describe('#setBucketNotification()', () => {
       it('should error on invalid arguments', async () => {
-        await expect(client.setBucketNotification('ab')).to.be.rejectedWith('Invalid bucket name')
-        await expect(client.setBucketNotification('bucket', 49)).to.be.rejectedWith(
+        await expect(anyClient.setBucketNotification('ab')).to.be.rejectedWith('Invalid bucket name')
+        await expect(anyClient.setBucketNotification('bucket', 49)).to.be.rejectedWith(
           'notification config should be of type "Object"',
         )
       })
@@ -692,20 +688,20 @@ describe('Client', function () {
           client.listenBucketNotification('ab', 'prefix', 'suffix', ['events'])
         }, /Invalid bucket name/)
         assert.throws(() => {
-          client.listenBucketNotification('bucket', {}, 'suffix', ['events'])
+          anyClient.listenBucketNotification('bucket', {}, 'suffix', ['events'])
         }, /prefix must be of type string/)
         assert.throws(() => {
-          client.listenBucketNotification('bucket', '', {}, ['events'])
+          anyClient.listenBucketNotification('bucket', '', {}, ['events'])
         }, /suffix must be of type string/)
         assert.throws(() => {
-          client.listenBucketNotification('bucket', '', '', {})
+          anyClient.listenBucketNotification('bucket', '', '', {})
         }, /events must be of type Array/)
       })
     })
 
     describe('#statObject(bucket, object, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.statObject(null, 'hello').then(
+        anyClient.statObject(null, 'hello').then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -723,7 +719,7 @@ describe('Client', function () {
         )
       })
       it('should fail on null object', (done) => {
-        client.statObject('hello', null).then(
+        anyClient.statObject('hello', null).then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -736,13 +732,13 @@ describe('Client', function () {
       })
 
       it('should fail on incompatible argument type (number) for statOpts object', (done) => {
-        client.statObject('hello', 'testStatOpts', 1).then(
+        anyClient.statObject('hello', 'testStatOpts', 1).then(
           () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on incompatible argument type (sting) for statOpts object', (done) => {
-        client.statObject('hello', 'testStatOpts', '  ').then(
+        anyClient.statObject('hello', 'testStatOpts', '  ').then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -752,7 +748,7 @@ describe('Client', function () {
     describe('#removeObject(bucket, object, callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.removeObject(null, 'hello')
+          await anyClient.removeObject(null, 'hello')
         } catch (err) {
           return
         }
@@ -779,7 +775,7 @@ describe('Client', function () {
 
       it('should fail on null object', async () => {
         try {
-          await client.removeObject('hello', null)
+          await anyClient.removeObject('hello', null)
         } catch (err) {
           return
         }
@@ -798,7 +794,7 @@ describe('Client', function () {
       // Versioning related options as removeOpts
       it('should fail on empty (null) removeOpts object', async () => {
         try {
-          await client.removeObject('hello', 'testRemoveOpts', null)
+          await anyClient.removeObject('hello', 'testRemoveOpts', null)
         } catch (err) {
           return
         }
@@ -807,7 +803,7 @@ describe('Client', function () {
 
       it('should fail on empty (string) removeOpts', async () => {
         try {
-          await client.removeObject('hello', '', '')
+          await anyClient.removeObject('hello', '', '')
         } catch (err) {
           return
         }
@@ -818,7 +814,7 @@ describe('Client', function () {
     describe('#removeIncompleteUpload(bucket, object, callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.removeIncompleteUpload(null, 'hello')
+          await anyClient.removeIncompleteUpload(null, 'hello')
         } catch (err) {
           return
         }
@@ -843,7 +839,7 @@ describe('Client', function () {
 
       it('should fail on null object', async () => {
         try {
-          await client.removeIncompleteUpload('hello', null)
+          await anyClient.removeIncompleteUpload('hello', null)
         } catch (err) {
           return
         }
@@ -863,7 +859,7 @@ describe('Client', function () {
   describe('Bucket Versioning APIs', () => {
     describe('getBucketVersioning(bucket, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.getBucketVersioning(null, function (err) {
+        anyClient.getBucketVersioning(null, function (err: any) {
           if (err) {
             return done()
           }
@@ -872,7 +868,7 @@ describe('Client', function () {
       })
 
       it('should fail on empty bucket', (done) => {
-        client.getBucketVersioning('', function (err) {
+        anyClient.getBucketVersioning('', function (err: any) {
           if (err) {
             return done()
           }
@@ -883,7 +879,7 @@ describe('Client', function () {
 
     describe('setBucketVersioning(bucket, versionConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.setBucketVersioning(null, {}, function (err) {
+        anyClient.setBucketVersioning(null, {}, function (err: any) {
           if (err) {
             return done()
           }
@@ -892,7 +888,7 @@ describe('Client', function () {
       })
 
       it('should fail on empty bucket', (done) => {
-        client.setBucketVersioning(null, {}, function (err) {
+        anyClient.setBucketVersioning(null, {}, function (err: any) {
           if (err) {
             return done()
           }
@@ -900,7 +896,7 @@ describe('Client', function () {
         })
       })
       it('should fail on empty bucket', (done) => {
-        client.setBucketVersioning('', null, function (err) {
+        anyClient.setBucketVersioning('', null, function (err: any) {
           if (err) {
             return done()
           }
@@ -913,7 +909,7 @@ describe('Client', function () {
   describe('Bucket and Object Tags APIs', () => {
     describe('Set Bucket Tags ', () => {
       it('should fail on null bucket', (done) => {
-        client.setBucketTagging(null, {}).then(
+        anyClient.setBucketTagging(null, {}).then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
@@ -925,9 +921,9 @@ describe('Client', function () {
         )
       })
       it('should fail if tags are more than 50', (done) => {
-        const _50_plus_key_tags = {}
+        const _50_plus_key_tags: Record<string, string> = {}
         for (let i = 0; i < 51; i += 1) {
-          _50_plus_key_tags[i] = i
+          _50_plus_key_tags[i] = String(i)
         }
         client.setBucketTagging('', _50_plus_key_tags).then(
           () => done(new Error('callback should receive error')),
@@ -938,7 +934,7 @@ describe('Client', function () {
     describe('Get Bucket Tags', () => {
       it('should fail on invalid bucket', async () => {
         try {
-          await client.getBucketTagging('nv', null)
+          await anyClient.getBucketTagging('nv', null)
         } catch (err) {
           return
         }
@@ -946,7 +942,7 @@ describe('Client', function () {
       })
       it('should fail on null bucket', async () => {
         try {
-          await client.getBucketTagging(null)
+          await anyClient.getBucketTagging(null)
         } catch (err) {
           return
         }
@@ -963,7 +959,7 @@ describe('Client', function () {
     })
     describe('Remove Bucket Tags', () => {
       it('should fail on null object', (done) => {
-        client.removeBucketTagging(null).then(
+        anyClient.removeBucketTagging(null).then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
@@ -990,14 +986,14 @@ describe('Client', function () {
     })
     describe('Get Object Tags', () => {
       it('should fail on invalid bucket', (done) => {
-        client.getObjectTagging('nv', null).then(
+        anyClient.getObjectTagging('nv', null).then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
       })
       it('should fail on null object', async () => {
         try {
-          await client.getObjectTagging('my-bucket-name', null)
+          await anyClient.getObjectTagging('my-bucket-name', null)
         } catch (err) {
           return
         }
@@ -1005,7 +1001,7 @@ describe('Client', function () {
       })
       it('should fail on empty object', async () => {
         try {
-          await client.getObjectTagging('my-bucket-name', null)
+          await anyClient.getObjectTagging('my-bucket-name', null)
         } catch (err) {
           return
         }
@@ -1014,26 +1010,26 @@ describe('Client', function () {
     })
     describe('Remove Object Tags', () => {
       it('should fail on null object', (done) => {
-        client.removeObjectTagging('my-bucket', null).then(
+        anyClient.removeObjectTagging('my-bucket', null).then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
       })
       it('should fail on empty bucket', (done) => {
-        client.removeObjectTagging('my-bucket', '').then(
+        anyClient.removeObjectTagging('my-bucket', '').then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
       })
       it('should fail on invalid bucket name', (done) => {
-        client.removeObjectTagging('198.51.100.24').then(
+        anyClient.removeObjectTagging('198.51.100.24').then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
       })
 
       it('should fail on invalid bucket name', (done) => {
-        client.removeObjectTagging('xy').then(
+        anyClient.removeObjectTagging('xy').then(
           () => done(new Error('callback should receive error')),
           () => done(),
         )
@@ -1044,7 +1040,7 @@ describe('Client', function () {
   describe('setBucketLifecycle(bucket, lifecycleConfig, callback)', () => {
     it('should fail on null bucket', async () => {
       try {
-        await client.setBucketLifecycle(null, null)
+        await anyClient.setBucketLifecycle(null, null)
       } catch (err) {
         return
       }
@@ -1063,7 +1059,7 @@ describe('Client', function () {
   describe('getBucketLifecycle(bucket, callback)', () => {
     it('should fail on null bucket', async () => {
       try {
-        await client.getBucketLifecycle(null)
+        await anyClient.getBucketLifecycle(null)
       } catch (err) {
         return
       }
@@ -1082,7 +1078,7 @@ describe('Client', function () {
   describe('removeBucketLifecycle(bucket, callback)', () => {
     it('should fail on null bucket', async () => {
       try {
-        await client.removeBucketLifecycle(null, null)
+        await anyClient.removeBucketLifecycle(null, null)
       } catch (err) {
         return
       }
@@ -1091,7 +1087,7 @@ describe('Client', function () {
 
     it('should fail on empty bucket', async () => {
       try {
-        await client.removeBucketLifecycle('', null)
+        await anyClient.removeBucketLifecycle('', null)
       } catch (err) {
         return
       }
@@ -1102,7 +1098,7 @@ describe('Client', function () {
   describe('Object Locking APIs', () => {
     describe('getObjectLockConfig(bucket, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.getObjectLockConfig(null, function (err) {
+        anyClient.getObjectLockConfig(null, function (err: any) {
           if (err) {
             return done()
           }
@@ -1110,7 +1106,7 @@ describe('Client', function () {
         })
       })
       it('should fail on null bucket', (done) => {
-        client.getObjectLockConfig('', function (err) {
+        client.getObjectLockConfig('', function (err: any) {
           if (err) {
             return done()
           }
@@ -1121,7 +1117,7 @@ describe('Client', function () {
 
     describe('setObjectLockConfig(bucket, lockConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
-        client.setObjectLockConfig(null, function (err) {
+        anyClient.setObjectLockConfig(null, function (err: any) {
           if (err) {
             return done()
           }
@@ -1129,7 +1125,7 @@ describe('Client', function () {
         })
       })
       it('should fail on null bucket', (done) => {
-        client.setObjectLockConfig('', function (err) {
+        anyClient.setObjectLockConfig('', function (err: any) {
           if (err) {
             return done()
           }
@@ -1137,7 +1133,7 @@ describe('Client', function () {
         })
       })
       it('should fail on passing invalid mode ', (done) => {
-        client.setObjectLockConfig('my-bucket', { mode: 'invalid_mode' }, function (err) {
+        anyClient.setObjectLockConfig('my-bucket', { mode: 'invalid_mode' }, function (err: any) {
           if (err) {
             return done()
           }
@@ -1145,7 +1141,7 @@ describe('Client', function () {
         })
       })
       it('should fail on passing invalid unit ', (done) => {
-        client.setObjectLockConfig('my-bucket', { mode: 'COMPLIANCE', unit: 'invalid_unit' }, function (err) {
+        anyClient.setObjectLockConfig('my-bucket', { mode: 'COMPLIANCE', unit: 'invalid_unit' }, function (err: any) {
           if (err) {
             return done()
           }
@@ -1154,14 +1150,14 @@ describe('Client', function () {
       })
 
       it('should fail on passing invalid validity ', (done) => {
-        client.setObjectLockConfig(
+        anyClient.setObjectLockConfig(
           'my-bucket',
           {
             mode: 'COMPLIANCE',
             unit: 'invalid_unit',
             validity: '',
           },
-          function (err) {
+          function (err: any) {
             if (err) {
               return done()
             }
@@ -1171,14 +1167,14 @@ describe('Client', function () {
       })
 
       it('should fail on passing  invalid config ', (done) => {
-        client.setObjectLockConfig(
+        anyClient.setObjectLockConfig(
           'my-bucket',
           {
             mode: 'COMPLIANCE',
             randomProp: true,
             nonExisting: false,
           },
-          function (err) {
+          function (err: any) {
             if (err) {
               return done()
             }
@@ -1193,7 +1189,7 @@ describe('Client', function () {
     describe('getObjectRetention(bucket, objectName, getRetentionOpts,callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.getObjectRetention(null, '', '')
+          await anyClient.getObjectRetention(null, '', '')
         } catch (err) {
           return
         }
@@ -1201,7 +1197,7 @@ describe('Client', function () {
       })
       it('should fail on empty bucket', async () => {
         try {
-          await client.getObjectRetention('', '', '')
+          await anyClient.getObjectRetention('', '', '')
         } catch (err) {
           return
         }
@@ -1209,7 +1205,7 @@ describe('Client', function () {
       })
       it('should fail on invalid  object name', async () => {
         try {
-          await client.getObjectRetention('my-bucket', null, '')
+          await anyClient.getObjectRetention('my-bucket', null, '')
         } catch (err) {
           return
         }
@@ -1217,7 +1213,7 @@ describe('Client', function () {
       })
       it('should fail on invalid  versionId', async () => {
         try {
-          await client.getObjectRetention('my-bucket', null, '')
+          await anyClient.getObjectRetention('my-bucket', null, '')
         } catch (err) {
           return
         }
@@ -1228,7 +1224,7 @@ describe('Client', function () {
     describe('putObjectRetention(bucket, objectName, retentionConfig, callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.putObjectRetention(null, '', {})
+          await anyClient.putObjectRetention(null, '', {})
         } catch (err) {
           return
         }
@@ -1245,7 +1241,7 @@ describe('Client', function () {
 
       it('should fail on null object', async () => {
         try {
-          await client.putObjectRetention('my-bucket', null, {})
+          await anyClient.putObjectRetention('my-bucket', null, {})
         } catch (err) {
           return
         }
@@ -1261,7 +1257,7 @@ describe('Client', function () {
       })
       it('should fail on passing invalid mode ', async () => {
         try {
-          await client.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' })
+          await anyClient.putObjectRetention('my-bucket', 'my-object', { mode: 'invalid_mode' })
         } catch (err) {
           return
         }
@@ -1269,7 +1265,7 @@ describe('Client', function () {
       })
       it('should fail on passing invalid governanceBypass ', async () => {
         try {
-          await client.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' })
+          await anyClient.putObjectRetention('my-bucket', 'my-object', { governanceBypass: 'nonbool' })
         } catch (err) {
           return
         }
@@ -1277,7 +1273,7 @@ describe('Client', function () {
       })
       it('should fail on passing invalid (null) retainUntilDate ', async () => {
         try {
-          await client.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 })
+          await anyClient.putObjectRetention('my-bucket', 'my-object', { retainUntilDate: 12345 })
         } catch (err) {
           return
         }
@@ -1285,7 +1281,7 @@ describe('Client', function () {
       })
       it('should fail on passing invalid versionId ', async () => {
         try {
-          await client.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' })
+          await anyClient.putObjectRetention('my-bucket', { versionId: 'COMPLIANCE' })
         } catch (err) {
           return
         }
@@ -1298,7 +1294,7 @@ describe('Client', function () {
     describe('setBucketEncryption(bucket, encryptionConfig, callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.setBucketEncryption(null)
+          await anyClient.setBucketEncryption(null)
         } catch (err) {
           return
         }
@@ -1339,7 +1335,7 @@ describe('Client', function () {
     describe('getBucketEncryption(bucket, callback)', () => {
       it('should fail on null bucket', async () => {
         try {
-          await client.getBucketEncryption(null)
+          await anyClient.getBucketEncryption(null)
         } catch (err) {
           return
         }
@@ -1368,7 +1364,7 @@ describe('Client', function () {
 
       it('should fail on null bucket', async () => {
         try {
-          await client.getBucketEncryption(null)
+          await anyClient.getBucketEncryption(null)
         } catch (err) {
           return
         }
@@ -1380,7 +1376,7 @@ describe('Client', function () {
     describe('setBucketReplication(bucketName, replicationConfig, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setBucketReplication(null, {}, function (err) {
+          anyClient.setBucketReplication(null, {}, function (err: any) {
             if (err) {
               return done()
             }
@@ -1392,7 +1388,7 @@ describe('Client', function () {
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setBucketReplication('', {}, function (err) {
+          anyClient.setBucketReplication('', {}, function (err: any) {
             if (err) {
               return done()
             }
@@ -1405,7 +1401,7 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig', (done) => {
         try {
-          client.setBucketReplication('my-bucket', {}, function (err) {
+          anyClient.setBucketReplication('my-bucket', {}, function (err: any) {
             if (err) {
               return done()
             }
@@ -1418,7 +1414,7 @@ describe('Client', function () {
 
       it('should fail on empty replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: '' }, function (err) {
+          anyClient.setBucketReplication('my-bucket', { role: '' }, function (err: any) {
             if (err) {
               return done()
             }
@@ -1431,7 +1427,7 @@ describe('Client', function () {
 
       it('should fail on  invalid value for replicationConfig role', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 12 }, function (err) {
+          anyClient.setBucketReplication('my-bucket', { role: 12 }, function (err: any) {
             if (err) {
               return done()
             }
@@ -1444,7 +1440,7 @@ describe('Client', function () {
 
       it('should fail on  empty value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function (err) {
+          anyClient.setBucketReplication('my-bucket', { role: 'arn:', rules: [] }, function (err: any) {
             if (err) {
               return done()
             }
@@ -1456,7 +1452,7 @@ describe('Client', function () {
       })
       it('should fail on  null value for replicationConfig rules', (done) => {
         try {
-          client.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function (err) {
+          anyClient.setBucketReplication('my-bucket', { role: 'arn:', rules: null }, function (err: any) {
             if (err) {
               return done()
             }
@@ -1471,7 +1467,7 @@ describe('Client', function () {
     describe('getBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getBucketReplication(null, function (err) {
+          anyClient.getBucketReplication(null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1483,7 +1479,7 @@ describe('Client', function () {
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.getBucketReplication('', function (err) {
+          anyClient.getBucketReplication('', function (err: any) {
             if (err) {
               return done()
             }
@@ -1498,7 +1494,7 @@ describe('Client', function () {
     describe('removeBucketReplication(bucketName, callback)', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.removeBucketReplication(null, function (err) {
+          anyClient.removeBucketReplication(null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1510,7 +1506,7 @@ describe('Client', function () {
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.removeBucketReplication('', function (err) {
+          client.removeBucketReplication('', function (err: any) {
             if (err) {
               return done()
             }
@@ -1527,7 +1523,7 @@ describe('Client', function () {
     describe('getObjectLegalHold(bucketName, objectName, getOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.getObjectLegalHold(null, function (err) {
+          anyClient.getObjectLegalHold(null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1540,7 +1536,7 @@ describe('Client', function () {
 
       it('should fail on empty bucket', (done) => {
         try {
-          client.getObjectLegalHold('', function (err) {
+          anyClient.getObjectLegalHold('', function (err: any) {
             if (err) {
               return done()
             }
@@ -1553,7 +1549,7 @@ describe('Client', function () {
 
       it('should fail on null objectName', (done) => {
         try {
-          client.getObjectLegalHold('my-bucket', null, function (err) {
+          anyClient.getObjectLegalHold('my-bucket', null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1565,7 +1561,7 @@ describe('Client', function () {
       })
       it('should fail on invalid version id in getOpts', (done) => {
         try {
-          client.getObjectLegalHold('my-bucket', 'my-object', { versionId: 123 }, function (err) {
+          anyClient.getObjectLegalHold('my-bucket', 'my-object', { versionId: 123 }, function (err: any) {
             if (err) {
               return done()
             }
@@ -1580,7 +1576,7 @@ describe('Client', function () {
     describe('setObjectLegalHold(bucketName, objectName, setOpts={})', () => {
       it('should fail on null bucket', (done) => {
         try {
-          client.setObjectLegalHold(null, function (err) {
+          anyClient.setObjectLegalHold(null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1592,7 +1588,7 @@ describe('Client', function () {
       })
       it('should fail on empty bucket', (done) => {
         try {
-          client.setObjectLegalHold('', function (err) {
+          anyClient.setObjectLegalHold('', function (err: any) {
             if (err) {
               return done()
             }
@@ -1605,7 +1601,7 @@ describe('Client', function () {
 
       it('should fail on null object', (done) => {
         try {
-          client.setObjectLegalHold('my-bucket', null, function (err) {
+          anyClient.setObjectLegalHold('my-bucket', null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1617,7 +1613,7 @@ describe('Client', function () {
       })
       it('should fail on null setOpts', (done) => {
         try {
-          client.setObjectLegalHold('my-bucket', 'my-object', null, function (err) {
+          anyClient.setObjectLegalHold('my-bucket', 'my-object', null, function (err: any) {
             if (err) {
               return done()
             }
@@ -1630,7 +1626,7 @@ describe('Client', function () {
 
       it('should fail on empty version', (done) => {
         try {
-          client.setObjectLegalHold('my-bucket', 'my-object', {}, function (err) {
+          anyClient.setObjectLegalHold('my-bucket', 'my-object', {}, function (err: any) {
             if (err) {
               return done()
             }
@@ -1647,7 +1643,7 @@ describe('Client', function () {
     describe('composeObject(destObjConfig, sourceObjectList,cb)', () => {
       it('should fail on null destination config', async () => {
         try {
-          await client.composeObject(null)
+          await anyClient.composeObject(null)
         } catch (err) {
           return
         }
@@ -1656,7 +1652,7 @@ describe('Client', function () {
       it('should fail on no array source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          await client.composeObject(destOptions, 'non-array')
+          await anyClient.composeObject(destOptions, 'non-array')
         } catch (err) {
           return
         }
@@ -1666,7 +1662,7 @@ describe('Client', function () {
       it('should fail on null source config', async () => {
         try {
           const destOptions = new CopyDestinationOptions({ Bucket: 'test-bucket', Object: 'test-object' })
-          await client.composeObject(destOptions, null)
+          await anyClient.composeObject(destOptions, null)
         } catch (err) {
           return
         }
@@ -1677,26 +1673,26 @@ describe('Client', function () {
   describe('Select Object Content APIs', () => {
     describe('selectObjectContent(bucketName, objectName, selectOpts={}, cb)', () => {
       it('should fail on null bucket', (done) => {
-        client.selectObjectContent(null).then(
+        anyClient.selectObjectContent(null).then(
           () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on empty bucket', (done) => {
-        client.selectObjectContent('').then(
+        anyClient.selectObjectContent('').then(
           () => done(new Error('expecting error')),
           () => done(),
         )
       })
 
       it('should fail on empty object', (done) => {
-        client.selectObjectContent('my-bucket', '').then(
+        anyClient.selectObjectContent('my-bucket', '').then(
           () => done(new Error('expecting error')),
           () => done(),
         )
       })
       it('should fail on null object', (done) => {
-        client.selectObjectContent('my-bucket', null).then(
+        anyClient.selectObjectContent('my-bucket', null).then(
           () => done(new Error('expecting error')),
           () => done(),
         )
@@ -2273,18 +2269,18 @@ describe('xml-parser', () => {
       it('should parse VersionId as string even if number is provided', () => {
         const { objects } = parseListObjects(xml)
 
-        assert.equal(objects[0].versionId, '1234')
-        assert.equal(objects[1].versionId, '5678')
-        assert.equal(objects[0].name, '1337')
-        assert.equal(objects[1].name, '1337')
+        assert.equal((objects[0] as any).versionId, '1234')
+        assert.equal((objects[1] as any).versionId, '5678')
+        assert.equal((objects[0] as any).name, '1337')
+        assert.equal((objects[1] as any).name, '1337')
         assert.deepEqual(objects[2], { prefix: '42', size: 0 })
       })
 
       it('should parse Size as number', () => {
         const { objects } = parseListObjects(xml)
 
-        assert.equal(objects[0].size, 151306240)
-        assert.equal(objects[1].size, undefined)
+        assert.equal((objects[0] as any).size, 151306240)
+        assert.equal((objects[1] as any).size, undefined)
       })
     })
   })
@@ -2317,7 +2313,7 @@ describe('xml-parser', () => {
       it('should parse list incomplete', () => {
         const { uploads } = parseListMultipart(xml)
         assert.equal(uploads.length, 1)
-        assert.equal(uploads[0].key, 'some-file.pdf')
+        assert.equal(uploads[0]!.key, 'some-file.pdf')
       })
     })
   })
