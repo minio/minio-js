@@ -1900,7 +1900,7 @@ To stop listening, call `.stop()` on the returned `EventEmitter`.
 | `suffix`     | _string_ | Object key suffix to filter notifications for.  |
 | `events`     | _Array_  | Enables notifications for specific event types. |
 
-See [here](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) for a full example.
+See [here](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.mjs) for a full example.
 
 ```js
 const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])

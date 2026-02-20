@@ -151,40 +151,40 @@ mc ls play/europetrip/
 
 #### 完整示例 : 操作存储桶
 
-* [list-buckets.js](https://github.com/minio/minio-js/blob/master/examples/list-buckets.js)
-* [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
-* [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
+* [list-buckets.mjs](https://github.com/minio/minio-js/blob/master/examples/list-buckets.mjs)
+* [list-objects.mjs](https://github.com/minio/minio-js/blob/master/examples/list-objects.mjs)
+* [list-objects-v2.mjs](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.mjs)
 * [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
-* [make-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/make-bucket.js)
+* [make-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/make-bucket.mjs)
 * [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
-* [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
+* [list-incomplete-uploads.mjs](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.mjs)
 
 #### 完整示例 : 操作文件对象
-* [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.js)
+* [fput-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fput-object.mjs)
 * [fget-object.mjs](https://github.com/minio/minio-js/blob/master/examples/fget-object.mjs)
 
 #### 完整示例 : 操作对象
-* [put-object.js](https://github.com/minio/minio-js/blob/master/examples/put-object.js)
+* [put-object.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object.mjs)
 * [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
-* [copy-object.js](https://github.com/minio/minio-js/blob/master/examples/copy-object.js)
+* [copy-object.mjs](https://github.com/minio/minio-js/blob/master/examples/copy-object.mjs)
 * [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
-* [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
-* [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
+* [remove-object.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object.mjs)
+* [remove-incomplete-upload.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.mjs)
 * [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 
 #### 完整示例 : Presigned操作
-* [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.js)
-* [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.js)
-* [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.js)
+* [presigned-getobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-getobject.mjs)
+* [presigned-putobject.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-putobject.mjs)
+* [presigned-postpolicy.mjs](https://github.com/minio/minio-js/blob/master/examples/presigned-postpolicy.mjs)
 
 #### 完整示例 : 存储桶通知
-* [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
-* [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
-* [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
-* [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (MinIO Extension)
+* [get-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.mjs)
+* [set-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.mjs)
+* [remove-all-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.mjs)
+* [listen-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.mjs) (MinIO Extension)
 
 #### 完整示例 : 存储桶策略
-* [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
+* [get-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.mjs)
 * [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## 了解更多
