@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2020 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-//Example to reset/remove object lock config.
-s3Client.setObjectLockConfig('my-bucketname', {}, function (err) {
-  if (err) {
-    return console.log(err)
-  }
-  console.log('Success')
+// List all object paths in bucket my-bucketname.
+const objectsStream = s3Client.extensions.listObjectsV2WithMetadata('my-bucketname', '', true, '')
+objectsStream.on('data', function (obj) {
+  console.log(obj)
+})
+objectsStream.on('error', function (e) {
+  console.log(e)
 })

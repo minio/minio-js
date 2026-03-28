@@ -190,13 +190,13 @@ The complete API Reference is available here:
 #### Bucket Operations
 
 - [list-buckets.mjs](https://github.com/minio/minio-js/blob/master/examples/list-buckets.mjs)
-- [list-objects.js](https://github.com/minio/minio-js/blob/master/examples/list-objects.js)
-- [list-objects-v2.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.js)
-- [list-objects-v2-with-metadata.js](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.js) (Extension)
+- [list-objects.mjs](https://github.com/minio/minio-js/blob/master/examples/list-objects.mjs)
+- [list-objects-v2.mjs](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2.mjs)
+- [list-objects-v2-with-metadata.mjs](https://github.com/minio/minio-js/blob/master/examples/list-objects-v2-with-metadata.mjs) (Extension)
 - [bucket-exists.mjs](https://github.com/minio/minio-js/blob/master/examples/bucket-exists.mjs)
 - [make-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/make-bucket.mjs)
 - [remove-bucket.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-bucket.mjs)
-- [list-incomplete-uploads.js](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.js)
+- [list-incomplete-uploads.mjs](https://github.com/minio/minio-js/blob/master/examples/list-incomplete-uploads.mjs)
 - [get-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-versioning.mjs)
 - [set-bucket-versioning.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-versioning.mjs)
 - [set-bucket-tagging.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-tagging.mjs)
@@ -225,8 +225,8 @@ The complete API Reference is available here:
 - [get-object.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object.mjs)
 - [copy-object.mjs](https://github.com/minio/minio-js/blob/master/examples/copy-object.mjs)
 - [get-partialobject.mjs](https://github.com/minio/minio-js/blob/master/examples/get-partialobject.mjs)
-- [remove-object.js](https://github.com/minio/minio-js/blob/master/examples/remove-object.js)
-- [remove-incomplete-upload.js](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.js)
+- [remove-object.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-object.mjs)
+- [remove-incomplete-upload.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-incomplete-upload.mjs)
 - [stat-object.mjs](https://github.com/minio/minio-js/blob/master/examples/stat-object.mjs)
 - [get-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/get-object-retention.mjs)
 - [put-object-retention.mjs](https://github.com/minio/minio-js/blob/master/examples/put-object-retention.mjs)
@@ -246,19 +246,19 @@ The complete API Reference is available here:
 
 #### Bucket Notification Operations
 
-- [get-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.js)
-- [set-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.js)
-- [remove-all-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.js)
-- [listen-bucket-notification.js](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js) (MinIO Extension)
+- [get-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-notification.mjs)
+- [set-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-notification.mjs)
+- [remove-all-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/remove-all-bucket-notification.mjs)
+- [listen-bucket-notification.mjs](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.mjs) (MinIO Extension)
 
 #### Bucket Policy Operations
 
-- [get-bucket-policy.js](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.js)
+- [get-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/get-bucket-policy.mjs)
 - [set-bucket-policy.mjs](https://github.com/minio/minio-js/blob/master/examples/set-bucket-policy.mjs)
 
 ## Custom Settings
 
-- [setAccelerateEndPoint](https://github.com/minio/minio-js/blob/master/examples/set-accelerate-end-point.js)
+- [setAccelerateEndPoint](https://github.com/minio/minio-js/blob/master/examples/set-accelerate-end-point.mjs)
 
 ## Explore Further
 

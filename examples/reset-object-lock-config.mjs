@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2021 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
-// are dummy values, please replace them with original values.
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY and my-bucketname are
+// dummy values, please replace them with original values.
 
 import * as Minio from 'minio'
 
@@ -25,11 +25,9 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-// Retrieves the bucket policy and logs it to the console.
-s3Client.getBucketPolicy('testbucket', (err, policy) => {
-  if (err) {
-    throw err
-  }
-
-  console.log(`Bucket policy: ${policy}`)
-})
+try {
+  await s3Client.setObjectLockConfig('my-bucketname', {})
+  console.log('Success')
+} catch (e) {
+  console.log(e)
+}

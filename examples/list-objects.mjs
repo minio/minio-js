@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2020 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,36 @@ const s3Client = new Minio.Client({
   accessKey: 'YOUR-ACCESSKEYID',
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
+
 // List all object paths in bucket my-bucketname.
-const objectsStream = s3Client.extensions.listObjectsV2WithMetadata('my-bucketname', '', true, '')
+const objectsStream = s3Client.listObjects('my-bucketname', '', true)
 objectsStream.on('data', function (obj) {
   console.log(obj)
 })
 objectsStream.on('error', function (e) {
+  console.log(e)
+})
+
+// List all object versions in bucket my-bucketname.
+const objectsStreamWithVersions = s3Client.listObjects('my-bucketname', '', true, { IncludeVersion: true })
+objectsStreamWithVersions.on('data', function (obj) {
+  console.log(obj)
+})
+objectsStreamWithVersions.on('error', function (e) {
+  console.log(e)
+})
+
+// Example to list only the prefixes of a bucket.
+const prefixStream = s3Client.listObjects('your-bucket', '', false, {})
+let counter = 0
+prefixStream.on('data', function (obj) {
+  if (obj.prefix) {
+    counter += 1
+  }
+})
+prefixStream.on('end', () => {
+  console.log('Prefix Count:', counter)
+})
+prefixStream.on('error', function (e) {
   console.log(e)
 })

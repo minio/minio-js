@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-// Note that `listenBucketNotification` is only available for MinIO, and not
-// Amazon.
+// Note that `listenBucketNotification` is only available for MinIO, and not Amazon.
 
 import * as Minio from 'minio'
 
@@ -55,9 +54,9 @@ poller.on('notification', (record) => {
 })
 
 // Create an object - this should trigger a notification.
-s3Client.putObject('bucket1', 'file.jpg', 'stringdata', (err, etag) => {
-  if (err) {
-    throw err
-  }
+try {
+  const etag = await s3Client.putObject('bucket1', 'file.jpg', 'stringdata')
   console.log(etag)
-})
+} catch (e) {
+  console.log(e)
+}

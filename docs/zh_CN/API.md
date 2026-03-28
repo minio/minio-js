@@ -929,7 +929,7 @@ __参数__
 | `suffix`  | _string_  | 用于过滤通知的对象名称后缀。 |
 | `events`  | _Array_ | 在指定事件类型上开启通知。 |
 
-这里是你要的[完整示例](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.js)，拿走不谢。
+这里是你要的[完整示例](https://github.com/minio/minio-js/blob/master/examples/minio/listen-bucket-notification.mjs)，拿走不谢。
 
 ```js
 const listener = minioClient.listenBucketNotification('my-bucketname', 'photos/', '.jpg', ['s3:ObjectCreated:*'])

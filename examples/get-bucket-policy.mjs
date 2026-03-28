@@ -1,5 +1,5 @@
 /*
- * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2015 MinIO, Inc.
+ * MinIO Javascript Library for Amazon S3 Compatible Cloud Storage, (C) 2016 MinIO, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname and my-prefixname
+// Note: YOUR-ACCESSKEYID, YOUR-SECRETACCESSKEY, my-bucketname
 // are dummy values, please replace them with original values.
 
 import * as Minio from 'minio'
@@ -25,11 +25,5 @@ const s3Client = new Minio.Client({
   secretKey: 'YOUR-SECRETACCESSKEY',
 })
 
-// List all object paths in bucket my-bucketname that begins with my-prefixname.
-const incompleteObjectsStream = s3Client.listIncompleteUploads('my-bucketname', 'my-prefixname', true)
-incompleteObjectsStream.on('data', function (obj) {
-  console.log(obj)
-})
-incompleteObjectsStream.on('error', function (e) {
-  console.log(e)
-})
+const policy = await s3Client.getBucketPolicy('my-bucketname')
+console.log(`Bucket policy: ${policy}`)
