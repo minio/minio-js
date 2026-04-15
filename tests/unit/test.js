@@ -662,6 +662,11 @@ describe('Client', function () {
         it('should fail on empty object', () => {
           return expect(client.putObject('hello', '', null, 1, '')).to.be.rejectedWith('Invalid object name')
         })
+        it('should fail when stream is destroyed', () => {
+          const s = new Stream.Readable({ read() {} })
+          s.destroy()
+          return expect(client.putObject('bucket', 'object', s)).to.be.rejectedWith('stream.Readable')
+        })
       })
     })
 
