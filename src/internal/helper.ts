@@ -244,7 +244,7 @@ export function isPlainObject(arg: unknown): arg is Record<string, unknown> {
  */
 export function isReadableStream(arg: unknown): arg is stream.Readable {
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  return isObject(arg) && isFunction((arg as stream.Readable)._read)
+  return isObject(arg) && isFunction((arg as stream.Readable)._read) && stream.isReadable(arg as stream.Readable)
 }
 
 /**

@@ -599,6 +599,33 @@ describe('functional tests', function () {
       })
     })
 
+    step(`putObject(bucketName, objectName, destroyedStream) should reject immediately`, function (done) {
+      this.timeout(10000)
+      var s = new stream.Readable({ read() {} })
+      s.destroy()
+      client.putObject(bucketName, objectName, s, (e) => {
+        if (e && e instanceof TypeError && e.message.includes('stream.Readable')) {
+          return done()
+        }
+        done(new Error('expected TypeError for destroyed stream, got: ' + (e || 'no error')))
+      })
+    })
+
+    step(`putObject(bucketName, objectName, streamDestroyedDuringUpload) should reject`, function (done) {
+      this.timeout(10000)
+      // Create a stream large enough to trigger multipart upload (> partSize).
+      // Destroy it on the next event loop tick so it becomes unreadable during
+      // the async findUploadId/initiateNewMultipartUpload calls in uploadStream.
+      var s = new stream.Readable({ read() {} })
+      setTimeout(() => s.destroy(), 0)
+      client.putObject(bucketName, objectName, s, _65mb.length, (e) => {
+        if (e) {
+          return done()
+        }
+        done(new Error('expected an error for stream destroyed during upload'))
+      })
+    })
+
     step(
       `getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, offset:0, length:100*1024_`,
       (done) => {

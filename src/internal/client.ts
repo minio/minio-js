@@ -1787,6 +1787,10 @@ export class TypedClient {
       })
     }
 
+    if (!isReadableStream(body)) {
+      throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
+    }
+
     const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
