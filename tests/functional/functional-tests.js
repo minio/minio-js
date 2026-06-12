@@ -36,6 +36,7 @@ import { getVersionId } from '../../src/internal/helper.ts'
 import * as minio from '../../src/minio.ts'
 
 const assert = chai.assert
+const expect = chai.expect
 
 const isWindowsPlatform = process.platform === 'win32'
 
@@ -599,32 +600,51 @@ describe('functional tests', function () {
       })
     })
 
-    step(`putObject(bucketName, objectName, destroyedStream) should reject immediately`, function (done) {
-      this.timeout(10000)
-      var s = new stream.Readable({ read() {} })
-      s.destroy()
-      client.putObject(bucketName, objectName, s, (e) => {
-        if (e && e instanceof TypeError && e.message.includes('stream.Readable')) {
-          return done()
-        }
-        done(new Error('expected TypeError for destroyed stream, got: ' + (e || 'no error')))
-      })
-    })
+    step(
+      `putObject(bucketName, objectName, destroyedStream) should reject with the default premature close error`,
+      async function () {
+        this.timeout(10000)
+        var s = new stream.Readable({ read() {} })
+        s.destroy()
+        await expect(client.putObject(bucketName, objectName, s)).to.be.rejectedWith('Premature close')
+      },
+    )
 
-    step(`putObject(bucketName, objectName, streamDestroyedDuringUpload) should reject`, function (done) {
-      this.timeout(10000)
-      // Create a stream large enough to trigger multipart upload (> partSize).
-      // Destroy it on the next event loop tick so it becomes unreadable during
-      // the async findUploadId/initiateNewMultipartUpload calls in uploadStream.
-      var s = new stream.Readable({ read() {} })
-      setTimeout(() => s.destroy(), 0)
-      client.putObject(bucketName, objectName, s, _65mb.length, (e) => {
-        if (e) {
-          return done()
-        }
-        done(new Error('expected an error for stream destroyed during upload'))
-      })
-    })
+    step(
+      `putObject(bucketName, objectName, streamDestroyedWithError) should reject with the destroy error`,
+      async function () {
+        this.timeout(10000)
+        var s = new stream.Readable({ read() {} }).on('error', () => {})
+        s.destroy(new Error('test stream error'))
+        await expect(client.putObject(bucketName, objectName, s)).to.be.rejectedWith('test stream error')
+      },
+    )
+
+    step(
+      `putObject(bucketName, objectName, streamDestroyedDuringUpload) should reject with the default premature close error`,
+      async function () {
+        this.timeout(10000)
+        // Create a stream large enough to trigger multipart upload (> partSize).
+        // Destroy it after a short timeout so it becomes unreadable during
+        // the async findUploadId/initiateNewMultipartUpload calls in uploadStream.
+        var s = new stream.Readable({ read() {} })
+        setTimeout(() => s.destroy(), 500)
+        await expect(client.putObject(bucketName, objectName, s, _65mb.length)).to.be.rejectedWith('Premature close')
+      },
+    )
+
+    step(
+      `putObject(bucketName, objectName, streamDestroyedWithErrorDuringUpload) should reject with the destroy error`,
+      async function () {
+        this.timeout(10000)
+        // Create a stream large enough to trigger multipart upload (> partSize).
+        // Destroy it after a short timeout so it becomes unreadable during
+        // the async findUploadId/initiateNewMultipartUpload calls in uploadStream.
+        var s = new stream.Readable({ read() {} }).on('error', () => {})
+        setTimeout(() => s.destroy(new Error('test stream error')), 500)
+        await expect(client.putObject(bucketName, objectName, s, _65mb.length)).to.be.rejectedWith('test stream error')
+      },
+    )
 
     step(
       `getPartialObject(bucketName, objectName, offset, length, cb)_bucketName:${bucketName}, objectName:${_65mbObjectName}, offset:0, length:100*1024_`,
