@@ -1800,21 +1800,19 @@ export class TypedClient {
         chunkier.on('end', resolve).on('error', reject)
       }),
       (async () => {
-        let partNumber = 1
+        let partNumber = 0
 
         for await (const chunk of chunkier) {
           const md5 = crypto.createHash('md5').update(chunk).digest()
 
+          partNumber++
           const oldPart = oldParts[partNumber]
           if (oldPart) {
             if (oldPart.etag === md5.toString('hex')) {
               eTags.push({ part: partNumber, etag: oldPart.etag })
-              partNumber++
               continue
             }
           }
-
-          partNumber++
 
           // now start to upload missing part
           const options: RequestOption = {
@@ -1838,6 +1836,11 @@ export class TypedClient {
           }
 
           eTags.push({ part: partNumber, etag })
+        }
+
+        if (eTags.length === 0) {
+          await this.abortMultipartUpload(bucketName, objectName, uploadId)
+          return await this.uploadBuffer(bucketName, objectName, headers, Buffer.from(''))
         }
 
         return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
