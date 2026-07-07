@@ -2788,13 +2788,25 @@ describe('functional tests', function () {
         })
       })
 
-      step('Set lifecycle config of a bucket', (done) => {
-        client.getBucketLifecycle(bucketName, (err) => {
+      step('Get lifecycle config of a bucket', (done) => {
+        client.getBucketLifecycle(bucketName, (err, lifecycleConfig) => {
           if (err && err.code === 'NotImplemented') {
             return done()
           }
           if (err) {
             return done(err)
+          }
+          // Regression for #1407: a single <Rule> in the response must be
+          // returned as an array, matching the multiple-rules case and the
+          // LifecycleConfig type.
+          if (!lifecycleConfig || !Array.isArray(lifecycleConfig.Rule)) {
+            return done(new Error('Expected Rule to be an array for a single-rule lifecycle config'))
+          }
+          if (lifecycleConfig.Rule.length !== 1) {
+            return done(new Error(`Expected exactly one rule, got ${lifecycleConfig.Rule.length}`))
+          }
+          if (lifecycleConfig.Rule[0].ID !== 'Transition and Expiration Rule') {
+            return done(new Error(`Unexpected rule ID: ${lifecycleConfig.Rule[0].ID}`))
           }
           done()
         })
