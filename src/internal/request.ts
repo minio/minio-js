@@ -65,6 +65,7 @@ export async function requestWithRetry(
   maxRetries: number = MAX_RETRIES,
   baseDelayMs: number = BASE_DELAY_MS,
   maximumDelayMs: number = MAX_DELAY_MS,
+  log: (msg: string) => void = () => {},
 ): Promise<http.IncomingMessage> {
   let attempt = 0
   let isRetryable = false
@@ -87,10 +88,7 @@ export async function requestWithRetry(
           throw new Error(`Request failed after ${maxRetries} retries: ${err}`)
         }
         const delay = getExpBackOffDelay(attempt, baseDelayMs, maximumDelayMs)
-        // eslint-disable-next-line no-console
-        console.warn(
-          `${new Date().toLocaleString()} Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`,
-        )
+        log(`Retrying request (attempt ${attempt}/${maxRetries}) after ${delay}ms due to: ${err}`)
         await sleep(delay)
       } else {
         throw err // re-throw if any request, syntax errors
