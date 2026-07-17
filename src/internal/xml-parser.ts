@@ -109,7 +109,7 @@ export async function parseResponseError(response: http.IncomingMessage): Promis
   const xmlString = await readAsString(response)
 
   if (xmlString) {
-    throw parseError(xmlString, headerInfo)
+    return parseError(xmlString, headerInfo)
   }
 
   // Message should be instantiated for each S3Errors.
@@ -121,7 +121,7 @@ export async function parseResponseError(response: http.IncomingMessage): Promis
     e[key] = value
   })
 
-  throw e
+  return e
 }
 
 /**
