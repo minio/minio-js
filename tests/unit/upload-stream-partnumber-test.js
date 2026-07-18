@@ -99,4 +99,23 @@ describe('uploadStream multipart part numbering (#1482)', () => {
     assert.deepEqual(record.sentPartNumbers, [3])
     assert.deepEqual(record.completedParts, [1, 2, 3])
   })
+
+  it('re-uploads a mismatched old part at its own part number', async () => {
+    const client = makeClient()
+
+    // Part 1 still matches, but part 2's stored etag is stale, so the second
+    // chunk must be re-uploaded — at part 2, not shifted to part 3.
+    const matchingETag = Crypto.createHash('md5').update(Buffer.alloc(partSize, 'x')).digest('hex')
+    const oldParts = [
+      { part: 1, etag: matchingETag },
+      { part: 2, etag: 'stale-etag' },
+    ]
+    const record = instrument(client, oldParts)
+
+    await client.uploadStream('bucket', 'object', {}, bodyStream(3), partSize)
+
+    // part 1 skipped; part 2 re-uploaded at part 2 (not 3); part 3 uploaded.
+    assert.deepEqual(record.sentPartNumbers, [2, 3])
+    assert.deepEqual(record.completedParts, [1, 2, 3])
+  })
 })
