@@ -2861,7 +2861,7 @@ export class TypedClient {
 
       splitPartSizeList.forEach((splitSize, splitIndex: number) => {
         if (splitSize) {
-          const { startIndex: startIdx, endIndex: endIdx, objInfo: objConfig } = splitSize
+          const { startIndex: startIdx, endIndex: endIdx } = splitSize
 
           const partIndex = splitIndex + 1 // part index starts from 1.
           const totalUploads = Array.from(startIdx)
@@ -2871,8 +2871,10 @@ export class TypedClient {
           totalUploads.forEach((splitStart, upldCtrIdx) => {
             const splitEnd = endIdx[upldCtrIdx]
 
-            const sourceObj = `${objConfig.Bucket}/${objConfig.Object}`
-            headers['x-amz-copy-source'] = `${sourceObj}`
+            // x-amz-copy-source is already set by CopySourceOptions.getHeaders() above,
+            // URI-escaped and including the ?versionId selector when pinned. Don't
+            // overwrite it here: the raw value broke non-ASCII names (ERR_INVALID_CHAR,
+            // #1385) and silently dropped the source version.
             headers['x-amz-copy-source-range'] = `bytes=${splitStart}-${splitEnd}`
 
             const uploadPartConfig = {
@@ -2881,7 +2883,6 @@ export class TypedClient {
               uploadID: uploadId,
               partNumber: partIndex,
               headers: headers,
-              sourceObj: sourceObj,
             }
 
             uploadPartConfigList.push(uploadPartConfig)

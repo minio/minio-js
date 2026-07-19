@@ -460,7 +460,6 @@ export type UploadPartConfig = {
   uploadID: string
   partNumber: number
   headers: RequestHeaders
-  sourceObj: string
 }
 
 export type PreSignRequestParams = { [key: string]: string }
