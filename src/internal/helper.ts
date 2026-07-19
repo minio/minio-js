@@ -16,6 +16,7 @@
 
 import * as crypto from 'node:crypto'
 import * as stream from 'node:stream'
+import * as streamPromise from 'node:stream/promises'
 
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
@@ -244,7 +245,23 @@ export function isPlainObject(arg: unknown): arg is Record<string, unknown> {
  */
 export function isReadableStream(arg: unknown): arg is stream.Readable {
   // eslint-disable-next-line @typescript-eslint/unbound-method
-  return isObject(arg) && isFunction((arg as stream.Readable)._read) && stream.isReadable(arg as stream.Readable)
+  return isObject(arg) && isFunction((arg as stream.Readable)._read)
+}
+
+/**
+ * get the error of a readable stream, return undefined if the stream is still open
+ * or closed without error.
+ */
+export async function getReadableStreamError(s: stream.Readable): Promise<undefined | unknown> {
+  if (s.readable) {
+    return undefined
+  }
+  try {
+    await streamPromise.finished(s)
+    return undefined
+  } catch (error) {
+    return error
+  }
 }
 
 /**

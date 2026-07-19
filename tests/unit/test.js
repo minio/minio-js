@@ -665,7 +665,12 @@ describe('Client', function () {
         it('should fail when stream is destroyed', () => {
           const s = new Stream.Readable({ read() {} })
           s.destroy()
-          return expect(client.putObject('bucket', 'object', s)).to.be.rejectedWith('stream.Readable')
+          return expect(client.putObject('bucket', 'object', s)).to.be.rejectedWith('Premature close')
+        })
+        it('should fail when stream is destroyed with an error', () => {
+          const s = new Stream.Readable({ read() {} }).on('error', () => {})
+          s.destroy(new Error('stream error'))
+          return expect(client.putObject('bucket', 'object', s)).to.be.rejectedWith('stream error')
         })
       })
     })

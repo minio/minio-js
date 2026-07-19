@@ -35,6 +35,7 @@ import {
   calculateEvenSplits,
   extractMetadata,
   getContentLength,
+  getReadableStreamError,
   getScope,
   getSourceVersionId,
   getVersionId,
@@ -1682,7 +1683,15 @@ export class TypedClient {
       // Adapts the non-stream interface into a stream.
       size = stream.length
       stream = readableStream(stream)
-    } else if (!isReadableStream(stream)) {
+    } else if (isReadableStream(stream)) {
+      const streamError = await getReadableStreamError(stream)
+      if (streamError) {
+        throw streamError
+      }
+      if (!stream.readable) {
+        throw new Error('stream is not readable')
+      }
+    } else {
       throw new TypeError('third argument should be of type "stream.Readable" or "Buffer" or "string"')
     }
 
@@ -1793,58 +1802,61 @@ export class TypedClient {
 
     const chunkier = new BlockStream2({ size: partSize, zeroPadding: false })
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, o] = await Promise.all([
-      new Promise((resolve, reject) => {
-        body.pipe(chunkier).on('error', reject)
-        chunkier.on('end', resolve).on('error', reject)
-      }),
-      (async () => {
-        let partNumber = 1
+    const upload = (async () => {
+      let partNumber = 1
 
-        for await (const chunk of chunkier) {
-          const md5 = crypto.createHash('md5').update(chunk).digest()
+      for await (const chunk of chunkier) {
+        const md5 = crypto.createHash('md5').update(chunk).digest()
 
-          const oldPart = oldParts[partNumber]
-          if (oldPart) {
-            if (oldPart.etag === md5.toString('hex')) {
-              eTags.push({ part: partNumber, etag: oldPart.etag })
-              partNumber++
-              continue
-            }
+        const oldPart = oldParts[partNumber]
+        if (oldPart) {
+          if (oldPart.etag === md5.toString('hex')) {
+            eTags.push({ part: partNumber, etag: oldPart.etag })
+            partNumber++
+            continue
           }
-
-          partNumber++
-
-          // now start to upload missing part
-          const options: RequestOption = {
-            method: 'PUT',
-            query: qs.stringify({ partNumber, uploadId }),
-            headers: {
-              'Content-Length': chunk.length,
-              'Content-MD5': md5.toString('base64'),
-            },
-            bucketName,
-            objectName,
-          }
-
-          const response = await this.makeRequestAsyncOmit(options, chunk)
-
-          let etag = response.headers.etag
-          if (etag) {
-            etag = etag.replace(/^"/, '').replace(/"$/, '')
-          } else {
-            etag = ''
-          }
-
-          eTags.push({ part: partNumber, etag })
         }
 
-        return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
-      })(),
-    ])
+        partNumber++
 
-    return o
+        // now start to upload missing part
+        const options: RequestOption = {
+          method: 'PUT',
+          query: qs.stringify({ partNumber, uploadId }),
+          headers: {
+            'Content-Length': chunk.length,
+            'Content-MD5': md5.toString('base64'),
+          },
+          bucketName,
+          objectName,
+        }
+
+        const response = await this.makeRequestAsyncOmit(options, chunk)
+
+        let etag = response.headers.etag
+        if (etag) {
+          etag = etag.replace(/^"/, '').replace(/"$/, '')
+        } else {
+          etag = ''
+        }
+
+        eTags.push({ part: partNumber, etag })
+      }
+    })().catch((err) => {
+      if (!chunkier.closed) {
+        chunkier.destroy(err)
+      }
+      throw err
+    })
+
+    try {
+      await Promise.all([streamPromise.pipeline(body, chunkier), upload])
+    } catch (err) {
+      await this.abortMultipartUpload(bucketName, objectName, uploadId)
+      throw err
+    }
+
+    return await this.completeMultipartUpload(bucketName, objectName, uploadId, eTags)
   }
 
   async removeBucketReplication(bucketName: string): Promise<void>
