@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import http from 'node:http'
 import * as Stream from 'node:stream'
 
 import { assert, expect, use } from 'chai'
@@ -378,6 +379,39 @@ describe('Client', function () {
       } catch (e) {
         done()
       }
+    })
+    it('should send custom headers with requests', async () => {
+      const headers = { 'X-Test-Header': 'test-value' }
+
+      const httpAgent = new http.Agent()
+
+      const client = new Minio.Client({
+        endPoint: 'localhost',
+        port: 9000,
+        accessKey: 'accesskey',
+        secretKey: 'secretkey',
+        useSSL: false,
+        transportAgent: httpAgent,
+      })
+      client.setRequestOptions({
+        headers,
+      })
+
+      const promiseConnection = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timed out'))
+        }, 5000)
+        const originalCreateConnection = httpAgent.createConnection
+        httpAgent.createConnection = (options, callback) => {
+          clearTimeout(timeout)
+          resolve(options)
+          return originalCreateConnection(options, callback)
+        }
+      })
+
+      await client.listBuckets()
+      const connectionOptions = await promiseConnection
+      assert.propertyVal(connectionOptions.headers, 'x-test-header', headers['X-Test-Header'])
     })
   })
   describe('Presigned URL', () => {
