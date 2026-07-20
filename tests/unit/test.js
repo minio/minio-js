@@ -32,7 +32,7 @@ import {
   partsRequired,
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
-import { parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
+import { parseLifecycleConfig, parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
 import * as Minio from '../../src/minio.ts'
 
 const Package = { version: 'development' }
@@ -2243,6 +2243,34 @@ describe('IP Address Validations', () => {
 })
 
 describe('xml-parser', () => {
+  describe('#getBucketLifecycle()', () => {
+    // See https://github.com/minio/minio-js/issues/1407
+    const ruleXml = (id) => `
+      <Rule>
+        <ID>${id}</ID>
+        <Status>Enabled</Status>
+        <Expiration><Days>30</Days></Expiration>
+      </Rule>`
+
+    it('should return Rule as an array for a single rule', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        <LifecycleConfiguration>${ruleXml('r1')}</LifecycleConfiguration>`
+      const config = parseLifecycleConfig(xml)
+      assert(Array.isArray(config.Rule), 'Rule should be an array')
+      assert.equal(config.Rule.length, 1)
+      assert.equal(config.Rule[0].ID, 'r1')
+    })
+
+    it('should return Rule as an array for multiple rules', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        <LifecycleConfiguration>${ruleXml('r1')}${ruleXml('r2')}</LifecycleConfiguration>`
+      const config = parseLifecycleConfig(xml)
+      assert(Array.isArray(config.Rule), 'Rule should be an array')
+      assert.equal(config.Rule.length, 2)
+      assert.equal(config.Rule[1].ID, 'r2')
+    })
+  })
+
   describe('#listObjects()', () => {
     describe('value type casting', () => {
       const xml = `
