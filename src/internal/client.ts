@@ -770,6 +770,9 @@ export class TypedClient {
       reqOptions.headers.authorization = signV4(reqOptions, this.accessKey, this.secretKey, region, date, sha256sum)
     }
 
+    const logStream = this.logStream
+    const log = logStream ? (msg: string) => logStream.write(`${msg}\n`) : () => {}
+
     const response = await requestWithRetry(
       this.transport,
       reqOptions,
@@ -777,6 +780,7 @@ export class TypedClient {
       this.retryOptions.disableRetry === true ? 0 : this.retryOptions.maximumRetryCount,
       this.retryOptions.baseDelayMs,
       this.retryOptions.maximumDelayMs,
+      log,
     )
     if (!response.statusCode) {
       throw new Error("BUG: response doesn't have a statusCode")
