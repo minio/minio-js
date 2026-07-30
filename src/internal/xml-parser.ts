@@ -697,7 +697,13 @@ export function parseSelectObjectContentResponse(res: Buffer) {
 
 export function parseLifecycleConfig(xml: string) {
   const xmlObj = parseXml(xml)
-  return xmlObj.LifecycleConfiguration
+  const lifecycleConfig = xmlObj.LifecycleConfiguration
+  if (lifecycleConfig && lifecycleConfig.Rule) {
+    // A single <Rule> is parsed as an object; normalize to an array so the
+    // result matches the LifecycleConfig type and the multiple-rules case. See #1407.
+    lifecycleConfig.Rule = toArray(lifecycleConfig.Rule)
+  }
+  return lifecycleConfig
 }
 
 export function parseBucketEncryptionConfig(xml: string) {
