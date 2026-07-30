@@ -1840,8 +1840,6 @@ export class TypedClient {
           }
 
           eTags.push({ part: partNumber, etag })
-
-          partNumber++
         }
 
         if (eTags.length === 0) {
@@ -2390,28 +2388,18 @@ export class TypedClient {
     const method = 'POST'
     const query = `select&select-type=2`
 
-    const config: Record<string, unknown>[] = [
-      {
-        Expression: selectOpts.expression,
-      },
-      {
-        ExpressionType: selectOpts.expressionType || 'SQL',
-      },
-      {
-        InputSerialization: [selectOpts.inputSerialization],
-      },
-      {
-        OutputSerialization: [selectOpts.outputSerialization],
-      },
-    ]
-
-    // Optional
-    if (selectOpts.requestProgress) {
-      config.push({ RequestProgress: selectOpts?.requestProgress })
+    const config: Record<string, unknown> = {
+      Expression: selectOpts.expression,
+      ExpressionType: selectOpts.expressionType || 'SQL',
+      InputSerialization: [selectOpts.inputSerialization],
+      OutputSerialization: [selectOpts.outputSerialization],
     }
-    // Optional
+
+    if (selectOpts.requestProgress) {
+      config.RequestProgress = selectOpts.requestProgress
+    }
     if (selectOpts.scanRange) {
-      config.push({ ScanRange: selectOpts.scanRange })
+      config.ScanRange = selectOpts.scanRange
     }
 
     const builder = new xml2js.Builder({

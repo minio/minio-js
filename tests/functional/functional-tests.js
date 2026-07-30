@@ -4554,9 +4554,16 @@ describe('functional tests', function () {
   describe('Select Object content API Test', function () {
     const selObjContentBucket = 'minio-js-test-sel-object-' + uuid.v4()
     const selObject = 'SelectObjectContent'
-    // Isolate the bucket/object for easy debugging and tracking.
-    before(() => client.makeBucket(selObjContentBucket, ''))
-    after(() => client.removeBucket(selObjContentBucket))
+    let bucketCreated = false
+    before(async function () {
+      await client.makeBucket(selObjContentBucket, '')
+      bucketCreated = true
+    })
+    after(async () => {
+      if (bucketCreated) {
+        await client.removeBucket(selObjContentBucket)
+      }
+    })
 
     step(
       `putObject(bucketName, objectName, stream)_bucketName:${selObjContentBucket}, objectName:${selObject}, stream:csv`,
@@ -4585,7 +4592,8 @@ describe('functional tests', function () {
 
     step(
       `selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`,
-      (done) => {
+      function (done) {
+        const self = this
         const selectOpts = {
           expression: 'SELECT * FROM s3object s where s."Name" = \'Jane\'',
           expressionType: 'SQL',
@@ -4614,7 +4622,13 @@ describe('functional tests', function () {
               )
             }
           })
-          .catch(done)
+          .catch((err) => {
+            // S3 Select is not supported on all MinIO deployments; mark as skipped.
+            if (err.code === 'MethodNotAllowed') {
+              return self.skip()
+            }
+            done(err)
+          })
       },
     )
 
