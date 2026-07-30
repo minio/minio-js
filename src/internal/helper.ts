@@ -428,9 +428,11 @@ export function sanitizeETag(etag = ''): string {
 }
 
 export function toMd5(payload: Binary): string {
-  // use string from browser and buffer from nodejs
-  // browser support is tested only against minio server
-  return crypto.createHash('md5').update(Buffer.from(payload)).digest().toString('base64')
+  // MD5 is intentionally used here solely for the Content-MD5 header required by
+  // the S3 protocol specification (RFC 1864). It is NOT used for cryptographic
+  // security or authentication — transport integrity is enforced by TLS.
+  // nosemgrep: use-of-md5
+  return crypto.createHash('md5').update(Buffer.from(payload)).digest().toString('base64') // nosec
 }
 
 export function toSha256(payload: Binary): string {
