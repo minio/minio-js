@@ -4592,7 +4592,8 @@ describe('functional tests', function () {
 
     step(
       `selectObjectContent(bucketName, objectName, selectOpts)_bucketName:${selObjContentBucket}, objectName:${selObject}`,
-      (done) => {
+      function (done) {
+        const self = this
         const selectOpts = {
           expression: 'SELECT * FROM s3object s where s."Name" = \'Jane\'',
           expressionType: 'SQL',
@@ -4622,9 +4623,9 @@ describe('functional tests', function () {
             }
           })
           .catch((err) => {
-            // S3 Select is not supported on all MinIO deployments; skip gracefully.
+            // S3 Select is not supported on all MinIO deployments; mark as skipped.
             if (err.code === 'MethodNotAllowed') {
-              return done()
+              return self.skip()
             }
             done(err)
           })
