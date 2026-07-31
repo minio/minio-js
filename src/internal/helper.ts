@@ -428,9 +428,9 @@ export function sanitizeETag(etag = ''): string {
 }
 
 export function toMd5(payload: Binary): string {
-  // MD5 is intentionally used here solely for the Content-MD5 header required by
-  // the S3 protocol specification (RFC 1864). It is NOT used for cryptographic
-  // security or authentication — transport integrity is enforced by TLS.
+  // MD5 is intentionally used here for the Content-MD5 header, which provides
+  // end-to-end payload integrity verification for S3 operations (RFC 1864).
+  // It is NOT used for cryptographic security or authentication.
   // nosemgrep: use-of-md5
   return crypto.createHash('md5').update(Buffer.from(payload)).digest().toString('base64') // nosec
 }
