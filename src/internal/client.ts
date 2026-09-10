@@ -1952,7 +1952,7 @@ export class TypedClient {
     return parseObjectLegalHoldConfig(strRes)
   }
 
-  setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): void
+  setObjectLegalHold(bucketName: string, objectName: string, setOpts?: PutObjectLegalHoldOptions): Promise<void>
   async setObjectLegalHold(
     bucketName: string,
     objectName: string,
