@@ -66,6 +66,7 @@ export type {
   SelectProgress,
   SourceSelectionCriteria,
   Tag,
+  UploadedObjectInfo,
 } from './internal/type.ts'
 
 /**
