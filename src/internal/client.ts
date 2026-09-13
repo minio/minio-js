@@ -1865,7 +1865,6 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query }, '', [200, 204], '')
   }
 
-  setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): void
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts): Promise<void>
   async setBucketReplication(bucketName: string, replicationConfig: ReplicationConfigOpts) {
     if (!isValidBucketName(bucketName)) {
@@ -1900,7 +1899,6 @@ export class TypedClient {
     await this.makeRequestAsyncOmit({ method, bucketName, query, headers }, payload)
   }
 
-  getBucketReplication(bucketName: string): void
   async getBucketReplication(bucketName: string): Promise<ReplicationConfig>
   async getBucketReplication(bucketName: string) {
     if (!isValidBucketName(bucketName)) {
