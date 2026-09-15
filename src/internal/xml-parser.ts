@@ -2,7 +2,7 @@ import type * as http from 'node:http'
 import type stream from 'node:stream'
 
 import crc32 from 'buffer-crc32'
-import { XMLParser } from 'fast-xml-parser'
+import { XMLParser, XMLValidator } from 'fast-xml-parser'
 
 import * as errors from '../errors.ts'
 import { SelectResults } from '../helpers.ts'
@@ -108,8 +108,11 @@ export async function parseResponseError(response: http.IncomingMessage): Promis
 
   const xmlString = await readAsString(response)
 
-  if (xmlString) {
-    throw parseError(xmlString, headerInfo)
+  if (xmlString && XMLValidator.validate(xmlString) === true) {
+    const xmlError = parseError(xmlString, headerInfo)
+    if (xmlError.code || xmlError.message) {
+      throw xmlError
+    }
   }
 
   // Message should be instantiated for each S3Errors.
