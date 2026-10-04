@@ -580,6 +580,17 @@ export function parseXml(xml: string): any {
 }
 
 /**
+ * how many bytes an `fs.ReadStream` emits of a file of the given size: `start` and `end` (inclusive) make it
+ * a slice of the file
+ */
+function getReadRangeLength(s: stream.Readable, fileSize: number): number {
+  const { start, end } = s as unknown as { start?: number; end?: number }
+  const from = typeof start === 'number' ? start : 0
+  const to = typeof end === 'number' && Number.isFinite(end) ? Math.min(end + 1, fileSize) : fileSize
+  return Math.max(0, to - from)
+}
+
+/**
  * get content size of object content to upload
  */
 export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
@@ -591,15 +602,17 @@ export async function getContentLength(s: stream.Readable | Buffer | string): Pr
   // property of `fs.ReadStream`
   const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
   if (filePath && typeof filePath === 'string') {
-    const stat = await fsp.lstat(filePath)
-    return stat.size
+    // `stat` follows a symbolic link to the file that is actually read, `lstat` would measure the link itself
+    const stat = await fsp.stat(filePath)
+    // the size of a pipe, a device or a /proc file says nothing about what can be read from it
+    return stat.isFile() ? getReadRangeLength(s, stat.size) : null
   }
 
   // property of `fs.ReadStream`
   const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
   if (fd && typeof fd === 'number') {
     const stat = await fstat(fd)
-    return stat.size
+    return stat.isFile() ? getReadRangeLength(s, stat.size) : null
   }
 
   return null

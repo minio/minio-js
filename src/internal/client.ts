@@ -1694,15 +1694,8 @@ export class TypedClient {
       throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
     }
 
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
+    // Without an explicit size, try to find it out from the stream, e.g. the file behind an `fs.ReadStream`.
     if (!isNumber(size)) {
-      size = this.maxObjectSize
-    }
-
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
-    if (size === undefined) {
       const statSize = await getContentLength(stream)
       if (statSize !== null) {
         size = statSize
