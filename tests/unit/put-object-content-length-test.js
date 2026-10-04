@@ -112,6 +112,34 @@ describe('putObject content length probe (#1502)', () => {
     assert.equal(record.streams, 1)
     assert.equal(record.buffers.length, 0)
   })
+
+  it('reads and closes a stream whose probed size is zero instead of taking it as empty', async () => {
+    const client = makeClient()
+    const record = instrument(client)
+    // a range that starts past the end of the file covers no bytes, so the probe reports zero
+    const stream = fs.createReadStream(file, { start: fileSize + 10 })
+
+    await client.putObject('bucket', 'object', stream)
+    await once(stream, 'close')
+
+    assert.equal(record.streams, 0)
+    assert.equal(record.buffers.length, 1)
+    assert.equal(record.buffers[0].length, 0)
+    assert.isTrue(stream.closed)
+  })
+
+  it('still uploads an empty object without reading the stream when the size given is zero', async () => {
+    const client = makeClient()
+    const record = instrument(client)
+    const stream = fs.createReadStream(file)
+
+    await client.putObject('bucket', 'object', stream, 0)
+    stream.destroy()
+
+    assert.equal(record.streams, 0)
+    assert.equal(record.buffers.length, 1)
+    assert.equal(record.buffers[0].length, 0)
+  })
 })
 
 describe('getContentLength', () => {
@@ -139,6 +167,16 @@ describe('getContentLength', () => {
 
   it('measures a whole file', async () => {
     assert.equal(await measure(fs.createReadStream(file)), fileSize)
+  })
+
+  it('measures a file whose path was given as a Buffer', async () => {
+    assert.equal(await measure(fs.createReadStream(Buffer.from(file))), fileSize)
+  })
+
+  it('measures a stream made from a file descriptor', async () => {
+    const fd = fs.openSync(file, 'r')
+    // the stream closes the descriptor when it is destroyed
+    assert.equal(await measure(fs.createReadStream(null, { fd })), fileSize)
   })
 
   it('measures the byte range of a partial read, not the file on disk', async () => {

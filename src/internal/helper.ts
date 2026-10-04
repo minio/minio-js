@@ -630,15 +630,15 @@ export async function getContentLength(s: stream.Readable | Buffer | string): Pr
   }
 
   // property of `fs.ReadStream`
-  const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
-  if (filePath && typeof filePath === 'string') {
+  const filePath = (s as unknown as Record<string, unknown>).path as string | Buffer | undefined
+  if (filePath && (typeof filePath === 'string' || Buffer.isBuffer(filePath))) {
     // measure the file the stream opened: the path may name another file by the time it is read
     await waitUntilOpen(s)
   }
 
   // property of `fs.ReadStream`
   const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
-  if (fd && typeof fd === 'number') {
+  if (typeof fd === 'number') {
     // `fstat` reports on the file that is actually read, even if the path is a symbolic link
     const stat = await fstat(fd)
     // The size of a pipe or a device says nothing about what can be read from it, and some regular files

@@ -1695,7 +1695,8 @@ export class TypedClient {
     }
 
     // Without an explicit size, try to find it out from the stream, e.g. the file behind an `fs.ReadStream`.
-    if (!isNumber(size)) {
+    const sizeGiven = isNumber(size)
+    if (!sizeGiven) {
       const statSize = await getContentLength(stream)
       if (statSize !== null) {
         size = statSize
@@ -1706,7 +1707,9 @@ export class TypedClient {
       // Backward compatibility
       size = this.maxObjectSize
     }
-    if (size === 0) {
+    // Only a size the caller gave proves the object is empty. A size found by probing the stream is read
+    // from the stream instead, so that it is closed and what is really there is uploaded.
+    if (size === 0 && sizeGiven) {
       return this.uploadBuffer(bucketName, objectName, headers, Buffer.from(''))
     }
 
