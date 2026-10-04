@@ -1694,15 +1694,9 @@ export class TypedClient {
       throw new errors.InvalidArgumentError(`size cannot be negative, given size: ${size}`)
     }
 
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
-    if (!isNumber(size)) {
-      size = this.maxObjectSize
-    }
-
-    // Get the part size and forward that to the BlockStream. Default to the
-    // largest block size possible if necessary.
-    if (size === undefined) {
+    // Without an explicit size, try to find it out from the stream, e.g. the file behind an `fs.ReadStream`.
+    const sizeGiven = isNumber(size)
+    if (!sizeGiven) {
       const statSize = await getContentLength(stream)
       if (statSize !== null) {
         size = statSize
@@ -1713,7 +1707,9 @@ export class TypedClient {
       // Backward compatibility
       size = this.maxObjectSize
     }
-    if (size === 0) {
+    // Only a size the caller gave proves the object is empty. A size found by probing the stream is read
+    // from the stream instead, so that it is closed and what is really there is uploaded.
+    if (size === 0 && sizeGiven) {
       return this.uploadBuffer(bucketName, objectName, headers, Buffer.from(''))
     }
 
