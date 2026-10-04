@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { once } from 'node:events'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
@@ -99,6 +100,18 @@ describe('putObject content length probe (#1502)', () => {
     assert.equal(record.streams, 1)
     assert.equal(record.buffers.length, 0)
   })
+
+  it('reads a file that reports a size of zero instead of uploading an empty object', async () => {
+    const client = makeClient()
+    const record = instrument(client)
+    const empty = path.join(dir, 'empty.bin')
+    fs.writeFileSync(empty, '')
+
+    await client.putObject('bucket', 'object', fs.createReadStream(empty))
+
+    assert.equal(record.streams, 1)
+    assert.equal(record.buffers.length, 0)
+  })
 })
 
 describe('getContentLength', () => {
@@ -152,6 +165,50 @@ describe('getContentLength', () => {
   it('returns null for a path that is not a regular file', async () => {
     // the size of a pipe, a device or a directory says nothing about what a stream can read from it
     assert.isNull(await measure(fs.createReadStream(dir)))
+  })
+
+  it('returns null for a file that reports a size of zero', async () => {
+    // some regular files report no size although they have content (e.g. /proc files on Linux), so a
+    // size of zero does not prove that the stream is empty
+    const empty = path.join(dir, 'empty.bin')
+    fs.writeFileSync(empty, '')
+
+    assert.isNull(await measure(fs.createReadStream(empty)))
+  })
+
+  it('measures the file the stream opened, not the file the path names later', async function () {
+    const swapped = path.join(dir, 'swapped.bin')
+    fs.writeFileSync(swapped, Buffer.alloc(fileSize, 'x'))
+    const stream = fs.createReadStream(swapped)
+    await once(stream, 'open')
+    try {
+      fs.rmSync(swapped)
+      fs.writeFileSync(swapped, Buffer.alloc(5, 'y'))
+    } catch (err) {
+      // some systems do not allow replacing a file that is open
+      stream.destroy()
+      this.skip()
+    }
+
+    assert.equal(await measure(stream), fileSize)
+  })
+
+  it('rejects when the file cannot be opened', async () => {
+    let error
+    try {
+      await measure(fs.createReadStream(path.join(dir, 'missing.bin')))
+    } catch (err) {
+      error = err
+    }
+
+    assert.equal(error && error.code, 'ENOENT')
+  })
+
+  it('returns null for a stream that was destroyed before it opened', async () => {
+    const stream = fs.createReadStream(file)
+    stream.destroy()
+
+    assert.isNull(await getContentLength(stream))
   })
 
   it('returns null for a stream it cannot measure', async () => {

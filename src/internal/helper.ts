@@ -22,7 +22,7 @@ import ipaddr from 'ipaddr.js'
 import _ from 'lodash'
 import * as mime from 'mime-types'
 
-import { fsp, fstat } from './async.ts'
+import { fstat } from './async.ts'
 import type { Binary, Encryption, ObjectMetaData, RequestHeaders, ResponseHeader } from './type.ts'
 import { ENCRYPTION_TYPES } from './type.ts'
 
@@ -591,6 +591,36 @@ function getReadRangeLength(s: stream.Readable, fileSize: number): number {
 }
 
 /**
+ * wait until an `fs.ReadStream` made from a path has opened its file, so that its `fd` refers to the file it
+ * reads. Rejects with the error of the stream when the file cannot be opened.
+ */
+function waitUntilOpen(s: stream.Readable): Promise<void> {
+  const { fd, pending } = s as unknown as { fd?: number | null; pending?: boolean }
+  if (typeof fd === 'number' || pending !== true || s.destroyed) {
+    return Promise.resolve()
+  }
+  return new Promise((resolve, reject) => {
+    const settle = (err?: Error) => {
+      s.off('open', onOpen)
+      s.off('error', onError)
+      s.off('close', onClose)
+      if (err) {
+        reject(err)
+      } else {
+        resolve()
+      }
+    }
+    const onOpen = () => settle()
+    const onError = (err: Error) => settle(err)
+    // a stream that is destroyed before it opens has no file to measure
+    const onClose = () => settle()
+    s.once('open', onOpen)
+    s.once('error', onError)
+    s.once('close', onClose)
+  })
+}
+
+/**
  * get content size of object content to upload
  */
 export async function getContentLength(s: stream.Readable | Buffer | string): Promise<number | null> {
@@ -602,17 +632,19 @@ export async function getContentLength(s: stream.Readable | Buffer | string): Pr
   // property of `fs.ReadStream`
   const filePath = (s as unknown as Record<string, unknown>).path as string | undefined
   if (filePath && typeof filePath === 'string') {
-    // `stat` follows a symbolic link to the file that is actually read, `lstat` would measure the link itself
-    const stat = await fsp.stat(filePath)
-    // the size of a pipe, a device or a /proc file says nothing about what can be read from it
-    return stat.isFile() ? getReadRangeLength(s, stat.size) : null
+    // measure the file the stream opened: the path may name another file by the time it is read
+    await waitUntilOpen(s)
   }
 
   // property of `fs.ReadStream`
   const fd = (s as unknown as Record<string, unknown>).fd as number | null | undefined
   if (fd && typeof fd === 'number') {
+    // `fstat` reports on the file that is actually read, even if the path is a symbolic link
     const stat = await fstat(fd)
-    return stat.isFile() ? getReadRangeLength(s, stat.size) : null
+    // The size of a pipe or a device says nothing about what can be read from it, and some regular files
+    // (e.g. /proc files on Linux) report a size of zero although they have content. In those cases the
+    // size is unknown, so the stream is read instead of being taken as empty.
+    return stat.isFile() && stat.size > 0 ? getReadRangeLength(s, stat.size) : null
   }
 
   return null
