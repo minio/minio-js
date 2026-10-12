@@ -260,6 +260,17 @@ The complete API Reference is available here:
 
 - [setAccelerateEndPoint](https://github.com/minio/minio-js/blob/master/examples/set-accelerate-end-point.js)
 
+## IAM Container Credential Endpoints
+
+`IamAwsProvider` validates container credential endpoints before requesting
+credentials. Relative URIs must resolve to the ECS credential endpoint. HTTP
+full URIs are restricted to loopback and known ECS or EKS hosts, while HTTPS
+full URIs remain supported for AWS SDK compatibility. URLs containing user
+information, fragments, or unsupported protocols are rejected.
+
+See [issue #1509](https://github.com/minio/minio-js/issues/1509) and
+[pull request #1510](https://github.com/minio/minio-js/pull/1510).
+
 ## Explore Further
 
 - [Complete Documentation](https://min.io/docs/minio/kubernetes/upstream/index.html)
