@@ -70,6 +70,15 @@ describe('IamAwsProvider container credential URI validation', () => {
     })
   }
 
+  it('rejects a relative URI that resolves outside the ECS credentials endpoint', async () => {
+    process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = '/\t/127.0.0.1:1234/credentials'
+
+    const provider = new IamAwsProvider({})
+    await expect(provider.getCredentials()).to.be.rejectedWith(
+      'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI must resolve to the ECS credentials endpoint',
+    )
+  })
+
   it('rejects an HTTP full URI outside ECS and loopback hosts', async () => {
     process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI = 'http://10.0.0.1/credentials'
 

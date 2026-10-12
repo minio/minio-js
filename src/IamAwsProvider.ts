@@ -34,11 +34,17 @@ interface EcsCredentials {
 const ECS_CONTAINER_CREDENTIALS_ORIGIN = 'http://169.254.170.2'
 const ECS_CONTAINER_CREDENTIALS_HOSTS = new Set(['169.254.170.2', '169.254.170.23', '[fd00:ec2::23]'])
 
+/**
+ * Returns whether hostname is a literal or conventional loopback host.
+ */
 function isLoopbackHost(hostname: string): boolean {
   const normalized = hostname.toLowerCase()
   return normalized === 'localhost' || normalized === '[::1]' || /^127(?:\.\d{1,3}){3}$/.test(normalized)
 }
 
+/**
+ * Validates a full container credentials URL using the AWS SDK endpoint rules.
+ */
 function validateContainerCredentialsUrl(url: URL): URL {
   if (url.username || url.password || url.hash) {
     throw new Error('Container credentials URI must not contain user information or a fragment')
@@ -55,6 +61,10 @@ function validateContainerCredentialsUrl(url: URL): URL {
   return url
 }
 
+/**
+ * Resolves a relative container credentials URI without allowing it to change
+ * the ECS credentials origin.
+ */
 function resolveContainerCredentialsRelativeUri(relativeUri: string): URL {
   if (!relativeUri.startsWith('/') || relativeUri.startsWith('//') || relativeUri.includes('\\')) {
     throw new Error('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI must be a relative path')
