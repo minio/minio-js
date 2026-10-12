@@ -31,6 +31,41 @@ interface EcsCredentials {
   Message: string
 }
 
+const ECS_CONTAINER_CREDENTIALS_ORIGIN = 'http://169.254.170.2'
+const ECS_CONTAINER_CREDENTIALS_HOSTS = new Set(['169.254.170.2', '169.254.170.23', '[fd00:ec2::23]'])
+
+function isLoopbackHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase()
+  return normalized === 'localhost' || normalized === '[::1]' || /^127(?:\.\d{1,3}){3}$/.test(normalized)
+}
+
+function validateContainerCredentialsUrl(url: URL): URL {
+  if (url.username || url.password || url.hash) {
+    throw new Error('Container credentials URI must not contain user information or a fragment')
+  }
+  if (url.protocol === 'https:') {
+    return url
+  }
+  if (url.protocol !== 'http:') {
+    throw new Error('Container credentials URI must use HTTP or HTTPS')
+  }
+  if (!ECS_CONTAINER_CREDENTIALS_HOSTS.has(url.hostname) && !isLoopbackHost(url.hostname)) {
+    throw new Error('HTTP container credentials URI must use an ECS or loopback host')
+  }
+  return url
+}
+
+function resolveContainerCredentialsRelativeUri(relativeUri: string): URL {
+  if (!relativeUri.startsWith('/') || relativeUri.startsWith('//') || relativeUri.includes('\\')) {
+    throw new Error('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI must be a relative path')
+  }
+  const url = new URL(relativeUri, ECS_CONTAINER_CREDENTIALS_ORIGIN)
+  if (url.origin !== ECS_CONTAINER_CREDENTIALS_ORIGIN) {
+    throw new Error('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI must resolve to the ECS credentials endpoint')
+  }
+  return validateContainerCredentialsUrl(url)
+}
+
 export interface IamAwsProviderOptions {
   customEndpoint?: string
   transportAgent?: http.Agent
@@ -77,9 +112,9 @@ export class IamAwsProvider extends CredentialProvider {
       const fullUri = process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI
       let url: URL
       if (relativeUri) {
-        url = new URL(relativeUri, 'http://169.254.170.2')
+        url = resolveContainerCredentialsRelativeUri(relativeUri)
       } else if (fullUri) {
-        url = new URL(fullUri)
+        url = validateContainerCredentialsUrl(new URL(fullUri))
       } else {
         token = await this.fetchImdsToken()
         tokenHeader = 'X-aws-ec2-metadata-token'
