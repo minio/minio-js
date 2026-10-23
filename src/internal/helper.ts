@@ -16,6 +16,7 @@
 
 import * as crypto from 'node:crypto'
 import * as stream from 'node:stream'
+import { StringDecoder } from 'node:string_decoder'
 
 import { XMLParser } from 'fast-xml-parser'
 import ipaddr from 'ipaddr.js'
@@ -320,6 +321,80 @@ export function readableStream(data: unknown): stream.Readable {
   s.push(data)
   s.push(null)
   return s
+}
+
+/**
+ * Serialize `params` into a URL query string the way the S3 API expects it:
+ * keys are sorted, keys and values are percent-encoded so that only RFC 3986
+ * "unreserved" characters stay literal (see `uriEscape`), `undefined` values
+ * are skipped, `null` emits the bare key and an array repeats the key once
+ * per element.
+ */
+export function queryStringify(params: object | null | undefined): string {
+  if (!params) {
+    return ''
+  }
+
+  const record = params as Record<string, unknown>
+  const parts: string[] = []
+  for (const key of Object.keys(record).sort()) {
+    const value = record[key]
+    if (value === undefined) {
+      continue
+    }
+    const encodedKey = uriEscape(key)
+    const part = (Array.isArray(value) ? value : [value])
+      .filter((item) => item !== undefined)
+      .map((item) => (item === null ? encodedKey : `${encodedKey}=${uriEscape(String(item))}`))
+      .join('&')
+    if (part !== '') {
+      parts.push(part)
+    }
+  }
+  return parts.join('&')
+}
+
+/**
+ * Transform stream that parses newline-delimited JSON (one document per line)
+ * and emits each document as an object.
+ *
+ * Blank and whitespace-only lines are ignored: the MinIO server writes a single
+ * space as keep-alive on long-polling endpoints such as `ListenBucketNotification`.
+ */
+export class JsonLinesParser extends stream.Transform {
+  private readonly decoder = new StringDecoder('utf8')
+  private pending = ''
+
+  constructor() {
+    super({ readableObjectMode: true })
+  }
+
+  _transform(chunk: Buffer | string, _encoding: BufferEncoding, callback: stream.TransformCallback) {
+    this.pending += typeof chunk === 'string' ? chunk : this.decoder.write(chunk)
+    const lines = this.pending.split('\n')
+    this.pending = lines.pop() ?? ''
+    callback(this.pushLines(lines))
+  }
+
+  _flush(callback: stream.TransformCallback) {
+    const rest = this.pending + this.decoder.end()
+    this.pending = ''
+    callback(this.pushLines([rest]))
+  }
+
+  private pushLines(lines: string[]): Error | null {
+    for (const line of lines) {
+      if (line.trim() === '') {
+        continue
+      }
+      try {
+        this.push(JSON.parse(line))
+      } catch (e) {
+        return e as Error
+      }
+    }
+    return null
+  }
 }
 
 /**

@@ -1,8 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import * as querystring from 'query-string'
-
 import * as errors from './errors.ts'
 import {
   getEncryptionHeaders,
@@ -13,6 +11,7 @@ import {
   isString,
   isValidBucketName,
   isValidObjectName,
+  queryStringify,
 } from './internal/helper.ts'
 import type { Encryption, ObjectMetaData, RequestHeaders } from './internal/type.ts'
 import { RETENTION_MODES } from './internal/type.ts'
@@ -227,7 +226,7 @@ export class CopyDestinationOptions {
     if (!isEmpty(userTags)) {
       headerOptions['X-Amz-Tagging-Directive'] = replaceDirective
       headerOptions['X-Amz-Tagging'] = isObject(userTags)
-        ? querystring.stringify(userTags)
+        ? queryStringify(userTags)
         : isString(userTags)
         ? userTags
         : ''
