@@ -15,11 +15,10 @@
  */
 
 import { EventEmitter } from 'eventemitter3'
-import jsonLineParser from 'stream-json/jsonl/Parser.js'
 
 import { DEFAULT_REGION } from './helpers.ts'
 import type { TypedClient } from './internal/client.ts'
-import { pipesetup, uriEscape } from './internal/helper.ts'
+import { JsonLinesParser, pipesetup, uriEscape } from './internal/helper.ts'
 
 // TODO: type this
 
@@ -216,13 +215,13 @@ export class NotificationPoller extends EventEmitter<{
 
     this.client.makeRequestAsync({ method, bucketName: this.bucketName, query }, '', [200], region).then(
       (response) => {
-        const asm = jsonLineParser.make()
+        const asm = new JsonLinesParser()
 
         pipesetup(response, asm)
           .on('data', (data) => {
             // Data is flushed periodically (every 5 seconds), so we should
             // handle it after flushing from the JSON parser.
-            let records = data.value.Records
+            let records = data.Records
             // If null (= no records), change to an empty array.
             if (!records) {
               records = []

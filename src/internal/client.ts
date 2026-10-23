@@ -10,7 +10,6 @@ import * as async from 'async'
 import BlockStream2 from 'block-stream2'
 import { isBrowser } from 'browser-or-node'
 import _ from 'lodash'
-import * as qs from 'query-string'
 import xml2js from 'xml2js'
 
 import { CredentialProvider } from '../CredentialProvider.ts'
@@ -59,6 +58,7 @@ import {
   PART_CONSTRAINTS,
   partsRequired,
   prependXAMZMeta,
+  queryStringify,
   readableStream,
   sanitizeETag,
   toMd5,
@@ -1133,7 +1133,7 @@ export class TypedClient {
           'X-Amz-Server-Side-Encryption-Customer-Key-MD5': getOpts.SSECustomerKeyMD5,
         }),
       }
-      query = qs.stringify(getOpts)
+      query = queryStringify(getOpts)
       headers = {
         ...prependXAMZMeta(sseHeaders),
         ...headers,
@@ -1227,7 +1227,7 @@ export class TypedClient {
       throw new errors.InvalidArgumentError('statOpts should be of type "object"')
     }
 
-    const query = qs.stringify(statOptDef)
+    const query = queryStringify(statOptDef)
     const method = 'HEAD'
     const res = await this.makeRequestAsyncOmit({ method, bucketName, objectName, query })
 
@@ -1266,7 +1266,7 @@ export class TypedClient {
     if (removeOpts?.versionId) {
       queryParams.versionId = `${removeOpts.versionId}`
     }
-    const query = qs.stringify(queryParams)
+    const query = queryStringify(queryParams)
 
     await this.makeRequestAsyncOmit({ method, bucketName, objectName, headers, query }, '', [200, 204])
   }
@@ -1821,7 +1821,7 @@ export class TypedClient {
           // now start to upload missing part
           const options: RequestOption = {
             method: 'PUT',
-            query: qs.stringify({ partNumber, uploadId }),
+            query: queryStringify({ partNumber, uploadId }),
             headers: {
               'Content-Length': chunk.length,
               'Content-MD5': md5.toString('base64'),
@@ -2954,7 +2954,7 @@ export class TypedClient {
       throw new TypeError('requestDate should be of type "Date" and valid')
     }
 
-    const query = reqParams ? qs.stringify(reqParams) : undefined
+    const query = reqParams ? queryStringify(reqParams) : undefined
 
     try {
       const region = await this.getBucketRegionAsync(bucketName)

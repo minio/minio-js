@@ -27,13 +27,16 @@ import {
   calculateEvenSplits,
   isValidEndpoint,
   isValidIP,
+  JsonLinesParser,
   makeDateLong,
   makeDateShort,
   partsRequired,
+  queryStringify,
 } from '../../src/internal/helper.ts'
 import { joinHostPort } from '../../src/internal/join-host-port.ts'
 import { parseLifecycleConfig, parseListMultipart, parseListObjects } from '../../src/internal/xml-parser.ts'
 import * as Minio from '../../src/minio.ts'
+import { NotificationPoller } from '../../src/notification.ts'
 
 const Package = { version: 'development' }
 
@@ -2384,5 +2387,148 @@ describe('join-host-port', () => {
   it('should be able to parse domain', () => {
     assert.equal(joinHostPort('internal.company.com', 5000), 'internal.company.com:5000')
     assert.equal(joinHostPort('internal.company.com'), 'internal.company.com')
+  })
+})
+
+describe('queryStringify', () => {
+  it('should return an empty string for empty or missing input', () => {
+    assert.equal(queryStringify(undefined), '')
+    assert.equal(queryStringify(null), '')
+    assert.equal(queryStringify({}), '')
+  })
+
+  it('should sort keys and stringify scalar values', () => {
+    assert.equal(queryStringify({ versionId: 'abc', partNumber: 3 }), 'partNumber=3&versionId=abc')
+    assert.equal(queryStringify({ 'list-type': 2, 'continuation-token': 'tok' }), 'continuation-token=tok&list-type=2')
+    assert.equal(queryStringify({ b: true, a: false, c: 0 }), 'a=false&b=true&c=0')
+  })
+
+  it('should percent-encode everything except RFC 3986 unreserved characters', () => {
+    assert.equal(queryStringify({ uploadId: 'x/y+z==' }), 'uploadId=x%2Fy%2Bz%3D%3D')
+    assert.equal(
+      queryStringify({ 'response-content-disposition': 'attachment; filename="a b.pdf"' }),
+      'response-content-disposition=attachment%3B%20filename%3D%22a%20b.pdf%22',
+    )
+    // `!'()*` are left alone by encodeURIComponent but must be escaped for S3 signing
+    assert.equal(queryStringify({ k: "!'()*~-._" }), 'k=%21%27%28%29%2A~-._')
+    assert.equal(queryStringify({ 'tag=eq': 'v&amp' }), 'tag%3Deq=v%26amp')
+    assert.equal(queryStringify({ 'continuation-token': 'tok%2F==' }), 'continuation-token=tok%252F%3D%3D')
+    assert.equal(queryStringify({ k: 'na\u00efve \u4e2d' }), 'k=na%C3%AFve%20%E4%B8%AD')
+  })
+
+  it('should skip undefined values and emit bare keys for null', () => {
+    assert.equal(queryStringify({ versionId: 'v1', tagging: null, retention: undefined }), 'tagging&versionId=v1')
+    assert.equal(queryStringify({ versionId: '' }), 'versionId=')
+  })
+
+  it('should repeat the key for array values', () => {
+    assert.equal(
+      queryStringify({ events: ['b', 'a', null, undefined, 1], single: ['x'], empty: [] }),
+      'events=b&events=a&events&events=1&single=x',
+    )
+  })
+})
+
+describe('JsonLinesParser', () => {
+  const parse = (chunks) =>
+    new Promise((resolve, reject) => {
+      const parser = new JsonLinesParser()
+      const docs = []
+      parser.on('data', (doc) => docs.push(doc))
+      parser.on('error', reject)
+      parser.on('end', () => resolve(docs))
+      for (const chunk of chunks) {
+        parser.write(chunk)
+      }
+      parser.end()
+    })
+
+  it('should emit one object per line, however the input is chunked', async () => {
+    const docs = await parse(['{"a":1}\n{"b"', ':2}\n{"c":[1,', '2,3]}\n'])
+    assert.deepEqual(docs, [{ a: 1 }, { b: 2 }, { c: [1, 2, 3] }])
+  })
+
+  it('should flush a trailing document without a newline', async () => {
+    const docs = await parse(['{"a":1}\n{"b":2}'])
+    assert.deepEqual(docs, [{ a: 1 }, { b: 2 }])
+  })
+
+  it('should ignore blank lines and whitespace keep-alives', async () => {
+    const docs = await parse([' ', ' ', '\n\n', ' {"Records":null}\n', '  \n', ' '])
+    assert.deepEqual(docs, [{ Records: null }])
+  })
+
+  it('should decode multi-byte UTF-8 characters split across chunks', async () => {
+    const bytes = Buffer.from('{"k":"na\u00efve \u4e2d"}\n')
+    // offset 9 is inside the two bytes of "\u00ef", offset 14 inside the three bytes of "\u4e2d"
+    const docs = await parse([bytes.subarray(0, 9), bytes.subarray(9, 14), bytes.subarray(14)])
+    assert.deepEqual(docs, [{ k: 'na\u00efve \u4e2d' }])
+  })
+
+  it('should reject a null document instead of ending the stream', async () => {
+    await expect(parse(['null\n{"a":1}\n'])).to.eventually.be.rejectedWith(TypeError, /must not be null/)
+  })
+
+  it('should emit an error for malformed JSON', async () => {
+    await expect(parse(['{"a":1}\n{not json}\n'])).to.eventually.be.rejectedWith(SyntaxError)
+  })
+})
+
+describe('NotificationPoller', () => {
+  const fakeClient = (responses) => {
+    const requests = []
+    return {
+      requests,
+      region: 'us-east-1',
+      makeRequestAsync(options) {
+        requests.push(options)
+        const body = responses.shift()
+        return Promise.resolve(body instanceof Error ? Promise.reject(body) : Stream.Readable.from(body))
+      },
+    }
+  }
+
+  it('should emit every record of every response and poll again when a response ends', (done) => {
+    const client = fakeClient([
+      [
+        ' ',
+        ' {"Records":null}\n',
+        '{"Records":[{"eventName":"s3:ObjectCreated:Put"},',
+        '{"eventName":"s3:ObjectCreated:Copy"}]}\n',
+      ],
+      ['{"Records":[{"eventName":"s3:ObjectRemoved:Delete"}]}\n'],
+    ])
+    const poller = new NotificationPoller(client, 'bucket', 'photos/', '.jpg', [
+      's3:ObjectCreated:*',
+      's3:ObjectRemoved:*',
+    ])
+    const records = []
+    poller.on('error', done)
+    poller.on('notification', (record) => {
+      records.push(record.eventName)
+      if (records.length === 3) {
+        poller.stop()
+        assert.deepEqual(records, ['s3:ObjectCreated:Put', 's3:ObjectCreated:Copy', 's3:ObjectRemoved:Delete'])
+        assert.equal(client.requests.length, 2)
+        assert.deepEqual(client.requests[0], {
+          method: 'GET',
+          bucketName: 'bucket',
+          query: 'events=s3%3AObjectCreated%3A%2A&events=s3%3AObjectRemoved%3A%2A&prefix=photos%2F&suffix=.jpg',
+        })
+        done()
+      }
+    })
+    poller.start()
+  })
+
+  it('should emit an error when the response is not newline-delimited JSON', (done) => {
+    const client = fakeClient([['{"Records":[]}\n', 'oops\n']])
+    const poller = new NotificationPoller(client, 'bucket', '', '', [])
+    poller.on('error', (e) => {
+      poller.stop()
+      assert.instanceOf(e, SyntaxError)
+      done()
+    })
+    poller.start()
   })
 })
