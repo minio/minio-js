@@ -2460,8 +2460,13 @@ describe('JsonLinesParser', () => {
 
   it('should decode multi-byte UTF-8 characters split across chunks', async () => {
     const bytes = Buffer.from('{"k":"na\u00efve \u4e2d"}\n')
-    const docs = await parse([bytes.subarray(0, 10), bytes.subarray(10, 11), bytes.subarray(11)])
+    // offset 9 is inside the two bytes of "\u00ef", offset 14 inside the three bytes of "\u4e2d"
+    const docs = await parse([bytes.subarray(0, 9), bytes.subarray(9, 14), bytes.subarray(14)])
     assert.deepEqual(docs, [{ k: 'na\u00efve \u4e2d' }])
+  })
+
+  it('should reject a null document instead of ending the stream', async () => {
+    await expect(parse(['null\n{"a":1}\n'])).to.eventually.be.rejectedWith(TypeError, /must not be null/)
   })
 
   it('should emit an error for malformed JSON', async () => {

@@ -388,7 +388,12 @@ export class JsonLinesParser extends stream.Transform {
         continue
       }
       try {
-        this.push(JSON.parse(line))
+        const document: unknown = JSON.parse(line)
+        if (document === null) {
+          // push(null) would signal end-of-stream to the readable side
+          throw new TypeError('JSON lines document must not be null')
+        }
+        this.push(document)
       } catch (e) {
         return e as Error
       }
