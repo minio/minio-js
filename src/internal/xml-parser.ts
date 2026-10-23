@@ -852,7 +852,7 @@ export function parseListObjects(xml: string) {
     }
 
     if (listVersionsResult.NextKeyMarker) {
-      result.keyMarker = listVersionsResult.NextKeyMarker
+      result.keyMarker = sanitizeObjectKey(listVersionsResult.NextKeyMarker)
     }
     if (listVersionsResult.NextVersionIdMarker) {
       result.versionIdMarker = listVersionsResult.NextVersionIdMarker

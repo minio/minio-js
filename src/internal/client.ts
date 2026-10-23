@@ -3121,10 +3121,10 @@ export class TypedClient {
     if (IncludeVersion) {
       // v1 version listing..
       if (keyMarker) {
-        queries.push(`key-marker=${keyMarker}`)
+        queries.push(`key-marker=${uriEscape(keyMarker)}`)
       }
       if (versionIdMarker) {
-        queries.push(`version-id-marker=${versionIdMarker}`)
+        queries.push(`version-id-marker=${uriEscape(versionIdMarker)}`)
       }
     } else if (marker) {
       marker = uriEscape(marker)
