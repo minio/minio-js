@@ -23,12 +23,15 @@ interface AssumeRoleResponse {
 }
 
 interface EcsCredentials {
-  AccessKeyID: string
+  AccessKeyId?: string
+  // Not returned by AWS. Kept so custom endpoints that use this casing keep working.
+  AccessKeyID?: string
   SecretAccessKey: string
   Token: string
   Expiration: string
-  Code: string
-  Message: string
+  // Returned by EC2 instance metadata, but not by the ECS and EKS Pod Identity endpoints.
+  Code?: string
+  Message?: string
 }
 
 export interface IamAwsProviderOptions {
@@ -209,13 +212,14 @@ export class IamAwsProvider extends CredentialProvider {
     const res = await request(transport, requestOptions, null)
     const body = await readAsString(res)
     const ecsCredentials = JSON.parse(body) as EcsCredentials
-    if (!ecsCredentials.Code || ecsCredentials.Code != 'Success') {
+    const accessKey = ecsCredentials.AccessKeyId ?? ecsCredentials.AccessKeyID
+    if ((ecsCredentials.Code !== undefined && ecsCredentials.Code !== 'Success') || !accessKey) {
       throw new Error(`${url} failed with code ${ecsCredentials.Code} and message ${ecsCredentials.Message}`)
     }
 
     this.accessExpiresAt = ecsCredentials.Expiration
     return new Credentials({
-      accessKey: ecsCredentials.AccessKeyID,
+      accessKey,
       secretKey: ecsCredentials.SecretAccessKey,
       sessionToken: ecsCredentials.Token,
     })
