@@ -110,9 +110,21 @@ describe('IamAwsProvider #1515 — credential response parsing', () => {
 
   it('rejects a response whose Code is not Success', async () => {
     process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI = `${endpoint}/credentials`
-    credentialsResponse = { Code: 'AssumeRoleUnauthorizedAccess', Message: 'denied' }
+    credentialsResponse = {
+      ...baseCredentials,
+      AccessKeyId: 'fake-access-key',
+      Code: 'AssumeRoleUnauthorizedAccess',
+      Message: 'denied',
+    }
 
     await assert.rejects(new IamAwsProvider({}).getCredentials(), /failed with code AssumeRoleUnauthorizedAccess/)
+  })
+
+  it('rejects a response whose Code is empty', async () => {
+    process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI = `${endpoint}/credentials`
+    credentialsResponse = { ...baseCredentials, AccessKeyId: 'fake-access-key', Code: '' }
+
+    await assert.rejects(new IamAwsProvider({}).getCredentials(), /failed with code/)
   })
 
   it('rejects a response without an access key', async () => {

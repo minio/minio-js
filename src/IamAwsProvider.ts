@@ -213,7 +213,7 @@ export class IamAwsProvider extends CredentialProvider {
     const body = await readAsString(res)
     const ecsCredentials = JSON.parse(body) as EcsCredentials
     const accessKey = ecsCredentials.AccessKeyId ?? ecsCredentials.AccessKeyID
-    if ((ecsCredentials.Code && ecsCredentials.Code !== 'Success') || !accessKey) {
+    if ((ecsCredentials.Code !== undefined && ecsCredentials.Code !== 'Success') || !accessKey) {
       throw new Error(`${url} failed with code ${ecsCredentials.Code} and message ${ecsCredentials.Message}`)
     }
 
