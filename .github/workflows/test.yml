@@ -13,6 +13,7 @@ jobs:
     name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       max-parallel: 5
       matrix:
         node_version: [24.x, 22.x, 20.x, 18.x, 16.x ]
@@ -26,23 +27,82 @@ jobs:
       SERVER_ENDPOINT: localhost:9000
 
     steps:
-      - name: Start Server
+      - uses: actions/checkout@v4
+
+      # AIStor requires this public FREE-plan fixture for writable functional tests.
+      # Keep it in sync with minio/minio-py tests/functional/minio.license.
+      - name: Start AIStor Server
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          wget --quiet -O /tmp/minio https://dl.min.io/server/minio/release/linux-amd64/minio
-          chmod +x /tmp/minio
-          /tmp/minio -C /tmp/minio-config server /tmp/data{1...4} &
-
-      - run: Invoke-WebRequest -Uri https://dl.minio.io/server/minio/release/windows-amd64/minio.exe -OutFile $HOME/minio.exe
-        if: ${{ matrix.os == 'windows-latest' }}
-
-      - name: Start MinIO Server
-        if: ${{ matrix.os == 'windows-latest' }}
         shell: bash
         run: |
-          $HOME/minio.exe -C $HOME/tmp/minio-config server $HOME/tmp/data{1...4} &
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            --output /tmp/minio \
+            https://dl.min.io/aistor/minio/release/linux-amd64/minio
+          chmod +x /tmp/minio
+          /tmp/minio -C /tmp/minio-config server \
+            --license tests/functional/minio.license \
+            /tmp/data{1...4} > /tmp/minio.log 2>&1 &
+          server_pid=$!
 
-      - uses: actions/checkout@v4
+          for _ in {1..60}; do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              break
+            fi
+            if curl --fail --silent http://127.0.0.1:9000/minio/health/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          cat /tmp/minio.log
+          exit 1
+
+      - name: Start AIStor Server
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          $binary = Join-Path $HOME "minio.exe"
+          $stdout = Join-Path $env:RUNNER_TEMP "minio.stdout.log"
+          $stderr = Join-Path $env:RUNNER_TEMP "minio.stderr.log"
+          $config = Join-Path $HOME "tmp/minio-config"
+          $data = Join-Path $HOME "tmp/data{1...4}"
+          $license = Join-Path $env:GITHUB_WORKSPACE "tests/functional/minio.license"
+
+          Invoke-WebRequest `
+            -Uri https://dl.min.io/aistor/minio/release/windows-amd64/minio.exe `
+            -OutFile $binary
+
+          $server = Start-Process `
+            -FilePath $binary `
+            -ArgumentList "-C", $config, "server", "--license", $license, $data `
+            -NoNewWindow `
+            -PassThru `
+            -RedirectStandardOutput $stdout `
+            -RedirectStandardError $stderr
+
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 60; $attempt++) {
+            if ($server.HasExited) {
+              break
+            }
+            try {
+              Invoke-WebRequest `
+                -UseBasicParsing `
+                -Uri http://127.0.0.1:9000/minio/health/ready | Out-Null
+              $ready = $true
+              break
+            } catch {
+              Start-Sleep -Seconds 1
+            }
+          }
+
+          if (-not $ready) {
+            Get-Content $stdout -ErrorAction SilentlyContinue
+            Get-Content $stderr -ErrorAction SilentlyContinue
+            throw "AIStor server did not become ready within 60 seconds"
+          }
+
       - name: Use Node.js ${{ matrix.node_version }}
         uses: actions/setup-node@v4
         with:
