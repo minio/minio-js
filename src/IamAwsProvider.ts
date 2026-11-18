@@ -1,6 +1,8 @@
+import { X509Certificate } from 'node:crypto'
 import * as fs from 'node:fs/promises'
 import * as http from 'node:http'
 import * as https from 'node:https'
+import * as tls from 'node:tls'
 import { URL, URLSearchParams } from 'node:url'
 
 import { CredentialProvider } from './CredentialProvider.ts'
@@ -32,21 +34,84 @@ interface EcsCredentials {
 }
 
 export interface IamAwsProviderOptions {
+  /** Endpoint of the instance metadata service. Not used for the web-identity (STS) flow. */
   customEndpoint?: string
+  /**
+   * Endpoint of the STS service used for the web-identity flow (AWS_WEB_IDENTITY_TOKEN_FILE).
+   * Takes precedence over AWS_ENDPOINT_URL_STS. The URL path is preserved. AWS_CA_BUNDLE does not apply to it.
+   * http and https endpoints are accepted; a `transportAgent` must match the scheme (see there).
+   */
+  stsEndpoint?: string
+  /**
+   * Agent used for every request. For the web-identity (STS) flow its protocol must match the
+   * STS endpoint's scheme: an `https.Agent` for an https endpoint, an `http.Agent` for an http
+   * endpoint. A mismatch, for example an `http:` AWS_ENDPOINT_URL_STS together with an `https.Agent`,
+   * is rejected with an error; the agent is never replaced silently.
+   */
   transportAgent?: http.Agent
+}
+
+/**
+ * Resolve the opt-in STS endpoint from AWS_ENDPOINT_URL_STS. It is skipped when
+ * AWS_IGNORE_CONFIGURED_ENDPOINT_URLS is "true" (case-insensitive). The global
+ * AWS_ENDPOINT_URL is deliberately not read: it usually points at S3.
+ * https://docs.aws.amazon.com/sdkref/latest/guide/feature-ss-endpoints.html
+ */
+function stsEndpointFromEnv(): string | undefined {
+  if (process.env.AWS_IGNORE_CONFIGURED_ENDPOINT_URLS?.toLowerCase() === 'true') {
+    return undefined
+  }
+  return process.env.AWS_ENDPOINT_URL_STS || undefined
+}
+
+/**
+ * Build an https agent that trusts the PEM certificates in `caBundle` in addition to
+ * the default trust store.
+ * https://docs.aws.amazon.com/sdkref/latest/guide/feature-gen-config.html
+ */
+async function agentWithCaBundle(caBundle: string): Promise<https.Agent> {
+  let pem: string
+  try {
+    pem = await fs.readFile(caBundle, { encoding: 'utf8' })
+  } catch (err) {
+    throw new Error(`unable to read AWS_CA_BUNDLE ${caBundle}: ${err}`, { cause: err })
+  }
+  const blocks = pem.match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g)
+  if (!blocks) {
+    throw new Error(`AWS_CA_BUNDLE ${caBundle} contains no PEM certificates`)
+  }
+  for (const block of blocks) {
+    try {
+      new X509Certificate(block)
+    } catch (err) {
+      throw new Error(`AWS_CA_BUNDLE ${caBundle} contains an invalid PEM certificate: ${err}`, { cause: err })
+    }
+  }
+  // getCACertificates('default') also includes NODE_EXTRA_CA_CERTS; it is missing before Node 22.15.
+  const getCACertificates = (tls as { getCACertificates?: (type: 'default') => string[] }).getCACertificates
+  const defaults = getCACertificates ? getCACertificates('default') : tls.rootCertificates
+  // On Node versions that honor NODE_USE_ENV_PROXY, keep the proxy routing the global agent would use.
+  const proxyEnv = process.env.NODE_USE_ENV_PROXY === '1' ? { proxyEnv: process.env } : {}
+  return new https.Agent({ ca: [...defaults, ...blocks], ...proxyEnv })
 }
 
 export class IamAwsProvider extends CredentialProvider {
   private readonly customEndpoint?: string
+  private readonly stsEndpointOption?: string
 
   private _credentials: Credentials | null
   private readonly transportAgent?: http.Agent
   private accessExpiresAt = ''
 
-  constructor({ customEndpoint = undefined, transportAgent = undefined }: IamAwsProviderOptions) {
+  constructor({
+    customEndpoint = undefined,
+    stsEndpoint = undefined,
+    transportAgent = undefined,
+  }: IamAwsProviderOptions) {
     super({ accessKey: '', secretKey: '' })
 
     this.customEndpoint = customEndpoint
+    this.stsEndpointOption = stsEndpoint
     this.transportAgent = transportAgent
 
     /**
@@ -95,9 +160,37 @@ export class IamAwsProvider extends CredentialProvider {
   private async fetchCredentialsUsingTokenFile(tokenFile: string): Promise<Credentials> {
     const token = await fs.readFile(tokenFile, { encoding: 'utf8' })
     const region = process.env.AWS_REGION
-    const stsEndpoint = new URL(region ? `https://sts.${region}.amazonaws.com` : 'https://sts.amazonaws.com')
+    // explicit option > AWS_ENDPOINT_URL_STS > default AWS endpoint
+    const envEndpoint = this.stsEndpointOption ? undefined : stsEndpointFromEnv()
+    const stsEndpoint = new URL(
+      this.stsEndpointOption ||
+        envEndpoint ||
+        (region
+          ? `https://sts.${region}.amazonaws.com${region.startsWith('cn-') ? '.cn' : ''}`
+          : 'https://sts.amazonaws.com'),
+    )
 
-    const hostValue = stsEndpoint.hostname
+    // Node refuses to send a request through an agent of the other protocol. Fail with a message
+    // that names the source of the endpoint instead of substituting the caller's agent.
+    const agentProtocol = (this.transportAgent as { protocol?: string } | undefined)?.protocol
+    if (agentProtocol && agentProtocol !== stsEndpoint.protocol) {
+      let source = 'the default STS endpoint'
+      let advice = 'supply a matching transportAgent'
+      if (this.stsEndpointOption) {
+        source = 'stsEndpoint'
+        advice = 'change stsEndpoint or supply a matching transportAgent'
+      } else if (envEndpoint) {
+        source = 'AWS_ENDPOINT_URL_STS'
+        advice =
+          'supply a matching transportAgent, unset AWS_ENDPOINT_URL_STS, or set AWS_IGNORE_CONFIGURED_ENDPOINT_URLS=true'
+      }
+      throw new Error(
+        `transportAgent is for ${agentProtocol} but the STS endpoint from ${source} uses ${stsEndpoint.protocol} (${stsEndpoint.origin}); ${advice}`,
+      )
+    }
+
+    // URL keeps the brackets of IPv6 literals, but http.request options expect the bare address.
+    const hostValue = stsEndpoint.hostname.replace(/^\[|\]$/g, '')
     const portValue = stsEndpoint.port
     const qryParams = new URLSearchParams({
       Action: 'AssumeRoleWithWebIdentity',
@@ -114,6 +207,12 @@ export class IamAwsProvider extends CredentialProvider {
     qryParams.set('WebIdentityToken', token)
     qryParams.sort()
 
+    // Opt-in: AWS_CA_BUNDLE is read only for an endpoint taken from AWS_ENDPOINT_URL_STS, and then
+    // extends the default trust store. A caller-supplied agent is never modified.
+    const caBundle = envEndpoint ? process.env.AWS_CA_BUNDLE : undefined
+    const ownAgent = !this.transportAgent && caBundle && stsEndpoint.protocol === 'https:'
+    const agent = ownAgent ? await agentWithCaBundle(caBundle) : this.transportAgent
+
     const requestOptions = {
       hostname: hostValue,
       port: portValue,
@@ -121,12 +220,19 @@ export class IamAwsProvider extends CredentialProvider {
       protocol: stsEndpoint.protocol,
       method: 'POST',
       headers: {},
-      agent: this.transportAgent,
+      agent,
     } satisfies http.RequestOptions
 
-    const transport = stsEndpoint.protocol === 'http:' ? http : https
-    const res = await request(transport, requestOptions, null)
-    const body = await readAsString(res)
+    let body: string
+    try {
+      const transport = stsEndpoint.protocol === 'http:' ? http : https
+      const res = await request(transport, requestOptions, null)
+      body = await readAsString(res)
+    } finally {
+      if (ownAgent) {
+        agent?.destroy()
+      }
+    }
 
     const assumeRoleResponse: AssumeRoleResponse = parseXml(body)
     const creds = assumeRoleResponse.AssumeRoleWithWebIdentityResponse.AssumeRoleWithWebIdentityResult.Credentials
